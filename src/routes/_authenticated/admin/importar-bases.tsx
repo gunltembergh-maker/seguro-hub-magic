@@ -355,29 +355,54 @@ function CaixaCard() {
   const importMut = useMutation({
     mutationFn: async () => {
       if (!preview) throw new Error("Nenhuma prévia");
-      const { data: syncData, error: resetErr } = await supabase.rpc("rpc_admin_caixa_reset");
-      if (resetErr) throw resetErr;
-      const syncId = syncData as unknown as string;
+      const { data: userData } = await supabase.auth.getUser();
+      const { data: logInicio, error: logErr } = await supabase
+        .from("lavoro_sync_log")
+        .insert({ base: "caixa", origem: "manual", status: "iniciado", usuario_id: userData.user?.id ?? null })
+        .select()
+        .single();
+      if (logErr) throw logErr;
 
-      const BATCH = 500;
-      let total = 0;
-      for (let i = 0; i < preview.length; i += BATCH) {
-        const chunk = preview.slice(i, i + BATCH);
-        const { data: n, error } = await supabase.rpc("rpc_admin_caixa_append", {
-          _rows: chunk as unknown as never, _sync_id: syncId,
-        });
-        if (error) throw error;
-        total += (n as unknown as number) ?? 0;
+      try {
+        const { data: syncData, error: resetErr } = await supabase.rpc("rpc_admin_caixa_reset");
+        if (resetErr) throw resetErr;
+        const syncId = syncData as unknown as string;
+
+        const BATCH = 500;
+        let total = 0;
+        for (let i = 0; i < preview.length; i += BATCH) {
+          const chunk = preview.slice(i, i + BATCH);
+          const { data: n, error } = await supabase.rpc("rpc_admin_caixa_append", {
+            _rows: chunk as unknown as never, _sync_id: syncId,
+          });
+          if (error) throw error;
+          total += (n as unknown as number) ?? 0;
+        }
+
+        await supabase.from("lavoro_sync_log").update({
+          status: "sucesso", sync_id: syncId, linhas_importadas: total,
+        }).eq("id", logInicio.id);
+
+        return { linhas: total };
+      } catch (error) {
+        await supabase.from("lavoro_sync_log").update({
+          status: "erro", mensagem_erro: String((error as Error)?.message ?? error),
+        }).eq("id", logInicio.id);
+        throw error;
       }
-      return { linhas: total };
     },
     onSuccess: (res) => {
       toast.success("Base Caixa importada", { description: `${res.linhas} linhas` });
       setFile(null); setPreview(null);
       qc.invalidateQueries({ queryKey: ["admin-last-import", "caixa"] });
+      qc.invalidateQueries({ queryKey: ["lavoro-sync-log"] });
     },
-    onError: (e: Error) => toast.error("Falha na importação", { description: e.message }),
+    onError: (e: Error) => {
+      toast.error("Falha na importação", { description: e.message });
+      qc.invalidateQueries({ queryKey: ["lavoro-sync-log"] });
+    },
   });
+
 
 
   const total = preview?.reduce((s, r) => s + (r.valor ?? 0), 0) ?? 0;
