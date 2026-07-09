@@ -134,8 +134,8 @@ function AdminPerfisPage() {
 }
 
 function PerfilDialog({ perfil, onClose, onDone }: { perfil: PerfilAcesso | null; onClose: () => void; onDone: () => void }) {
-  const [nome, setNome] = useState(perfil?.nome ?? "");
-  const [descricao, setDescricao] = useState(perfil?.descricao ?? "");
+  const [nome, setNome] = useState<string>(perfil?.nome ?? "");
+  const [descricao, setDescricao] = useState<string>(perfil?.descricao ?? "");
   const [perms, setPerms] = useState<Record<string, boolean>>(perfil?.permissoes ?? {});
   const isProtected = perfil && PROTECTED_NAMES.includes(perfil.nome);
 

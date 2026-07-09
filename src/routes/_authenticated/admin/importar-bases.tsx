@@ -232,7 +232,7 @@ function GerencialCard() {
     mutationFn: async () => {
       if (!preview) throw new Error("Nenhuma prévia");
       const { data, error } = await supabase.rpc("rpc_admin_ingest_gerencial", {
-        _rows: preview.ger, _ramo_rows: preview.ramo,
+        _rows: preview.ger as unknown as never, _ramo_rows: preview.ramo as unknown as never,
       });
       if (error) throw error;
       return Array.isArray(data) ? data[0] : data;
@@ -296,7 +296,7 @@ function CaixaCard() {
   const importMut = useMutation({
     mutationFn: async () => {
       if (!preview) throw new Error("Nenhuma prévia");
-      const { data, error } = await supabase.rpc("rpc_admin_ingest_caixa", { _rows: preview });
+      const { data, error } = await supabase.rpc("rpc_admin_ingest_caixa", { _rows: preview as unknown as never });
       if (error) throw error;
       return Array.isArray(data) ? data[0] : data;
     },
