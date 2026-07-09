@@ -12,14 +12,18 @@ import { LoadingSplash } from "@/components/loading-splash";
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async () => {
-    const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) {
+    // getSession lê do localStorage (síncrono/local) → evita HTTP round-trip
+    // em cada navegação. A validação real do token acontece nas RPCs via RLS.
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) {
       throw redirect({ to: "/auth" });
     }
-    return { user: data.user };
+    return { user: data.session.user };
   },
   component: AuthenticatedLayout,
+  pendingComponent: LoadingSplash,
 });
+
 
 function AuthenticatedLayout() {
   const { data: perfil, isLoading } = useMeuPerfil();
