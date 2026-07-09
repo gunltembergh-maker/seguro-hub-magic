@@ -27,7 +27,7 @@ function AuthenticatedLayout() {
   // registrar acesso uma vez, quando temos perfil válido
   useEffect(() => {
     if (perfil && !perfil.blocked && perfil.active) {
-      supabase.rpc("rpc_registrar_acesso").catch(() => {});
+      void supabase.rpc("rpc_registrar_acesso").then(() => {});
     }
   }, [perfil?.user_id, perfil?.blocked, perfil?.active]);
 
