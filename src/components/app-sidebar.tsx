@@ -62,6 +62,14 @@ export function AppSidebar() {
 
   const { data: meuPerfil } = useMeuPerfil();
   const isAdmin = hasRole(meuPerfil, "ADMIN");
+
+  const dashboardItems = [
+    { title: "Receita", url: "/dashboard/receita",
+      show: isAdmin || hasPermission(meuPerfil, "menu_dashboard_receita") },
+  ].filter((i) => i.show);
+  const showDashboards =
+    isAdmin || hasPermission(meuPerfil, "menu_dashboards") || dashboardItems.length > 0;
+
   const adminItems = [
     { title: "Usuários", url: "/admin/usuarios", icon: Users, show: isAdmin },
     { title: "Perfis", url: "/admin/perfis", icon: KeyRound, show: isAdmin },
@@ -70,6 +78,7 @@ export function AppSidebar() {
     { title: "Configurações", url: "/admin/configuracoes", icon: Settings,
       show: hasPermission(meuPerfil, "menu_admin_configuracoes") },
   ].filter((i) => i.show);
+
 
 
   return (
