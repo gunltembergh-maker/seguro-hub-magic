@@ -119,7 +119,34 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {showDashboards && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Dashboards</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton isActive={false} tooltip="Dashboards" className="pointer-events-none opacity-80">
+                    <BarChart3 />
+                    <span>Dashboards</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                {dashboardItems.map((i) => (
+                  <SidebarMenuItem key={i.url}>
+                    <SidebarMenuButton asChild isActive={isActive(i.url)} tooltip={i.title} className="pl-6">
+                      <Link to={i.url}>
+                        <CornerDownRight />
+                        <span>{i.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
         <SidebarGroup>
+
           <SidebarGroupLabel>Áreas</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
