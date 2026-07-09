@@ -1,0 +1,1 @@
+ALTER TABLE public.raw_lavoro_depara_ramo DROP CONSTRAINT IF EXISTS raw_lavoro_depara_ramo_sync_ramo_key;
