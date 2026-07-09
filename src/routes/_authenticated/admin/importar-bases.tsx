@@ -180,9 +180,12 @@ function ImportarBasesPage() {
         {canGer && <GerencialCard />}
         {canCx && <CaixaCard />}
       </div>
+
+      <HistoricoImportacoes />
     </div>
   );
 }
+
 
 interface Preview<T> { rows: T[]; extras?: { label: string; value: string }[]; }
 
