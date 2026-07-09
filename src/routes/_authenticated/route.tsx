@@ -5,8 +5,9 @@ import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/s
 import { AppSidebar } from "@/components/app-sidebar";
 import { HubHeader } from "@/components/hub-header";
 import { useMeuPerfil } from "@/hooks/use-meu-perfil";
-import { Loader2, ShieldAlert, LogOut } from "lucide-react";
+import { ShieldAlert, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LoadingSplash } from "@/components/loading-splash";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -32,11 +33,7 @@ function AuthenticatedLayout() {
   }, [perfil?.user_id, perfil?.blocked, perfil?.active]);
 
   if (isLoading) {
-    return (
-      <div className="grid min-h-screen place-items-center bg-background">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <LoadingSplash />;
   }
 
   if (!perfil || perfil.blocked || !perfil.active) {
