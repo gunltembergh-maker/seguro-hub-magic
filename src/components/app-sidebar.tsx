@@ -60,8 +60,9 @@ export function AppSidebar() {
           <img
             src={logoBranca.url}
             alt="Lavoro Seguros"
-            className="h-8 w-8 shrink-0 object-contain"
+            className={collapsed ? "h-7 w-7 shrink-0 object-contain" : "h-8 w-auto object-contain"}
           />
+
           {!collapsed && (
             <div className="flex flex-col leading-tight">
               <span className="font-display text-sm font-semibold text-sidebar-foreground">Lavoro Seguros</span>
