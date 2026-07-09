@@ -501,8 +501,9 @@ function HistoricoImportacoes() {
                   const isErr = row.status === "erro" && row.mensagem_erro;
                   const isOpen = expanded === row.id;
                   return (
-                    <>
-                      <tr key={row.id} className="border-b border-border/50 hover:bg-muted/30">
+                    <Fragment key={row.id}>
+                      <tr className="border-b border-border/50 hover:bg-muted/30">
+
                         <td className="px-2 py-2">
                           {isErr ? (
                             <button
