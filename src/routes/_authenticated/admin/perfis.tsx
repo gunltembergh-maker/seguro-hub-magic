@@ -144,7 +144,7 @@ function PerfilDialog({ perfil, onClose, onDone }: { perfil: PerfilAcesso | null
       if (!nome.trim()) throw new Error("Informe o nome do perfil");
       const { error } = await supabase.rpc("rpc_admin_upsert_perfil", {
         _id: perfil?.id ?? null, _nome: nome.trim(), _descricao: descricao.trim() || null, _permissoes: perms,
-      });
+      } as never);
       if (error) throw error;
     },
     onSuccess: () => { toast.success(perfil ? "Perfil atualizado" : "Perfil criado"); onDone(); },
