@@ -458,23 +458,59 @@ export type Database = {
           ramo: string | null
           tipo_de_ramo: string | null
         }
-        Insert: {
-          ramo?: string | null
-          tipo_de_ramo?: string | null
-        }
-        Update: {
-          ramo?: string | null
-          tipo_de_ramo?: string | null
+        Relationships: []
+      }
+      vw_lavoro_gerencial: {
+        Row: {
+          ano: number | null
+          comissao_bruta: number | null
+          comissao_emitida: number | null
+          data_ajustada: string | null
+          data_emissao: string | null
+          data_pagamento: string | null
+          data_repasse: string | null
+          dezena: string | null
+          documento: string | null
+          empresa_faturada: string | null
+          fim_vigencia: string | null
+          grupo: string | null
+          id: number | null
+          imposto_ret: number | null
+          inicio_vigencia: string | null
+          mes: number | null
+          numero_apolice: string | null
+          numero_da_parcela: number | null
+          observacao: string | null
+          percentual_comissao: number | null
+          percentual_repasse: number | null
+          possui_repasse: string | null
+          premio_parcela: number | null
+          premio_total: number | null
+          qtd_parcelas: number | null
+          ramo: string | null
+          responsavel: string | null
+          segurado: string | null
+          seguradora: string | null
+          status_parcela_comissao: string | null
+          status_repasse: string | null
+          sync_id: string | null
+          tipo_de_ramo: string | null
+          tipo_pagamento: string | null
+          tomador: string | null
+          valor_is: number | null
+          valor_iss: number | null
+          valor_recebido_a_receber: number | null
+          valor_repasse_total: number | null
         }
         Relationships: []
       }
       vw_lavoro_previsto_caixa: {
         Row: {
           ano: number | null
-          canal: string | null
+          data_pagamento: string | null
           mes: number | null
           ramo: string | null
-          seguradora: string | null
+          tipo_de_ramo: string | null
           valor_previsto: number | null
         }
         Relationships: []
@@ -482,26 +518,53 @@ export type Database = {
       vw_lavoro_receita_caixa: {
         Row: {
           ano: number | null
-          canal: string | null
+          data_pagamento: string | null
+          descricao: string | null
+          id: number | null
           mes: number | null
-          ramo: string | null
-          seguradora: string | null
-          valor_recebido: number | null
+          mes_referencia: string | null
+          referencia: string | null
+          sync_id: string | null
+          valor: number | null
+        }
+        Insert: {
+          ano?: never
+          data_pagamento?: string | null
+          descricao?: string | null
+          id?: number | null
+          mes?: never
+          mes_referencia?: string | null
+          referencia?: string | null
+          sync_id?: string | null
+          valor?: number | null
+        }
+        Update: {
+          ano?: never
+          data_pagamento?: string | null
+          descricao?: string | null
+          id?: number | null
+          mes?: never
+          mes_referencia?: string | null
+          referencia?: string | null
+          sync_id?: string | null
+          valor?: number | null
         }
         Relationships: []
       }
       vw_lavoro_receita_competencia: {
         Row: {
           ano: number | null
-          canal: string | null
           comissao_bruta: number | null
-          comissao_liquida: number | null
+          data_emissao: string | null
+          data_pagamento: string | null
+          documento: string | null
           mes: number | null
-          premio_liquido: number | null
           ramo: string | null
+          segurado: string | null
           seguradora: string | null
           status_parcela_comissao: string | null
           tipo_de_ramo: string | null
+          tomador: string | null
         }
         Relationships: []
       }
@@ -517,7 +580,10 @@ export type Database = {
       }
       is_admin_or_diretoria: { Args: { _user_id: string }; Returns: boolean }
       is_dominio_lavoro: { Args: { _email: string }; Returns: boolean }
-      normalize_categoria_financeira: { Args: { txt: string }; Returns: string }
+      normalize_categoria_financeira: {
+        Args: { categoria: string }
+        Returns: string
+      }
       pode_gerenciar_configuracoes: {
         Args: { _user_id: string }
         Returns: boolean
@@ -527,10 +593,10 @@ export type Database = {
         Returns: boolean
       }
       rpc_comissao_vencida_por_canal: {
-        Args: { _ano: number; _mes: number; _periodo?: string }
+        Args: { p_ano: number; p_mes: number; p_periodo?: string }
         Returns: {
-          canal: string
-          valor: number
+          comissao_vencida: number
+          tipo_de_ramo: string
         }[]
       }
       rpc_get_meta_anual: { Args: { _ano: number }; Returns: number }
