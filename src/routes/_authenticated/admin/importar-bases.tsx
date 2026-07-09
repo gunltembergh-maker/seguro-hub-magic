@@ -170,8 +170,9 @@ function ImportarBasesPage() {
       <header className="mb-6">
         <h1 className="font-display text-2xl font-bold tracking-tight">Importação de Bases</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Cada nova importação substitui completamente a base anterior. Confira contagem e soma antes de confirmar.
+          Cada nova importação vira a versão atual — cargas anteriores ficam guardadas como histórico.
         </p>
+
       </header>
 
       <div className="grid gap-6 md:grid-cols-2">
