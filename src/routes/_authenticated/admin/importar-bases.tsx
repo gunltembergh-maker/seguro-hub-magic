@@ -1,17 +1,18 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Loader2, Upload, CheckCircle2, FileSpreadsheet, ShieldAlert } from "lucide-react";
+import { Loader2, Upload, CheckCircle2, FileSpreadsheet, ShieldAlert, ChevronDown, ChevronRight, History } from "lucide-react";
 import * as XLSX from "xlsx";
 
 import { supabase } from "@/integrations/supabase/client";
-import { useMeuPerfil, hasRole, hasPermission } from "@/hooks/use-meu-perfil";
+import { useMeuPerfil, hasPermission } from "@/hooks/use-meu-perfil";
 import { useLastImport } from "@/hooks/use-admin-data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+
 
 export const Route = createFileRoute("/_authenticated/admin/importar-bases")({
   component: ImportarBasesPage,
@@ -179,9 +180,12 @@ function ImportarBasesPage() {
         {canGer && <GerencialCard />}
         {canCx && <CaixaCard />}
       </div>
+
+      <HistoricoImportacoes />
     </div>
   );
 }
+
 
 interface Preview<T> { rows: T[]; extras?: { label: string; value: string }[]; }
 
@@ -240,39 +244,64 @@ function GerencialCard() {
   const importMut = useMutation({
     mutationFn: async () => {
       if (!preview) throw new Error("Nenhuma prévia");
-      const { data: syncData, error: resetErr } = await supabase.rpc("rpc_admin_gerencial_reset");
-      if (resetErr) throw resetErr;
-      const syncId = syncData as unknown as string;
+      const { data: userData } = await supabase.auth.getUser();
+      const { data: logInicio, error: logErr } = await supabase
+        .from("lavoro_sync_log")
+        .insert({ base: "gerencial", origem: "manual", status: "iniciado", usuario_id: userData.user?.id ?? null })
+        .select()
+        .single();
+      if (logErr) throw logErr;
 
-      const BATCH = 500;
-      let totalGer = 0;
-      for (let i = 0; i < preview.ger.length; i += BATCH) {
-        const chunk = preview.ger.slice(i, i + BATCH);
-        const { data: n, error } = await supabase.rpc("rpc_admin_gerencial_append", {
-          _rows: chunk as unknown as never, _sync_id: syncId,
-        });
-        if (error) throw error;
-        totalGer += (n as unknown as number) ?? 0;
-      }
+      try {
+        const { data: syncData, error: resetErr } = await supabase.rpc("rpc_admin_gerencial_reset");
+        if (resetErr) throw resetErr;
+        const syncId = syncData as unknown as string;
 
-      let totalRamo = 0;
-      for (let i = 0; i < preview.ramo.length; i += BATCH) {
-        const chunk = preview.ramo.slice(i, i + BATCH);
-        const { data: n, error } = await supabase.rpc("rpc_admin_ramo_append", {
-          _rows: chunk as unknown as never, _sync_id: syncId,
-        });
-        if (error) throw error;
-        totalRamo += (n as unknown as number) ?? 0;
+        const BATCH = 500;
+        let totalGer = 0;
+        for (let i = 0; i < preview.ger.length; i += BATCH) {
+          const chunk = preview.ger.slice(i, i + BATCH);
+          const { data: n, error } = await supabase.rpc("rpc_admin_gerencial_append", {
+            _rows: chunk as unknown as never, _sync_id: syncId,
+          });
+          if (error) throw error;
+          totalGer += (n as unknown as number) ?? 0;
+        }
+
+        let totalRamo = 0;
+        for (let i = 0; i < preview.ramo.length; i += BATCH) {
+          const chunk = preview.ramo.slice(i, i + BATCH);
+          const { data: n, error } = await supabase.rpc("rpc_admin_ramo_append", {
+            _rows: chunk as unknown as never, _sync_id: syncId,
+          });
+          if (error) throw error;
+          totalRamo += (n as unknown as number) ?? 0;
+        }
+
+        await supabase.from("lavoro_sync_log").update({
+          status: "sucesso", sync_id: syncId, linhas_importadas: totalGer,
+        }).eq("id", logInicio.id);
+
+        return { linhas_gerencial: totalGer, linhas_ramo: totalRamo };
+      } catch (error) {
+        await supabase.from("lavoro_sync_log").update({
+          status: "erro", mensagem_erro: String((error as Error)?.message ?? error),
+        }).eq("id", logInicio.id);
+        throw error;
       }
-      return { linhas_gerencial: totalGer, linhas_ramo: totalRamo };
     },
     onSuccess: (res) => {
       toast.success("Base Gerencial importada", { description: `${res.linhas_gerencial} linhas + ${res.linhas_ramo} de-para` });
       setFile(null); setPreview(null);
       qc.invalidateQueries({ queryKey: ["admin-last-import", "gerencial"] });
+      qc.invalidateQueries({ queryKey: ["lavoro-sync-log"] });
     },
-    onError: (e: Error) => toast.error("Falha na importação", { description: e.message }),
+    onError: (e: Error) => {
+      toast.error("Falha na importação", { description: e.message });
+      qc.invalidateQueries({ queryKey: ["lavoro-sync-log"] });
+    },
   });
+
 
 
   const totalPremio = preview?.ger.reduce((s, r) => s + (r.premio_total ?? 0), 0) ?? 0;
@@ -326,29 +355,54 @@ function CaixaCard() {
   const importMut = useMutation({
     mutationFn: async () => {
       if (!preview) throw new Error("Nenhuma prévia");
-      const { data: syncData, error: resetErr } = await supabase.rpc("rpc_admin_caixa_reset");
-      if (resetErr) throw resetErr;
-      const syncId = syncData as unknown as string;
+      const { data: userData } = await supabase.auth.getUser();
+      const { data: logInicio, error: logErr } = await supabase
+        .from("lavoro_sync_log")
+        .insert({ base: "caixa", origem: "manual", status: "iniciado", usuario_id: userData.user?.id ?? null })
+        .select()
+        .single();
+      if (logErr) throw logErr;
 
-      const BATCH = 500;
-      let total = 0;
-      for (let i = 0; i < preview.length; i += BATCH) {
-        const chunk = preview.slice(i, i + BATCH);
-        const { data: n, error } = await supabase.rpc("rpc_admin_caixa_append", {
-          _rows: chunk as unknown as never, _sync_id: syncId,
-        });
-        if (error) throw error;
-        total += (n as unknown as number) ?? 0;
+      try {
+        const { data: syncData, error: resetErr } = await supabase.rpc("rpc_admin_caixa_reset");
+        if (resetErr) throw resetErr;
+        const syncId = syncData as unknown as string;
+
+        const BATCH = 500;
+        let total = 0;
+        for (let i = 0; i < preview.length; i += BATCH) {
+          const chunk = preview.slice(i, i + BATCH);
+          const { data: n, error } = await supabase.rpc("rpc_admin_caixa_append", {
+            _rows: chunk as unknown as never, _sync_id: syncId,
+          });
+          if (error) throw error;
+          total += (n as unknown as number) ?? 0;
+        }
+
+        await supabase.from("lavoro_sync_log").update({
+          status: "sucesso", sync_id: syncId, linhas_importadas: total,
+        }).eq("id", logInicio.id);
+
+        return { linhas: total };
+      } catch (error) {
+        await supabase.from("lavoro_sync_log").update({
+          status: "erro", mensagem_erro: String((error as Error)?.message ?? error),
+        }).eq("id", logInicio.id);
+        throw error;
       }
-      return { linhas: total };
     },
     onSuccess: (res) => {
       toast.success("Base Caixa importada", { description: `${res.linhas} linhas` });
       setFile(null); setPreview(null);
       qc.invalidateQueries({ queryKey: ["admin-last-import", "caixa"] });
+      qc.invalidateQueries({ queryKey: ["lavoro-sync-log"] });
     },
-    onError: (e: Error) => toast.error("Falha na importação", { description: e.message }),
+    onError: (e: Error) => {
+      toast.error("Falha na importação", { description: e.message });
+      qc.invalidateQueries({ queryKey: ["lavoro-sync-log"] });
+    },
   });
+
 
 
   const total = preview?.reduce((s, r) => s + (r.valor ?? 0), 0) ?? 0;
@@ -377,5 +431,124 @@ function CaixaCard() {
         {file && <p className="text-xs text-muted-foreground">Arquivo: {file.name}</p>}
       </div>
     </ImportCardShell>
+  );
+}
+
+interface SyncLogRow {
+  id: number;
+  sync_id: string | null;
+  origem: string;
+  base: string;
+  status: string;
+  linhas_importadas: number | null;
+  mensagem_erro: string | null;
+  criado_em: string;
+}
+
+function StatusBadge({ status }: { status: string }) {
+  if (status === "sucesso")
+    return <Badge className="bg-emerald-500/15 text-emerald-700 border-emerald-500/30 border">Sucesso</Badge>;
+  if (status === "erro")
+    return <Badge className="bg-red-500/15 text-red-700 border-red-500/30 border">Erro</Badge>;
+  return <Badge variant="outline" className="text-muted-foreground">Iniciado</Badge>;
+}
+
+function HistoricoImportacoes() {
+  const [expanded, setExpanded] = useState<number | null>(null);
+  const { data, isLoading } = useQuery({
+    queryKey: ["lavoro-sync-log"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("lavoro_sync_log")
+        .select("*")
+        .order("criado_em", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return data as SyncLogRow[];
+    },
+    refetchInterval: 5000,
+  });
+
+  return (
+    <Card className="mt-6">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <History className="h-4 w-4 text-primary" /> Histórico de Importações
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> Carregando...
+          </div>
+        ) : !data || data.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nenhuma importação registrada ainda.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
+                  <th className="w-8 px-2 py-2"></th>
+                  <th className="px-2 py-2">Data/Hora</th>
+                  <th className="px-2 py-2">Base</th>
+                  <th className="px-2 py-2">Origem</th>
+                  <th className="px-2 py-2">Status</th>
+                  <th className="px-2 py-2 text-right">Linhas</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.map((row) => {
+                  const isErr = row.status === "erro" && row.mensagem_erro;
+                  const isOpen = expanded === row.id;
+                  return (
+                    <Fragment key={row.id}>
+                      <tr className="border-b border-border/50 hover:bg-muted/30">
+
+                        <td className="px-2 py-2">
+                          {isErr ? (
+                            <button
+                              type="button"
+                              onClick={() => setExpanded(isOpen ? null : row.id)}
+                              className="text-muted-foreground hover:text-foreground"
+                              aria-label="Ver mensagem de erro"
+                            >
+                              {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                            </button>
+                          ) : null}
+                        </td>
+                        <td className="px-2 py-2 tabular-nums">
+                          {new Date(row.criado_em).toLocaleString("pt-BR")}
+                        </td>
+                        <td className="px-2 py-2">
+                          {row.base === "gerencial" ? "Gerencial" : "Caixa Bradesco"}
+                        </td>
+                        <td className="px-2 py-2">
+                          <Badge variant="outline" className="text-xs">
+                            {row.origem === "manual" ? "Manual" : "Automático"}
+                          </Badge>
+                        </td>
+                        <td className="px-2 py-2"><StatusBadge status={row.status} /></td>
+                        <td className="px-2 py-2 text-right tabular-nums">
+                          {row.linhas_importadas != null ? row.linhas_importadas.toLocaleString("pt-BR") : "—"}
+                        </td>
+                      </tr>
+                      {isErr && isOpen ? (
+                        <tr className="border-b border-border/50 bg-red-500/5">
+                          <td></td>
+                          <td colSpan={5} className="px-2 py-2 text-xs text-red-700 whitespace-pre-wrap break-words">
+                            {row.mensagem_erro}
+                          </td>
+                        </tr>
+                      ) : null}
+                    </Fragment>
+
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

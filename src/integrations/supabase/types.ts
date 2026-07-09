@@ -62,6 +62,42 @@ export type Database = {
         }
         Relationships: []
       }
+      lavoro_sync_log: {
+        Row: {
+          base: string
+          criado_em: string
+          id: number
+          linhas_importadas: number | null
+          mensagem_erro: string | null
+          origem: string
+          status: string
+          sync_id: string | null
+          usuario_id: string | null
+        }
+        Insert: {
+          base: string
+          criado_em?: string
+          id?: never
+          linhas_importadas?: number | null
+          mensagem_erro?: string | null
+          origem: string
+          status: string
+          sync_id?: string | null
+          usuario_id?: string | null
+        }
+        Update: {
+          base?: string
+          criado_em?: string
+          id?: never
+          linhas_importadas?: number | null
+          mensagem_erro?: string | null
+          origem?: string
+          status?: string
+          sync_id?: string | null
+          usuario_id?: string | null
+        }
+        Relationships: []
+      }
       notificacoes_admin: {
         Row: {
           created_at: string
