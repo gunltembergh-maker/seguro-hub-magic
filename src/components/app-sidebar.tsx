@@ -141,14 +141,7 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-      </SidebarContent>
-      <SidebarFooter className="border-t border-sidebar-border">
-        {!collapsed && (
-          <p className="px-2 py-1 text-[11px] text-sidebar-foreground/50">
-            © {new Date().getFullYear()} Lavoro Seguros
-          </p>
-        )}
-      </SidebarFooter>
+
 
         {adminItems.length > 0 && (
           <SidebarGroup>
