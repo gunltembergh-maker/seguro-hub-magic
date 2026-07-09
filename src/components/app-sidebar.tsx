@@ -11,6 +11,8 @@ import {
   HeartPulse,
   Boxes,
 } from "lucide-react";
+import logoBranca from "@/assets/logo-branca.png.asset.json";
+
 
 import {
   Sidebar,
@@ -55,9 +57,12 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="border-b border-sidebar-border">
         <Link to="/hub" className="flex items-center gap-2 px-2 py-1.5">
-          <div className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
-            <ShieldCheck className="h-4 w-4" />
-          </div>
+          <img
+            src={logoBranca.url}
+            alt="Lavoro Seguros"
+            className={collapsed ? "h-7 w-7 shrink-0 object-contain" : "h-8 w-auto object-contain"}
+          />
+
           {!collapsed && (
             <div className="flex flex-col leading-tight">
               <span className="font-display text-sm font-semibold text-sidebar-foreground">Lavoro Seguros</span>
@@ -65,6 +70,7 @@ export function AppSidebar() {
             </div>
           )}
         </Link>
+
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
