@@ -182,7 +182,7 @@ function EditDialog({ user, perfis, onClose, onDone }: { user: AdminUser; perfis
     mutationFn: async () => {
       const { error } = await supabase.rpc("rpc_admin_update_user", {
         _user_id: user.user_id, _perfil_id: perfilId || null, _blocked: blocked, _active: active,
-      });
+      } as never);
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Usuário atualizado"); onDone(); },
