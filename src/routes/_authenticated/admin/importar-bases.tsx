@@ -315,7 +315,7 @@ function CaixaCard() {
   const parse = async (f: File) => {
     setReading(true); setPreview(null);
     try {
-      const rows = await readSheet(f, "Descrição Financeira (Caixa)", 2);
+      const rows = await readSheetByName(f, "Descrição Financeira (Caixa)", 2);
       setPreview(rows.map(mapCaixa));
     } catch (e) {
       toast.error("Erro ao ler planilha", { description: (e as Error).message });
@@ -325,17 +325,30 @@ function CaixaCard() {
   const importMut = useMutation({
     mutationFn: async () => {
       if (!preview) throw new Error("Nenhuma prévia");
-      const { data, error } = await supabase.rpc("rpc_admin_ingest_caixa", { _rows: preview as unknown as never });
-      if (error) throw error;
-      return Array.isArray(data) ? data[0] : data;
+      const { data: syncData, error: resetErr } = await supabase.rpc("rpc_admin_caixa_reset");
+      if (resetErr) throw resetErr;
+      const syncId = syncData as unknown as string;
+
+      const BATCH = 500;
+      let total = 0;
+      for (let i = 0; i < preview.length; i += BATCH) {
+        const chunk = preview.slice(i, i + BATCH);
+        const { data: n, error } = await supabase.rpc("rpc_admin_caixa_append", {
+          _rows: chunk as unknown as never, _sync_id: syncId,
+        });
+        if (error) throw error;
+        total += (n as unknown as number) ?? 0;
+      }
+      return { linhas: total };
     },
     onSuccess: (res) => {
-      toast.success("Base Caixa importada", { description: `${res?.linhas ?? 0} linhas` });
+      toast.success("Base Caixa importada", { description: `${res.linhas} linhas` });
       setFile(null); setPreview(null);
       qc.invalidateQueries({ queryKey: ["admin-last-import", "caixa"] });
     },
     onError: (e: Error) => toast.error("Falha na importação", { description: e.message }),
   });
+
 
   const total = preview?.reduce((s, r) => s + (r.valor ?? 0), 0) ?? 0;
 
