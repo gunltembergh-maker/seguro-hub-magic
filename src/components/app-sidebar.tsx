@@ -51,6 +51,12 @@ const ramos = [
   { title: "Benefícios", url: "/beneficios", icon: HeartPulse },
   { title: "Demais Ramos", url: "/demais-ramos", icon: Boxes },
 ];
+export function AppSidebar() {
+  const { state } = useSidebar();
+  const collapsed = state === "collapsed";
+  const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const isActive = (url: string) => pathname === url;
+
   const { data: meuPerfil } = useMeuPerfil();
   const isAdmin = hasRole(meuPerfil, "ADMIN");
   const adminItems = [
@@ -62,11 +68,6 @@ const ramos = [
       show: hasPermission(meuPerfil, "menu_admin_configuracoes") },
   ].filter((i) => i.show);
 
-export function AppSidebar() {
-  const { state } = useSidebar();
-  const collapsed = state === "collapsed";
-  const pathname = useRouterState({ select: (r) => r.location.pathname });
-  const isActive = (url: string) => pathname === url;
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
