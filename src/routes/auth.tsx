@@ -1,25 +1,16 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ShieldCheck, ArrowLeft, Loader2 } from "lucide-react";
+import { ShieldCheck, ArrowLeft, Loader2, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
+const ALLOWED_DOMAIN = "lavoroseguros.com.br";
+
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
-
-function MicrosoftLogo({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 23 23" className={className} aria-hidden="true">
-      <rect width="10" height="10" x="1" y="1" fill="#F25022" />
-      <rect width="10" height="10" x="12" y="1" fill="#7FBA00" />
-      <rect width="10" height="10" x="1" y="12" fill="#00A4EF" />
-      <rect width="10" height="10" x="12" y="12" fill="#FFB900" />
-    </svg>
-  );
-}
 
 function AuthPage() {
   const navigate = useNavigate();
@@ -31,24 +22,26 @@ function AuthPage() {
     });
   }, [navigate]);
 
-  const handleMicrosoftLogin = async () => {
+  const handleSsoLogin = async () => {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "azure",
+    const { error } = await supabase.auth.signInWithSSO({
+      domain: ALLOWED_DOMAIN,
       options: {
-        scopes: "email openid profile",
         redirectTo: `${window.location.origin}/hub`,
       },
     });
     if (error) {
-      toast.error("Não foi possível iniciar o login", { description: error.message });
+      toast.error("Não foi possível iniciar o SSO", {
+        description:
+          error.message ||
+          "Confirme com o TI se o SSO SAML está configurado no Supabase.",
+      });
       setLoading(false);
     }
   };
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
-      {/* Left: brand panel */}
       <div className="relative hidden gradient-hero p-10 text-primary-foreground lg:flex lg:flex-col lg:justify-between">
         <Link to="/" className="inline-flex items-center gap-2 text-sm opacity-80 hover:opacity-100">
           <ArrowLeft className="h-4 w-4" /> Voltar
@@ -64,8 +57,7 @@ function AuthPage() {
             Bem-vindo ao Hub.
           </h2>
           <p className="mt-4 max-w-md text-primary-foreground/80">
-            Entre com sua conta corporativa Microsoft 365 para acessar as áreas
-            da Lavoro em um só lugar.
+            Acesso corporativo via SSO. Apenas contas @{ALLOWED_DOMAIN}.
           </p>
         </div>
         <p className="text-xs text-primary-foreground/60">
@@ -73,7 +65,6 @@ function AuthPage() {
         </p>
       </div>
 
-      {/* Right: login */}
       <div className="flex items-center justify-center p-6 sm:p-12">
         <div className="w-full max-w-sm">
           <div className="mb-8 flex items-center gap-2 lg:hidden">
@@ -89,22 +80,22 @@ function AuthPage() {
           </p>
 
           <Button
-            onClick={handleMicrosoftLogin}
+            onClick={handleSsoLogin}
             disabled={loading}
             size="lg"
-            className="mt-8 w-full justify-center gap-3 bg-foreground text-background hover:bg-foreground/90"
+            className="mt-8 w-full justify-center gap-3"
           >
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <MicrosoftLogo className="h-4 w-4" />
+              <KeyRound className="h-4 w-4" />
             )}
-            Continuar com Microsoft 365
+            Entrar com SSO Lavoro
           </Button>
 
           <div className="mt-6 rounded-lg border border-border bg-muted/40 p-4 text-xs text-muted-foreground">
-            Você será redirecionado ao provedor de identidade da Lavoro para
-            autenticação segura via SSO. Nenhuma senha é armazenada neste hub.
+            Você será redirecionado ao provedor de identidade corporativo (SAML).
+            Somente e-mails <span className="font-medium">@{ALLOWED_DOMAIN}</span> são autorizados.
           </div>
 
           <p className="mt-8 text-center text-xs text-muted-foreground">
