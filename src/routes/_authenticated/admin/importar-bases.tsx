@@ -1,17 +1,18 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Loader2, Upload, CheckCircle2, FileSpreadsheet, ShieldAlert } from "lucide-react";
+import { Loader2, Upload, CheckCircle2, FileSpreadsheet, ShieldAlert, ChevronDown, ChevronRight, History } from "lucide-react";
 import * as XLSX from "xlsx";
 
 import { supabase } from "@/integrations/supabase/client";
-import { useMeuPerfil, hasRole, hasPermission } from "@/hooks/use-meu-perfil";
+import { useMeuPerfil, hasPermission } from "@/hooks/use-meu-perfil";
 import { useLastImport } from "@/hooks/use-admin-data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+
 
 export const Route = createFileRoute("/_authenticated/admin/importar-bases")({
   component: ImportarBasesPage,
