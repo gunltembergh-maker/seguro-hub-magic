@@ -14,7 +14,10 @@ import {
   KeyRound,
   Upload,
   Settings,
+  BarChart3,
+  CornerDownRight,
 } from "lucide-react";
+
 import logoBranca from "@/assets/logo-branca.png.asset.json";
 import { useMeuPerfil, hasPermission, hasRole } from "@/hooks/use-meu-perfil";
 
