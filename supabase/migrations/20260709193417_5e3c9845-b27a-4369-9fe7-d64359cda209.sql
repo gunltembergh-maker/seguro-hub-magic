@@ -1,0 +1,2 @@
+ALTER TABLE public.raw_lavoro_depara_ramo DROP CONSTRAINT IF EXISTS raw_lavoro_depara_ramo_ramo_key;
+ALTER TABLE public.raw_lavoro_depara_ramo ADD CONSTRAINT raw_lavoro_depara_ramo_sync_ramo_key UNIQUE (sync_id, ramo);
