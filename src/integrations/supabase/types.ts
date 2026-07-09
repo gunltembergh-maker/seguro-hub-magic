@@ -592,6 +592,70 @@ export type Database = {
         Args: { _tipo: string; _user_id: string }
         Returns: boolean
       }
+      rpc_admin_approve_user: {
+        Args: { _perfil_id: string; _user_id: string }
+        Returns: undefined
+      }
+      rpc_admin_delete_perfil: { Args: { _id: string }; Returns: undefined }
+      rpc_admin_ingest_caixa: {
+        Args: { _rows: Json }
+        Returns: {
+          linhas: number
+          sync_id: string
+        }[]
+      }
+      rpc_admin_ingest_gerencial: {
+        Args: { _ramo_rows: Json; _rows: Json }
+        Returns: {
+          linhas_gerencial: number
+          linhas_ramo: number
+          sync_id: string
+        }[]
+      }
+      rpc_admin_last_import: { Args: { _tipo: string }; Returns: string }
+      rpc_admin_list_perfis: {
+        Args: never
+        Returns: {
+          created_at: string
+          descricao: string
+          id: string
+          nome: string
+          permissoes: Json
+          updated_at: string
+        }[]
+      }
+      rpc_admin_list_users: {
+        Args: never
+        Returns: {
+          active: boolean
+          blocked: boolean
+          criado_em: string
+          email: string
+          full_name: string
+          perfil_id: string
+          perfil_nome: string
+          ultimo_acesso: string
+          user_id: string
+        }[]
+      }
+      rpc_admin_update_user: {
+        Args: {
+          _active: boolean
+          _blocked: boolean
+          _perfil_id: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
+      rpc_admin_upsert_perfil: {
+        Args: {
+          _descricao: string
+          _id: string
+          _nome: string
+          _permissoes: Json
+        }
+        Returns: string
+      }
       rpc_comissao_vencida_por_canal: {
         Args: { p_ano: number; p_mes: number; p_periodo?: string }
         Returns: {
