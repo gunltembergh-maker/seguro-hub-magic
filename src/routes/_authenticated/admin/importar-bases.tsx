@@ -48,13 +48,19 @@ function num(v: unknown): number | null {
   return isNaN(n) ? null : n;
 }
 
-function readSheet(file: File, sheetName: string, startRow: number): Promise<Record<string, unknown>[]> {
+function findSheet(wb: XLSX.WorkBook, name: string): XLSX.WorkSheet | null {
+  const target = name.trim().toLowerCase();
+  const match = wb.SheetNames.find((n) => n.trim().toLowerCase() === target);
+  return match ? wb.Sheets[match] : null;
+}
+
+function readSheetByName(file: File, sheetName: string, startRow: number): Promise<Record<string, unknown>[]> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
       try {
         const wb = XLSX.read(reader.result, { type: "array", cellDates: false });
-        const ws = wb.Sheets[sheetName];
+        const ws = findSheet(wb, sheetName);
         if (!ws) throw new Error(`Aba "${sheetName}" não encontrada`);
         const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { range: startRow - 1, defval: null });
         resolve(rows);
@@ -64,6 +70,7 @@ function readSheet(file: File, sheetName: string, startRow: number): Promise<Rec
     reader.readAsArrayBuffer(file);
   });
 }
+
 
 // Column resolver — case/space/accent-insensitive lookup
 function pick(row: Record<string, unknown>, ...keys: string[]) {
@@ -216,12 +223,13 @@ function GerencialCard() {
     setReading(true); setPreview(null);
     try {
       const [gerRaw, ramoRaw] = await Promise.all([
-        readSheet(f, "Gerencial", 2),
-        readSheet(f, "aux Ramo", 2).catch(() => [] as Record<string, unknown>[]),
+        readSheetByName(f, "Gerencial", 2),
+        // aux Ramo: header on row 1 (no title row)
+        readSheetByName(f, "aux Ramo", 1).catch(() => [] as Record<string, unknown>[]),
       ]);
       setPreview({
         ger: gerRaw.map(mapGerencial),
-        ramo: ramoRaw.map(mapRamo).filter((r) => r.ramo && r.tipo_de_ramo),
+        ramo: ramoRaw.map(mapRamo).filter((r): r is { ramo: unknown; tipo_de_ramo: unknown } & { ramo: string; tipo_de_ramo: string } => Boolean(r.ramo && r.tipo_de_ramo)),
       });
     } catch (e) {
       toast.error("Erro ao ler planilha", { description: (e as Error).message });
@@ -231,19 +239,40 @@ function GerencialCard() {
   const importMut = useMutation({
     mutationFn: async () => {
       if (!preview) throw new Error("Nenhuma prévia");
-      const { data, error } = await supabase.rpc("rpc_admin_ingest_gerencial", {
-        _rows: preview.ger as unknown as never, _ramo_rows: preview.ramo as unknown as never,
-      });
-      if (error) throw error;
-      return Array.isArray(data) ? data[0] : data;
+      const { data: syncData, error: resetErr } = await supabase.rpc("rpc_admin_gerencial_reset");
+      if (resetErr) throw resetErr;
+      const syncId = syncData as unknown as string;
+
+      const BATCH = 500;
+      let totalGer = 0;
+      for (let i = 0; i < preview.ger.length; i += BATCH) {
+        const chunk = preview.ger.slice(i, i + BATCH);
+        const { data: n, error } = await supabase.rpc("rpc_admin_gerencial_append", {
+          _rows: chunk as unknown as never, _sync_id: syncId,
+        });
+        if (error) throw error;
+        totalGer += (n as unknown as number) ?? 0;
+      }
+
+      let totalRamo = 0;
+      for (let i = 0; i < preview.ramo.length; i += BATCH) {
+        const chunk = preview.ramo.slice(i, i + BATCH);
+        const { data: n, error } = await supabase.rpc("rpc_admin_ramo_append", {
+          _rows: chunk as unknown as never, _sync_id: syncId,
+        });
+        if (error) throw error;
+        totalRamo += (n as unknown as number) ?? 0;
+      }
+      return { linhas_gerencial: totalGer, linhas_ramo: totalRamo };
     },
     onSuccess: (res) => {
-      toast.success("Base Gerencial importada", { description: `${res?.linhas_gerencial ?? 0} linhas + ${res?.linhas_ramo ?? 0} de-para` });
+      toast.success("Base Gerencial importada", { description: `${res.linhas_gerencial} linhas + ${res.linhas_ramo} de-para` });
       setFile(null); setPreview(null);
       qc.invalidateQueries({ queryKey: ["admin-last-import", "gerencial"] });
     },
     onError: (e: Error) => toast.error("Falha na importação", { description: e.message }),
   });
+
 
   const totalPremio = preview?.ger.reduce((s, r) => s + (r.premio_total ?? 0), 0) ?? 0;
   const totalCom = preview?.ger.reduce((s, r) => s + (r.comissao_bruta ?? 0), 0) ?? 0;
@@ -286,7 +315,7 @@ function CaixaCard() {
   const parse = async (f: File) => {
     setReading(true); setPreview(null);
     try {
-      const rows = await readSheet(f, "Descrição Financeira (Caixa)", 2);
+      const rows = await readSheetByName(f, "Descrição Financeira (Caixa)", 2);
       setPreview(rows.map(mapCaixa));
     } catch (e) {
       toast.error("Erro ao ler planilha", { description: (e as Error).message });
@@ -296,17 +325,30 @@ function CaixaCard() {
   const importMut = useMutation({
     mutationFn: async () => {
       if (!preview) throw new Error("Nenhuma prévia");
-      const { data, error } = await supabase.rpc("rpc_admin_ingest_caixa", { _rows: preview as unknown as never });
-      if (error) throw error;
-      return Array.isArray(data) ? data[0] : data;
+      const { data: syncData, error: resetErr } = await supabase.rpc("rpc_admin_caixa_reset");
+      if (resetErr) throw resetErr;
+      const syncId = syncData as unknown as string;
+
+      const BATCH = 500;
+      let total = 0;
+      for (let i = 0; i < preview.length; i += BATCH) {
+        const chunk = preview.slice(i, i + BATCH);
+        const { data: n, error } = await supabase.rpc("rpc_admin_caixa_append", {
+          _rows: chunk as unknown as never, _sync_id: syncId,
+        });
+        if (error) throw error;
+        total += (n as unknown as number) ?? 0;
+      }
+      return { linhas: total };
     },
     onSuccess: (res) => {
-      toast.success("Base Caixa importada", { description: `${res?.linhas ?? 0} linhas` });
+      toast.success("Base Caixa importada", { description: `${res.linhas} linhas` });
       setFile(null); setPreview(null);
       qc.invalidateQueries({ queryKey: ["admin-last-import", "caixa"] });
     },
     onError: (e: Error) => toast.error("Falha na importação", { description: e.message }),
   });
+
 
   const total = preview?.reduce((s, r) => s + (r.valor ?? 0), 0) ?? 0;
 

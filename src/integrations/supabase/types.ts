@@ -596,7 +596,17 @@ export type Database = {
         Args: { _perfil_id: string; _user_id: string }
         Returns: undefined
       }
+      rpc_admin_caixa_append: {
+        Args: { _rows: Json; _sync_id: string }
+        Returns: number
+      }
+      rpc_admin_caixa_reset: { Args: never; Returns: string }
       rpc_admin_delete_perfil: { Args: { _id: string }; Returns: undefined }
+      rpc_admin_gerencial_append: {
+        Args: { _rows: Json; _sync_id: string }
+        Returns: number
+      }
+      rpc_admin_gerencial_reset: { Args: never; Returns: string }
       rpc_admin_ingest_caixa: {
         Args: { _rows: Json }
         Returns: {
@@ -637,6 +647,10 @@ export type Database = {
           ultimo_acesso: string
           user_id: string
         }[]
+      }
+      rpc_admin_ramo_append: {
+        Args: { _rows: Json; _sync_id: string }
+        Returns: number
       }
       rpc_admin_update_user: {
         Args: {
