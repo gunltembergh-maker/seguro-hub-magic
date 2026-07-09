@@ -533,14 +533,15 @@ function HistoricoImportacoes() {
                         </td>
                       </tr>
                       {isErr && isOpen ? (
-                        <tr key={`${row.id}-err`} className="border-b border-border/50 bg-red-500/5">
+                        <tr className="border-b border-border/50 bg-red-500/5">
                           <td></td>
                           <td colSpan={5} className="px-2 py-2 text-xs text-red-700 whitespace-pre-wrap break-words">
                             {row.mensagem_erro}
                           </td>
                         </tr>
                       ) : null}
-                    </>
+                    </Fragment>
+
                   );
                 })}
               </tbody>
