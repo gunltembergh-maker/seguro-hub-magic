@@ -48,13 +48,19 @@ function num(v: unknown): number | null {
   return isNaN(n) ? null : n;
 }
 
-function readSheet(file: File, sheetName: string, startRow: number): Promise<Record<string, unknown>[]> {
+function findSheet(wb: XLSX.WorkBook, name: string): XLSX.WorkSheet | null {
+  const target = name.trim().toLowerCase();
+  const match = wb.SheetNames.find((n) => n.trim().toLowerCase() === target);
+  return match ? wb.Sheets[match] : null;
+}
+
+function readSheetByName(file: File, sheetName: string, startRow: number): Promise<Record<string, unknown>[]> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
       try {
         const wb = XLSX.read(reader.result, { type: "array", cellDates: false });
-        const ws = wb.Sheets[sheetName];
+        const ws = findSheet(wb, sheetName);
         if (!ws) throw new Error(`Aba "${sheetName}" não encontrada`);
         const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { range: startRow - 1, defval: null });
         resolve(rows);
@@ -64,6 +70,7 @@ function readSheet(file: File, sheetName: string, startRow: number): Promise<Rec
     reader.readAsArrayBuffer(file);
   });
 }
+
 
 // Column resolver — case/space/accent-insensitive lookup
 function pick(row: Record<string, unknown>, ...keys: string[]) {
