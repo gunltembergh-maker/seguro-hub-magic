@@ -90,35 +90,35 @@ function AuthPage() {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
-      <div className="relative hidden gradient-hero p-10 text-primary-foreground lg:flex lg:flex-col lg:justify-between">
-        <Link to="/" className="inline-flex items-center gap-2 text-sm opacity-80 hover:opacity-100">
+      <div
+        className="relative hidden bg-cover bg-center p-10 text-white lg:flex lg:flex-col lg:justify-between"
+        style={{ backgroundImage: `url(${fundo1.url})` }}
+      >
+        <Link to="/" className="inline-flex items-center gap-2 text-sm text-white/80 hover:text-white">
           <ArrowLeft className="h-4 w-4" /> Voltar
         </Link>
-        <div>
-          <div className="flex items-center gap-2">
-            <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary-foreground/10 ring-1 ring-primary-foreground/20">
-              <ShieldCheck className="h-5 w-5" />
-            </div>
-            <span className="font-display text-lg font-semibold">Lavoro Seguros</span>
-          </div>
+        <div className="flex flex-col items-center text-center">
+          <img
+            src={logoBranca.url}
+            alt="Lavoro Seguros"
+            className="w-72 max-w-[70%]"
+          />
           <h2 className="mt-10 font-display text-4xl font-bold leading-tight tracking-tight">
             Bem-vindo ao Hub.
           </h2>
-          <p className="mt-4 max-w-md text-primary-foreground/80">
+          <p className="mt-4 max-w-md text-white/75">
             Acesso corporativo. Apenas contas @{ALLOWED_DOMAIN}.
           </p>
         </div>
-        <p className="text-xs text-primary-foreground/60">
+        <p className="text-xs text-white/60">
           © {new Date().getFullYear()} Lavoro Seguros. Uso interno restrito.
         </p>
       </div>
 
       <div className="flex items-center justify-center p-6 sm:p-12">
         <div className="w-full max-w-sm">
-          <div className="mb-8 flex items-center gap-2 lg:hidden">
-            <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary text-primary-foreground">
-              <ShieldCheck className="h-5 w-5" />
-            </div>
+          <div className="mb-8 flex items-center gap-3 lg:hidden">
+            <img src={logoNavy.url} alt="Lavoro Seguros" className="h-10 w-10" />
             <span className="font-display text-lg font-semibold">Lavoro Seguros</span>
           </div>
 
@@ -128,6 +128,7 @@ function AuthPage() {
           <p className="mt-2 text-sm text-muted-foreground">
             Acesso exclusivo para colaboradores Lavoro Seguros.
           </p>
+
 
           <Button
             onClick={handleMicrosoftLogin}
