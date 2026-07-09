@@ -1,12 +1,16 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ShieldCheck, ArrowLeft, Loader2, Mail, Lock } from "lucide-react";
+import { ArrowLeft, Loader2, Mail, Lock } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import logoBranca from "@/assets/logo-branca.png.asset.json";
+import logoNavy from "@/assets/logo-navy.png.asset.json";
+import fundo1 from "@/assets/fundo-1.png.asset.json";
+
 
 const ALLOWED_DOMAIN = "lavoroseguros.com.br";
 
