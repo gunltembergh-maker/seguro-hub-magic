@@ -10,8 +10,13 @@ import {
   ShieldCheck,
   HeartPulse,
   Boxes,
+  Users,
+  KeyRound,
+  Upload,
+  Settings,
 } from "lucide-react";
 import logoBranca from "@/assets/logo-branca.png.asset.json";
+import { useMeuPerfil, hasPermission, hasRole } from "@/hooks/use-meu-perfil";
 
 
 import {
