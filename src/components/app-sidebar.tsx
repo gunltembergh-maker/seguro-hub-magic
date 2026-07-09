@@ -11,6 +11,8 @@ import {
   HeartPulse,
   Boxes,
 } from "lucide-react";
+import logoBranca from "@/assets/logo-branca.png.asset.json";
+
 
 import {
   Sidebar,
