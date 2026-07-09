@@ -87,7 +87,7 @@ function useComissaoVencida(ano: number, mes: number, periodo: Periodo) {
   return useQuery({
     queryKey: ["comissao-vencida", ano, mes, periodo],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("rpc_comissao_vencida_por_canal", { _ano: ano, _mes: mes, _periodo: periodo });
+      const { data, error } = await supabase.rpc("rpc_comissao_vencida_por_canal", { p_ano: ano, p_mes: mes, p_periodo: periodo });
       if (error) throw error;
       return data ?? [];
     },

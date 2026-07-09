@@ -23,6 +23,7 @@ import { Route as AuthenticatedDemaisRamosRouteImport } from './routes/_authenti
 import { Route as AuthenticatedComunicadosRouteImport } from './routes/_authenticated/comunicados'
 import { Route as AuthenticatedBeneficiosRouteImport } from './routes/_authenticated/beneficios'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
+import { Route as AuthenticatedDashboardReceitaRouteImport } from './routes/_authenticated/dashboard.receita'
 import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authenticated/admin/usuarios'
 import { Route as AuthenticatedAdminPerfisRouteImport } from './routes/_authenticated/admin/perfis'
 import { Route as AuthenticatedAdminImportarBasesRouteImport } from './routes/_authenticated/admin/importar-bases'
@@ -100,6 +101,12 @@ const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedDashboardReceitaRoute =
+  AuthenticatedDashboardReceitaRouteImport.update({
+    id: '/dashboard/receita',
+    path: '/dashboard/receita',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminUsuariosRoute =
   AuthenticatedAdminUsuariosRouteImport.update({
     id: '/usuarios',
@@ -143,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/admin/importar-bases': typeof AuthenticatedAdminImportarBasesRoute
   '/admin/perfis': typeof AuthenticatedAdminPerfisRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/dashboard/receita': typeof AuthenticatedDashboardReceitaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -162,6 +170,7 @@ export interface FileRoutesByTo {
   '/admin/importar-bases': typeof AuthenticatedAdminImportarBasesRoute
   '/admin/perfis': typeof AuthenticatedAdminPerfisRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/dashboard/receita': typeof AuthenticatedDashboardReceitaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -183,6 +192,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/importar-bases': typeof AuthenticatedAdminImportarBasesRoute
   '/_authenticated/admin/perfis': typeof AuthenticatedAdminPerfisRoute
   '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/_authenticated/dashboard/receita': typeof AuthenticatedDashboardReceitaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -204,6 +214,7 @@ export interface FileRouteTypes {
     | '/admin/importar-bases'
     | '/admin/perfis'
     | '/admin/usuarios'
+    | '/dashboard/receita'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -223,6 +234,7 @@ export interface FileRouteTypes {
     | '/admin/importar-bases'
     | '/admin/perfis'
     | '/admin/usuarios'
+    | '/dashboard/receita'
   id:
     | '__root__'
     | '/'
@@ -243,6 +255,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/importar-bases'
     | '/_authenticated/admin/perfis'
     | '/_authenticated/admin/usuarios'
+    | '/_authenticated/dashboard/receita'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -351,6 +364,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/dashboard/receita': {
+      id: '/_authenticated/dashboard/receita'
+      path: '/dashboard/receita'
+      fullPath: '/dashboard/receita'
+      preLoaderRoute: typeof AuthenticatedDashboardReceitaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/usuarios': {
       id: '/_authenticated/admin/usuarios'
       path: '/usuarios'
@@ -414,6 +434,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedJuridicoRoute: typeof AuthenticatedJuridicoRoute
   AuthenticatedMiddleRoute: typeof AuthenticatedMiddleRoute
   AuthenticatedOperacionalRoute: typeof AuthenticatedOperacionalRoute
+  AuthenticatedDashboardReceitaRoute: typeof AuthenticatedDashboardReceitaRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -428,6 +449,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedJuridicoRoute: AuthenticatedJuridicoRoute,
   AuthenticatedMiddleRoute: AuthenticatedMiddleRoute,
   AuthenticatedOperacionalRoute: AuthenticatedOperacionalRoute,
+  AuthenticatedDashboardReceitaRoute: AuthenticatedDashboardReceitaRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
