@@ -9,38 +9,200 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedOperacionalRouteImport } from './routes/_authenticated/operacional'
+import { Route as AuthenticatedMiddleRouteImport } from './routes/_authenticated/middle'
+import { Route as AuthenticatedJuridicoRouteImport } from './routes/_authenticated/juridico'
+import { Route as AuthenticatedHubRouteImport } from './routes/_authenticated/hub'
+import { Route as AuthenticatedGarantiaRouteImport } from './routes/_authenticated/garantia'
+import { Route as AuthenticatedFinanceiroRouteImport } from './routes/_authenticated/financeiro'
+import { Route as AuthenticatedFacilitiesRouteImport } from './routes/_authenticated/facilities'
+import { Route as AuthenticatedDemaisRamosRouteImport } from './routes/_authenticated/demais-ramos'
+import { Route as AuthenticatedComunicadosRouteImport } from './routes/_authenticated/comunicados'
+import { Route as AuthenticatedBeneficiosRouteImport } from './routes/_authenticated/beneficios'
 
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedOperacionalRoute =
+  AuthenticatedOperacionalRouteImport.update({
+    id: '/operacional',
+    path: '/operacional',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedMiddleRoute = AuthenticatedMiddleRouteImport.update({
+  id: '/middle',
+  path: '/middle',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedJuridicoRoute = AuthenticatedJuridicoRouteImport.update({
+  id: '/juridico',
+  path: '/juridico',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHubRoute = AuthenticatedHubRouteImport.update({
+  id: '/hub',
+  path: '/hub',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedGarantiaRoute = AuthenticatedGarantiaRouteImport.update({
+  id: '/garantia',
+  path: '/garantia',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFinanceiroRoute = AuthenticatedFinanceiroRouteImport.update({
+  id: '/financeiro',
+  path: '/financeiro',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFacilitiesRoute = AuthenticatedFacilitiesRouteImport.update({
+  id: '/facilities',
+  path: '/facilities',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDemaisRamosRoute =
+  AuthenticatedDemaisRamosRouteImport.update({
+    id: '/demais-ramos',
+    path: '/demais-ramos',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedComunicadosRoute =
+  AuthenticatedComunicadosRouteImport.update({
+    id: '/comunicados',
+    path: '/comunicados',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedBeneficiosRoute = AuthenticatedBeneficiosRouteImport.update({
+  id: '/beneficios',
+  path: '/beneficios',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/beneficios': typeof AuthenticatedBeneficiosRoute
+  '/comunicados': typeof AuthenticatedComunicadosRoute
+  '/demais-ramos': typeof AuthenticatedDemaisRamosRoute
+  '/facilities': typeof AuthenticatedFacilitiesRoute
+  '/financeiro': typeof AuthenticatedFinanceiroRoute
+  '/garantia': typeof AuthenticatedGarantiaRoute
+  '/hub': typeof AuthenticatedHubRoute
+  '/juridico': typeof AuthenticatedJuridicoRoute
+  '/middle': typeof AuthenticatedMiddleRoute
+  '/operacional': typeof AuthenticatedOperacionalRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/beneficios': typeof AuthenticatedBeneficiosRoute
+  '/comunicados': typeof AuthenticatedComunicadosRoute
+  '/demais-ramos': typeof AuthenticatedDemaisRamosRoute
+  '/facilities': typeof AuthenticatedFacilitiesRoute
+  '/financeiro': typeof AuthenticatedFinanceiroRoute
+  '/garantia': typeof AuthenticatedGarantiaRoute
+  '/hub': typeof AuthenticatedHubRoute
+  '/juridico': typeof AuthenticatedJuridicoRoute
+  '/middle': typeof AuthenticatedMiddleRoute
+  '/operacional': typeof AuthenticatedOperacionalRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/beneficios': typeof AuthenticatedBeneficiosRoute
+  '/_authenticated/comunicados': typeof AuthenticatedComunicadosRoute
+  '/_authenticated/demais-ramos': typeof AuthenticatedDemaisRamosRoute
+  '/_authenticated/facilities': typeof AuthenticatedFacilitiesRoute
+  '/_authenticated/financeiro': typeof AuthenticatedFinanceiroRoute
+  '/_authenticated/garantia': typeof AuthenticatedGarantiaRoute
+  '/_authenticated/hub': typeof AuthenticatedHubRoute
+  '/_authenticated/juridico': typeof AuthenticatedJuridicoRoute
+  '/_authenticated/middle': typeof AuthenticatedMiddleRoute
+  '/_authenticated/operacional': typeof AuthenticatedOperacionalRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/beneficios'
+    | '/comunicados'
+    | '/demais-ramos'
+    | '/facilities'
+    | '/financeiro'
+    | '/garantia'
+    | '/hub'
+    | '/juridico'
+    | '/middle'
+    | '/operacional'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/beneficios'
+    | '/comunicados'
+    | '/demais-ramos'
+    | '/facilities'
+    | '/financeiro'
+    | '/garantia'
+    | '/hub'
+    | '/juridico'
+    | '/middle'
+    | '/operacional'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/beneficios'
+    | '/_authenticated/comunicados'
+    | '/_authenticated/demais-ramos'
+    | '/_authenticated/facilities'
+    | '/_authenticated/financeiro'
+    | '/_authenticated/garantia'
+    | '/_authenticated/hub'
+    | '/_authenticated/juridico'
+    | '/_authenticated/middle'
+    | '/_authenticated/operacional'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +210,113 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/operacional': {
+      id: '/_authenticated/operacional'
+      path: '/operacional'
+      fullPath: '/operacional'
+      preLoaderRoute: typeof AuthenticatedOperacionalRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/middle': {
+      id: '/_authenticated/middle'
+      path: '/middle'
+      fullPath: '/middle'
+      preLoaderRoute: typeof AuthenticatedMiddleRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/juridico': {
+      id: '/_authenticated/juridico'
+      path: '/juridico'
+      fullPath: '/juridico'
+      preLoaderRoute: typeof AuthenticatedJuridicoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hub': {
+      id: '/_authenticated/hub'
+      path: '/hub'
+      fullPath: '/hub'
+      preLoaderRoute: typeof AuthenticatedHubRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/garantia': {
+      id: '/_authenticated/garantia'
+      path: '/garantia'
+      fullPath: '/garantia'
+      preLoaderRoute: typeof AuthenticatedGarantiaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/financeiro': {
+      id: '/_authenticated/financeiro'
+      path: '/financeiro'
+      fullPath: '/financeiro'
+      preLoaderRoute: typeof AuthenticatedFinanceiroRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/facilities': {
+      id: '/_authenticated/facilities'
+      path: '/facilities'
+      fullPath: '/facilities'
+      preLoaderRoute: typeof AuthenticatedFacilitiesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/demais-ramos': {
+      id: '/_authenticated/demais-ramos'
+      path: '/demais-ramos'
+      fullPath: '/demais-ramos'
+      preLoaderRoute: typeof AuthenticatedDemaisRamosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/comunicados': {
+      id: '/_authenticated/comunicados'
+      path: '/comunicados'
+      fullPath: '/comunicados'
+      preLoaderRoute: typeof AuthenticatedComunicadosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/beneficios': {
+      id: '/_authenticated/beneficios'
+      path: '/beneficios'
+      fullPath: '/beneficios'
+      preLoaderRoute: typeof AuthenticatedBeneficiosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedBeneficiosRoute: typeof AuthenticatedBeneficiosRoute
+  AuthenticatedComunicadosRoute: typeof AuthenticatedComunicadosRoute
+  AuthenticatedDemaisRamosRoute: typeof AuthenticatedDemaisRamosRoute
+  AuthenticatedFacilitiesRoute: typeof AuthenticatedFacilitiesRoute
+  AuthenticatedFinanceiroRoute: typeof AuthenticatedFinanceiroRoute
+  AuthenticatedGarantiaRoute: typeof AuthenticatedGarantiaRoute
+  AuthenticatedHubRoute: typeof AuthenticatedHubRoute
+  AuthenticatedJuridicoRoute: typeof AuthenticatedJuridicoRoute
+  AuthenticatedMiddleRoute: typeof AuthenticatedMiddleRoute
+  AuthenticatedOperacionalRoute: typeof AuthenticatedOperacionalRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedBeneficiosRoute: AuthenticatedBeneficiosRoute,
+  AuthenticatedComunicadosRoute: AuthenticatedComunicadosRoute,
+  AuthenticatedDemaisRamosRoute: AuthenticatedDemaisRamosRoute,
+  AuthenticatedFacilitiesRoute: AuthenticatedFacilitiesRoute,
+  AuthenticatedFinanceiroRoute: AuthenticatedFinanceiroRoute,
+  AuthenticatedGarantiaRoute: AuthenticatedGarantiaRoute,
+  AuthenticatedHubRoute: AuthenticatedHubRoute,
+  AuthenticatedJuridicoRoute: AuthenticatedJuridicoRoute,
+  AuthenticatedMiddleRoute: AuthenticatedMiddleRoute,
+  AuthenticatedOperacionalRoute: AuthenticatedOperacionalRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
