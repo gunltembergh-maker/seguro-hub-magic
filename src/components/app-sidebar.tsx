@@ -14,7 +14,10 @@ import {
   KeyRound,
   Upload,
   Settings,
+  BarChart3,
+  CornerDownRight,
 } from "lucide-react";
+
 import logoBranca from "@/assets/logo-branca.png.asset.json";
 import { useMeuPerfil, hasPermission, hasRole } from "@/hooks/use-meu-perfil";
 
@@ -59,6 +62,14 @@ export function AppSidebar() {
 
   const { data: meuPerfil } = useMeuPerfil();
   const isAdmin = hasRole(meuPerfil, "ADMIN");
+
+  const dashboardItems = [
+    { title: "Receita", url: "/dashboard/receita",
+      show: isAdmin || hasPermission(meuPerfil, "menu_dashboard_receita") },
+  ].filter((i) => i.show);
+  const showDashboards =
+    isAdmin || hasPermission(meuPerfil, "menu_dashboards") || dashboardItems.length > 0;
+
   const adminItems = [
     { title: "Usuários", url: "/admin/usuarios", icon: Users, show: isAdmin },
     { title: "Perfis", url: "/admin/perfis", icon: KeyRound, show: isAdmin },
@@ -67,6 +78,7 @@ export function AppSidebar() {
     { title: "Configurações", url: "/admin/configuracoes", icon: Settings,
       show: hasPermission(meuPerfil, "menu_admin_configuracoes") },
   ].filter((i) => i.show);
+
 
 
   return (
@@ -107,7 +119,34 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {showDashboards && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Dashboards</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton isActive={false} tooltip="Dashboards" className="pointer-events-none opacity-80">
+                    <BarChart3 />
+                    <span>Dashboards</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                {dashboardItems.map((i) => (
+                  <SidebarMenuItem key={i.url}>
+                    <SidebarMenuButton asChild isActive={isActive(i.url)} tooltip={i.title} className="pl-6">
+                      <Link to={i.url}>
+                        <CornerDownRight />
+                        <span>{i.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
         <SidebarGroup>
+
           <SidebarGroupLabel>Áreas</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>

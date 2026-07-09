@@ -24,6 +24,7 @@ export interface PerfilAcesso {
 
 export const PERMISSION_KEYS = [
   { key: "menu_inicio", label: "Menu Início" },
+  { key: "menu_dashboards", label: "Dashboards (pai)" },
   { key: "menu_dashboard_receita", label: "Dashboard de Receita" },
   { key: "menu_importar_gerencial", label: "Importar Base Gerencial" },
   { key: "menu_importar_caixa", label: "Importar Caixa Bradesco" },
@@ -31,6 +32,7 @@ export const PERMISSION_KEYS = [
   { key: "menu_admin_perfis", label: "Admin — Perfis" },
   { key: "menu_admin_configuracoes", label: "Admin — Configurações" },
 ] as const;
+
 
 export function useAdminUsers() {
   return useQuery({
