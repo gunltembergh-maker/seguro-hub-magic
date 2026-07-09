@@ -166,9 +166,15 @@
     -webkit-font-smoothing: antialiased;
   }
   h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.01em; }
+  .valor-monetario, .valor-percentual,
+  .tabular-nums, [data-tabular-nums] {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
 }
 
 @utility gradient-hero { background: var(--gradient-hero); }
 @utility gradient-accent { background: var(--gradient-accent); }
 @utility shadow-elegant { box-shadow: var(--shadow-elegant); }
 @utility shadow-card { box-shadow: var(--shadow-card); }
+
