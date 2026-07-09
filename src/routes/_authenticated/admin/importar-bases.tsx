@@ -244,39 +244,64 @@ function GerencialCard() {
   const importMut = useMutation({
     mutationFn: async () => {
       if (!preview) throw new Error("Nenhuma prévia");
-      const { data: syncData, error: resetErr } = await supabase.rpc("rpc_admin_gerencial_reset");
-      if (resetErr) throw resetErr;
-      const syncId = syncData as unknown as string;
+      const { data: userData } = await supabase.auth.getUser();
+      const { data: logInicio, error: logErr } = await supabase
+        .from("lavoro_sync_log")
+        .insert({ base: "gerencial", origem: "manual", status: "iniciado", usuario_id: userData.user?.id ?? null })
+        .select()
+        .single();
+      if (logErr) throw logErr;
 
-      const BATCH = 500;
-      let totalGer = 0;
-      for (let i = 0; i < preview.ger.length; i += BATCH) {
-        const chunk = preview.ger.slice(i, i + BATCH);
-        const { data: n, error } = await supabase.rpc("rpc_admin_gerencial_append", {
-          _rows: chunk as unknown as never, _sync_id: syncId,
-        });
-        if (error) throw error;
-        totalGer += (n as unknown as number) ?? 0;
-      }
+      try {
+        const { data: syncData, error: resetErr } = await supabase.rpc("rpc_admin_gerencial_reset");
+        if (resetErr) throw resetErr;
+        const syncId = syncData as unknown as string;
 
-      let totalRamo = 0;
-      for (let i = 0; i < preview.ramo.length; i += BATCH) {
-        const chunk = preview.ramo.slice(i, i + BATCH);
-        const { data: n, error } = await supabase.rpc("rpc_admin_ramo_append", {
-          _rows: chunk as unknown as never, _sync_id: syncId,
-        });
-        if (error) throw error;
-        totalRamo += (n as unknown as number) ?? 0;
+        const BATCH = 500;
+        let totalGer = 0;
+        for (let i = 0; i < preview.ger.length; i += BATCH) {
+          const chunk = preview.ger.slice(i, i + BATCH);
+          const { data: n, error } = await supabase.rpc("rpc_admin_gerencial_append", {
+            _rows: chunk as unknown as never, _sync_id: syncId,
+          });
+          if (error) throw error;
+          totalGer += (n as unknown as number) ?? 0;
+        }
+
+        let totalRamo = 0;
+        for (let i = 0; i < preview.ramo.length; i += BATCH) {
+          const chunk = preview.ramo.slice(i, i + BATCH);
+          const { data: n, error } = await supabase.rpc("rpc_admin_ramo_append", {
+            _rows: chunk as unknown as never, _sync_id: syncId,
+          });
+          if (error) throw error;
+          totalRamo += (n as unknown as number) ?? 0;
+        }
+
+        await supabase.from("lavoro_sync_log").update({
+          status: "sucesso", sync_id: syncId, linhas_importadas: totalGer,
+        }).eq("id", logInicio.id);
+
+        return { linhas_gerencial: totalGer, linhas_ramo: totalRamo };
+      } catch (error) {
+        await supabase.from("lavoro_sync_log").update({
+          status: "erro", mensagem_erro: String((error as Error)?.message ?? error),
+        }).eq("id", logInicio.id);
+        throw error;
       }
-      return { linhas_gerencial: totalGer, linhas_ramo: totalRamo };
     },
     onSuccess: (res) => {
       toast.success("Base Gerencial importada", { description: `${res.linhas_gerencial} linhas + ${res.linhas_ramo} de-para` });
       setFile(null); setPreview(null);
       qc.invalidateQueries({ queryKey: ["admin-last-import", "gerencial"] });
+      qc.invalidateQueries({ queryKey: ["lavoro-sync-log"] });
     },
-    onError: (e: Error) => toast.error("Falha na importação", { description: e.message }),
+    onError: (e: Error) => {
+      toast.error("Falha na importação", { description: e.message });
+      qc.invalidateQueries({ queryKey: ["lavoro-sync-log"] });
+    },
   });
+
 
 
   const totalPremio = preview?.ger.reduce((s, r) => s + (r.premio_total ?? 0), 0) ?? 0;
