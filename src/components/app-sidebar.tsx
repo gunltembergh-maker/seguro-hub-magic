@@ -10,8 +10,13 @@ import {
   ShieldCheck,
   HeartPulse,
   Boxes,
+  Users,
+  KeyRound,
+  Upload,
+  Settings,
 } from "lucide-react";
 import logoBranca from "@/assets/logo-branca.png.asset.json";
+import { useMeuPerfil, hasPermission, hasRole } from "@/hooks/use-meu-perfil";
 
 
 import {
@@ -46,6 +51,16 @@ const ramos = [
   { title: "Benefícios", url: "/beneficios", icon: HeartPulse },
   { title: "Demais Ramos", url: "/demais-ramos", icon: Boxes },
 ];
+  const { data: meuPerfil } = useMeuPerfil();
+  const isAdmin = hasRole(meuPerfil, "ADMIN");
+  const adminItems = [
+    { title: "Usuários", url: "/admin/usuarios", icon: Users, show: isAdmin },
+    { title: "Perfis", url: "/admin/perfis", icon: KeyRound, show: isAdmin },
+    { title: "Importar Bases", url: "/admin/importar-bases", icon: Upload,
+      show: isAdmin || hasPermission(meuPerfil, "menu_importar_gerencial") || hasPermission(meuPerfil, "menu_importar_caixa") },
+    { title: "Configurações", url: "/admin/configuracoes", icon: Settings,
+      show: hasPermission(meuPerfil, "menu_admin_configuracoes") },
+  ].filter((i) => i.show);
 
 export function AppSidebar() {
   const { state } = useSidebar();
@@ -126,6 +141,27 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+
+        {adminItems.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Administração</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {adminItems.map((i) => (
+                  <SidebarMenuItem key={i.url}>
+                    <SidebarMenuButton asChild isActive={isActive(i.url)} tooltip={i.title}>
+                      <Link to={i.url}>
+                        <i.icon />
+                        <span>{i.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border">
         {!collapsed && (

@@ -22,6 +22,11 @@ import { Route as AuthenticatedFacilitiesRouteImport } from './routes/_authentic
 import { Route as AuthenticatedDemaisRamosRouteImport } from './routes/_authenticated/demais-ramos'
 import { Route as AuthenticatedComunicadosRouteImport } from './routes/_authenticated/comunicados'
 import { Route as AuthenticatedBeneficiosRouteImport } from './routes/_authenticated/beneficios'
+import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
+import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authenticated/admin/usuarios'
+import { Route as AuthenticatedAdminPerfisRouteImport } from './routes/_authenticated/admin/perfis'
+import { Route as AuthenticatedAdminImportarBasesRouteImport } from './routes/_authenticated/admin/importar-bases'
+import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_authenticated/admin/configuracoes'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -90,10 +95,40 @@ const AuthenticatedBeneficiosRoute = AuthenticatedBeneficiosRouteImport.update({
   path: '/beneficios',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminUsuariosRoute =
+  AuthenticatedAdminUsuariosRouteImport.update({
+    id: '/usuarios',
+    path: '/usuarios',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminPerfisRoute =
+  AuthenticatedAdminPerfisRouteImport.update({
+    id: '/perfis',
+    path: '/perfis',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminImportarBasesRoute =
+  AuthenticatedAdminImportarBasesRouteImport.update({
+    id: '/importar-bases',
+    path: '/importar-bases',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminConfiguracoesRoute =
+  AuthenticatedAdminConfiguracoesRouteImport.update({
+    id: '/configuracoes',
+    path: '/configuracoes',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/beneficios': typeof AuthenticatedBeneficiosRoute
   '/comunicados': typeof AuthenticatedComunicadosRoute
   '/demais-ramos': typeof AuthenticatedDemaisRamosRoute
@@ -104,10 +139,15 @@ export interface FileRoutesByFullPath {
   '/juridico': typeof AuthenticatedJuridicoRoute
   '/middle': typeof AuthenticatedMiddleRoute
   '/operacional': typeof AuthenticatedOperacionalRoute
+  '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
+  '/admin/importar-bases': typeof AuthenticatedAdminImportarBasesRoute
+  '/admin/perfis': typeof AuthenticatedAdminPerfisRoute
+  '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/beneficios': typeof AuthenticatedBeneficiosRoute
   '/comunicados': typeof AuthenticatedComunicadosRoute
   '/demais-ramos': typeof AuthenticatedDemaisRamosRoute
@@ -118,12 +158,17 @@ export interface FileRoutesByTo {
   '/juridico': typeof AuthenticatedJuridicoRoute
   '/middle': typeof AuthenticatedMiddleRoute
   '/operacional': typeof AuthenticatedOperacionalRoute
+  '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
+  '/admin/importar-bases': typeof AuthenticatedAdminImportarBasesRoute
+  '/admin/perfis': typeof AuthenticatedAdminPerfisRoute
+  '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/_authenticated/beneficios': typeof AuthenticatedBeneficiosRoute
   '/_authenticated/comunicados': typeof AuthenticatedComunicadosRoute
   '/_authenticated/demais-ramos': typeof AuthenticatedDemaisRamosRoute
@@ -134,12 +179,17 @@ export interface FileRoutesById {
   '/_authenticated/juridico': typeof AuthenticatedJuridicoRoute
   '/_authenticated/middle': typeof AuthenticatedMiddleRoute
   '/_authenticated/operacional': typeof AuthenticatedOperacionalRoute
+  '/_authenticated/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
+  '/_authenticated/admin/importar-bases': typeof AuthenticatedAdminImportarBasesRoute
+  '/_authenticated/admin/perfis': typeof AuthenticatedAdminPerfisRoute
+  '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/auth'
+    | '/admin'
     | '/beneficios'
     | '/comunicados'
     | '/demais-ramos'
@@ -150,10 +200,15 @@ export interface FileRouteTypes {
     | '/juridico'
     | '/middle'
     | '/operacional'
+    | '/admin/configuracoes'
+    | '/admin/importar-bases'
+    | '/admin/perfis'
+    | '/admin/usuarios'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/admin'
     | '/beneficios'
     | '/comunicados'
     | '/demais-ramos'
@@ -164,11 +219,16 @@ export interface FileRouteTypes {
     | '/juridico'
     | '/middle'
     | '/operacional'
+    | '/admin/configuracoes'
+    | '/admin/importar-bases'
+    | '/admin/perfis'
+    | '/admin/usuarios'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/admin'
     | '/_authenticated/beneficios'
     | '/_authenticated/comunicados'
     | '/_authenticated/demais-ramos'
@@ -179,6 +239,10 @@ export interface FileRouteTypes {
     | '/_authenticated/juridico'
     | '/_authenticated/middle'
     | '/_authenticated/operacional'
+    | '/_authenticated/admin/configuracoes'
+    | '/_authenticated/admin/importar-bases'
+    | '/_authenticated/admin/perfis'
+    | '/_authenticated/admin/usuarios'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -280,10 +344,66 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBeneficiosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/usuarios': {
+      id: '/_authenticated/admin/usuarios'
+      path: '/usuarios'
+      fullPath: '/admin/usuarios'
+      preLoaderRoute: typeof AuthenticatedAdminUsuariosRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/perfis': {
+      id: '/_authenticated/admin/perfis'
+      path: '/perfis'
+      fullPath: '/admin/perfis'
+      preLoaderRoute: typeof AuthenticatedAdminPerfisRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/importar-bases': {
+      id: '/_authenticated/admin/importar-bases'
+      path: '/importar-bases'
+      fullPath: '/admin/importar-bases'
+      preLoaderRoute: typeof AuthenticatedAdminImportarBasesRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/configuracoes': {
+      id: '/_authenticated/admin/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/admin/configuracoes'
+      preLoaderRoute: typeof AuthenticatedAdminConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
   }
 }
 
+interface AuthenticatedAdminRouteRouteChildren {
+  AuthenticatedAdminConfiguracoesRoute: typeof AuthenticatedAdminConfiguracoesRoute
+  AuthenticatedAdminImportarBasesRoute: typeof AuthenticatedAdminImportarBasesRoute
+  AuthenticatedAdminPerfisRoute: typeof AuthenticatedAdminPerfisRoute
+  AuthenticatedAdminUsuariosRoute: typeof AuthenticatedAdminUsuariosRoute
+}
+
+const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
+  {
+    AuthenticatedAdminConfiguracoesRoute: AuthenticatedAdminConfiguracoesRoute,
+    AuthenticatedAdminImportarBasesRoute: AuthenticatedAdminImportarBasesRoute,
+    AuthenticatedAdminPerfisRoute: AuthenticatedAdminPerfisRoute,
+    AuthenticatedAdminUsuariosRoute: AuthenticatedAdminUsuariosRoute,
+  }
+
+const AuthenticatedAdminRouteRouteWithChildren =
+  AuthenticatedAdminRouteRoute._addFileChildren(
+    AuthenticatedAdminRouteRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
   AuthenticatedBeneficiosRoute: typeof AuthenticatedBeneficiosRoute
   AuthenticatedComunicadosRoute: typeof AuthenticatedComunicadosRoute
   AuthenticatedDemaisRamosRoute: typeof AuthenticatedDemaisRamosRoute
@@ -297,6 +417,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
   AuthenticatedBeneficiosRoute: AuthenticatedBeneficiosRoute,
   AuthenticatedComunicadosRoute: AuthenticatedComunicadosRoute,
   AuthenticatedDemaisRamosRoute: AuthenticatedDemaisRamosRoute,
