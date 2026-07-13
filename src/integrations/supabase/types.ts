@@ -590,7 +590,9 @@ export type Database = {
       vw_lavoro_receita_competencia: {
         Row: {
           ano: number | null
+          canal: string | null
           comissao_bruta: number | null
+          comissao_liquida: number | null
           data_emissao: string | null
           data_pagamento: string | null
           documento: string | null
