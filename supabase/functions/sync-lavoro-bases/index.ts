@@ -54,7 +54,33 @@ async function getGraphToken(creds: { tenant_id: string; client_id: string; clie
   });
   const d = await r.json();
   if (!d.access_token) throw new Error(`Auth Graph Lavoro falhou: ${JSON.stringify(d)}`);
+  validateGraphTokenClaims(d.access_token);
   return d.access_token as string;
+}
+
+function decodeJwtPayload(token: string): Record<string, any> {
+  const payload = token.split(".")[1];
+  if (!payload) return {};
+  const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
+  return JSON.parse(atob(padded));
+}
+
+function validateGraphTokenClaims(token: string) {
+  const claims = decodeJwtPayload(token);
+  const roles = Array.isArray(claims.roles) ? claims.roles : [];
+  console.log(
+    `[sync-lavoro-bases] Graph token claims aud=${claims.aud ?? "?"} tid=${claims.tid ?? "?"} appid=${claims.appid ?? claims.azp ?? "?"} roles=${roles.join(",") || "<none>"}`,
+  );
+
+  const hasSharePointRole = roles.some((role: string) => ["Sites.Read.All", "Sites.ReadWrite.All", "Files.Read.All", "Files.ReadWrite.All"].includes(role));
+  if (!hasSharePointRole) {
+    throw new Error(
+      `O App Graph autenticou, mas o token não contém permissão Application para SharePoint. ` +
+        `No Entra ID, adicione Microsoft Graph > Application permissions: Sites.Read.All ou Sites.ReadWrite.All e conceda Admin consent. ` +
+        `Tenant detectado: ${claims.tid ?? "?"}; app: ${claims.appid ?? claims.azp ?? "?"}; roles: ${roles.join(",") || "nenhuma"}.`,
+    );
+  }
 }
 
 async function graphGet(token: string, url: string, attempt = 1): Promise<Response> {
