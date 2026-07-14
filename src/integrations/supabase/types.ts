@@ -590,9 +590,7 @@ export type Database = {
       vw_lavoro_receita_competencia: {
         Row: {
           ano: number | null
-          canal: string | null
           comissao_bruta: number | null
-          comissao_liquida: number | null
           data_emissao: string | null
           data_pagamento: string | null
           documento: string | null
@@ -608,7 +606,10 @@ export type Database = {
       }
     }
     Functions: {
-      divide_safe: { Args: { den: number; num: number }; Returns: number }
+      divide_safe: {
+        Args: { denominador: number; numerador: number }
+        Returns: number
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -716,6 +717,138 @@ export type Database = {
         }[]
       }
       rpc_get_meta_anual: { Args: { _ano: number }; Returns: number }
+      rpc_lavoro_apolices_filtros: {
+        Args: never
+        Returns: {
+          anos: number[]
+          apolices: string[]
+          grupos: string[]
+          ramos: string[]
+          seguradoras: string[]
+          status_parcela_comissao: string[]
+          status_repasse: string[]
+          tipos_ramo: string[]
+          tomadores: string[]
+        }[]
+      }
+      rpc_lavoro_apolices_kpis: {
+        Args: {
+          p_ano?: number
+          p_apolice?: string
+          p_grupo?: string
+          p_possui_repasse?: string
+          p_ramo?: string
+          p_seguradora?: string
+          p_status?: string
+          p_tipo_ramo?: string
+          p_tomador?: string
+        }
+        Returns: {
+          comissao_emitida: number
+          comissao_gerada: number
+          comissao_menos_repasse: number
+          premio_total: number
+          repasse_parceiro: number
+        }[]
+      }
+      rpc_lavoro_apolices_lista: {
+        Args: { p_filtros?: Json; p_pagina?: number; p_tamanho_pagina?: number }
+        Returns: {
+          comissao_bruta: number
+          data_emissao: string
+          documento: string
+          numero_apolice: string
+          ramo: string
+          segurado: string
+          seguradora: string
+          status_parcela_comissao: string
+          tipo_de_ramo: string
+          tomador: string
+          total_linhas: number
+        }[]
+      }
+      rpc_lavoro_apolices_por_seguradora: {
+        Args: { p_filtros?: Json }
+        Returns: {
+          comissao_bruta: number
+          premio_total: number
+          seguradora: string
+        }[]
+      }
+      rpc_lavoro_apolices_previsao_dezena: {
+        Args: { p_ano?: number; p_mes?: number }
+        Returns: {
+          ano: number
+          dezena: string
+          empresa_faturada: string
+          mes: number
+          valor_a_receber: number
+        }[]
+      }
+      rpc_lavoro_get_meta_anual: { Args: { p_ano: number }; Returns: number }
+      rpc_lavoro_receita_caixa_comparativo_anual: {
+        Args: { p_anos: number[] }
+        Returns: {
+          ano: number
+          mes: number
+          receita_caixa: number
+        }[]
+      }
+      rpc_lavoro_receita_comparativo_anual: {
+        Args: { p_anos: number[] }
+        Returns: {
+          ano: number
+          mes: number
+          receita_competencia: number
+        }[]
+      }
+      rpc_lavoro_receita_kpis: {
+        Args: { p_ano: number; p_mes: number; p_periodo?: string }
+        Returns: {
+          atingimento: number
+          atingimento_caixa: number
+          defasagem: number
+          meta_periodo: number
+          previsto_caixa: number
+          receita_caixa: number
+          receita_competencia: number
+        }[]
+      }
+      rpc_lavoro_receita_por_canal: {
+        Args: { p_ano: number; p_mes: number; p_periodo?: string }
+        Returns: {
+          receita: number
+          tipo_de_ramo: string
+        }[]
+      }
+      rpc_lavoro_receita_por_ramo: {
+        Args: { p_ano: number; p_mes: number; p_periodo?: string }
+        Returns: {
+          ramo: string
+          receita: number
+        }[]
+      }
+      rpc_lavoro_receita_serie_mensal: {
+        Args: { p_ano: number }
+        Returns: {
+          mes: number
+          meta_mensal: number
+          receita_caixa: number
+          receita_competencia: number
+        }[]
+      }
+      rpc_lavoro_receita_variacoes: {
+        Args: { p_ano: number; p_mes: number }
+        Returns: {
+          variacao_ano_anterior: number
+          variacao_mes_anterior: number
+        }[]
+      }
+      rpc_lavoro_set_meta_anual: {
+        Args: { p_ano: number; p_valor: number }
+        Returns: undefined
+      }
+      rpc_lavoro_ultima_atualizacao: { Args: never; Returns: string }
       rpc_meu_perfil: {
         Args: never
         Returns: {
