@@ -563,28 +563,6 @@ export type Database = {
           sync_id: string | null
           valor: number | null
         }
-        Insert: {
-          ano?: never
-          data_pagamento?: string | null
-          descricao?: string | null
-          id?: number | null
-          mes?: never
-          mes_referencia?: string | null
-          referencia?: string | null
-          sync_id?: string | null
-          valor?: number | null
-        }
-        Update: {
-          ano?: never
-          data_pagamento?: string | null
-          descricao?: string | null
-          id?: number | null
-          mes?: never
-          mes_referencia?: string | null
-          referencia?: string | null
-          sync_id?: string | null
-          valor?: number | null
-        }
         Relationships: []
       }
       vw_lavoro_receita_competencia: {
