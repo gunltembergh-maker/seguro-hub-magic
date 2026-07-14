@@ -2,7 +2,7 @@ import { Fragment, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Loader2, Upload, CheckCircle2, FileSpreadsheet, ShieldAlert, ChevronDown, ChevronRight, History } from "lucide-react";
+import { Loader2, Upload, CheckCircle2, FileSpreadsheet, ShieldAlert, ChevronDown, ChevronRight, History, RefreshCw, Cloud } from "lucide-react";
 import * as XLSX from "xlsx";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -176,13 +176,73 @@ function ImportarBasesPage() {
 
       </header>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <SharePointSyncCard />
+
+      <div className="mt-6 grid gap-6 md:grid-cols-2">
         {canGer && <GerencialCard />}
         {canCx && <CaixaCard />}
       </div>
 
       <HistoricoImportacoes />
     </div>
+  );
+}
+
+function SharePointSyncCard() {
+  const qc = useQueryClient();
+  const [syncing, setSyncing] = useState<null | "all" | "gerencial" | "caixa">(null);
+
+  const runSync = async (base: "all" | "gerencial" | "caixa") => {
+    setSyncing(base);
+    try {
+      const { data, error } = await supabase.functions.invoke("sync-lavoro-bases", {
+        body: { trigger: "manual", base },
+      });
+      if (error) throw error;
+      toast.success("Sync iniciada", {
+        description: "A execução roda em background. Acompanhe no Histórico abaixo.",
+      });
+      qc.invalidateQueries({ queryKey: ["lavoro-sync-log"] });
+      console.log("[sync-lavoro-bases] invoke response", data);
+    } catch (e: any) {
+      toast.error("Falha ao iniciar sync", { description: e?.message ?? String(e) });
+    } finally {
+      setSyncing(null);
+    }
+  };
+
+  return (
+    <Card className="border-primary/30 bg-primary/5">
+      <CardHeader>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Cloud className="h-4 w-4 text-primary" />
+              Sync automático SharePoint (Lavoro)
+            </CardTitle>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Roda diariamente às 05:00 (BRT) puxando Gerencial + Caixa Bradesco direto do SharePoint via Microsoft Graph. Upload manual abaixo continua como fallback.
+            </p>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" onClick={() => runSync("all")} disabled={syncing !== null} className="gap-2">
+            {syncing === "all" ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            Forçar sync completa
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => runSync("gerencial")} disabled={syncing !== null} className="gap-2">
+            {syncing === "gerencial" ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            Só Gerencial
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => runSync("caixa")} disabled={syncing !== null} className="gap-2">
+            {syncing === "caixa" ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            Só Caixa Bradesco
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
