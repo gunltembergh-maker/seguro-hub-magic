@@ -114,6 +114,22 @@ function parseSharePointConfig() {
   };
 }
 
+function getSharePointHostnameCandidates(hostname: string): string[] {
+  const normalized = hostname.toLowerCase();
+  const candidates = [hostname];
+
+  // A Lavoro aparece em ambientes antigos com o hostname invertido.
+  // Tenta os dois para espelhar o comportamento validado no Hub Tailor sem
+  // depender de uma troca manual de segredo a cada correção.
+  if (normalized === "seguroslavoro.sharepoint.com") {
+    candidates.push("lavoroseguros.sharepoint.com");
+  } else if (normalized === "lavoroseguros.sharepoint.com") {
+    candidates.push("seguroslavoro.sharepoint.com");
+  }
+
+  return Array.from(new Set(candidates));
+}
+
 function sanitizeSitePath(raw: string): string {
   // Aceita "/sites/xxx", "/teams/xxx" ou URL completa do SharePoint.
   let v = (raw || "").trim();
@@ -131,11 +147,14 @@ function sanitizeSitePath(raw: string): string {
 
 async function resolveSiteId(token: string): Promise<string> {
   const { hostname, sitePath } = parseSharePointConfig();
+  const hostnames = getSharePointHostnameCandidates(hostname);
   const urls = sitePath
-    ? [`https://graph.microsoft.com/v1.0/sites/${hostname}:${sitePath}`]
+    ? hostnames.map((host) => `https://graph.microsoft.com/v1.0/sites/${host}:${sitePath}`)
     : [
-        `https://graph.microsoft.com/v1.0/sites/${hostname}`,
-        `https://graph.microsoft.com/v1.0/sites/${hostname}:/`,
+        ...hostnames.flatMap((host) => [
+          `https://graph.microsoft.com/v1.0/sites/${host}`,
+          `https://graph.microsoft.com/v1.0/sites/${host}:/`,
+        ]),
         "https://graph.microsoft.com/v1.0/sites/root",
       ];
 
@@ -150,7 +169,7 @@ async function resolveSiteId(token: string): Promise<string> {
     failures.push(`${r.status} ${body.slice(0, 220)}`);
   }
 
-  throw new Error(`Resolve site ("${sitePath || "<root>"}", hostname="${hostname}") falhou: ${failures.join(" | ")}`);
+  throw new Error(`Resolve site ("${sitePath || "<root>"}", hostnames="${hostnames.join(",")}") falhou: ${failures.join(" | ")}`);
 }
 
 async function listDriveObjects(token: string, siteId: string): Promise<SharePointDrive[]> {
