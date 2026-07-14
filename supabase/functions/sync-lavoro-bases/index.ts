@@ -86,14 +86,24 @@ function normalizeText(s: string): string {
   return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
 }
 
+function sanitizeSitePath(raw: string): string {
+  // Aceita apenas "/sites/xxx" ou "/teams/xxx". Qualquer outra coisa (URL completa,
+  // caminho de biblioteca, etc.) é tratada como vazio → resolve o site raiz.
+  const v = (raw || "").trim();
+  if (!v) return "";
+  if (/^\/(sites|teams)\/[^/]+/i.test(v)) return v.replace(/\/+$/, "");
+  return "";
+}
+
 async function resolveSiteId(token: string): Promise<string> {
-  const url = SHAREPOINT_SITE_PATH
-    ? `https://graph.microsoft.com/v1.0/sites/${SHAREPOINT_HOSTNAME}:${SHAREPOINT_SITE_PATH}`
+  const sitePath = sanitizeSitePath(SHAREPOINT_SITE_PATH);
+  const url = sitePath
+    ? `https://graph.microsoft.com/v1.0/sites/${SHAREPOINT_HOSTNAME}:${sitePath}`
     : `https://graph.microsoft.com/v1.0/sites/${SHAREPOINT_HOSTNAME}`;
   const r = await graphGet(token, url);
   if (!r.ok) {
     const body = await r.text();
-    throw new Error(`Resolve site ("${SHAREPOINT_SITE_PATH || "<root>"}") falhou: ${r.status} ${body.slice(0, 300)}`);
+    throw new Error(`Resolve site ("${sitePath || "<root>"}", hostname="${SHAREPOINT_HOSTNAME}") falhou: ${r.status} ${body.slice(0, 300)}`);
   }
   const j = await r.json();
   return j.id as string;
