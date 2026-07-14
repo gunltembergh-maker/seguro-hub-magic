@@ -66,6 +66,8 @@ export function AppSidebar() {
   const dashboardItems = [
     { title: "Receita", url: "/dashboard/receita",
       show: isAdmin || hasPermission(meuPerfil, "menu_dashboard_receita") },
+    { title: "Receita Caixa", url: "/dashboard/receita-caixa",
+      show: isAdmin || hasPermission(meuPerfil, "menu_dashboard_receita_caixa") || hasPermission(meuPerfil, "menu_dashboard_receita") },
   ].filter((i) => i.show);
   const showDashboards =
     isAdmin || hasPermission(meuPerfil, "menu_dashboards") || dashboardItems.length > 0;
