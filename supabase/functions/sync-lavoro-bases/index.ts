@@ -376,33 +376,38 @@ async function syncCaixaBase(admin: ReturnType<typeof createClient>, token: stri
   const syncId = uuidv4();
   await createPendingSyncLog(admin, syncId, "caixa");
   try {
-    const caixaPath = await findCurrentCaixaFile(token, siteId);
-    result.caixaPath = caixaPath;
-    const target = await resolveDriveItemTarget(token, siteId, caixaPath);
-    const sheet = await resolveWorkbookSheet(token, target, "Descrição Financeira (Caixa)");
-    const dims = await getSheetDimensions(token, target, sheet);
-    const lastCol = colToLetter(dims.columnCount);
-    const headers = ((await readRangeValues(token, target, sheet, `A2:${lastCol}2`))[0] || []).map((h) => String(h ?? "").trim());
+    const caixaPaths = await findCaixaFiles(token, siteId);
+    result.caixaPaths = caixaPaths;
 
     let totalReadRows = 0;
     let rows = 0;
     let totalComissao = 0;
-    const batch: Record<string, unknown>[] = [];
-    for (let r = 3; r <= dims.rowCount; r += READ_CHUNK) {
-      const end = Math.min(r + READ_CHUNK - 1, dims.rowCount);
-      const values = await readRangeValues(token, target, sheet, `A${r}:${lastCol}${end}`);
-      for (const rowVals of values) {
-        const raw = rowFromValues(headers, rowVals);
-        if (!raw) continue;
-        const c = convertCaixaRawRow(raw, syncId);
-        if (!c) continue;
-        totalReadRows++;
-        if (!isCaixaComissaoConvertedRow(c)) continue;
-        batch.push(c);
-        rows++;
-        totalComissao += Number(c.valor) || 0;
+
+    for (const caixaPath of caixaPaths) {
+      console.log(`[sync-lavoro-bases] Processando caixa: ${caixaPath}`);
+      const target = await resolveDriveItemTarget(token, siteId, caixaPath);
+      const sheet = await resolveWorkbookSheet(token, target, "Descrição Financeira (Caixa)");
+      const dims = await getSheetDimensions(token, target, sheet);
+      const lastCol = colToLetter(dims.columnCount);
+      const headers = ((await readRangeValues(token, target, sheet, `A2:${lastCol}2`))[0] || []).map((h) => String(h ?? "").trim());
+
+      const batch: Record<string, unknown>[] = [];
+      for (let r = 3; r <= dims.rowCount; r += READ_CHUNK) {
+        const end = Math.min(r + READ_CHUNK - 1, dims.rowCount);
+        const values = await readRangeValues(token, target, sheet, `A${r}:${lastCol}${end}`);
+        for (const rowVals of values) {
+          const raw = rowFromValues(headers, rowVals);
+          if (!raw) continue;
+          const c = convertCaixaRawRow(raw, syncId);
+          if (!c) continue;
+          totalReadRows++;
+          if (!isCaixaComissaoConvertedRow(c)) continue;
+          batch.push(c);
+          rows++;
+          totalComissao += Number(c.valor) || 0;
+        }
+        await flushBatch(admin, "raw_lavoro_caixa_comissao", batch);
       }
-      await flushBatch(admin, "raw_lavoro_caixa_comissao", batch);
     }
 
     await updateSyncLog(admin, syncId, "caixa", { status: "sucesso", linhas_importadas: rows, mensagem_erro: null });
