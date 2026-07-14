@@ -157,36 +157,69 @@ async function listFolderChildren(token: string, siteId: string, folderPath: str
   return (j.value || []) as FolderChild[];
 }
 
-async function findCurrentCaixaFile(token: string, siteId: string): Promise<string> {
+const BRADESCO_NEEDLE = normalizeText("controle lavoro bradesco");
+
+function pickBradescoFromChildren(children: FolderChild[]): FolderChild | null {
+  const candidatos = children
+    .filter((c) => {
+      const n = normalizeText(c.name);
+      return n.endsWith(".xlsx") && n.includes(BRADESCO_NEEDLE);
+    })
+    .sort((a, b) => {
+      const ta = a.lastModifiedDateTime ? new Date(a.lastModifiedDateTime).getTime() : 0;
+      const tb = b.lastModifiedDateTime ? new Date(b.lastModifiedDateTime).getTime() : 0;
+      if (tb !== ta) return tb - ta;
+      return b.name.localeCompare(a.name);
+    });
+  return candidatos[0] ?? null;
+}
+
+async function tryListChildren(token: string, siteId: string, folderPath: string): Promise<FolderChild[]> {
+  try {
+    return await listFolderChildren(token, siteId, folderPath);
+  } catch (err: any) {
+    console.warn(`[sync-lavoro-bases] Subpasta "${folderPath}" ignorada: ${err?.message ?? String(err)}`);
+    return [];
+  }
+}
+
+async function findCaixaFiles(token: string, siteId: string): Promise<string[]> {
   const now = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
-  const ano = now.getFullYear();
-  const children = await listFolderChildren(token, siteId, CAIXA_FOLDER_PATH);
+  const anoAtual = now.getFullYear();
+  const paths: string[] = [];
 
-  const buscarAno = (targetAno: number) => {
-    const needle = normalizeText(`controle lavoro bradesco ${targetAno}`);
-    return children
-      .filter((c) => {
-        const n = normalizeText(c.name);
-        return n.endsWith(".xlsx") && n.includes(needle);
-      })
-      .sort((a, b) => {
-        const ta = a.lastModifiedDateTime ? new Date(a.lastModifiedDateTime).getTime() : 0;
-        const tb = b.lastModifiedDateTime ? new Date(b.lastModifiedDateTime).getTime() : 0;
-        if (tb !== ta) return tb - ta;
-        return b.name.localeCompare(a.name);
-      });
-  };
+  // 1) Arquivo do ano corrente na raiz de Planilhas (ex.: "Controle Lavoro BRADESCO <data>.xlsx").
+  const raiz = await listFolderChildren(token, siteId, CAIXA_FOLDER_PATH);
+  const atual = pickBradescoFromChildren(raiz);
+  if (atual) {
+    paths.push(`${CAIXA_FOLDER_PATH}/${atual.name}`);
+    console.log(`[sync-lavoro-bases] Caixa Bradesco (raiz/${anoAtual}): ${atual.name}`);
+  } else {
+    console.warn(`[sync-lavoro-bases] Nenhum "Controle Lavoro BRADESCO" na raiz "${CAIXA_FOLDER_PATH}".`);
+  }
 
-  const escolhido = buscarAno(ano)[0] ?? buscarAno(ano - 1)[0];
-  if (!escolhido) {
-    const disponiveis = children.map((c) => c.name).join(" | ");
+  // 2) Subpastas por ano (2024, 2025, ...): pega o Bradesco mais recente de cada.
+  const anosHistoricos: number[] = [];
+  for (let ano = anoAtual - 1; ano >= anoAtual - 3; ano--) anosHistoricos.push(ano);
+
+  for (const ano of anosHistoricos) {
+    const subChildren = await tryListChildren(token, siteId, `${CAIXA_FOLDER_PATH}/${ano}`);
+    if (!subChildren.length) continue;
+    const escolhido = pickBradescoFromChildren(subChildren);
+    if (escolhido) {
+      paths.push(`${CAIXA_FOLDER_PATH}/${ano}/${escolhido.name}`);
+      console.log(`[sync-lavoro-bases] Caixa Bradesco (${ano}): ${escolhido.name}`);
+    }
+  }
+
+  if (!paths.length) {
+    const disponiveis = raiz.map((c) => c.name).join(" | ");
     throw new Error(
-      `Arquivo "Controle Lavoro BRADESCO ${ano}" não encontrado em "${CAIXA_FOLDER_PATH}". ` +
-        `Arquivos disponíveis (${children.length}): ${disponiveis.slice(0, 800)}`,
+      `Nenhum arquivo "Controle Lavoro BRADESCO" encontrado em "${CAIXA_FOLDER_PATH}" ou subpastas por ano. ` +
+        `Arquivos na raiz (${raiz.length}): ${disponiveis.slice(0, 800)}`,
     );
   }
-  console.log(`[sync-lavoro-bases] Caixa Bradesco selecionado: ${escolhido.name} (mod ${escolhido.lastModifiedDateTime ?? "?"})`);
-  return `${CAIXA_FOLDER_PATH}/${escolhido.name}`;
+  return paths;
 }
 
 function colToLetter(col: number): string {
