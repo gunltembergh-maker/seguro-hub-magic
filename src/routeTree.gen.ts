@@ -23,6 +23,7 @@ import { Route as AuthenticatedDemaisRamosRouteImport } from './routes/_authenti
 import { Route as AuthenticatedComunicadosRouteImport } from './routes/_authenticated/comunicados'
 import { Route as AuthenticatedBeneficiosRouteImport } from './routes/_authenticated/beneficios'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
+import { Route as AuthenticatedDashboardReceitaCaixaRouteImport } from './routes/_authenticated/dashboard.receita-caixa'
 import { Route as AuthenticatedDashboardReceitaRouteImport } from './routes/_authenticated/dashboard.receita'
 import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authenticated/admin/usuarios'
 import { Route as AuthenticatedAdminPerfisRouteImport } from './routes/_authenticated/admin/perfis'
@@ -101,6 +102,12 @@ const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedDashboardReceitaCaixaRoute =
+  AuthenticatedDashboardReceitaCaixaRouteImport.update({
+    id: '/dashboard/receita-caixa',
+    path: '/dashboard/receita-caixa',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDashboardReceitaRoute =
   AuthenticatedDashboardReceitaRouteImport.update({
     id: '/dashboard/receita',
@@ -151,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/admin/perfis': typeof AuthenticatedAdminPerfisRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/dashboard/receita': typeof AuthenticatedDashboardReceitaRoute
+  '/dashboard/receita-caixa': typeof AuthenticatedDashboardReceitaCaixaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -171,6 +179,7 @@ export interface FileRoutesByTo {
   '/admin/perfis': typeof AuthenticatedAdminPerfisRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/dashboard/receita': typeof AuthenticatedDashboardReceitaRoute
+  '/dashboard/receita-caixa': typeof AuthenticatedDashboardReceitaCaixaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -193,6 +202,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/perfis': typeof AuthenticatedAdminPerfisRoute
   '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/_authenticated/dashboard/receita': typeof AuthenticatedDashboardReceitaRoute
+  '/_authenticated/dashboard/receita-caixa': typeof AuthenticatedDashboardReceitaCaixaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -215,6 +225,7 @@ export interface FileRouteTypes {
     | '/admin/perfis'
     | '/admin/usuarios'
     | '/dashboard/receita'
+    | '/dashboard/receita-caixa'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -235,6 +246,7 @@ export interface FileRouteTypes {
     | '/admin/perfis'
     | '/admin/usuarios'
     | '/dashboard/receita'
+    | '/dashboard/receita-caixa'
   id:
     | '__root__'
     | '/'
@@ -256,6 +268,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/perfis'
     | '/_authenticated/admin/usuarios'
     | '/_authenticated/dashboard/receita'
+    | '/_authenticated/dashboard/receita-caixa'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -364,6 +377,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/dashboard/receita-caixa': {
+      id: '/_authenticated/dashboard/receita-caixa'
+      path: '/dashboard/receita-caixa'
+      fullPath: '/dashboard/receita-caixa'
+      preLoaderRoute: typeof AuthenticatedDashboardReceitaCaixaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard/receita': {
       id: '/_authenticated/dashboard/receita'
       path: '/dashboard/receita'
@@ -435,6 +455,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMiddleRoute: typeof AuthenticatedMiddleRoute
   AuthenticatedOperacionalRoute: typeof AuthenticatedOperacionalRoute
   AuthenticatedDashboardReceitaRoute: typeof AuthenticatedDashboardReceitaRoute
+  AuthenticatedDashboardReceitaCaixaRoute: typeof AuthenticatedDashboardReceitaCaixaRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -450,6 +471,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMiddleRoute: AuthenticatedMiddleRoute,
   AuthenticatedOperacionalRoute: AuthenticatedOperacionalRoute,
   AuthenticatedDashboardReceitaRoute: AuthenticatedDashboardReceitaRoute,
+  AuthenticatedDashboardReceitaCaixaRoute:
+    AuthenticatedDashboardReceitaCaixaRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
