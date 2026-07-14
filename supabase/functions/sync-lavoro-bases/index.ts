@@ -115,19 +115,7 @@ function parseSharePointConfig() {
 }
 
 function getSharePointHostnameCandidates(hostname: string): string[] {
-  const normalized = hostname.toLowerCase();
-  const candidates = [hostname];
-
-  // A Lavoro aparece em ambientes antigos com o hostname invertido.
-  // Tenta os dois para espelhar o comportamento validado no Hub Tailor sem
-  // depender de uma troca manual de segredo a cada correção.
-  if (normalized === "seguroslavoro.sharepoint.com") {
-    candidates.push("lavoroseguros.sharepoint.com");
-  } else if (normalized === "lavoroseguros.sharepoint.com") {
-    candidates.push("seguroslavoro.sharepoint.com");
-  }
-
-  return Array.from(new Set(candidates));
+  return Array.from(new Set([hostname]));
 }
 
 function sanitizeSitePath(raw: string): string {
