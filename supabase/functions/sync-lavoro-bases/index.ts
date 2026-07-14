@@ -20,8 +20,8 @@ declare const EdgeRuntime: { waitUntil(promise: Promise<void>): void };
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-const SHAREPOINT_HOSTNAME = Deno.env.get("LAVORO_SHAREPOINT_HOSTNAME") ?? "seguroslavoro.sharepoint.com";
-const SHAREPOINT_SITE_PATH = Deno.env.get("LAVORO_SHAREPOINT_SITE_PATH") ?? "";
+const RAW_SHAREPOINT_HOSTNAME = Deno.env.get("LAVORO_SHAREPOINT_HOSTNAME") ?? "seguroslavoro.sharepoint.com";
+const RAW_SHAREPOINT_SITE_PATH = Deno.env.get("LAVORO_SHAREPOINT_SITE_PATH") ?? "";
 const GERENCIAL_FILE_PATH = "Financeiro/NF's e Extratos/Controle Gerencial - Financeiro.xlsx";
 const CAIXA_FOLDER_PATH = "Financeiro/Financeiro Lavoro/Planilhas";
 const READ_CHUNK = 2500;
@@ -86,27 +86,71 @@ function normalizeText(s: string): string {
   return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
 }
 
+function parseSharePointConfig() {
+  let hostname = (RAW_SHAREPOINT_HOSTNAME || "").trim();
+  let sitePathFromHostname = "";
+
+  if (/^https?:\/\//i.test(hostname)) {
+    try {
+      const url = new URL(hostname);
+      hostname = url.hostname;
+      sitePathFromHostname = url.pathname;
+    } catch {
+      // Cai no tratamento manual abaixo.
+    }
+  }
+
+  if (hostname.includes("/")) {
+    const [host, ...pathParts] = hostname.split("/");
+    hostname = host;
+    sitePathFromHostname ||= `/${pathParts.join("/")}`;
+  }
+
+  hostname = hostname.replace(/^https?:\/\//i, "").replace(/\/+$/g, "").trim();
+
+  return {
+    hostname: hostname || "seguroslavoro.sharepoint.com",
+    sitePath: sanitizeSitePath(RAW_SHAREPOINT_SITE_PATH || sitePathFromHostname),
+  };
+}
+
 function sanitizeSitePath(raw: string): string {
-  // Aceita apenas "/sites/xxx" ou "/teams/xxx". Qualquer outra coisa (URL completa,
-  // caminho de biblioteca, etc.) é tratada como vazio → resolve o site raiz.
-  const v = (raw || "").trim();
+  // Aceita "/sites/xxx", "/teams/xxx" ou URL completa do SharePoint.
+  let v = (raw || "").trim();
+  if (/^https?:\/\//i.test(v)) {
+    try {
+      v = new URL(v).pathname;
+    } catch {
+      v = "";
+    }
+  }
   if (!v) return "";
   if (/^\/(sites|teams)\/[^/]+/i.test(v)) return v.replace(/\/+$/, "");
   return "";
 }
 
 async function resolveSiteId(token: string): Promise<string> {
-  const sitePath = sanitizeSitePath(SHAREPOINT_SITE_PATH);
-  const url = sitePath
-    ? `https://graph.microsoft.com/v1.0/sites/${SHAREPOINT_HOSTNAME}:${sitePath}`
-    : `https://graph.microsoft.com/v1.0/sites/${SHAREPOINT_HOSTNAME}`;
-  const r = await graphGet(token, url);
-  if (!r.ok) {
+  const { hostname, sitePath } = parseSharePointConfig();
+  const urls = sitePath
+    ? [`https://graph.microsoft.com/v1.0/sites/${hostname}:${sitePath}`]
+    : [
+        `https://graph.microsoft.com/v1.0/sites/${hostname}`,
+        `https://graph.microsoft.com/v1.0/sites/${hostname}:/`,
+        "https://graph.microsoft.com/v1.0/sites/root",
+      ];
+
+  const failures: string[] = [];
+  for (const url of urls) {
+    const r = await graphGet(token, url);
+    if (r.ok) {
+      const j = await r.json();
+      return j.id as string;
+    }
     const body = await r.text();
-    throw new Error(`Resolve site ("${sitePath || "<root>"}", hostname="${SHAREPOINT_HOSTNAME}") falhou: ${r.status} ${body.slice(0, 300)}`);
+    failures.push(`${r.status} ${body.slice(0, 220)}`);
   }
-  const j = await r.json();
-  return j.id as string;
+
+  throw new Error(`Resolve site ("${sitePath || "<root>"}", hostname="${hostname}") falhou: ${failures.join(" | ")}`);
 }
 
 async function listDriveObjects(token: string, siteId: string): Promise<SharePointDrive[]> {
