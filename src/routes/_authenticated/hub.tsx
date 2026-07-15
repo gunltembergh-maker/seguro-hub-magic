@@ -3,7 +3,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMeuPerfilEfetivo, useViewAs } from "@/contexts/view-as-context";
 import { useInicioData } from "@/hooks/use-inicio-data";
 import { HeaderSaudacao } from "@/components/hub/header-saudacao";
-import { BlocoLavoroInicio } from "@/components/hub/bloco-lavoro-inicio";
 import { AcessoRapidoCard } from "@/components/hub/acesso-rapido-card";
 import { UltimasAtualizacoesCard } from "@/components/hub/ultimas-atualizacoes-card";
 import { BlocoLavoroKpis } from "@/components/hub/bloco-lavoro-kpis";
@@ -15,7 +14,7 @@ export const Route = createFileRoute("/_authenticated/hub")({
 function HubHome() {
   const perfil = useMeuPerfilEfetivo();
   const { effectiveRole, effectivePermissoes } = useViewAs();
-  const { resumo, timestamps, isLoading, isFetching, lastUpdated, refetch } = useInicioData();
+  const { timestamps, isLoading, isFetching, lastUpdated, refetch } = useInicioData();
 
   const isAdmin = effectiveRole === "ADMIN";
   const canSeeLavoro =
@@ -40,8 +39,6 @@ function HubHome() {
             isFetching={isFetching}
             onRefresh={refetch}
           />
-
-          <BlocoLavoroInicio resumo={resumo} isLoading={isLoading} canSee={canSeeLavoro} />
 
           <BlocoLavoroKpis canSee={canSeeLavoro} />
 
