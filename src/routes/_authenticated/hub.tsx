@@ -6,6 +6,7 @@ import { HeaderSaudacao } from "@/components/hub/header-saudacao";
 import { BlocoLavoroInicio } from "@/components/hub/bloco-lavoro-inicio";
 import { AcessoRapidoCard } from "@/components/hub/acesso-rapido-card";
 import { UltimasAtualizacoesCard } from "@/components/hub/ultimas-atualizacoes-card";
+import { BlocoLavoroKpis } from "@/components/hub/bloco-lavoro-kpis";
 
 export const Route = createFileRoute("/_authenticated/hub")({
   component: HubHome,
