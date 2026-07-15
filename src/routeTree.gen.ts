@@ -23,6 +23,7 @@ import { Route as AuthenticatedDemaisRamosRouteImport } from './routes/_authenti
 import { Route as AuthenticatedComunicadosRouteImport } from './routes/_authenticated/comunicados'
 import { Route as AuthenticatedBeneficiosRouteImport } from './routes/_authenticated/beneficios'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
+import { Route as AuthenticatedDashboardReportFechamentoRouteImport } from './routes/_authenticated/dashboard.report-fechamento'
 import { Route as AuthenticatedDashboardReceitaExecutivoRouteImport } from './routes/_authenticated/dashboard.receita-executivo'
 import { Route as AuthenticatedDashboardReceitaCaixaRouteImport } from './routes/_authenticated/dashboard.receita-caixa'
 import { Route as AuthenticatedDashboardReceitaRouteImport } from './routes/_authenticated/dashboard.receita'
@@ -103,6 +104,12 @@ const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedDashboardReportFechamentoRoute =
+  AuthenticatedDashboardReportFechamentoRouteImport.update({
+    id: '/dashboard/report-fechamento',
+    path: '/dashboard/report-fechamento',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDashboardReceitaExecutivoRoute =
   AuthenticatedDashboardReceitaExecutivoRouteImport.update({
     id: '/dashboard/receita-executivo',
@@ -167,6 +174,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/receita': typeof AuthenticatedDashboardReceitaRoute
   '/dashboard/receita-caixa': typeof AuthenticatedDashboardReceitaCaixaRoute
   '/dashboard/receita-executivo': typeof AuthenticatedDashboardReceitaExecutivoRoute
+  '/dashboard/report-fechamento': typeof AuthenticatedDashboardReportFechamentoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -189,6 +197,7 @@ export interface FileRoutesByTo {
   '/dashboard/receita': typeof AuthenticatedDashboardReceitaRoute
   '/dashboard/receita-caixa': typeof AuthenticatedDashboardReceitaCaixaRoute
   '/dashboard/receita-executivo': typeof AuthenticatedDashboardReceitaExecutivoRoute
+  '/dashboard/report-fechamento': typeof AuthenticatedDashboardReportFechamentoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -213,6 +222,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/receita': typeof AuthenticatedDashboardReceitaRoute
   '/_authenticated/dashboard/receita-caixa': typeof AuthenticatedDashboardReceitaCaixaRoute
   '/_authenticated/dashboard/receita-executivo': typeof AuthenticatedDashboardReceitaExecutivoRoute
+  '/_authenticated/dashboard/report-fechamento': typeof AuthenticatedDashboardReportFechamentoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -237,6 +247,7 @@ export interface FileRouteTypes {
     | '/dashboard/receita'
     | '/dashboard/receita-caixa'
     | '/dashboard/receita-executivo'
+    | '/dashboard/report-fechamento'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -259,6 +270,7 @@ export interface FileRouteTypes {
     | '/dashboard/receita'
     | '/dashboard/receita-caixa'
     | '/dashboard/receita-executivo'
+    | '/dashboard/report-fechamento'
   id:
     | '__root__'
     | '/'
@@ -282,6 +294,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/receita'
     | '/_authenticated/dashboard/receita-caixa'
     | '/_authenticated/dashboard/receita-executivo'
+    | '/_authenticated/dashboard/report-fechamento'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -390,6 +403,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/dashboard/report-fechamento': {
+      id: '/_authenticated/dashboard/report-fechamento'
+      path: '/dashboard/report-fechamento'
+      fullPath: '/dashboard/report-fechamento'
+      preLoaderRoute: typeof AuthenticatedDashboardReportFechamentoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard/receita-executivo': {
       id: '/_authenticated/dashboard/receita-executivo'
       path: '/dashboard/receita-executivo'
@@ -477,6 +497,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardReceitaRoute: typeof AuthenticatedDashboardReceitaRoute
   AuthenticatedDashboardReceitaCaixaRoute: typeof AuthenticatedDashboardReceitaCaixaRoute
   AuthenticatedDashboardReceitaExecutivoRoute: typeof AuthenticatedDashboardReceitaExecutivoRoute
+  AuthenticatedDashboardReportFechamentoRoute: typeof AuthenticatedDashboardReportFechamentoRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -496,6 +517,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedDashboardReceitaCaixaRoute,
   AuthenticatedDashboardReceitaExecutivoRoute:
     AuthenticatedDashboardReceitaExecutivoRoute,
+  AuthenticatedDashboardReportFechamentoRoute:
+    AuthenticatedDashboardReportFechamentoRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

@@ -612,6 +612,13 @@ export type Database = {
       }
     }
     Functions: {
+      _fechamento_janela: {
+        Args: { p_ano: number; p_gran: string; p_periodo: number }
+        Returns: {
+          dt_fim: string
+          dt_ini: string
+        }[]
+      }
       divide_safe: {
         Args: { denominador: number; numerador: number }
         Returns: number
@@ -722,6 +729,54 @@ export type Database = {
           tipo_de_ramo: string
         }[]
       }
+      rpc_fechamento_a_receber: { Args: never; Returns: Json }
+      rpc_fechamento_base: {
+        Args: {
+          p_ano: number
+          p_gran: string
+          p_pagina?: number
+          p_periodo: number
+          p_tamanho?: number
+        }
+        Returns: Json
+      }
+      rpc_fechamento_caixa_ramo: {
+        Args: {
+          p_ano: number
+          p_comparar?: boolean
+          p_gran: string
+          p_periodo: number
+        }
+        Returns: Json
+      }
+      rpc_fechamento_evolucao_mensal: {
+        Args: {
+          p_ano: number
+          p_comparar?: boolean
+          p_gran: string
+          p_periodo: number
+        }
+        Returns: Json
+      }
+      rpc_fechamento_sumario: {
+        Args: {
+          p_ano: number
+          p_comparar?: boolean
+          p_gran: string
+          p_periodo: number
+        }
+        Returns: Json
+      }
+      rpc_fechamento_top_tomadores: {
+        Args: {
+          p_ano: number
+          p_comparar?: boolean
+          p_gran: string
+          p_periodo: number
+        }
+        Returns: Json
+      }
+      rpc_fechamento_vencidos: { Args: never; Returns: Json }
       rpc_get_meta_anual: { Args: { _ano: number }; Returns: number }
       rpc_lavoro_apolices_filtros: {
         Args: never

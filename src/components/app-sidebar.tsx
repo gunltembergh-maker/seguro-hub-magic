@@ -70,6 +70,8 @@ export function AppSidebar() {
       show: isAdmin || hasPermission(meuPerfil, "menu_dashboard_receita_caixa") || hasPermission(meuPerfil, "menu_dashboard_receita") },
     { title: "Resumo Executivo", url: "/dashboard/receita-executivo",
       show: isAdmin || hasPermission(meuPerfil, "menu_dashboard_receita") },
+    { title: "Report Fechamento", url: "/dashboard/report-fechamento",
+      show: isAdmin || hasPermission(meuPerfil, "menu_dashboard_receita") },
   ].filter((i) => i.show);
   const showDashboards =
     isAdmin || hasPermission(meuPerfil, "menu_dashboards") || dashboardItems.length > 0;
