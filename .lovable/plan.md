@@ -1,114 +1,103 @@
-# Report Fechamento — Fase 1 + Newsletters (3 reports)
+# Portar features do Hub Tailor para o Hub Lavoro
 
-## Escopo desta entrega
-
-Antes de voltar às newsletters, entregar o **Report Fechamento (Fase 1)** — módulo novo dentro do Hub, reaproveitando `raw_lavoro_gerencial` (mesma base do `/dashboard/receita-executivo`, sem novo importador). Depois, plugar os 3 reports no mesmo esquema de destinatários / disparos / admin.
-
-Fases 2 (Área/Finder/Vidas) e 3 (projeção/cenários/alertas) **ficam fora** desta entrega — só Fase 1, conforme o prompt.
+Vou trazer 6 features do Hub Tailor, adaptadas ao padrão Lavoro (navy `#14405C`, azul `#00BAF2`, sem elementos Tailor como chevrons/bege `#DFDBBE`). Trabalho grande — recomendo aprovar por fases (proposta: F1+F2 juntas, F3+F4 juntas, F5+F6 juntas).
 
 ---
 
-## Parte A — Report Fechamento (Dashboard)
+## Fase 1 — Início (Hub) reformulado
 
-### A1. Backend (uma migration)
+Reescrever `/hub` (`src/routes/_authenticated/hub.tsx`) para reaproveitar a estrutura do `Inicio` do Tailor, **apenas com dados Lavoro**:
 
-Nova página `/dashboard/report-fechamento`, com filtro global: **granularidade** (Mensal / Trimestral / Semestral / Anual), **ano**, **período** dependente, e toggle **comparar com período equivalente do ano anterior** (default ON).
+- **HeaderSaudacao** — "Olá, {primeiro nome}", horário BRT, botão refresh, "Última atualização".
+- **Bloco Lavoro Seguros** (mesmo `BlocoLavoroInicio`): Receita Competência do mês, Receita Caixa do mês, barra de atingimento, banner âmbar de comissões vencidas, link para `/dashboard/receita-executivo`.
+- **Últimas Notícias** — 8 comunicados mais recentes de `comunicados` (já existe no projeto), com badge por categoria.
+- **Acesso Rápido** — grid de atalhos filtrado por permissões (Dashboards Receita/Caixa/Executivo/Fechamento, Áreas, Ramos, Admin).
+- **Últimas Atualizações** — timestamps de `raw_lavoro_gerencial` e `raw_lavoro_caixa_comissao`.
 
-Regras de dados (aplicadas dentro de cada RPC, uma vez):
-- Ler só `raw_lavoro_gerencial`.
-- Normalizar `status_parcela_comissao` (trim + title case).
-- Excluir `Cancelado`, `Analisar`, `Transferência De Corretagem`.
-- Cutoff = último dia do último mês fechado.
-- Ordem canais fixa: Benefícios → Demais Ramos → Garantia (mapa via `raw_lavoro_depara_ramo`).
-- Apólices = `count(distinct numero_apolice)`; Parcelas = `count(*)`.
-- Tomador vazio/'-': mantém em totais, remove de rankings; em Vencidos/A Receber usa `segurado (s/ Tomador)`.
-
-RPCs (todas recebem `p_ano int, p_gran text, p_periodo int, p_comparar bool`):
-
-1. `rpc_fechamento_sumario` — cards Emissão (prêmio, comissão, apólices) + Caixa (recebido, parcelas, ticket) + tabela por ramo (atual vs anterior, Δ R$/%) + bloco pipeline resumido.
-2. `rpc_fechamento_caixa_ramo` — mix por ramo, evolução mensal por ramo, top 15 tomadores período atual + período anterior.
-3. `rpc_fechamento_evolucao_mensal` — 3 blocos (comissão, caixa, apólices) mês×ramo ano atual vs ano anterior, com totais e Δ%.
-4. `rpc_fechamento_vencidos` (snapshot, ignora filtro de período) — por ano de vencimento × canal, aging por faixa × canal, matriz ano × faixa, top 10 inadimplentes.
-5. `rpc_fechamento_a_receber` (snapshot) — por ano de pagamento previsto, detalhamento próximo semestre, safra por ano de emissão, top 10 tomadores a receber.
-6. `rpc_fechamento_top_tomadores` — top 20 comissão emitida período atual + top 20 período anterior.
-7. `rpc_fechamento_base` — drill-down paginado com filtros aplicados (server-side pagination).
-
-Todas `security definer`, `grant execute to authenticated`, gated por permissão nova `menu_dashboard_fechamento` (ou `ADMIN`).
-
-### A2. Frontend
-
-Rota: `src/routes/_authenticated/dashboard.report-fechamento.tsx` com 7 abas (`Tabs` do shadcn), filtro global no topo persistido em `sessionStorage`, callout amarelo (#FFF4D6 / borda #B89968) descrevendo período ativo em cada aba, badge "Última atualização" (max `updated_at` de `raw_lavoro_gerencial`), alerta se sync > 24h.
-
-Componentes reutilizados: `MetricCard`, tabelas `<Table>` shadcn, `recharts` (bar / line / pie) — mesma paleta do `/dashboard/receita-executivo`. Formatação BR (R$, %, DD/MM/AAAA), Δ com ▲ verde / ▼ vermelho.
-
-**Botão "Exportar Excel"** no topo: usa `xlsx` (já usado no importador) gerando as 7 abas com mesma estrutura das telas. Sem gráficos embutidos no Excel v1 — cabeçalho navy + callout amarelo replicados via styles do sheetjs pro.
-
-Sidebar: adicionar "Report Fechamento" abaixo de "Resumo Executivo", gated pela mesma permissão.
-
-### A3. Aceite Fase 1
-
-- Sumário bate 100% com Caixa por Ramo, Evolução Mensal e Top Tomadores no mesmo período.
-- YTD sempre compara mesma janela (Jan-Jun 2026 vs Jan-Jun 2025).
-- Vencidos + A Receber + Recebido são mutuamente exclusivos.
-- Filtro global aplica em todas as abas exceto Vencidos/A Receber (snapshots).
-- Export Excel com 7 abas.
+Nova RPC: `rpc_inicio_lavoro_resumo` — devolve `receita_competencia_mes`, `receita_caixa_mes`, `atingimento_caixa_mes`, `total_vencido_mes`, `ultima_atualizacao` a partir de `raw_lavoro_gerencial`.
 
 ---
 
-## Parte B — Newsletters (3 reports unificados)
+## Fase 2 — Minha Visão (impersonation)
 
-Depois do Fechamento validado, criar o esquema **único** de reports:
+Contexto React `ViewAsProvider` com API `useViewAs()` e `useEffectiveUserId()` — igual ao Tailor. **ADMIN** escolhe um usuário e o app inteiro passa a enxergar como aquele perfil (permissões + role efetivas).
 
-### B1. Migration (segunda migration)
-
-```
-report_tipo enum: 'receita_diaria' | 'executivo_semanal' | 'fechamento_manual'
-
-report_destinatarios(id, tipo report_tipo, email, nome, ativo, created_at)
-report_disparos(id, tipo report_tipo, disparado_por uuid, disparado_em, status,
-                total_destinatarios, erro, payload jsonb, periodo_ref text)
-```
-
-RLS: ADMIN gerencia; edge function usa service_role.
-
-### B2. Templates React Email (`src/emails/`)
-
-1. **`ReceitaDiariaEmail.tsx`** — formato Hub Tailor: KPIs do dia (Emitido, Caixa, Apólices), vs meta, top 5 ramos, top 5 canais, CTA "Ver no Hub" → `/dashboard/receita`.
-2. **`ExecutivoSemanalEmail.tsx`** — enxuto: 4 KPIs YTD (Emitido, Caixa Esperado, Caixa Recebido %, A Receber Futuro) + banner **Comissão Vencida** destacado + CTA "Ver detalhamento mensal no Hub" → `/dashboard/receita-executivo`. Sem tabela mensal, sem gráficos.
-3. **`FechamentoManualEmail.tsx`** — resumo executivo do período selecionado pelo ADM (KPIs Emissão + Caixa + Δ vs anterior + top 5 tomadores + link para o Hub). Anexa o Excel gerado pelo botão de export.
-
-Preview em `/lovable/email/transactional/preview` funciona sem domínio.
-
-### B3. Edge Functions (uma por tipo, ou uma com `?tipo=`)
-
-- `send-report-receita-diaria` — reusa RPCs de `/dashboard/receita`.
-- `send-report-executivo-semanal` — reusa `rpc_receita_executivo_mensal` + `rpc_receita_executivo_complementares`.
-- `send-report-fechamento-manual` — recebe filtros do ADM, gera Excel, envia.
-
-Todas gravam em `report_disparos`. Envio real fica bloqueado até domínio liberado — deixamos configurado com fallback para preview.
-
-### B4. Cron
-
-- Diária Receita: `0 8 * * 1-5` BRT
-- Semanal Executivo: `0 8 * * 2` BRT
-- Fechamento: **sem cron**, disparo manual pelo ADM.
-
-### B5. Admin `/admin/reports`
-
-Uma tela, 3 abas (uma por tipo):
-- Lista de destinatários (CRUD)
-- Histórico de disparos
-- Botão "Disparar agora" (Fechamento: abre modal com filtros de período antes de disparar)
-
-Gated por ADMIN, link no sidebar.
+- `ViewAsContext.tsx` — persiste em `sessionStorage`, expõe `effectiveRole`, `effectivePermissoes`, `effectiveUserId`.
+- Novo hook `useMeuPerfilEfetivo()` que envolve `useMeuPerfil` e sobrepõe com `viewAs`.
+- Substituir `useMeuPerfil()` por `useMeuPerfilEfetivo()` no sidebar, no Hub e nos guards de permissão em dashboards/admin.
+- **Seletor** no header/sidebar (só visível para ADMIN): `Select` de usuários ativos.
+- **Banner amarelo topo** + **`MinhaVisaoIndicator`** (pill flutuante bottom-right) enquanto ativo — "Visualizando como {nome}" · "Sair".
+- Nova RPC `rpc_view_as_perfil(user_id)` que devolve o perfil efetivo (protegida — só ADMIN pode chamar).
 
 ---
 
-## Ordem de execução
+## Fase 3 — Popup de Comunicado
 
-1. Migration A1 (7 RPCs + permissão) → validar números.
-2. Página `/dashboard/report-fechamento` + sidebar + export Excel → validar aceite Fase 1.
-3. Migration B1 + templates + admin screen + preview.
-4. Quando domínio for liberado: ligar edge functions + crons.
+- Tabela `comunicados_popup` (id, titulo, mensagem, ativo, paginas text[], cor_fundo, cor_texto, botao_label, criado_em, criado_por).
+- Tabela `comunicados_popup_dispensados` (popup_id, user_id, dispensado_em) — para "não mostrar novamente".
+- RPCs: `rpc_get_popups_ativos(p_pagina)`, `rpc_dispensar_popup(p_popup_id)`.
+- Componente `PopupComunicado` (adaptado — visual Lavoro navy, sem chevrons Tailor) montado no `_authenticated/route.tsx`.
+- Admin `/admin/comunicados-popup` (CRUD ADMIN-only): título, mensagem, páginas alvo (multi-select), preview ao vivo, toggle ativo.
 
-Confirmar antes de começar A1 (é a maior parte do trabalho — ~7 RPCs e 7 abas de UI).
+---
+
+## Fase 4 — Log de Emails
+
+Reaproveita 100% o `email_domain--list_email_logs` que já usamos para depurar.
+
+- Nova página `/admin/emails/log` (ADMIN-only):
+  - Cards: Total / Sent / Rejected+Bounced / Suppressed.
+  - Filtros: período (24h / 7d / 30d), tipo (`sent`/`bounced`/`suppressed`/…), busca por destinatário.
+  - Tabela: Quando (BRT), Destinatário, Evento, Status, Message ID.
+  - Botão "Atualizar" (invalida query).
+- Server function `listEmailEvents` (createServerFn + `requireSupabaseAuth` + check ADMIN) que chama a API do Lovable (`listEmailLogs` do `@lovable.dev/email-js`) — nunca expõe `LOVABLE_API_KEY` ao browser.
+- Renomear a atual `/admin/emails` para `/admin/emails/enviar-teste` (ou virar sub-aba) e criar layout com abas: **Enviar teste** | **Log** | **Agendamentos**.
+
+---
+
+## Fase 5 — Botão "Enviar por email agora" em cada dashboard
+
+Em cada rota filha de Dashboards adicionar botão no topo (visível para ADMIN):
+
+- `/dashboard/receita` → `send-report-receita`
+- `/dashboard/receita-caixa` → `send-report-receita-caixa`
+- `/dashboard/receita-executivo` → `send-report-executivo`
+- `/dashboard/report-fechamento` → `send-report-fechamento` (já mapeado no plano B)
+
+Cada botão abre modal `EnviarEmailReport` com:
+- Lista de destinatários cadastrados no tipo (checkbox pré-marcados).
+- Campo para adicionar destinatários extras (comma-separated).
+- Preview do assunto.
+- Botão "Enviar agora" → server fn dedicada por tipo que renderiza template React Email + `sendTemplateEmail`.
+
+Templates React Email (padrão Lavoro navy):
+- `ReceitaReportEmail.tsx`
+- `ReceitaCaixaReportEmail.tsx`
+- `ExecutivoReportEmail.tsx`
+- `FechamentoReportEmail.tsx`
+
+---
+
+## Fase 6 — Agendamentos por tipo de Dashboard
+
+Nova página `/admin/emails/agendamentos` (abas por tipo, igual Tailor):
+
+- Tabela `email_schedules_config` (modulo enum, hora_brt, dias_semana int[], ativo, motivo_pausa, atualizado_por, atualizado_em).
+- Tabela `email_schedules_disparos` (id, modulo, disparado_em, disparado_por, total_destinatarios, sucessos, falhas, status, payload jsonb, erro).
+- RPCs: `rpc_atualizar_schedule_config`, `rpc_toggle_schedule`, `rpc_proxima_execucao_schedule`, `rpc_historico_disparos`, `rpc_listar_destinatarios_automaticos`, `rpc_adicionar_destinatario`, `rpc_remover_destinatario`.
+- UI por módulo: horário BRT, checkbox dias, switch ativo, próxima execução calculada server-side, últimos 30 disparos, botão "Disparar agora" (usa mesma server fn da Fase 5), CRUD de destinatários.
+- Server routes públicas `/api/public/hooks/scheduled-report-{modulo}` com verificação de `apikey` (anon) — chamadas por `pg_cron` no horário configurado, respeitando dias e feriados.
+- `pg_cron` job unificado que roda a cada 5 min e decide se dispara conforme config (via `rpc_proxima_execucao_schedule`).
+
+---
+
+## Notas técnicas
+
+- Stack: TanStack Start → `createServerFn` para lógica autenticada, server routes `/api/public/*` só para `pg_cron`.
+- Adaptação visual: substituir `#DFDBBE` → `#F5F7FA`, `#082537` → `#14405C`, remover `/tailor-chevrons.svg`, trocar "Tailor Partners" por "Lavoro Seguros".
+- Reaproveitar 100% das RPCs existentes do Lavoro (`raw_lavoro_gerencial`, `rpc_receita_executivo_*`, etc.).
+- `sendTemplateEmail` já está pronto; templates novos só precisam ser registrados em `registry.ts`.
+- Migrations: uma por fase (3, 4 não têm migration; 5 opcional se cadastrar destinatários; 6 tem 2 tabelas + RPCs).
+- Nenhum secret novo — usa `LOVABLE_API_KEY` já provisionado.
+
+Confirma se pode seguir e por qual fase começar (sugestão: **Fase 1 + Fase 2 juntas** — são as que mais mudam a experiência do dia-a-dia).
