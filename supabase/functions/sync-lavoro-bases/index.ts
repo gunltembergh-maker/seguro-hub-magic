@@ -121,7 +121,7 @@ async function resolveSiteId(token: string): Promise<string> {
 
   for (const sitePath of sitePathCandidates()) {
     const url = sitePath
-      ? `https://graph.microsoft.com/v1.0/sites/${SHAREPOINT_HOSTNAME}:${encodeGraphPath(sitePath)}`
+      ? `https://graph.microsoft.com/v1.0/sites/${SHAREPOINT_HOSTNAME}:/${encodeGraphPath(sitePath)}`
       : `https://graph.microsoft.com/v1.0/sites/${SHAREPOINT_HOSTNAME}`;
     const r = await graphGet(token, url);
     if (r.ok) {
