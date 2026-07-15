@@ -319,7 +319,7 @@ function AdminUsuariosPage() {
           onDone={() => { setConvidarOpen(false); refresh(); }} />
       )}
       {convidarInternoOpen && (
-        <NovoInternoDialog onClose={() => setConvidarInternoOpen(false)} />
+        <NovoInternoDialog perfis={perfis ?? []} onClose={() => setConvidarInternoOpen(false)} />
       )}
       {deletingUser && (
         <AlertDialog open onOpenChange={(o) => !o && setDeletingUser(null)}>
