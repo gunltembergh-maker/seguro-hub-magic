@@ -49,8 +49,6 @@ export async function sendTemplateEmail(
     )
   }
 
-  // Template-level `to` takes precedence — notification templates always
-  // send to their fixed address.
   const recipient = template.to || to
   if (!recipient) {
     throw new Error('Recipient is required (the template defines no fixed recipient)')
@@ -65,6 +63,24 @@ export async function sendTemplateEmail(
       ? template.subject(templateData)
       : template.subject
 
+  const messageId = options.idempotencyKey || crypto.randomUUID()
+  const { supabaseAdmin } = await import('@/integrations/supabase/client.server')
+
+  const logInsert = async (status: string, error_message: string | null = null) => {
+    try {
+      await supabaseAdmin.from('email_send_log').insert({
+        message_id: messageId,
+        template_name: templateName,
+        recipient_email: recipient,
+        status,
+        error_message,
+        metadata: { subject },
+      })
+    } catch (e) {
+      console.warn('[email log] insert failed', e)
+    }
+  }
+
   try {
     await sendLovableEmail(
       {
@@ -76,17 +92,22 @@ export async function sendTemplateEmail(
         text,
         purpose: 'transactional',
         label: templateName,
-        idempotency_key: options.idempotencyKey || crypto.randomUUID(),
+        idempotency_key: messageId,
         reply_to: options.replyTo,
       },
       { apiKey, sendUrl: process.env.LOVABLE_SEND_URL }
     )
   } catch (error) {
     if (error instanceof EmailAPIError && error.code === 'recipient_suppressed') {
+      await logInsert('suppressed', 'recipient_suppressed')
       return { sent: false, reason: 'recipient_suppressed' }
     }
+    const status =
+      error instanceof EmailAPIError && error.status === 429 ? 'rate_limited' : 'failed'
+    await logInsert(status, error instanceof Error ? error.message : String(error))
     throw error
   }
 
+  await logInsert('sent')
   return { sent: true }
 }
