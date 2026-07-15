@@ -689,7 +689,7 @@ export type Database = {
         Returns: string
       }
       rpc_comissao_vencida_por_canal: {
-        Args: { p_ano: number; p_mes: number; p_periodo?: string }
+        Args: { p_ano: number; p_mes?: number; p_periodo?: string }
         Returns: {
           comissao_vencida: number
           tipo_de_ramo: string
