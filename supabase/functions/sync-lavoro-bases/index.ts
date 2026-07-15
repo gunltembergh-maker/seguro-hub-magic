@@ -296,8 +296,8 @@ function workbookBase(target: DriveItemTarget, sheet: WorkbookSheet): string {
   return `https://graph.microsoft.com/v1.0/drives/${target.driveId}/items/${target.itemId}/workbook/worksheets/${encodeURIComponent(sheet.id)}`;
 }
 
-async function listWorkbookSheets(token: string, target: DriveItemTarget): Promise<WorkbookSheet[]> {
-  const r = await graphGet(token, `https://graph.microsoft.com/v1.0/drives/${target.driveId}/items/${target.itemId}/workbook/worksheets?$select=id,name`);
+async function listWorkbookSheets(token: string, target: DriveItemTarget, sessionId?: string): Promise<WorkbookSheet[]> {
+  const r = await graphGet(token, `https://graph.microsoft.com/v1.0/drives/${target.driveId}/items/${target.itemId}/workbook/worksheets?$select=id,name`, 1, sessionId);
   if (!r.ok) {
     const body = await r.text();
     throw new Error(`Listar abas de "${target.itemName}" falhou: ${r.status} ${body.slice(0, 300)}`);
@@ -306,15 +306,15 @@ async function listWorkbookSheets(token: string, target: DriveItemTarget): Promi
   return (j.value || []) as WorkbookSheet[];
 }
 
-async function resolveWorkbookSheet(token: string, target: DriveItemTarget, sheetName: string): Promise<WorkbookSheet> {
-  const sheets = await listWorkbookSheets(token, target);
+async function resolveWorkbookSheet(token: string, target: DriveItemTarget, sheetName: string, sessionId?: string): Promise<WorkbookSheet> {
+  const sheets = await listWorkbookSheets(token, target, sessionId);
   const sheet = sheets.find((s) => normalizeText(s.name) === normalizeText(sheetName));
   if (!sheet) throw new Error(`Aba "${sheetName}" não encontrada em "${target.itemName}". Abas disponíveis: ${sheets.map((s) => s.name).join(", ")}`);
   return sheet;
 }
 
-async function getSheetDimensions(token: string, target: DriveItemTarget, sheet: WorkbookSheet): Promise<{ rowCount: number; columnCount: number }> {
-  const r = await graphGet(token, `${workbookBase(target, sheet)}/usedRange(valuesOnly=false)?$select=rowCount,columnCount`);
+async function getSheetDimensions(token: string, target: DriveItemTarget, sheet: WorkbookSheet, sessionId?: string): Promise<{ rowCount: number; columnCount: number }> {
+  const r = await graphGet(token, `${workbookBase(target, sheet)}/usedRange(valuesOnly=false)?$select=rowCount,columnCount`, 1, sessionId);
   if (!r.ok) {
     const body = await r.text();
     throw new Error(`Dimensões da aba "${sheet.name}" falharam: ${r.status} ${body.slice(0, 300)}`);
@@ -323,8 +323,8 @@ async function getSheetDimensions(token: string, target: DriveItemTarget, sheet:
   return { rowCount: Number(j.rowCount) || 0, columnCount: Number(j.columnCount) || 0 };
 }
 
-async function readRangeValues(token: string, target: DriveItemTarget, sheet: WorkbookSheet, address: string): Promise<unknown[][]> {
-  const r = await graphGet(token, `${workbookBase(target, sheet)}/range(address='${address}')?$select=values`);
+async function readRangeValues(token: string, target: DriveItemTarget, sheet: WorkbookSheet, address: string, sessionId?: string): Promise<unknown[][]> {
+  const r = await graphGet(token, `${workbookBase(target, sheet)}/range(address='${address}')?$select=values`, 1, sessionId);
   if (!r.ok) {
     const body = await r.text();
     throw new Error(`Range ${sheet.name}!${address} falhou: ${r.status} ${body.slice(0, 300)}`);
