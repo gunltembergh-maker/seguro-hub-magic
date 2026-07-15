@@ -279,9 +279,11 @@ function ReportFechamento() {
           <AbaEvolucao data={evolucao.data} loading={evolucao.isLoading} ano={ano} />
         </TabsContent>
         <TabsContent value="vencidos" className="space-y-4 pt-4">
+          <Callout ano={ano} gran={gran} per={periodo} comparar={comparar} />
           <AbaVencidos data={vencidos.data} loading={vencidos.isLoading} />
         </TabsContent>
         <TabsContent value="areceber" className="space-y-4 pt-4">
+          <Callout ano={ano} gran={gran} per={periodo} comparar={comparar} />
           <AbaAReceber data={aReceber.data} loading={aReceber.isLoading} />
         </TabsContent>
         <TabsContent value="top" className="space-y-4 pt-4">
