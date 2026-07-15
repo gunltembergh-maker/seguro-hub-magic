@@ -376,20 +376,33 @@ type CaixaSyncResult = { syncId: string; rows: number; totalReadRows: number; to
 async function syncGerencialBase(admin: ReturnType<typeof createClient>, token: string, siteId: string): Promise<GerencialSyncResult> {
   const syncId = uuidv4();
   await createPendingSyncLog(admin, syncId, "gerencial");
+  let sessionId: string | undefined;
+  let target: DriveItemTarget | undefined;
   try {
-    const target = await resolveDriveItemTarget(token, siteId, GERENCIAL_FILE_PATH);
-    const sheet = await resolveWorkbookSheet(token, target, "Gerencial");
-    const dims = await getSheetDimensions(token, target, sheet);
+    // Snapshot completo: apaga as raws antes de reinserir (parity com caixa).
+    const delG = await admin.from("raw_lavoro_gerencial").delete().neq("sync_id", "00000000-0000-0000-0000-000000000000");
+    if (delG.error) throw new Error(`Limpar raw_lavoro_gerencial: ${delG.error.message}`);
+    const delR = await admin.from("raw_lavoro_depara_ramo").delete().neq("sync_id", "00000000-0000-0000-0000-000000000000");
+    if (delR.error) throw new Error(`Limpar raw_lavoro_depara_ramo: ${delR.error.message}`);
+
+    target = await resolveDriveItemTarget(token, siteId, GERENCIAL_FILE_PATH);
+    sessionId = await createWorkbookSession(token, target);
+
+    const sheet = await resolveWorkbookSheet(token, target, "Gerencial", sessionId);
+    const dims = await getSheetDimensions(token, target, sheet, sessionId);
     const lastCol = colToLetter(dims.columnCount);
-    const headers = ((await readRangeValues(token, target, sheet, `A2:${lastCol}2`))[0] || []).map((h) => String(h ?? "").trim());
+    const headers = ((await readRangeValues(token, target, sheet, `A2:${lastCol}2`, sessionId))[0] || []).map((h) => String(h ?? "").trim());
+    console.log(`[sync-lavoro-bases] Gerencial dims: ${dims.rowCount} linhas x ${dims.columnCount} colunas`);
 
     let rows = 0;
     let totalComissaoBruta = 0;
     let comissaoBrutaComEmissao = 0;
     const batch: Record<string, unknown>[] = [];
-    for (let r = 3; r <= dims.rowCount; r += READ_CHUNK) {
-      const end = Math.min(r + READ_CHUNK - 1, dims.rowCount);
-      const values = await readRangeValues(token, target, sheet, `A${r}:${lastCol}${end}`);
+    const totalChunks = Math.ceil(Math.max(0, dims.rowCount - 2) / GERENCIAL_READ_CHUNK);
+    let chunkIdx = 0;
+    for (let r = 3; r <= dims.rowCount; r += GERENCIAL_READ_CHUNK) {
+      const end = Math.min(r + GERENCIAL_READ_CHUNK - 1, dims.rowCount);
+      const values = await readRangeValues(token, target, sheet, `A${r}:${lastCol}${end}`, sessionId);
       for (const rowVals of values) {
         const raw = rowFromValues(headers, rowVals);
         if (!raw) continue;
@@ -401,18 +414,25 @@ async function syncGerencialBase(admin: ReturnType<typeof createClient>, token: 
         if (c.data_emissao) comissaoBrutaComEmissao += Number(c.comissao_bruta) || 0;
       }
       await flushBatch(admin, "raw_lavoro_gerencial", batch);
+      chunkIdx++;
+      // Heartbeat de progresso a cada chunk (também detectável na UI).
+      await updateSyncLog(admin, syncId, "gerencial", {
+        status: "erro",
+        linhas_importadas: rows,
+        mensagem_erro: `Em progresso: chunk ${chunkIdx}/${totalChunks} (${rows} linhas)`,
+      });
     }
 
-    const ramoSheet = await resolveWorkbookSheet(token, target, "aux Ramo");
-    const ramoDims = await getSheetDimensions(token, target, ramoSheet);
+    const ramoSheet = await resolveWorkbookSheet(token, target, "aux Ramo", sessionId);
+    const ramoDims = await getSheetDimensions(token, target, ramoSheet, sessionId);
     const ramoLastCol = colToLetter(ramoDims.columnCount);
     const headerRow = await resolveAutoHeaderRow(token, target, ramoSheet, ramoLastCol, ["Ramo", "Tipo de Ramo"]);
-    const ramoHeaders = ((await readRangeValues(token, target, ramoSheet, `A${headerRow}:${ramoLastCol}${headerRow}`))[0] || []).map((h) => String(h ?? "").trim());
+    const ramoHeaders = ((await readRangeValues(token, target, ramoSheet, `A${headerRow}:${ramoLastCol}${headerRow}`, sessionId))[0] || []).map((h) => String(h ?? "").trim());
     let ramos = 0;
     const ramoBatch: Record<string, unknown>[] = [];
     for (let r = headerRow + 1; r <= ramoDims.rowCount; r += READ_CHUNK) {
       const end = Math.min(r + READ_CHUNK - 1, ramoDims.rowCount);
-      const values = await readRangeValues(token, target, ramoSheet, `A${r}:${ramoLastCol}${end}`);
+      const values = await readRangeValues(token, target, ramoSheet, `A${r}:${ramoLastCol}${end}`, sessionId);
       for (const rowVals of values) {
         const raw = rowFromValues(ramoHeaders, rowVals);
         if (!raw) continue;
@@ -429,8 +449,13 @@ async function syncGerencialBase(admin: ReturnType<typeof createClient>, token: 
   } catch (err: any) {
     await updateSyncLog(admin, syncId, "gerencial", { status: "erro", mensagem_erro: err?.message ?? String(err) });
     throw err;
+  } finally {
+    if (sessionId && target) {
+      await closeWorkbookSession(token, target, sessionId);
+    }
   }
 }
+
 
 async function syncCaixaSingleFile(
   admin: ReturnType<typeof createClient>,
