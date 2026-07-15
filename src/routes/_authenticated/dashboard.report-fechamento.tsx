@@ -525,7 +525,7 @@ function AbaEvolucao({ data, loading, ano }: { data: any; loading: boolean; ano:
 
   const meses: number[] = data.meses ?? [];
 
-  const buildSerie = (rows: any[], acc: "sum" | "count" = "sum") => meses.map((m) => {
+  const buildSerie = (rows: any[]) => meses.map((m) => {
     const linha: any = { mes: MESES[m - 1] };
     [ano, ano - 1].forEach((a) => {
       linha[String(a)] = rows.filter((r) => r.mes === m && r.ano === a).reduce((s, r) => s + Number(r.valor || 0), 0);
@@ -534,27 +534,104 @@ function AbaEvolucao({ data, loading, ano }: { data: any; loading: boolean; ano:
   });
 
   const blocos = [
-    { titulo: "Comissão Bruta Emitida", rows: data.comissao ?? [] },
-    { titulo: "Caixa Recebido", rows: data.caixa ?? [] },
-    { titulo: "Apólices Emitidas", rows: data.apolices ?? [] },
+    { titulo: "Comissão Bruta Emitida (Competência)", rows: data.comissao ?? [], fmt: BRL, kind: "money" as const },
+    { titulo: "Caixa Recebido (Status Paga)", rows: data.caixa ?? [], fmt: BRL, kind: "money" as const },
+    { titulo: "Apólices Emitidas", rows: data.apolices ?? [], fmt: NUM, kind: "count" as const },
   ];
+
+  const getValor = (rows: any[], a: number, m: number, c: string) =>
+    rows.filter((r) => r.ano === a && r.mes === m && r.canal === c).reduce((s, r) => s + Number(r.valor || 0), 0);
 
   return (
     <div className="space-y-6">
       {blocos.map((b) => {
         const serie = buildSerie(b.rows);
+        const anoAnt = ano - 1;
+        // Totais por canal (YTD) e totais mês/YoY
+        const totalCanalAno = (c: string, a: number) => b.rows.filter((r) => r.canal === c && r.ano === a).reduce((s, r) => s + Number(r.valor || 0), 0);
+        const totalMesAno = (m: number, a: number) => CANAIS.reduce((s, c) => s + getValor(b.rows, a, m, c), 0);
         return (
           <section key={b.titulo} className="rounded-lg border bg-white p-4 shadow-sm">
             <h3 className="mb-3 text-sm font-semibold" style={{ color: NAVY }}>{b.titulo}</h3>
-            <ResponsiveContainer width="100%" height={260}>
-              <LineChart data={serie}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E8ECF1" />
-                <XAxis dataKey="mes" /><YAxis width={110} tickFormatter={(v) => NUM(v)} />
-                <Tooltip formatter={(v: any) => NUM(v)} /><Legend />
-                <Line type="monotone" dataKey={String(ano - 1)} stroke={AZUL_MED} strokeWidth={2} />
-                <Line type="monotone" dataKey={String(ano)} stroke={GOLD} strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
+
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead rowSpan={2}>Mês</TableHead>
+                    <TableHead colSpan={3} className="text-center border-l" style={{ background: "#F5F7FA" }}>{anoAnt}</TableHead>
+                    <TableHead colSpan={3} className="text-center border-l" style={{ background: "#EEF2F7" }}>{ano}</TableHead>
+                    <TableHead colSpan={3} className="text-center border-l">Δ % YoY por canal</TableHead>
+                    <TableHead colSpan={3} className="text-center border-l" style={{ background: "#F5F7FA" }}>Totais mês</TableHead>
+                  </TableRow>
+                  <TableRow>
+                    {CANAIS.map((c) => <TableHead key={`a-${c}`} className="text-right text-xs">{c}</TableHead>)}
+                    {CANAIS.map((c) => <TableHead key={`b-${c}`} className="text-right text-xs">{c}</TableHead>)}
+                    {CANAIS.map((c) => <TableHead key={`d-${c}`} className="text-right text-xs">{c}</TableHead>)}
+                    <TableHead className="text-right text-xs">Tot {anoAnt}</TableHead>
+                    <TableHead className="text-right text-xs">Tot {ano}</TableHead>
+                    <TableHead className="text-right text-xs">Δ %</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {meses.map((m) => {
+                    const tAnt = totalMesAno(m, anoAnt);
+                    const tAtu = totalMesAno(m, ano);
+                    const dTot = tAnt ? (tAtu - tAnt) / tAnt : null;
+                    return (
+                      <TableRow key={m}>
+                        <TableCell className="font-medium">{MESES[m - 1]}</TableCell>
+                        {CANAIS.map((c) => <TableCell key={`ra-${c}`} className="text-right">{b.fmt(getValor(b.rows, anoAnt, m, c))}</TableCell>)}
+                        {CANAIS.map((c) => <TableCell key={`rb-${c}`} className="text-right">{b.fmt(getValor(b.rows, ano, m, c))}</TableCell>)}
+                        {CANAIS.map((c) => {
+                          const va = getValor(b.rows, anoAnt, m, c);
+                          const vb = getValor(b.rows, ano, m, c);
+                          return <TableCell key={`rd-${c}`} className="text-right"><Delta atual={vb} anterior={va} /></TableCell>;
+                        })}
+                        <TableCell className="text-right">{b.fmt(tAnt)}</TableCell>
+                        <TableCell className="text-right font-semibold">{b.fmt(tAtu)}</TableCell>
+                        <TableCell className="text-right">
+                          {dTot === null ? <span className="text-xs text-muted-foreground">—</span> :
+                            <span className="text-xs font-semibold" style={{ color: dTot >= 0 ? VERDE : VERMELHO }}>{PCT(dTot)}</span>}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  <TableRow style={{ background: "#F5F7FA", fontWeight: 600 }}>
+                    <TableCell>TOTAL YTD</TableCell>
+                    {CANAIS.map((c) => <TableCell key={`ta-${c}`} className="text-right">{b.fmt(totalCanalAno(c, anoAnt))}</TableCell>)}
+                    {CANAIS.map((c) => <TableCell key={`tb-${c}`} className="text-right">{b.fmt(totalCanalAno(c, ano))}</TableCell>)}
+                    {CANAIS.map((c) => {
+                      const va = totalCanalAno(c, anoAnt);
+                      const vb = totalCanalAno(c, ano);
+                      return <TableCell key={`td-${c}`} className="text-right"><Delta atual={vb} anterior={va} /></TableCell>;
+                    })}
+                    <TableCell className="text-right">{b.fmt(CANAIS.reduce((s, c) => s + totalCanalAno(c, anoAnt), 0))}</TableCell>
+                    <TableCell className="text-right">{b.fmt(CANAIS.reduce((s, c) => s + totalCanalAno(c, ano), 0))}</TableCell>
+                    <TableCell className="text-right">
+                      {(() => {
+                        const va = CANAIS.reduce((s, c) => s + totalCanalAno(c, anoAnt), 0);
+                        const vb = CANAIS.reduce((s, c) => s + totalCanalAno(c, ano), 0);
+                        const d = va ? (vb - va) / va : null;
+                        return d === null ? "—" : <span className="text-xs font-semibold" style={{ color: d >= 0 ? VERDE : VERMELHO }}>{PCT(d)}</span>;
+                      })()}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
+
+            <div className="mt-4">
+              <ResponsiveContainer width="100%" height={240}>
+                <LineChart data={serie}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E8ECF1" />
+                  <XAxis dataKey="mes" /><YAxis width={110} tickFormatter={(v) => b.kind === "money" ? BRL(v) : NUM(v)} />
+                  <Tooltip formatter={(v: any) => b.kind === "money" ? BRL(v) : NUM(v)} /><Legend />
+                  <Line type="monotone" dataKey={String(anoAnt)} stroke={AZUL_MED} strokeWidth={2} />
+                  <Line type="monotone" dataKey={String(ano)} stroke={GOLD} strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </section>
         );
       })}
