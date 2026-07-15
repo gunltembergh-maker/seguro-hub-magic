@@ -6,6 +6,7 @@ import { HeaderSaudacao } from "@/components/hub/header-saudacao";
 import { BlocoLavoroInicio } from "@/components/hub/bloco-lavoro-inicio";
 import { AcessoRapidoCard } from "@/components/hub/acesso-rapido-card";
 import { UltimasAtualizacoesCard } from "@/components/hub/ultimas-atualizacoes-card";
+import { BlocoLavoroKpis } from "@/components/hub/bloco-lavoro-kpis";
 
 export const Route = createFileRoute("/_authenticated/hub")({
   component: HubHome,
@@ -41,6 +42,8 @@ function HubHome() {
           />
 
           <BlocoLavoroInicio resumo={resumo} isLoading={isLoading} canSee={canSeeLavoro} />
+
+          <BlocoLavoroKpis canSee={canSeeLavoro} />
 
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
             <div className="lg:col-span-3">
