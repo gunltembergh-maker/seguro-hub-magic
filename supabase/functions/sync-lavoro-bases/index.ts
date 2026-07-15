@@ -25,6 +25,7 @@ const SHAREPOINT_SITE_PATH = Deno.env.get("LAVORO_SHAREPOINT_SITE_PATH") ?? "";
 const GERENCIAL_FILE_PATH = "Financeiro/NF's e Extratos/Controle Gerencial - Financeiro.xlsx";
 const CAIXA_ROOT_FOLDER = "Financeiro/Financeiro Lavoro/Planilhas";
 const READ_CHUNK = 2500;
+const GERENCIAL_READ_CHUNK = 5000;
 
 // Anos históricos que devem ser sincronizados junto com o ano corrente.
 // O ano corrente fica na raiz de Planilhas/; os anteriores em subpastas Planilhas/<ano>/.
@@ -67,16 +68,53 @@ async function getGraphToken(creds: { tenant_id: string; client_id: string; clie
   return d.access_token as string;
 }
 
-async function graphGet(token: string, url: string, attempt = 1): Promise<Response> {
-  const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+async function graphGet(token: string, url: string, attempt = 1, sessionId?: string): Promise<Response> {
+  const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+  if (sessionId) headers["workbook-session-id"] = sessionId;
+  const r = await fetch(url, { headers });
   if ((r.status === 429 || [500, 502, 503, 504].includes(r.status)) && attempt < 6) {
     const retryAfter = Number(r.headers.get("retry-after"));
     const wait = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : Math.min(2 ** attempt * 750, 15000);
     console.log(`[sync-lavoro-bases] graphGet retry ${attempt} status=${r.status} wait=${wait}ms url=${url.slice(0, 160)}`);
     await new Promise((resolve) => setTimeout(resolve, wait));
-    return graphGet(token, url, attempt + 1);
+    return graphGet(token, url, attempt + 1, sessionId);
   }
   return r;
+}
+
+async function createWorkbookSession(token: string, target: DriveItemTarget): Promise<string | undefined> {
+  try {
+    const r = await fetch(
+      `https://graph.microsoft.com/v1.0/drives/${target.driveId}/items/${target.itemId}/workbook/createSession`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ persistChanges: false }),
+      },
+    );
+    if (!r.ok) {
+      console.warn(`[sync-lavoro-bases] createSession falhou ${r.status}: ${(await r.text()).slice(0, 200)}`);
+      return undefined;
+    }
+    const j = await r.json();
+    console.log(`[sync-lavoro-bases] Workbook session criada para "${target.itemName}"`);
+    return j.id as string;
+  } catch (err) {
+    console.warn(`[sync-lavoro-bases] createSession exception:`, (err as Error).message);
+    return undefined;
+  }
+}
+
+async function closeWorkbookSession(token: string, target: DriveItemTarget, sessionId: string) {
+  try {
+    await fetch(
+      `https://graph.microsoft.com/v1.0/drives/${target.driveId}/items/${target.itemId}/workbook/closeSession`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "workbook-session-id": sessionId },
+      },
+    );
+  } catch { /* ignore */ }
 }
 
 type SharePointDrive = { id: string; name: string; webUrl?: string };
@@ -258,8 +296,8 @@ function workbookBase(target: DriveItemTarget, sheet: WorkbookSheet): string {
   return `https://graph.microsoft.com/v1.0/drives/${target.driveId}/items/${target.itemId}/workbook/worksheets/${encodeURIComponent(sheet.id)}`;
 }
 
-async function listWorkbookSheets(token: string, target: DriveItemTarget): Promise<WorkbookSheet[]> {
-  const r = await graphGet(token, `https://graph.microsoft.com/v1.0/drives/${target.driveId}/items/${target.itemId}/workbook/worksheets?$select=id,name`);
+async function listWorkbookSheets(token: string, target: DriveItemTarget, sessionId?: string): Promise<WorkbookSheet[]> {
+  const r = await graphGet(token, `https://graph.microsoft.com/v1.0/drives/${target.driveId}/items/${target.itemId}/workbook/worksheets?$select=id,name`, 1, sessionId);
   if (!r.ok) {
     const body = await r.text();
     throw new Error(`Listar abas de "${target.itemName}" falhou: ${r.status} ${body.slice(0, 300)}`);
@@ -268,15 +306,15 @@ async function listWorkbookSheets(token: string, target: DriveItemTarget): Promi
   return (j.value || []) as WorkbookSheet[];
 }
 
-async function resolveWorkbookSheet(token: string, target: DriveItemTarget, sheetName: string): Promise<WorkbookSheet> {
-  const sheets = await listWorkbookSheets(token, target);
+async function resolveWorkbookSheet(token: string, target: DriveItemTarget, sheetName: string, sessionId?: string): Promise<WorkbookSheet> {
+  const sheets = await listWorkbookSheets(token, target, sessionId);
   const sheet = sheets.find((s) => normalizeText(s.name) === normalizeText(sheetName));
   if (!sheet) throw new Error(`Aba "${sheetName}" não encontrada em "${target.itemName}". Abas disponíveis: ${sheets.map((s) => s.name).join(", ")}`);
   return sheet;
 }
 
-async function getSheetDimensions(token: string, target: DriveItemTarget, sheet: WorkbookSheet): Promise<{ rowCount: number; columnCount: number }> {
-  const r = await graphGet(token, `${workbookBase(target, sheet)}/usedRange(valuesOnly=false)?$select=rowCount,columnCount`);
+async function getSheetDimensions(token: string, target: DriveItemTarget, sheet: WorkbookSheet, sessionId?: string): Promise<{ rowCount: number; columnCount: number }> {
+  const r = await graphGet(token, `${workbookBase(target, sheet)}/usedRange(valuesOnly=false)?$select=rowCount,columnCount`, 1, sessionId);
   if (!r.ok) {
     const body = await r.text();
     throw new Error(`Dimensões da aba "${sheet.name}" falharam: ${r.status} ${body.slice(0, 300)}`);
@@ -285,8 +323,8 @@ async function getSheetDimensions(token: string, target: DriveItemTarget, sheet:
   return { rowCount: Number(j.rowCount) || 0, columnCount: Number(j.columnCount) || 0 };
 }
 
-async function readRangeValues(token: string, target: DriveItemTarget, sheet: WorkbookSheet, address: string): Promise<unknown[][]> {
-  const r = await graphGet(token, `${workbookBase(target, sheet)}/range(address='${address}')?$select=values`);
+async function readRangeValues(token: string, target: DriveItemTarget, sheet: WorkbookSheet, address: string, sessionId?: string): Promise<unknown[][]> {
+  const r = await graphGet(token, `${workbookBase(target, sheet)}/range(address='${address}')?$select=values`, 1, sessionId);
   if (!r.ok) {
     const body = await r.text();
     throw new Error(`Range ${sheet.name}!${address} falhou: ${r.status} ${body.slice(0, 300)}`);
@@ -338,20 +376,33 @@ type CaixaSyncResult = { syncId: string; rows: number; totalReadRows: number; to
 async function syncGerencialBase(admin: ReturnType<typeof createClient>, token: string, siteId: string): Promise<GerencialSyncResult> {
   const syncId = uuidv4();
   await createPendingSyncLog(admin, syncId, "gerencial");
+  let sessionId: string | undefined;
+  let target: DriveItemTarget | undefined;
   try {
-    const target = await resolveDriveItemTarget(token, siteId, GERENCIAL_FILE_PATH);
-    const sheet = await resolveWorkbookSheet(token, target, "Gerencial");
-    const dims = await getSheetDimensions(token, target, sheet);
+    // Snapshot completo: apaga as raws antes de reinserir (parity com caixa).
+    const delG = await admin.from("raw_lavoro_gerencial").delete().neq("sync_id", "00000000-0000-0000-0000-000000000000");
+    if (delG.error) throw new Error(`Limpar raw_lavoro_gerencial: ${delG.error.message}`);
+    const delR = await admin.from("raw_lavoro_depara_ramo").delete().neq("sync_id", "00000000-0000-0000-0000-000000000000");
+    if (delR.error) throw new Error(`Limpar raw_lavoro_depara_ramo: ${delR.error.message}`);
+
+    target = await resolveDriveItemTarget(token, siteId, GERENCIAL_FILE_PATH);
+    sessionId = await createWorkbookSession(token, target);
+
+    const sheet = await resolveWorkbookSheet(token, target, "Gerencial", sessionId);
+    const dims = await getSheetDimensions(token, target, sheet, sessionId);
     const lastCol = colToLetter(dims.columnCount);
-    const headers = ((await readRangeValues(token, target, sheet, `A2:${lastCol}2`))[0] || []).map((h) => String(h ?? "").trim());
+    const headers = ((await readRangeValues(token, target, sheet, `A2:${lastCol}2`, sessionId))[0] || []).map((h) => String(h ?? "").trim());
+    console.log(`[sync-lavoro-bases] Gerencial dims: ${dims.rowCount} linhas x ${dims.columnCount} colunas`);
 
     let rows = 0;
     let totalComissaoBruta = 0;
     let comissaoBrutaComEmissao = 0;
     const batch: Record<string, unknown>[] = [];
-    for (let r = 3; r <= dims.rowCount; r += READ_CHUNK) {
-      const end = Math.min(r + READ_CHUNK - 1, dims.rowCount);
-      const values = await readRangeValues(token, target, sheet, `A${r}:${lastCol}${end}`);
+    const totalChunks = Math.ceil(Math.max(0, dims.rowCount - 2) / GERENCIAL_READ_CHUNK);
+    let chunkIdx = 0;
+    for (let r = 3; r <= dims.rowCount; r += GERENCIAL_READ_CHUNK) {
+      const end = Math.min(r + GERENCIAL_READ_CHUNK - 1, dims.rowCount);
+      const values = await readRangeValues(token, target, sheet, `A${r}:${lastCol}${end}`, sessionId);
       for (const rowVals of values) {
         const raw = rowFromValues(headers, rowVals);
         if (!raw) continue;
@@ -363,18 +414,25 @@ async function syncGerencialBase(admin: ReturnType<typeof createClient>, token: 
         if (c.data_emissao) comissaoBrutaComEmissao += Number(c.comissao_bruta) || 0;
       }
       await flushBatch(admin, "raw_lavoro_gerencial", batch);
+      chunkIdx++;
+      // Heartbeat de progresso a cada chunk (também detectável na UI).
+      await updateSyncLog(admin, syncId, "gerencial", {
+        status: "erro",
+        linhas_importadas: rows,
+        mensagem_erro: `Em progresso: chunk ${chunkIdx}/${totalChunks} (${rows} linhas)`,
+      });
     }
 
-    const ramoSheet = await resolveWorkbookSheet(token, target, "aux Ramo");
-    const ramoDims = await getSheetDimensions(token, target, ramoSheet);
+    const ramoSheet = await resolveWorkbookSheet(token, target, "aux Ramo", sessionId);
+    const ramoDims = await getSheetDimensions(token, target, ramoSheet, sessionId);
     const ramoLastCol = colToLetter(ramoDims.columnCount);
     const headerRow = await resolveAutoHeaderRow(token, target, ramoSheet, ramoLastCol, ["Ramo", "Tipo de Ramo"]);
-    const ramoHeaders = ((await readRangeValues(token, target, ramoSheet, `A${headerRow}:${ramoLastCol}${headerRow}`))[0] || []).map((h) => String(h ?? "").trim());
+    const ramoHeaders = ((await readRangeValues(token, target, ramoSheet, `A${headerRow}:${ramoLastCol}${headerRow}`, sessionId))[0] || []).map((h) => String(h ?? "").trim());
     let ramos = 0;
     const ramoBatch: Record<string, unknown>[] = [];
     for (let r = headerRow + 1; r <= ramoDims.rowCount; r += READ_CHUNK) {
       const end = Math.min(r + READ_CHUNK - 1, ramoDims.rowCount);
-      const values = await readRangeValues(token, target, ramoSheet, `A${r}:${ramoLastCol}${end}`);
+      const values = await readRangeValues(token, target, ramoSheet, `A${r}:${ramoLastCol}${end}`, sessionId);
       for (const rowVals of values) {
         const raw = rowFromValues(ramoHeaders, rowVals);
         if (!raw) continue;
@@ -391,8 +449,13 @@ async function syncGerencialBase(admin: ReturnType<typeof createClient>, token: 
   } catch (err: any) {
     await updateSyncLog(admin, syncId, "gerencial", { status: "erro", mensagem_erro: err?.message ?? String(err) });
     throw err;
+  } finally {
+    if (sessionId && target) {
+      await closeWorkbookSession(token, target, sessionId);
+    }
   }
 }
+
 
 async function syncCaixaSingleFile(
   admin: ReturnType<typeof createClient>,
