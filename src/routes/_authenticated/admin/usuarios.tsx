@@ -566,6 +566,10 @@ function NovoInternoDialog({ onClose, perfis }: { onClose: () => void; perfis: {
 }
 
 function UserDetailSheet({ user, onClose }: { user: AdminUserV2; onClose: () => void }) {
+  const sendEmail = useSendAuthEmail();
+  const doSend = (tipo: "invite" | "magiclink" | "recovery") =>
+    sendEmail.mutate({ user_id: user.user_id, email: user.email, tipo });
+
   const { data: atividades, isLoading } = useAtividadeUsuario(user.user_id);
   return (
     <Sheet open onOpenChange={(o) => !o && onClose()}>
