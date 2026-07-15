@@ -1,4 +1,4 @@
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -188,9 +188,63 @@ function ImportarBasesPage() {
   );
 }
 
+// Cron: a cada 6h em BRT (00, 06, 12, 18)
+const SYNC_HOURS_BRT = [0, 6, 12, 18];
+
+function getNextRunBRT(now = new Date()): Date {
+  // BRT = UTC-3 (sem horário de verão desde 2019)
+  const nowBRT = new Date(now.getTime() - 3 * 3600 * 1000);
+  for (const h of SYNC_HOURS_BRT) {
+    const cand = new Date(Date.UTC(
+      nowBRT.getUTCFullYear(), nowBRT.getUTCMonth(), nowBRT.getUTCDate(), h, 0, 0
+    ));
+    if (cand.getTime() > nowBRT.getTime()) {
+      return new Date(cand.getTime() + 3 * 3600 * 1000);
+    }
+  }
+  const tomorrow = new Date(Date.UTC(
+    nowBRT.getUTCFullYear(), nowBRT.getUTCMonth(), nowBRT.getUTCDate() + 1, SYNC_HOURS_BRT[0], 0, 0
+  ));
+  return new Date(tomorrow.getTime() + 3 * 3600 * 1000);
+}
+
+function formatDateTimeBR(d: Date) {
+  return d.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+}
+
+function useCountdown(target: Date) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const diff = Math.max(0, target.getTime() - now);
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+  return h > 0 ? `${h}h ${String(m).padStart(2, "0")}m` : `${m}m ${String(s).padStart(2, "0")}s`;
+}
+
 function SharePointSyncCard() {
   const qc = useQueryClient();
   const [syncing, setSyncing] = useState<null | "all" | "gerencial" | "caixa">(null);
+
+  const nextRun = getNextRunBRT();
+  const countdown = useCountdown(nextRun);
+
+  const { data: recent } = useQuery({
+    queryKey: ["lavoro-sync-log", "recent"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("lavoro_sync_log")
+        .select("id, origem, base, status, linhas_importadas, mensagem_erro, criado_em")
+        .order("criado_em", { ascending: false })
+        .limit(10);
+      if (error) throw error;
+      return data ?? [];
+    },
+    refetchInterval: 15000,
+  });
 
   const runSync = async (base: "all" | "gerencial" | "caixa") => {
     setSyncing(base);
@@ -200,7 +254,7 @@ function SharePointSyncCard() {
       });
       if (error) throw error;
       toast.success("Sync iniciada", {
-        description: "A execução roda em background. Acompanhe no Histórico abaixo.",
+        description: "A execução roda em background. Acompanhe abaixo.",
       });
       qc.invalidateQueries({ queryKey: ["lavoro-sync-log"] });
       console.log("[sync-lavoro-bases] invoke response", data);
@@ -209,6 +263,12 @@ function SharePointSyncCard() {
     } finally {
       setSyncing(null);
     }
+  };
+
+  const statusBadge = (s: string) => {
+    if (s === "sucesso") return <Badge className="bg-emerald-500/15 text-emerald-700 border-emerald-500/30 border">Sucesso</Badge>;
+    if (s === "erro") return <Badge className="bg-rose-500/15 text-rose-700 border-rose-500/30 border">Erro</Badge>;
+    return <Badge className="bg-amber-500/15 text-amber-700 border-amber-500/30 border">Em execução</Badge>;
   };
 
   return (
@@ -221,12 +281,22 @@ function SharePointSyncCard() {
               Sync automático SharePoint (Lavoro)
             </CardTitle>
             <p className="mt-1 text-xs text-muted-foreground">
-              Roda diariamente às 05:00 (BRT) puxando Gerencial + Caixa Bradesco direto do SharePoint via Microsoft Graph. Upload manual abaixo continua como fallback.
+              Roda a cada 6 horas (00h, 06h, 12h e 18h — horário de Brasília) puxando Gerencial + Caixa Bradesco direto do SharePoint via Microsoft Graph. Upload manual abaixo continua como fallback.
             </p>
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
+        <div className="flex flex-wrap items-center gap-3 rounded-md border border-primary/20 bg-background/60 px-3 py-2 text-xs">
+          <div className="flex items-center gap-1.5">
+            <RefreshCw className="h-3.5 w-3.5 text-primary" />
+            <span className="text-muted-foreground">Próxima rodada:</span>
+            <span className="font-semibold">{formatDateTimeBR(nextRun)} BRT</span>
+          </div>
+          <span className="text-muted-foreground">·</span>
+          <span className="font-mono text-primary">em {countdown}</span>
+        </div>
+
         <div className="flex flex-wrap gap-2">
           <Button size="sm" onClick={() => runSync("all")} disabled={syncing !== null} className="gap-2">
             {syncing === "all" ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
@@ -240,6 +310,43 @@ function SharePointSyncCard() {
             {syncing === "caixa" ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
             Só Caixa Bradesco
           </Button>
+        </div>
+
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-xs font-medium text-muted-foreground">Últimas execuções</p>
+            <span className="text-[10px] text-muted-foreground">Atualiza a cada 15s</span>
+          </div>
+          <div className="overflow-hidden rounded-md border border-primary/15 bg-background/60">
+            {!recent || recent.length === 0 ? (
+              <p className="px-3 py-4 text-center text-xs text-muted-foreground">Nenhuma execução registrada ainda.</p>
+            ) : (
+              <table className="w-full text-xs">
+                <thead className="bg-muted/40 text-muted-foreground">
+                  <tr>
+                    <th className="px-3 py-1.5 text-left font-medium">Quando</th>
+                    <th className="px-3 py-1.5 text-left font-medium">Origem</th>
+                    <th className="px-3 py-1.5 text-left font-medium">Base</th>
+                    <th className="px-3 py-1.5 text-left font-medium">Status</th>
+                    <th className="px-3 py-1.5 text-right font-medium">Linhas</th>
+                    <th className="px-3 py-1.5 text-left font-medium">Erro</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recent.map((r) => (
+                    <tr key={r.id} className="border-t border-primary/10">
+                      <td className="px-3 py-1.5 font-mono">{formatDateTimeBR(new Date(r.criado_em as string))}</td>
+                      <td className="px-3 py-1.5 capitalize">{r.origem}</td>
+                      <td className="px-3 py-1.5 capitalize">{r.base}</td>
+                      <td className="px-3 py-1.5">{statusBadge(r.status as string)}</td>
+                      <td className="px-3 py-1.5 text-right font-mono">{r.linhas_importadas ?? "—"}</td>
+                      <td className="px-3 py-1.5 max-w-[240px] truncate text-rose-600" title={r.mensagem_erro ?? ""}>{r.mensagem_erro ?? "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
