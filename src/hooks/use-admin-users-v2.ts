@@ -1,6 +1,79 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { adminSendAuthEmail } from "@/lib/admin-users.functions";
 import type { AppRole } from "@/hooks/use-meu-perfil";
+
+export function useSendAuthEmail() {
+  const send = useServerFn(adminSendAuthEmail);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (vars: {
+      user_id?: string | null;
+      email: string;
+      tipo: "invite" | "magiclink" | "recovery";
+    }) => send({ data: vars }),
+    onSuccess: (_r, vars) => {
+      const labels = {
+        invite: "Convite enviado",
+        magiclink: "Magic link enviado",
+        recovery: "E-mail de recuperação de senha enviado",
+      } as const;
+      toast.success(`${labels[vars.tipo]} para ${vars.email}`);
+      qc.invalidateQueries({ queryKey: ["admin-atividade-usuario"] });
+    },
+    onError: (e: Error) => toast.error("Falha ao enviar", { description: e.message }),
+  });
+}
+
+export function usePreCadastrarUsuario() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (vars: { email: string; full_name: string; perfil_id: string }) => {
+      const { data, error } = await supabase.rpc("rpc_admin_precadastrar_usuario" as never, {
+        _email: vars.email,
+        _full_name: vars.full_name,
+        _perfil_id: vars.perfil_id,
+      } as never);
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Usuário pré-cadastrado");
+      qc.invalidateQueries({ queryKey: ["admin-users-v2"] });
+      qc.invalidateQueries({ queryKey: ["admin-convites-externos"] });
+    },
+    onError: (e: Error) => toast.error("Falha ao pré-cadastrar", { description: e.message }),
+  });
+}
+
+export function useUpdateUserV2() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (vars: {
+      user_id: string;
+      full_name: string;
+      perfil_id: string | null;
+      blocked: boolean;
+      active: boolean;
+    }) => {
+      const { error } = await supabase.rpc("rpc_admin_update_user_v2" as never, {
+        _user_id: vars.user_id,
+        _full_name: vars.full_name,
+        _perfil_id: vars.perfil_id,
+        _blocked: vars.blocked,
+        _active: vars.active,
+      } as never);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Usuário atualizado");
+      qc.invalidateQueries({ queryKey: ["admin-users-v2"] });
+    },
+    onError: (e: Error) => toast.error("Falha ao atualizar", { description: e.message }),
+  });
+}
 
 export interface AdminUserV2 {
   user_id: string;
