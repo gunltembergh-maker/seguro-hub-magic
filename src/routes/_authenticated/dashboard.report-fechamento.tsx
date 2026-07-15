@@ -153,8 +153,8 @@ function ReportFechamento() {
   const sumario = useRpc<any>("rpc_fechamento_sumario", args);
   const caixaRamo = useRpc<any>("rpc_fechamento_caixa_ramo", args);
   const evolucao = useRpc<any>("rpc_fechamento_evolucao_mensal", args);
-  const vencidos = useRpc<any>("rpc_fechamento_vencidos", {});
-  const aReceber = useRpc<any>("rpc_fechamento_a_receber", {});
+  const vencidos = useRpc<any>("rpc_fechamento_vencidos", { p_ano: ano, p_gran: gran, p_periodo: periodo });
+  const aReceber = useRpc<any>("rpc_fechamento_a_receber", { p_ano: ano, p_gran: gran, p_periodo: periodo });
   const topTom = useRpc<any>("rpc_fechamento_top_tomadores", args);
   const ultima = useUltimaAtualizacao();
 
@@ -279,9 +279,11 @@ function ReportFechamento() {
           <AbaEvolucao data={evolucao.data} loading={evolucao.isLoading} ano={ano} />
         </TabsContent>
         <TabsContent value="vencidos" className="space-y-4 pt-4">
+          <Callout ano={ano} gran={gran} per={periodo} comparar={comparar} />
           <AbaVencidos data={vencidos.data} loading={vencidos.isLoading} />
         </TabsContent>
         <TabsContent value="areceber" className="space-y-4 pt-4">
+          <Callout ano={ano} gran={gran} per={periodo} comparar={comparar} />
           <AbaAReceber data={aReceber.data} loading={aReceber.isLoading} />
         </TabsContent>
         <TabsContent value="top" className="space-y-4 pt-4">

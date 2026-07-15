@@ -729,7 +729,10 @@ export type Database = {
           tipo_de_ramo: string
         }[]
       }
-      rpc_fechamento_a_receber: { Args: never; Returns: Json }
+      rpc_fechamento_a_receber: {
+        Args: { p_ano: number; p_gran: string; p_periodo: number }
+        Returns: Json
+      }
       rpc_fechamento_base: {
         Args: {
           p_ano: number
@@ -776,7 +779,10 @@ export type Database = {
         }
         Returns: Json
       }
-      rpc_fechamento_vencidos: { Args: never; Returns: Json }
+      rpc_fechamento_vencidos: {
+        Args: { p_ano: number; p_gran: string; p_periodo: number }
+        Returns: Json
+      }
       rpc_get_meta_anual: { Args: { _ano: number }; Returns: number }
       rpc_lavoro_apolices_filtros: {
         Args: never
