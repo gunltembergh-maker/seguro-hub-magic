@@ -390,27 +390,23 @@ function ApproveDialog({ user, perfis, onClose, onDone }: { user: AdminUserV2; p
 }
 
 function EditDialog({ user, perfis, onClose, onDone }: { user: AdminUserV2; perfis: { id: string; nome: string }[]; onClose: () => void; onDone: () => void }) {
+  const [fullName, setFullName] = useState(user.full_name ?? "");
   const [perfilId, setPerfilId] = useState(user.perfil_id ?? "");
   const [blocked, setBlocked] = useState(user.blocked);
   const [active, setActive] = useState(user.active);
-  const mut = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.rpc("rpc_admin_update_user", {
-        _user_id: user.user_id, _perfil_id: perfilId || null, _blocked: blocked, _active: active,
-      } as never);
-      if (error) throw error;
-    },
-    onSuccess: () => { toast.success("Usuário atualizado"); onDone(); },
-    onError: (e: Error) => toast.error("Falha ao atualizar", { description: e.message }),
-  });
+  const mut = useUpdateUserV2();
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
         <DialogHeader><DialogTitle>Editar usuário</DialogTitle></DialogHeader>
         <div className="space-y-4">
-          <div className="rounded-lg border border-border bg-muted/40 p-3 text-sm">
-            <div className="font-medium">{user.full_name ?? user.email}</div>
-            <div className="text-muted-foreground">{user.email}</div>
+          <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs">
+            <div className="text-muted-foreground">E-mail (não editável)</div>
+            <div className="font-medium">{user.email}</div>
+          </div>
+          <div className="space-y-2">
+            <Label>Nome completo</Label>
+            <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Nome do colaborador" />
           </div>
           <div className="space-y-2">
             <Label>Perfil de acesso</Label>
@@ -426,13 +422,20 @@ function EditDialog({ user, perfis, onClose, onDone }: { user: AdminUserV2; perf
             <Switch checked={active} onCheckedChange={setActive} />
           </div>
           <div className="flex items-center justify-between rounded-lg border border-border p-3">
-            <div><div className="text-sm font-medium">Bloqueado</div><div className="text-xs text-muted-foreground">Marca como aguardando aprovação</div></div>
+            <div><div className="text-sm font-medium">Bloqueado</div><div className="text-xs text-muted-foreground">Impede o login (bane no auth)</div></div>
             <Switch checked={blocked} onCheckedChange={setBlocked} />
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={() => mut.mutate()} disabled={mut.isPending} className="gap-2">
+          <Button
+            onClick={() => mut.mutate(
+              { user_id: user.user_id, full_name: fullName, perfil_id: perfilId || null, blocked, active },
+              { onSuccess: () => onDone() },
+            )}
+            disabled={mut.isPending}
+            className="gap-2"
+          >
             {mut.isPending && <Loader2 className="h-4 w-4 animate-spin" />} Salvar
           </Button>
         </DialogFooter>
