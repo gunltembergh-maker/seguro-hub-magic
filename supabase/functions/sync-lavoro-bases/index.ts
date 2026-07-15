@@ -196,18 +196,22 @@ async function listFolderChildren(token: string, siteId: string, folderPath: str
   return (j.value || []) as FolderChild[];
 }
 
-async function findCurrentCaixaFile(token: string, siteId: string): Promise<string> {
-  const now = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
-  const ano = now.getFullYear();
-  const children = await listFolderChildren(token, siteId, CAIXA_FOLDER_PATH);
+async function findCaixaFileForYear(token: string, siteId: string, target: CaixaYearTarget): Promise<string | null> {
+  let children: FolderChild[];
+  try {
+    children = await listFolderChildren(token, siteId, target.folder);
+  } catch (err) {
+    console.warn(`[sync-lavoro-bases] Pasta Caixa ${target.ano} indisponível (${target.folder}): ${(err as Error).message}`);
+    return null;
+  }
 
-  const buscarAno = (targetAno: number) => {
-    const needle = normalizeText(`controle lavoro bradesco ${targetAno}`);
-    return children
-      .filter((c) => {
-        const n = normalizeText(c.name);
-        return n.endsWith(".xlsx") && n.includes(needle);
-      })
+  const xlsxChildren = children.filter((c) => normalizeText(c.name).endsWith(".xlsx"));
+  const anoStr = String(target.ano);
+
+  const buscar = (matcher: string) => {
+    const needle = normalizeText(matcher);
+    return xlsxChildren
+      .filter((c) => normalizeText(c.name).includes(needle))
       .sort((a, b) => {
         const ta = a.lastModifiedDateTime ? new Date(a.lastModifiedDateTime).getTime() : 0;
         const tb = b.lastModifiedDateTime ? new Date(b.lastModifiedDateTime).getTime() : 0;
@@ -216,16 +220,28 @@ async function findCurrentCaixaFile(token: string, siteId: string): Promise<stri
       });
   };
 
-  const escolhido = buscarAno(ano)[0] ?? buscarAno(ano - 1)[0];
-  if (!escolhido) {
-    const disponiveis = children.map((c) => c.name).join(" | ");
-    throw new Error(
-      `Arquivo "Controle Lavoro BRADESCO ${ano}" não encontrado em "${CAIXA_FOLDER_PATH}". ` +
-        `Arquivos disponíveis (${children.length}): ${disponiveis.slice(0, 800)}`,
-    );
+  let escolhido: FolderChild | undefined;
+  for (const matcher of target.nameMatchers) {
+    const found = buscar(matcher);
+    // Se estamos em subpasta específica do ano, aceitamos qualquer arquivo que bata.
+    // Se estamos na pasta raiz (ano corrente), exigimos que o nome contenha o ano.
+    const emRaiz = target.folder === CAIXA_ROOT_FOLDER;
+    const filtrado = emRaiz ? found.filter((c) => c.name.includes(anoStr)) : found;
+    if (filtrado.length > 0) {
+      escolhido = filtrado[0];
+      break;
+    }
   }
-  console.log(`[sync-lavoro-bases] Caixa Bradesco selecionado: ${escolhido.name} (mod ${escolhido.lastModifiedDateTime ?? "?"})`);
-  return `${CAIXA_FOLDER_PATH}/${escolhido.name}`;
+
+  if (!escolhido) {
+    console.warn(
+      `[sync-lavoro-bases] Nenhum arquivo Caixa ${target.ano} encontrado em "${target.folder}". Disponíveis: ${children.map((c) => c.name).join(" | ").slice(0, 400)}`,
+    );
+    return null;
+  }
+
+  console.log(`[sync-lavoro-bases] Caixa ${target.ano}: ${escolhido.name} (mod ${escolhido.lastModifiedDateTime ?? "?"})`);
+  return `${target.folder}/${escolhido.name}`;
 }
 
 function colToLetter(col: number): string {
