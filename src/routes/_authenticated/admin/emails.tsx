@@ -61,12 +61,20 @@ function AdminEmailsPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-8">
-      <header className="mb-6">
-        <h1 className="font-display text-2xl font-bold tracking-tight">Emails</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Envia emails de teste para validar a entrega pelo domínio{' '}
-          <span className="font-medium">notify.hub.lavoroseguros.com.br</span>.
-        </p>
+      <header className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl font-bold tracking-tight">Emails</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Envia emails de teste para validar a entrega pelo domínio{' '}
+            <span className="font-medium">notify.hub.lavoroseguros.com.br</span>.
+          </p>
+        </div>
+        <a
+          href="/admin/emails/log"
+          className="text-sm text-primary underline underline-offset-4 hover:opacity-80 whitespace-nowrap"
+        >
+          Ver log de envios →
+        </a>
       </header>
 
       <Card>
