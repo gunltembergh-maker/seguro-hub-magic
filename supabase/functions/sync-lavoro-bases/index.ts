@@ -23,8 +23,18 @@ const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const SHAREPOINT_HOSTNAME = Deno.env.get("LAVORO_SHAREPOINT_HOSTNAME") ?? "seguroslavoro.sharepoint.com";
 const SHAREPOINT_SITE_PATH = Deno.env.get("LAVORO_SHAREPOINT_SITE_PATH") ?? "";
 const GERENCIAL_FILE_PATH = "Financeiro/NF's e Extratos/Controle Gerencial - Financeiro.xlsx";
-const CAIXA_FOLDER_PATH = "Financeiro/Financeiro Lavoro/Planilhas";
+const CAIXA_ROOT_FOLDER = "Financeiro/Financeiro Lavoro/Planilhas";
 const READ_CHUNK = 2500;
+
+// Anos históricos que devem ser sincronizados junto com o ano corrente.
+// O ano corrente fica na raiz de Planilhas/; os anteriores em subpastas Planilhas/<ano>/.
+type CaixaYearTarget = { ano: number; folder: string; nameMatchers: string[] };
+const CAIXA_YEAR_TARGETS: CaixaYearTarget[] = [
+  { ano: 2026, folder: CAIXA_ROOT_FOLDER, nameMatchers: ["controle lavoro bradesco 2026", "controle lavoro bradesco"] },
+  { ano: 2025, folder: `${CAIXA_ROOT_FOLDER}/2025`, nameMatchers: ["controle lavoro bradesco 2025", "controle lavoro bradesco"] },
+  { ano: 2024, folder: `${CAIXA_ROOT_FOLDER}/2024`, nameMatchers: ["controle lavoro bradesco 2024", "controle lavoro bradesco"] },
+  { ano: 2023, folder: `${CAIXA_ROOT_FOLDER}/2023`, nameMatchers: ["controle lavoro - 2023", "controle lavoro 2023", "controle lavoro bradesco 2023", "controle lavoro"] },
+];
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
