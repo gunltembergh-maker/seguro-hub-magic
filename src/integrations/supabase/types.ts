@@ -1040,6 +1040,10 @@ export type Database = {
           rota: string
         }[]
       }
+      rpc_admin_log_convite: {
+        Args: { _tipo: string; _user_id: string }
+        Returns: undefined
+      }
       rpc_admin_perfil_by_user_id: {
         Args: { _user_id: string }
         Returns: {
@@ -1051,6 +1055,10 @@ export type Database = {
           roles: Database["public"]["Enums"]["app_role"][]
           user_id: string
         }[]
+      }
+      rpc_admin_precadastrar_usuario: {
+        Args: { _email: string; _full_name: string; _perfil_id: string }
+        Returns: string
       }
       rpc_admin_ramo_append: {
         Args: { _rows: Json; _sync_id: string }
@@ -1086,6 +1094,16 @@ export type Database = {
         Args: {
           _active: boolean
           _blocked: boolean
+          _perfil_id: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
+      rpc_admin_update_user_v2: {
+        Args: {
+          _active: boolean
+          _blocked: boolean
+          _full_name: string
           _perfil_id: string
           _user_id: string
         }
