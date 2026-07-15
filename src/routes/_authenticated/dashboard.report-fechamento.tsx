@@ -548,7 +548,7 @@ function AbaEvolucao({ data, loading, ano }: { data: any; loading: boolean; ano:
         const serie = buildSerie(b.rows);
         const anoAnt = ano - 1;
         // Totais por canal (YTD) e totais mês/YoY
-        const totalCanalAno = (c: string, a: number) => b.rows.filter((r) => r.canal === c && r.ano === a).reduce((s, r) => s + Number(r.valor || 0), 0);
+        const totalCanalAno = (c: string, a: number) => b.rows.filter((r: any) => r.canal === c && r.ano === a).reduce((s: number, r: any) => s + Number(r.valor || 0), 0);
         const totalMesAno = (m: number, a: number) => CANAIS.reduce((s, c) => s + getValor(b.rows, a, m, c), 0);
         return (
           <section key={b.titulo} className="rounded-lg border bg-white p-4 shadow-sm">
