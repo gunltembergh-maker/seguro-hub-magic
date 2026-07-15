@@ -69,9 +69,10 @@ async function getGraphToken(creds: { tenant_id: string; client_id: string; clie
 
 async function graphGet(token: string, url: string, attempt = 1): Promise<Response> {
   const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-  if ((r.status === 429 || [500, 502, 503, 504].includes(r.status)) && attempt < 4) {
+  if ((r.status === 429 || [500, 502, 503, 504].includes(r.status)) && attempt < 6) {
     const retryAfter = Number(r.headers.get("retry-after"));
-    const wait = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : Math.min(2 ** attempt * 500, 6000);
+    const wait = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : Math.min(2 ** attempt * 750, 15000);
+    console.log(`[sync-lavoro-bases] graphGet retry ${attempt} status=${r.status} wait=${wait}ms url=${url.slice(0, 160)}`);
     await new Promise((resolve) => setTimeout(resolve, wait));
     return graphGet(token, url, attempt + 1);
   }
