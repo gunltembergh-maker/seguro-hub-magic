@@ -17,6 +17,9 @@ import {
   BarChart3,
   CornerDownRight,
   Mail,
+} from "lucide-react";
+
+
 
 
 import logoBranca from "@/assets/logo-branca.png.asset.json";
