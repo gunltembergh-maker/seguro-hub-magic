@@ -540,7 +540,7 @@ function AbaEvolucao({ data, loading, ano }: { data: any; loading: boolean; ano:
   ];
 
   const getValor = (rows: any[], a: number, m: number, c: string) =>
-    rows.filter((r) => r.ano === a && r.mes === m && r.canal === c).reduce((s, r) => s + Number(r.valor || 0), 0);
+    rows.filter((r: any) => r.ano === a && r.mes === m && r.canal === c).reduce((s: number, r: any) => s + Number(r.valor || 0), 0);
 
   return (
     <div className="space-y-6">
