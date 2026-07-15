@@ -20,7 +20,6 @@ import { Route as AuthenticatedGarantiaRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedFinanceiroRouteImport } from './routes/_authenticated/financeiro'
 import { Route as AuthenticatedFacilitiesRouteImport } from './routes/_authenticated/facilities'
 import { Route as AuthenticatedDemaisRamosRouteImport } from './routes/_authenticated/demais-ramos'
-import { Route as AuthenticatedComunicadosRouteImport } from './routes/_authenticated/comunicados'
 import { Route as AuthenticatedBeneficiosRouteImport } from './routes/_authenticated/beneficios'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as AuthenticatedDashboardReportFechamentoRouteImport } from './routes/_authenticated/dashboard.report-fechamento'
@@ -32,7 +31,9 @@ import { Route as AuthenticatedAdminPerfisRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAdminImportarBasesRouteImport } from './routes/_authenticated/admin/importar-bases'
 import { Route as AuthenticatedAdminEmailsRouteImport } from './routes/_authenticated/admin/emails'
 import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_authenticated/admin/configuracoes'
+import { Route as AuthenticatedAdminComunicadosRouteImport } from './routes/_authenticated/admin/comunicados'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
+import { Route as AuthenticatedAdminEmailsLogRouteImport } from './routes/_authenticated/admin/emails.log'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -88,12 +89,6 @@ const AuthenticatedDemaisRamosRoute =
   AuthenticatedDemaisRamosRouteImport.update({
     id: '/demais-ramos',
     path: '/demais-ramos',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedComunicadosRoute =
-  AuthenticatedComunicadosRouteImport.update({
-    id: '/comunicados',
-    path: '/comunicados',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedBeneficiosRoute = AuthenticatedBeneficiosRouteImport.update({
@@ -160,11 +155,23 @@ const AuthenticatedAdminConfiguracoesRoute =
     path: '/configuracoes',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminComunicadosRoute =
+  AuthenticatedAdminComunicadosRouteImport.update({
+    id: '/comunicados',
+    path: '/comunicados',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const LovableEmailTransactionalPreviewRoute =
   LovableEmailTransactionalPreviewRouteImport.update({
     id: '/lovable/email/transactional/preview',
     path: '/lovable/email/transactional/preview',
     getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedAdminEmailsLogRoute =
+  AuthenticatedAdminEmailsLogRouteImport.update({
+    id: '/log',
+    path: '/log',
+    getParentRoute: () => AuthenticatedAdminEmailsRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -172,7 +179,6 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/beneficios': typeof AuthenticatedBeneficiosRoute
-  '/comunicados': typeof AuthenticatedComunicadosRoute
   '/demais-ramos': typeof AuthenticatedDemaisRamosRoute
   '/facilities': typeof AuthenticatedFacilitiesRoute
   '/financeiro': typeof AuthenticatedFinanceiroRoute
@@ -181,8 +187,9 @@ export interface FileRoutesByFullPath {
   '/juridico': typeof AuthenticatedJuridicoRoute
   '/middle': typeof AuthenticatedMiddleRoute
   '/operacional': typeof AuthenticatedOperacionalRoute
+  '/admin/comunicados': typeof AuthenticatedAdminComunicadosRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
-  '/admin/emails': typeof AuthenticatedAdminEmailsRoute
+  '/admin/emails': typeof AuthenticatedAdminEmailsRouteWithChildren
   '/admin/importar-bases': typeof AuthenticatedAdminImportarBasesRoute
   '/admin/perfis': typeof AuthenticatedAdminPerfisRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
@@ -190,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/receita-caixa': typeof AuthenticatedDashboardReceitaCaixaRoute
   '/dashboard/receita-executivo': typeof AuthenticatedDashboardReceitaExecutivoRoute
   '/dashboard/report-fechamento': typeof AuthenticatedDashboardReportFechamentoRoute
+  '/admin/emails/log': typeof AuthenticatedAdminEmailsLogRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesByTo {
@@ -197,7 +205,6 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/beneficios': typeof AuthenticatedBeneficiosRoute
-  '/comunicados': typeof AuthenticatedComunicadosRoute
   '/demais-ramos': typeof AuthenticatedDemaisRamosRoute
   '/facilities': typeof AuthenticatedFacilitiesRoute
   '/financeiro': typeof AuthenticatedFinanceiroRoute
@@ -206,8 +213,9 @@ export interface FileRoutesByTo {
   '/juridico': typeof AuthenticatedJuridicoRoute
   '/middle': typeof AuthenticatedMiddleRoute
   '/operacional': typeof AuthenticatedOperacionalRoute
+  '/admin/comunicados': typeof AuthenticatedAdminComunicadosRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
-  '/admin/emails': typeof AuthenticatedAdminEmailsRoute
+  '/admin/emails': typeof AuthenticatedAdminEmailsRouteWithChildren
   '/admin/importar-bases': typeof AuthenticatedAdminImportarBasesRoute
   '/admin/perfis': typeof AuthenticatedAdminPerfisRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
@@ -215,6 +223,7 @@ export interface FileRoutesByTo {
   '/dashboard/receita-caixa': typeof AuthenticatedDashboardReceitaCaixaRoute
   '/dashboard/receita-executivo': typeof AuthenticatedDashboardReceitaExecutivoRoute
   '/dashboard/report-fechamento': typeof AuthenticatedDashboardReportFechamentoRoute
+  '/admin/emails/log': typeof AuthenticatedAdminEmailsLogRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesById {
@@ -224,7 +233,6 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/_authenticated/beneficios': typeof AuthenticatedBeneficiosRoute
-  '/_authenticated/comunicados': typeof AuthenticatedComunicadosRoute
   '/_authenticated/demais-ramos': typeof AuthenticatedDemaisRamosRoute
   '/_authenticated/facilities': typeof AuthenticatedFacilitiesRoute
   '/_authenticated/financeiro': typeof AuthenticatedFinanceiroRoute
@@ -233,8 +241,9 @@ export interface FileRoutesById {
   '/_authenticated/juridico': typeof AuthenticatedJuridicoRoute
   '/_authenticated/middle': typeof AuthenticatedMiddleRoute
   '/_authenticated/operacional': typeof AuthenticatedOperacionalRoute
+  '/_authenticated/admin/comunicados': typeof AuthenticatedAdminComunicadosRoute
   '/_authenticated/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
-  '/_authenticated/admin/emails': typeof AuthenticatedAdminEmailsRoute
+  '/_authenticated/admin/emails': typeof AuthenticatedAdminEmailsRouteWithChildren
   '/_authenticated/admin/importar-bases': typeof AuthenticatedAdminImportarBasesRoute
   '/_authenticated/admin/perfis': typeof AuthenticatedAdminPerfisRoute
   '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
@@ -242,6 +251,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/receita-caixa': typeof AuthenticatedDashboardReceitaCaixaRoute
   '/_authenticated/dashboard/receita-executivo': typeof AuthenticatedDashboardReceitaExecutivoRoute
   '/_authenticated/dashboard/report-fechamento': typeof AuthenticatedDashboardReportFechamentoRoute
+  '/_authenticated/admin/emails/log': typeof AuthenticatedAdminEmailsLogRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRouteTypes {
@@ -251,7 +261,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/admin'
     | '/beneficios'
-    | '/comunicados'
     | '/demais-ramos'
     | '/facilities'
     | '/financeiro'
@@ -260,6 +269,7 @@ export interface FileRouteTypes {
     | '/juridico'
     | '/middle'
     | '/operacional'
+    | '/admin/comunicados'
     | '/admin/configuracoes'
     | '/admin/emails'
     | '/admin/importar-bases'
@@ -269,6 +279,7 @@ export interface FileRouteTypes {
     | '/dashboard/receita-caixa'
     | '/dashboard/receita-executivo'
     | '/dashboard/report-fechamento'
+    | '/admin/emails/log'
     | '/lovable/email/transactional/preview'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -276,7 +287,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/admin'
     | '/beneficios'
-    | '/comunicados'
     | '/demais-ramos'
     | '/facilities'
     | '/financeiro'
@@ -285,6 +295,7 @@ export interface FileRouteTypes {
     | '/juridico'
     | '/middle'
     | '/operacional'
+    | '/admin/comunicados'
     | '/admin/configuracoes'
     | '/admin/emails'
     | '/admin/importar-bases'
@@ -294,6 +305,7 @@ export interface FileRouteTypes {
     | '/dashboard/receita-caixa'
     | '/dashboard/receita-executivo'
     | '/dashboard/report-fechamento'
+    | '/admin/emails/log'
     | '/lovable/email/transactional/preview'
   id:
     | '__root__'
@@ -302,7 +314,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/admin'
     | '/_authenticated/beneficios'
-    | '/_authenticated/comunicados'
     | '/_authenticated/demais-ramos'
     | '/_authenticated/facilities'
     | '/_authenticated/financeiro'
@@ -311,6 +322,7 @@ export interface FileRouteTypes {
     | '/_authenticated/juridico'
     | '/_authenticated/middle'
     | '/_authenticated/operacional'
+    | '/_authenticated/admin/comunicados'
     | '/_authenticated/admin/configuracoes'
     | '/_authenticated/admin/emails'
     | '/_authenticated/admin/importar-bases'
@@ -320,6 +332,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/receita-caixa'
     | '/_authenticated/dashboard/receita-executivo'
     | '/_authenticated/dashboard/report-fechamento'
+    | '/_authenticated/admin/emails/log'
     | '/lovable/email/transactional/preview'
   fileRoutesById: FileRoutesById
 }
@@ -409,13 +422,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDemaisRamosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/comunicados': {
-      id: '/_authenticated/comunicados'
-      path: '/comunicados'
-      fullPath: '/comunicados'
-      preLoaderRoute: typeof AuthenticatedComunicadosRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/beneficios': {
       id: '/_authenticated/beneficios'
       path: '/beneficios'
@@ -493,6 +499,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminConfiguracoesRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/comunicados': {
+      id: '/_authenticated/admin/comunicados'
+      path: '/comunicados'
+      fullPath: '/admin/comunicados'
+      preLoaderRoute: typeof AuthenticatedAdminComunicadosRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/lovable/email/transactional/preview': {
       id: '/lovable/email/transactional/preview'
       path: '/lovable/email/transactional/preview'
@@ -500,12 +513,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin/emails/log': {
+      id: '/_authenticated/admin/emails/log'
+      path: '/log'
+      fullPath: '/admin/emails/log'
+      preLoaderRoute: typeof AuthenticatedAdminEmailsLogRouteImport
+      parentRoute: typeof AuthenticatedAdminEmailsRoute
+    }
   }
 }
 
+interface AuthenticatedAdminEmailsRouteChildren {
+  AuthenticatedAdminEmailsLogRoute: typeof AuthenticatedAdminEmailsLogRoute
+}
+
+const AuthenticatedAdminEmailsRouteChildren: AuthenticatedAdminEmailsRouteChildren =
+  {
+    AuthenticatedAdminEmailsLogRoute: AuthenticatedAdminEmailsLogRoute,
+  }
+
+const AuthenticatedAdminEmailsRouteWithChildren =
+  AuthenticatedAdminEmailsRoute._addFileChildren(
+    AuthenticatedAdminEmailsRouteChildren,
+  )
+
 interface AuthenticatedAdminRouteRouteChildren {
+  AuthenticatedAdminComunicadosRoute: typeof AuthenticatedAdminComunicadosRoute
   AuthenticatedAdminConfiguracoesRoute: typeof AuthenticatedAdminConfiguracoesRoute
-  AuthenticatedAdminEmailsRoute: typeof AuthenticatedAdminEmailsRoute
+  AuthenticatedAdminEmailsRoute: typeof AuthenticatedAdminEmailsRouteWithChildren
   AuthenticatedAdminImportarBasesRoute: typeof AuthenticatedAdminImportarBasesRoute
   AuthenticatedAdminPerfisRoute: typeof AuthenticatedAdminPerfisRoute
   AuthenticatedAdminUsuariosRoute: typeof AuthenticatedAdminUsuariosRoute
@@ -513,8 +548,9 @@ interface AuthenticatedAdminRouteRouteChildren {
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
   {
+    AuthenticatedAdminComunicadosRoute: AuthenticatedAdminComunicadosRoute,
     AuthenticatedAdminConfiguracoesRoute: AuthenticatedAdminConfiguracoesRoute,
-    AuthenticatedAdminEmailsRoute: AuthenticatedAdminEmailsRoute,
+    AuthenticatedAdminEmailsRoute: AuthenticatedAdminEmailsRouteWithChildren,
     AuthenticatedAdminImportarBasesRoute: AuthenticatedAdminImportarBasesRoute,
     AuthenticatedAdminPerfisRoute: AuthenticatedAdminPerfisRoute,
     AuthenticatedAdminUsuariosRoute: AuthenticatedAdminUsuariosRoute,
@@ -528,7 +564,6 @@ const AuthenticatedAdminRouteRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
   AuthenticatedBeneficiosRoute: typeof AuthenticatedBeneficiosRoute
-  AuthenticatedComunicadosRoute: typeof AuthenticatedComunicadosRoute
   AuthenticatedDemaisRamosRoute: typeof AuthenticatedDemaisRamosRoute
   AuthenticatedFacilitiesRoute: typeof AuthenticatedFacilitiesRoute
   AuthenticatedFinanceiroRoute: typeof AuthenticatedFinanceiroRoute
@@ -546,7 +581,6 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
   AuthenticatedBeneficiosRoute: AuthenticatedBeneficiosRoute,
-  AuthenticatedComunicadosRoute: AuthenticatedComunicadosRoute,
   AuthenticatedDemaisRamosRoute: AuthenticatedDemaisRamosRoute,
   AuthenticatedFacilitiesRoute: AuthenticatedFacilitiesRoute,
   AuthenticatedFinanceiroRoute: AuthenticatedFinanceiroRoute,

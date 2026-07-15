@@ -11,6 +11,7 @@ import { LoadingSplash } from "@/components/loading-splash";
 import { ViewAsProvider, useViewAs } from "@/contexts/view-as-context";
 import { MinhaVisaoIndicator } from "@/components/minha-visao-indicator";
 import { ViewAsSelector } from "@/components/view-as-selector";
+import { PopupComunicado } from "@/components/popup-comunicado";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -106,6 +107,7 @@ function AuthenticatedShell() {
         </SidebarInset>
       </div>
       <MinhaVisaoIndicator />
+      <PopupComunicado />
     </SidebarProvider>
   );
 }

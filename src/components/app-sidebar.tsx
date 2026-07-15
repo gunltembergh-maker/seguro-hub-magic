@@ -43,7 +43,6 @@ import {
 
 const primary = [
   { title: "Hub", url: "/hub", icon: Home },
-  { title: "Comunicados", url: "/comunicados", icon: Megaphone },
 ];
 
 const areas = [
@@ -84,9 +83,11 @@ export function AppSidebar() {
   const adminItems = [
     { title: "Usuários", url: "/admin/usuarios", icon: Users, show: isAdmin },
     { title: "Perfis", url: "/admin/perfis", icon: KeyRound, show: isAdmin },
+    { title: "Comunicados", url: "/admin/comunicados", icon: Megaphone, show: isAdmin },
     { title: "Importar Bases", url: "/admin/importar-bases", icon: Upload,
       show: isAdmin || hasPermission(meuPerfil, "menu_importar_gerencial") || hasPermission(meuPerfil, "menu_importar_caixa") },
     { title: "Emails", url: "/admin/emails", icon: Mail, show: isAdmin },
+    { title: "Log de Emails", url: "/admin/emails/log", icon: Mail, show: isAdmin },
     { title: "Configurações", url: "/admin/configuracoes", icon: Settings,
       show: hasPermission(meuPerfil, "menu_admin_configuracoes") },
 

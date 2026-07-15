@@ -14,6 +14,119 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_popup_dismissals: {
+        Row: {
+          dismissed_at: string
+          id: string
+          popup_id: string
+          user_id: string
+        }
+        Insert: {
+          dismissed_at?: string
+          id?: string
+          popup_id: string
+          user_id: string
+        }
+        Update: {
+          dismissed_at?: string
+          id?: string
+          popup_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_popup_dismissals_popup_id_fkey"
+            columns: ["popup_id"]
+            isOneToOne: false
+            referencedRelation: "admin_popups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_popups: {
+        Row: {
+          ativo: boolean
+          botao_label: string | null
+          cor_fundo: string | null
+          cor_texto: string | null
+          created_at: string
+          criado_por: string | null
+          data_fim: string | null
+          data_inicio: string
+          destinatarios: string[] | null
+          id: string
+          logo_url: string | null
+          mensagem: string
+          mostrar_nome_hub: boolean | null
+          paginas: string[] | null
+          perfis: string[] | null
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          botao_label?: string | null
+          cor_fundo?: string | null
+          cor_texto?: string | null
+          created_at?: string
+          criado_por?: string | null
+          data_fim?: string | null
+          data_inicio?: string
+          destinatarios?: string[] | null
+          id?: string
+          logo_url?: string | null
+          mensagem: string
+          mostrar_nome_hub?: boolean | null
+          paginas?: string[] | null
+          perfis?: string[] | null
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          botao_label?: string | null
+          cor_fundo?: string | null
+          cor_texto?: string | null
+          created_at?: string
+          criado_por?: string | null
+          data_fim?: string | null
+          data_inicio?: string
+          destinatarios?: string[] | null
+          id?: string
+          logo_url?: string | null
+          mensagem?: string
+          mostrar_nome_hub?: boolean | null
+          paginas?: string[] | null
+          perfis?: string[] | null
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      admin_rotas: {
+        Row: {
+          ativo: boolean | null
+          created_at: string | null
+          id: string
+          nome: string
+          rota: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string | null
+          id?: string
+          nome: string
+          rota: string
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string | null
+          id?: string
+          nome?: string
+          rota?: string
+        }
+        Relationships: []
+      }
       dominio_empresa: {
         Row: {
           ativo: boolean
@@ -35,6 +148,42 @@ export type Database = {
           dominio?: string
           id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      email_send_log: {
+        Row: {
+          created_at: string
+          disparado_por: string | null
+          error_message: string | null
+          id: string
+          message_id: string | null
+          metadata: Json | null
+          recipient_email: string
+          status: string
+          template_name: string
+        }
+        Insert: {
+          created_at?: string
+          disparado_por?: string | null
+          error_message?: string | null
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+          recipient_email: string
+          status: string
+          template_name: string
+        }
+        Update: {
+          created_at?: string
+          disparado_por?: string | null
+          error_message?: string | null
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+          recipient_email?: string
+          status?: string
+          template_name?: string
         }
         Relationships: []
       }
@@ -723,6 +872,7 @@ export type Database = {
       }
       rpc_admin_caixa_reset: { Args: never; Returns: string }
       rpc_admin_delete_perfil: { Args: { _id: string }; Returns: undefined }
+      rpc_admin_excluir_popup: { Args: { p_id: string }; Returns: Json }
       rpc_admin_gerencial_append: {
         Args: { _rows: Json; _sync_id: string }
         Returns: number
@@ -779,6 +929,36 @@ export type Database = {
           user_id: string
         }[]
       }
+      rpc_admin_listar_popups: {
+        Args: never
+        Returns: {
+          ativo: boolean
+          botao_label: string
+          cor_fundo: string
+          cor_texto: string
+          created_at: string
+          data_fim: string
+          data_inicio: string
+          destinatarios: string[]
+          id: string
+          logo_url: string
+          mensagem: string
+          mostrar_nome_hub: boolean
+          paginas: string[]
+          perfis: string[]
+          titulo: string
+          total_dismiss: number
+          total_views: number
+        }[]
+      }
+      rpc_admin_listar_rotas: {
+        Args: never
+        Returns: {
+          ativo: boolean
+          nome: string
+          rota: string
+        }[]
+      }
       rpc_admin_perfil_by_user_id: {
         Args: { _user_id: string }
         Returns: {
@@ -797,6 +977,24 @@ export type Database = {
       rpc_admin_ramo_append: {
         Args: { _rows: Json; _sync_id: string }
         Returns: number
+      }
+      rpc_admin_salvar_popup: {
+        Args: {
+          p_ativo?: boolean
+          p_botao_label?: string
+          p_cor_fundo?: string
+          p_data_fim?: string
+          p_data_inicio?: string
+          p_destinatarios?: string[]
+          p_id?: string
+          p_logo_url?: string
+          p_mensagem?: string
+          p_mostrar_nome_hub?: boolean
+          p_paginas?: string[]
+          p_perfis?: string[]
+          p_titulo?: string
+        }
+        Returns: string
       }
       rpc_admin_update_user: {
         Args: {
@@ -823,6 +1021,7 @@ export type Database = {
           tipo_de_ramo: string
         }[]
       }
+      rpc_dispensar_popup: { Args: { p_popup_id: string }; Returns: Json }
       rpc_fechamento_a_receber: {
         Args: { p_ano: number; p_gran: string; p_periodo: number }
         Returns: Json
@@ -878,6 +1077,21 @@ export type Database = {
         Returns: Json
       }
       rpc_get_meta_anual: { Args: { _ano: number }; Returns: number }
+      rpc_get_popups_ativos: {
+        Args: { p_pagina?: string }
+        Returns: {
+          botao_label: string
+          cor_fundo: string
+          cor_texto: string
+          data_fim: string
+          id: string
+          logo_url: string
+          mensagem: string
+          mostrar_nome_hub: boolean
+          paginas: string[]
+          titulo: string
+        }[]
+      }
       rpc_inicio_lavoro_resumo: {
         Args: never
         Returns: {
