@@ -12,6 +12,7 @@ import { useMeuPerfil, hasRole } from "@/hooks/use-meu-perfil";
 import { usePerfis } from "@/hooks/use-admin-data";
 import {
   useAdminUsersV2, useConvitesExternos, useAtividadeUsuario,
+  useSendAuthEmail, usePreCadastrarUsuario, useUpdateUserV2,
   type AdminUserV2, type ConviteExterno,
 } from "@/hooks/use-admin-users-v2";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -188,6 +189,35 @@ function AdminUsuariosPage() {
         ))}
       </div>
 
+      {(() => {
+        const pendentes = (users ?? []).filter(u => u.blocked && !u.perfil_id);
+        if (!pendentes.length) return null;
+        return (
+          <Card className="mb-6 border-amber-500/40 bg-amber-500/5">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base text-amber-800">
+                <Clock className="h-4 w-4" /> Aguardando aprovação ({pendentes.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {pendentes.map(u => (
+                  <li key={u.user_id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-amber-500/30 bg-background p-2 text-sm">
+                    <div>
+                      <div className="font-medium">{u.full_name ?? "—"}</div>
+                      <div className="text-xs text-muted-foreground">{u.email}</div>
+                    </div>
+                    <Button size="sm" className="gap-1.5" onClick={() => setApproving(u)}>
+                      <UserCheck className="h-3.5 w-3.5" /> Aprovar
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        );
+      })()}
+
       <Tabs defaultValue="usuarios">
         <TabsList>
           <TabsTrigger value="usuarios">Usuários</TabsTrigger>
@@ -318,7 +348,7 @@ function AdminUsuariosPage() {
           onDone={() => { setConvidarOpen(false); refresh(); }} />
       )}
       {convidarInternoOpen && (
-        <NovoInternoDialog onClose={() => setConvidarInternoOpen(false)} />
+        <NovoInternoDialog perfis={perfis ?? []} onClose={() => setConvidarInternoOpen(false)} />
       )}
       {deletingUser && (
         <AlertDialog open onOpenChange={(o) => !o && setDeletingUser(null)}>
@@ -389,27 +419,23 @@ function ApproveDialog({ user, perfis, onClose, onDone }: { user: AdminUserV2; p
 }
 
 function EditDialog({ user, perfis, onClose, onDone }: { user: AdminUserV2; perfis: { id: string; nome: string }[]; onClose: () => void; onDone: () => void }) {
+  const [fullName, setFullName] = useState(user.full_name ?? "");
   const [perfilId, setPerfilId] = useState(user.perfil_id ?? "");
   const [blocked, setBlocked] = useState(user.blocked);
   const [active, setActive] = useState(user.active);
-  const mut = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.rpc("rpc_admin_update_user", {
-        _user_id: user.user_id, _perfil_id: perfilId || null, _blocked: blocked, _active: active,
-      } as never);
-      if (error) throw error;
-    },
-    onSuccess: () => { toast.success("Usuário atualizado"); onDone(); },
-    onError: (e: Error) => toast.error("Falha ao atualizar", { description: e.message }),
-  });
+  const mut = useUpdateUserV2();
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
         <DialogHeader><DialogTitle>Editar usuário</DialogTitle></DialogHeader>
         <div className="space-y-4">
-          <div className="rounded-lg border border-border bg-muted/40 p-3 text-sm">
-            <div className="font-medium">{user.full_name ?? user.email}</div>
-            <div className="text-muted-foreground">{user.email}</div>
+          <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs">
+            <div className="text-muted-foreground">E-mail (não editável)</div>
+            <div className="font-medium">{user.email}</div>
+          </div>
+          <div className="space-y-2">
+            <Label>Nome completo</Label>
+            <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Nome do colaborador" />
           </div>
           <div className="space-y-2">
             <Label>Perfil de acesso</Label>
@@ -425,13 +451,20 @@ function EditDialog({ user, perfis, onClose, onDone }: { user: AdminUserV2; perf
             <Switch checked={active} onCheckedChange={setActive} />
           </div>
           <div className="flex items-center justify-between rounded-lg border border-border p-3">
-            <div><div className="text-sm font-medium">Bloqueado</div><div className="text-xs text-muted-foreground">Marca como aguardando aprovação</div></div>
+            <div><div className="text-sm font-medium">Bloqueado</div><div className="text-xs text-muted-foreground">Impede o login (bane no auth)</div></div>
             <Switch checked={blocked} onCheckedChange={setBlocked} />
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={() => mut.mutate()} disabled={mut.isPending} className="gap-2">
+          <Button
+            onClick={() => mut.mutate(
+              { user_id: user.user_id, full_name: fullName, perfil_id: perfilId || null, blocked, active },
+              { onSuccess: () => onDone() },
+            )}
+            disabled={mut.isPending}
+            className="gap-2"
+          >
             {mut.isPending && <Loader2 className="h-4 w-4 animate-spin" />} Salvar
           </Button>
         </DialogFooter>
@@ -495,32 +528,77 @@ function ConvidarExternoDialog({ perfis, onClose, onDone }: { perfis: { id: stri
   );
 }
 
-function NovoInternoDialog({ onClose }: { onClose: () => void }) {
+function NovoInternoDialog({ onClose, perfis }: { onClose: () => void; perfis: { id: string; nome: string }[] }) {
+  const [email, setEmail] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [perfilId, setPerfilId] = useState("");
+  const [sendInvite, setSendInvite] = useState(true);
+  const preCad = usePreCadastrarUsuario();
+  const send = useSendAuthEmail();
+
+  const handleSave = async () => {
+    const clean = email.trim().toLowerCase();
+    if (!/^\S+@\S+\.\S+$/.test(clean)) { toast.error("E-mail inválido"); return; }
+    if (!clean.endsWith(`@${LAVORO_DOMAIN}`)) { toast.error(`Use "Convidar externo" para e-mails fora de @${LAVORO_DOMAIN}`); return; }
+    if (!perfilId) { toast.error("Selecione um perfil"); return; }
+    await preCad.mutateAsync({ email: clean, full_name: fullName, perfil_id: perfilId });
+    if (sendInvite) {
+      try { await send.mutateAsync({ email: clean, tipo: "invite" }); } catch { /* toast handled */ }
+    }
+    onClose();
+  };
+
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Novo cadastro (interno)</DialogTitle>
-          <DialogDescription>Como funciona o cadastro de colaboradores Lavoro</DialogDescription>
+          <DialogTitle>Pré-cadastrar colaborador interno</DialogTitle>
+          <DialogDescription>
+            Cadastre um e-mail <strong>@{LAVORO_DOMAIN}</strong> já com perfil definido. Opcionalmente envie o convite por e-mail agora.
+          </DialogDescription>
         </DialogHeader>
-        <div className="space-y-3 text-sm">
-          <p>Colaboradores com e-mail <strong>@{LAVORO_DOMAIN}</strong> são cadastrados automaticamente quando fazem o primeiro login no Hub.</p>
-          <ol className="ml-4 list-decimal space-y-1 text-muted-foreground">
-            <li>Peça ao colaborador para acessar o Hub e entrar com o login Lavoro.</li>
-            <li>O acesso ficará como <em>Aguardando aprovação</em> nesta tela.</li>
-            <li>Clique em <strong>Aprovar</strong> na linha dele para atribuir o perfil de acesso.</li>
-          </ol>
-          <p className="text-xs text-muted-foreground">
-            Para conceder acesso a alguém fora do domínio Lavoro, use <strong>Convidar externo</strong>.
-          </p>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>E-mail Lavoro</Label>
+            <Input type="email" placeholder={`nome@${LAVORO_DOMAIN}`} value={email} onChange={(e) => setEmail(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label>Nome completo</Label>
+            <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Nome do colaborador" />
+          </div>
+          <div className="space-y-2">
+            <Label>Perfil de acesso</Label>
+            <Select value={perfilId} onValueChange={setPerfilId}>
+              <SelectTrigger><SelectValue placeholder="Selecione um perfil" /></SelectTrigger>
+              <SelectContent>
+                {perfis.map(p => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center justify-between rounded-lg border border-border p-3">
+            <div>
+              <div className="text-sm font-medium">Enviar convite agora</div>
+              <div className="text-xs text-muted-foreground">Envia o e-mail do Supabase Auth para o colaborador definir a senha.</div>
+            </div>
+            <Switch checked={sendInvite} onCheckedChange={setSendInvite} />
+          </div>
         </div>
-        <DialogFooter><Button onClick={onClose}>Entendi</Button></DialogFooter>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={handleSave} disabled={preCad.isPending || send.isPending} className="gap-2">
+            {(preCad.isPending || send.isPending) && <Loader2 className="h-4 w-4 animate-spin" />} Cadastrar
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
 
 function UserDetailSheet({ user, onClose }: { user: AdminUserV2; onClose: () => void }) {
+  const sendEmail = useSendAuthEmail();
+  const doSend = (tipo: "invite" | "magiclink" | "recovery") =>
+    sendEmail.mutate({ user_id: user.user_id, email: user.email, tipo });
+
   const { data: atividades, isLoading } = useAtividadeUsuario(user.user_id);
   return (
     <Sheet open onOpenChange={(o) => !o && onClose()}>
@@ -556,6 +634,25 @@ function UserDetailSheet({ user, onClose }: { user: AdminUserV2; onClose: () => 
               <div className="font-medium">{user.roles.join(", ") || "—"}</div>
             </div>
           </div>
+
+          <div className="rounded-lg border border-border p-3">
+            <div className="mb-2 text-xs font-semibold text-muted-foreground">Ações rápidas</div>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="outline" className="gap-1.5" disabled={sendEmail.isPending}
+                onClick={() => doSend("invite")}>
+                <Mail className="h-3.5 w-3.5" /> Enviar convite
+              </Button>
+              <Button size="sm" variant="outline" className="gap-1.5" disabled={sendEmail.isPending}
+                onClick={() => doSend("magiclink")}>
+                <Mail className="h-3.5 w-3.5" /> Magic link
+              </Button>
+              <Button size="sm" variant="outline" className="gap-1.5" disabled={sendEmail.isPending}
+                onClick={() => doSend("recovery")}>
+                <Mail className="h-3.5 w-3.5" /> Resetar senha
+              </Button>
+            </div>
+          </div>
+
 
           <div>
             <h3 className="mb-2 text-sm font-semibold">Atividade recente</h3>
