@@ -394,41 +394,80 @@ async function syncGerencialBase(admin: ReturnType<typeof createClient>, token: 
   }
 }
 
+async function syncCaixaSingleFile(
+  admin: ReturnType<typeof createClient>,
+  token: string,
+  siteId: string,
+  caixaPath: string,
+  syncId: string,
+): Promise<{ rows: number; totalReadRows: number; totalComissao: number }> {
+  const target = await resolveDriveItemTarget(token, siteId, caixaPath);
+  const sheet = await resolveWorkbookSheet(token, target, "Descrição Financeira (Caixa)");
+  const dims = await getSheetDimensions(token, target, sheet);
+  const lastCol = colToLetter(dims.columnCount);
+  const headers = ((await readRangeValues(token, target, sheet, `A2:${lastCol}2`))[0] || []).map((h) => String(h ?? "").trim());
+
+  let totalReadRows = 0;
+  let rows = 0;
+  let totalComissao = 0;
+  const batch: Record<string, unknown>[] = [];
+  for (let r = 3; r <= dims.rowCount; r += READ_CHUNK) {
+    const end = Math.min(r + READ_CHUNK - 1, dims.rowCount);
+    const values = await readRangeValues(token, target, sheet, `A${r}:${lastCol}${end}`);
+    for (const rowVals of values) {
+      const raw = rowFromValues(headers, rowVals);
+      if (!raw) continue;
+      const c = convertCaixaRawRow(raw, syncId);
+      if (!c) continue;
+      totalReadRows++;
+      if (!isCaixaComissaoConvertedRow(c)) continue;
+      batch.push(c);
+      rows++;
+      totalComissao += Number(c.valor) || 0;
+    }
+    await flushBatch(admin, "raw_lavoro_caixa_comissao", batch);
+  }
+  return { rows, totalReadRows, totalComissao };
+}
+
 async function syncCaixaBase(admin: ReturnType<typeof createClient>, token: string, siteId: string, result: Record<string, any>): Promise<CaixaSyncResult> {
   const syncId = uuidv4();
   await createPendingSyncLog(admin, syncId, "caixa");
   try {
-    const caixaPath = await findCurrentCaixaFile(token, siteId);
-    result.caixaPath = caixaPath;
-    const target = await resolveDriveItemTarget(token, siteId, caixaPath);
-    const sheet = await resolveWorkbookSheet(token, target, "Descrição Financeira (Caixa)");
-    const dims = await getSheetDimensions(token, target, sheet);
-    const lastCol = colToLetter(dims.columnCount);
-    const headers = ((await readRangeValues(token, target, sheet, `A2:${lastCol}2`))[0] || []).map((h) => String(h ?? "").trim());
+    // Snapshot completo: apagamos a raw antes de inserir todos os anos.
+    const del = await admin.from("raw_lavoro_caixa_comissao").delete().neq("id", -1);
+    if (del.error) throw new Error(`Limpar raw_lavoro_caixa_comissao: ${del.error.message}`);
 
+    const perYear: Record<string, { path: string | null; rows: number; totalRead: number; totalComissao: number; error?: string }> = {};
+    let rowsTotal = 0;
     let totalReadRows = 0;
-    let rows = 0;
     let totalComissao = 0;
-    const batch: Record<string, unknown>[] = [];
-    for (let r = 3; r <= dims.rowCount; r += READ_CHUNK) {
-      const end = Math.min(r + READ_CHUNK - 1, dims.rowCount);
-      const values = await readRangeValues(token, target, sheet, `A${r}:${lastCol}${end}`);
-      for (const rowVals of values) {
-        const raw = rowFromValues(headers, rowVals);
-        if (!raw) continue;
-        const c = convertCaixaRawRow(raw, syncId);
-        if (!c) continue;
-        totalReadRows++;
-        if (!isCaixaComissaoConvertedRow(c)) continue;
-        batch.push(c);
-        rows++;
-        totalComissao += Number(c.valor) || 0;
+
+    for (const yearTarget of CAIXA_YEAR_TARGETS) {
+      const caixaPath = await findCaixaFileForYear(token, siteId, yearTarget);
+      if (!caixaPath) {
+        perYear[String(yearTarget.ano)] = { path: null, rows: 0, totalRead: 0, totalComissao: 0, error: "arquivo não encontrado" };
+        continue;
       }
-      await flushBatch(admin, "raw_lavoro_caixa_comissao", batch);
+      try {
+        const res = await syncCaixaSingleFile(admin, token, siteId, caixaPath, syncId);
+        perYear[String(yearTarget.ano)] = { path: caixaPath, rows: res.rows, totalRead: res.totalReadRows, totalComissao: res.totalComissao };
+        rowsTotal += res.rows;
+        totalReadRows += res.totalReadRows;
+        totalComissao += res.totalComissao;
+      } catch (err: any) {
+        const msg = err?.message ?? String(err);
+        console.error(`[sync-lavoro-bases] CAIXA ${yearTarget.ano} falhou:`, msg);
+        perYear[String(yearTarget.ano)] = { path: caixaPath, rows: 0, totalRead: 0, totalComissao: 0, error: msg };
+      }
     }
 
-    await updateSyncLog(admin, syncId, "caixa", { status: "sucesso", linhas_importadas: rows, mensagem_erro: null });
-    return { syncId, rows, totalReadRows, totalComissao };
+    result.caixaPorAno = perYear;
+    result.caixaPath = perYear[String(CAIXA_YEAR_TARGETS[0].ano)]?.path ?? null;
+
+    await updateSyncLog(admin, syncId, "caixa", { status: "sucesso", linhas_importadas: rowsTotal, mensagem_erro: null });
+    return { syncId, rows: rowsTotal, totalReadRows, totalComissao };
+
   } catch (err: any) {
     await updateSyncLog(admin, syncId, "caixa", { status: "erro", mensagem_erro: err?.message ?? String(err) });
     throw err;
