@@ -68,16 +68,53 @@ async function getGraphToken(creds: { tenant_id: string; client_id: string; clie
   return d.access_token as string;
 }
 
-async function graphGet(token: string, url: string, attempt = 1): Promise<Response> {
-  const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+async function graphGet(token: string, url: string, attempt = 1, sessionId?: string): Promise<Response> {
+  const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+  if (sessionId) headers["workbook-session-id"] = sessionId;
+  const r = await fetch(url, { headers });
   if ((r.status === 429 || [500, 502, 503, 504].includes(r.status)) && attempt < 6) {
     const retryAfter = Number(r.headers.get("retry-after"));
     const wait = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : Math.min(2 ** attempt * 750, 15000);
     console.log(`[sync-lavoro-bases] graphGet retry ${attempt} status=${r.status} wait=${wait}ms url=${url.slice(0, 160)}`);
     await new Promise((resolve) => setTimeout(resolve, wait));
-    return graphGet(token, url, attempt + 1);
+    return graphGet(token, url, attempt + 1, sessionId);
   }
   return r;
+}
+
+async function createWorkbookSession(token: string, target: DriveItemTarget): Promise<string | undefined> {
+  try {
+    const r = await fetch(
+      `https://graph.microsoft.com/v1.0/drives/${target.driveId}/items/${target.itemId}/workbook/createSession`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ persistChanges: false }),
+      },
+    );
+    if (!r.ok) {
+      console.warn(`[sync-lavoro-bases] createSession falhou ${r.status}: ${(await r.text()).slice(0, 200)}`);
+      return undefined;
+    }
+    const j = await r.json();
+    console.log(`[sync-lavoro-bases] Workbook session criada para "${target.itemName}"`);
+    return j.id as string;
+  } catch (err) {
+    console.warn(`[sync-lavoro-bases] createSession exception:`, (err as Error).message);
+    return undefined;
+  }
+}
+
+async function closeWorkbookSession(token: string, target: DriveItemTarget, sessionId: string) {
+  try {
+    await fetch(
+      `https://graph.microsoft.com/v1.0/drives/${target.driveId}/items/${target.itemId}/workbook/closeSession`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "workbook-session-id": sessionId },
+      },
+    );
+  } catch { /* ignore */ }
 }
 
 type SharePointDrive = { id: string; name: string; webUrl?: string };
