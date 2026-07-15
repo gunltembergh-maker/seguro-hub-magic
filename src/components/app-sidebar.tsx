@@ -43,7 +43,6 @@ import {
 
 const primary = [
   { title: "Hub", url: "/hub", icon: Home },
-  { title: "Comunicados", url: "/comunicados", icon: Megaphone },
 ];
 
 const areas = [
