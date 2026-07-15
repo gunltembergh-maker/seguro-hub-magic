@@ -20,8 +20,8 @@ declare const EdgeRuntime: { waitUntil(promise: Promise<void>): void };
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-const RAW_SHAREPOINT_HOSTNAME = Deno.env.get("LAVORO_SHAREPOINT_HOSTNAME") ?? "seguroslavoro.sharepoint.com";
-const RAW_SHAREPOINT_SITE_PATH = Deno.env.get("LAVORO_SHAREPOINT_SITE_PATH") ?? "";
+const SHAREPOINT_HOSTNAME = Deno.env.get("LAVORO_SHAREPOINT_HOSTNAME") ?? "seguroslavoro.sharepoint.com";
+const SHAREPOINT_SITE_PATH = Deno.env.get("LAVORO_SHAREPOINT_SITE_PATH") ?? "";
 const GERENCIAL_FILE_PATH = "Financeiro/NF's e Extratos/Controle Gerencial - Financeiro.xlsx";
 const CAIXA_FOLDER_PATH = "Financeiro/Financeiro Lavoro/Planilhas";
 const READ_CHUNK = 2500;
@@ -54,33 +54,7 @@ async function getGraphToken(creds: { tenant_id: string; client_id: string; clie
   });
   const d = await r.json();
   if (!d.access_token) throw new Error(`Auth Graph Lavoro falhou: ${JSON.stringify(d)}`);
-  validateGraphTokenClaims(d.access_token);
   return d.access_token as string;
-}
-
-function decodeJwtPayload(token: string): Record<string, any> {
-  const payload = token.split(".")[1];
-  if (!payload) return {};
-  const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
-  const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
-  return JSON.parse(atob(padded));
-}
-
-function validateGraphTokenClaims(token: string) {
-  const claims = decodeJwtPayload(token);
-  const roles = Array.isArray(claims.roles) ? claims.roles : [];
-  console.log(
-    `[sync-lavoro-bases] Graph token claims aud=${claims.aud ?? "?"} tid=${claims.tid ?? "?"} appid=${claims.appid ?? claims.azp ?? "?"} roles=${roles.join(",") || "<none>"}`,
-  );
-
-  const hasSharePointRole = roles.some((role: string) => ["Sites.Read.All", "Sites.ReadWrite.All", "Files.Read.All", "Files.ReadWrite.All"].includes(role));
-  if (!hasSharePointRole) {
-    throw new Error(
-      `O App Graph autenticou, mas o token não contém permissão Application para SharePoint. ` +
-        `No Entra ID, adicione Microsoft Graph > Application permissions: Sites.Read.All ou Sites.ReadWrite.All e conceda Admin consent. ` +
-        `Tenant detectado: ${claims.tid ?? "?"}; app: ${claims.appid ?? claims.azp ?? "?"}; roles: ${roles.join(",") || "nenhuma"}.`,
-    );
-  }
 }
 
 async function graphGet(token: string, url: string, attempt = 1): Promise<Response> {
@@ -112,78 +86,17 @@ function normalizeText(s: string): string {
   return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
 }
 
-function parseSharePointConfig() {
-  let hostname = (RAW_SHAREPOINT_HOSTNAME || "").trim();
-  let sitePathFromHostname = "";
-
-  if (/^https?:\/\//i.test(hostname)) {
-    try {
-      const url = new URL(hostname);
-      hostname = url.hostname;
-      sitePathFromHostname = url.pathname;
-    } catch {
-      // Cai no tratamento manual abaixo.
-    }
-  }
-
-  if (hostname.includes("/")) {
-    const [host, ...pathParts] = hostname.split("/");
-    hostname = host;
-    sitePathFromHostname ||= `/${pathParts.join("/")}`;
-  }
-
-  hostname = hostname.replace(/^https?:\/\//i, "").replace(/\/+$/g, "").trim();
-
-  return {
-    hostname: hostname || "seguroslavoro.sharepoint.com",
-    sitePath: sanitizeSitePath(RAW_SHAREPOINT_SITE_PATH || sitePathFromHostname),
-  };
-}
-
-function getSharePointHostnameCandidates(hostname: string): string[] {
-  return Array.from(new Set([hostname]));
-}
-
-function sanitizeSitePath(raw: string): string {
-  // Aceita "/sites/xxx", "/teams/xxx" ou URL completa do SharePoint.
-  let v = (raw || "").trim();
-  if (/^https?:\/\//i.test(v)) {
-    try {
-      v = new URL(v).pathname;
-    } catch {
-      v = "";
-    }
-  }
-  if (!v) return "";
-  if (/^\/(sites|teams)\/[^/]+/i.test(v)) return v.replace(/\/+$/, "");
-  return "";
-}
-
 async function resolveSiteId(token: string): Promise<string> {
-  const { hostname, sitePath } = parseSharePointConfig();
-  const hostnames = getSharePointHostnameCandidates(hostname);
-  const urls = sitePath
-    ? hostnames.map((host) => `https://graph.microsoft.com/v1.0/sites/${host}:${sitePath}`)
-    : [
-        ...hostnames.flatMap((host) => [
-          `https://graph.microsoft.com/v1.0/sites/${host}`,
-          `https://graph.microsoft.com/v1.0/sites/${host}:/`,
-        ]),
-        "https://graph.microsoft.com/v1.0/sites/root",
-      ];
-
-  const failures: string[] = [];
-  for (const url of urls) {
-    const r = await graphGet(token, url);
-    if (r.ok) {
-      const j = await r.json();
-      return j.id as string;
-    }
+  const url = SHAREPOINT_SITE_PATH
+    ? `https://graph.microsoft.com/v1.0/sites/${SHAREPOINT_HOSTNAME}:${SHAREPOINT_SITE_PATH}`
+    : `https://graph.microsoft.com/v1.0/sites/${SHAREPOINT_HOSTNAME}`;
+  const r = await graphGet(token, url);
+  if (!r.ok) {
     const body = await r.text();
-    failures.push(`${r.status} ${body.slice(0, 220)}`);
+    throw new Error(`Resolve site ("${SHAREPOINT_SITE_PATH || "<root>"}") falhou: ${r.status} ${body.slice(0, 300)}`);
   }
-
-  throw new Error(`Resolve site ("${sitePath || "<root>"}", hostnames="${hostnames.join(",")}") falhou: ${failures.join(" | ")}`);
+  const j = await r.json();
+  return j.id as string;
 }
 
 async function listDriveObjects(token: string, siteId: string): Promise<SharePointDrive[]> {
@@ -234,69 +147,36 @@ async function listFolderChildren(token: string, siteId: string, folderPath: str
   return (j.value || []) as FolderChild[];
 }
 
-const BRADESCO_NEEDLE = normalizeText("controle lavoro bradesco");
-
-function pickBradescoFromChildren(children: FolderChild[]): FolderChild | null {
-  const candidatos = children
-    .filter((c) => {
-      const n = normalizeText(c.name);
-      return n.endsWith(".xlsx") && n.includes(BRADESCO_NEEDLE);
-    })
-    .sort((a, b) => {
-      const ta = a.lastModifiedDateTime ? new Date(a.lastModifiedDateTime).getTime() : 0;
-      const tb = b.lastModifiedDateTime ? new Date(b.lastModifiedDateTime).getTime() : 0;
-      if (tb !== ta) return tb - ta;
-      return b.name.localeCompare(a.name);
-    });
-  return candidatos[0] ?? null;
-}
-
-async function tryListChildren(token: string, siteId: string, folderPath: string): Promise<FolderChild[]> {
-  try {
-    return await listFolderChildren(token, siteId, folderPath);
-  } catch (err: any) {
-    console.warn(`[sync-lavoro-bases] Subpasta "${folderPath}" ignorada: ${err?.message ?? String(err)}`);
-    return [];
-  }
-}
-
-async function findCaixaFiles(token: string, siteId: string): Promise<string[]> {
+async function findCurrentCaixaFile(token: string, siteId: string): Promise<string> {
   const now = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
-  const anoAtual = now.getFullYear();
-  const paths: string[] = [];
+  const ano = now.getFullYear();
+  const children = await listFolderChildren(token, siteId, CAIXA_FOLDER_PATH);
 
-  // 1) Arquivo do ano corrente na raiz de Planilhas (ex.: "Controle Lavoro BRADESCO <data>.xlsx").
-  const raiz = await listFolderChildren(token, siteId, CAIXA_FOLDER_PATH);
-  const atual = pickBradescoFromChildren(raiz);
-  if (atual) {
-    paths.push(`${CAIXA_FOLDER_PATH}/${atual.name}`);
-    console.log(`[sync-lavoro-bases] Caixa Bradesco (raiz/${anoAtual}): ${atual.name}`);
-  } else {
-    console.warn(`[sync-lavoro-bases] Nenhum "Controle Lavoro BRADESCO" na raiz "${CAIXA_FOLDER_PATH}".`);
-  }
+  const buscarAno = (targetAno: number) => {
+    const needle = normalizeText(`controle lavoro bradesco ${targetAno}`);
+    return children
+      .filter((c) => {
+        const n = normalizeText(c.name);
+        return n.endsWith(".xlsx") && n.includes(needle);
+      })
+      .sort((a, b) => {
+        const ta = a.lastModifiedDateTime ? new Date(a.lastModifiedDateTime).getTime() : 0;
+        const tb = b.lastModifiedDateTime ? new Date(b.lastModifiedDateTime).getTime() : 0;
+        if (tb !== ta) return tb - ta;
+        return b.name.localeCompare(a.name);
+      });
+  };
 
-  // 2) Subpastas por ano (2024, 2025, ...): pega o Bradesco mais recente de cada.
-  const anosHistoricos: number[] = [];
-  for (let ano = anoAtual - 1; ano >= anoAtual - 3; ano--) anosHistoricos.push(ano);
-
-  for (const ano of anosHistoricos) {
-    const subChildren = await tryListChildren(token, siteId, `${CAIXA_FOLDER_PATH}/${ano}`);
-    if (!subChildren.length) continue;
-    const escolhido = pickBradescoFromChildren(subChildren);
-    if (escolhido) {
-      paths.push(`${CAIXA_FOLDER_PATH}/${ano}/${escolhido.name}`);
-      console.log(`[sync-lavoro-bases] Caixa Bradesco (${ano}): ${escolhido.name}`);
-    }
-  }
-
-  if (!paths.length) {
-    const disponiveis = raiz.map((c) => c.name).join(" | ");
+  const escolhido = buscarAno(ano)[0] ?? buscarAno(ano - 1)[0];
+  if (!escolhido) {
+    const disponiveis = children.map((c) => c.name).join(" | ");
     throw new Error(
-      `Nenhum arquivo "Controle Lavoro BRADESCO" encontrado em "${CAIXA_FOLDER_PATH}" ou subpastas por ano. ` +
-        `Arquivos na raiz (${raiz.length}): ${disponiveis.slice(0, 800)}`,
+      `Arquivo "Controle Lavoro BRADESCO ${ano}" não encontrado em "${CAIXA_FOLDER_PATH}". ` +
+        `Arquivos disponíveis (${children.length}): ${disponiveis.slice(0, 800)}`,
     );
   }
-  return paths;
+  console.log(`[sync-lavoro-bases] Caixa Bradesco selecionado: ${escolhido.name} (mod ${escolhido.lastModifiedDateTime ?? "?"})`);
+  return `${CAIXA_FOLDER_PATH}/${escolhido.name}`;
 }
 
 function colToLetter(col: number): string {
@@ -453,38 +333,33 @@ async function syncCaixaBase(admin: ReturnType<typeof createClient>, token: stri
   const syncId = uuidv4();
   await createPendingSyncLog(admin, syncId, "caixa");
   try {
-    const caixaPaths = await findCaixaFiles(token, siteId);
-    result.caixaPaths = caixaPaths;
+    const caixaPath = await findCurrentCaixaFile(token, siteId);
+    result.caixaPath = caixaPath;
+    const target = await resolveDriveItemTarget(token, siteId, caixaPath);
+    const sheet = await resolveWorkbookSheet(token, target, "Descrição Financeira (Caixa)");
+    const dims = await getSheetDimensions(token, target, sheet);
+    const lastCol = colToLetter(dims.columnCount);
+    const headers = ((await readRangeValues(token, target, sheet, `A2:${lastCol}2`))[0] || []).map((h) => String(h ?? "").trim());
 
     let totalReadRows = 0;
     let rows = 0;
     let totalComissao = 0;
-
-    for (const caixaPath of caixaPaths) {
-      console.log(`[sync-lavoro-bases] Processando caixa: ${caixaPath}`);
-      const target = await resolveDriveItemTarget(token, siteId, caixaPath);
-      const sheet = await resolveWorkbookSheet(token, target, "Descrição Financeira (Caixa)");
-      const dims = await getSheetDimensions(token, target, sheet);
-      const lastCol = colToLetter(dims.columnCount);
-      const headers = ((await readRangeValues(token, target, sheet, `A2:${lastCol}2`))[0] || []).map((h) => String(h ?? "").trim());
-
-      const batch: Record<string, unknown>[] = [];
-      for (let r = 3; r <= dims.rowCount; r += READ_CHUNK) {
-        const end = Math.min(r + READ_CHUNK - 1, dims.rowCount);
-        const values = await readRangeValues(token, target, sheet, `A${r}:${lastCol}${end}`);
-        for (const rowVals of values) {
-          const raw = rowFromValues(headers, rowVals);
-          if (!raw) continue;
-          const c = convertCaixaRawRow(raw, syncId);
-          if (!c) continue;
-          totalReadRows++;
-          if (!isCaixaComissaoConvertedRow(c)) continue;
-          batch.push(c);
-          rows++;
-          totalComissao += Number(c.valor) || 0;
-        }
-        await flushBatch(admin, "raw_lavoro_caixa_comissao", batch);
+    const batch: Record<string, unknown>[] = [];
+    for (let r = 3; r <= dims.rowCount; r += READ_CHUNK) {
+      const end = Math.min(r + READ_CHUNK - 1, dims.rowCount);
+      const values = await readRangeValues(token, target, sheet, `A${r}:${lastCol}${end}`);
+      for (const rowVals of values) {
+        const raw = rowFromValues(headers, rowVals);
+        if (!raw) continue;
+        const c = convertCaixaRawRow(raw, syncId);
+        if (!c) continue;
+        totalReadRows++;
+        if (!isCaixaComissaoConvertedRow(c)) continue;
+        batch.push(c);
+        rows++;
+        totalComissao += Number(c.valor) || 0;
       }
+      await flushBatch(admin, "raw_lavoro_caixa_comissao", batch);
     }
 
     await updateSyncLog(admin, syncId, "caixa", { status: "sucesso", linhas_importadas: rows, mensagem_erro: null });
@@ -595,7 +470,6 @@ async function scheduleRetry(
     next_attempt: nextAttempt,
     error: errorMsg,
   });
-  // Pequeno delay pra evitar retry imediato sobre um erro transitório do Graph.
   await new Promise((r) => setTimeout(r, 5000));
   await triggerFollowUp(authHeader, base, nextAttempt, "auto-retry");
 }
@@ -622,7 +496,6 @@ async function runSyncJob(
     siteId = await resolveSiteId(token);
     result.siteId = siteId;
   } catch (err: any) {
-    // Erro de setup (credenciais/site) — vale pra qualquer base pedida.
     const msg = err?.message ?? String(err);
     console.error("[sync-lavoro-bases] SETUP ERROR:", msg);
     const bases: ("gerencial" | "caixa")[] = requestedBase === "all" ? ["gerencial", "caixa"] : [requestedBase];
@@ -649,7 +522,6 @@ async function runSyncJob(
       } else {
         await notifyAdmins(admin, `Sync Lavoro gerencial falhou após ${MAX_ATTEMPTS} tentativas`, { error: msg });
       }
-      // Mesmo com Gerencial falhando, ainda encadeia a Caixa (é independente).
     }
   }
 
