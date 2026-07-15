@@ -16,7 +16,8 @@ import {
   Settings,
   BarChart3,
   CornerDownRight,
-} from "lucide-react";
+  Mail,
+
 
 import logoBranca from "@/assets/logo-branca.png.asset.json";
 import { useMeuPerfil, hasPermission, hasRole } from "@/hooks/use-meu-perfil";
