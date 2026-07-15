@@ -705,6 +705,41 @@ export type Database = {
         }
         Relationships: []
       }
+      usuarios_convite_externo: {
+        Row: {
+          aceito_em: string | null
+          criado_em: string
+          criado_por: string | null
+          email: string
+          id: string
+          perfil_id: string | null
+        }
+        Insert: {
+          aceito_em?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          email: string
+          id?: string
+          perfil_id?: string | null
+        }
+        Update: {
+          aceito_em?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          email?: string
+          id?: string
+          perfil_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuarios_convite_externo_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfis_acesso"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       vw_lavoro_depara_ramo: {
@@ -850,6 +885,7 @@ export type Database = {
       }
       is_admin_or_diretoria: { Args: { _user_id: string }; Returns: boolean }
       is_dominio_lavoro: { Args: { _email: string }; Returns: boolean }
+      is_email_permitido: { Args: { _email: string }; Returns: boolean }
       normalize_categoria_financeira: {
         Args: { categoria: string }
         Returns: string
@@ -866,13 +902,29 @@ export type Database = {
         Args: { _perfil_id: string; _user_id: string }
         Returns: undefined
       }
+      rpc_admin_atividade_usuario: {
+        Args: { _limit?: number; _user_id: string }
+        Returns: {
+          detalhes: Json
+          momento: string
+          tipo: string
+        }[]
+      }
       rpc_admin_caixa_append: {
         Args: { _rows: Json; _sync_id: string }
         Returns: number
       }
       rpc_admin_caixa_reset: { Args: never; Returns: string }
+      rpc_admin_convidar_externo: {
+        Args: { _email: string; _perfil_id: string }
+        Returns: string
+      }
       rpc_admin_delete_perfil: { Args: { _id: string }; Returns: undefined }
       rpc_admin_excluir_popup: { Args: { p_id: string }; Returns: Json }
+      rpc_admin_excluir_usuario: {
+        Args: { _user_id: string }
+        Returns: undefined
+      }
       rpc_admin_gerencial_append: {
         Args: { _rows: Json; _sync_id: string }
         Returns: number
@@ -894,6 +946,17 @@ export type Database = {
         }[]
       }
       rpc_admin_last_import: { Args: { _tipo: string }; Returns: string }
+      rpc_admin_list_convites_externo: {
+        Args: never
+        Returns: {
+          aceito_em: string
+          criado_em: string
+          email: string
+          id: string
+          perfil_id: string
+          perfil_nome: string
+        }[]
+      }
       rpc_admin_list_perfis: {
         Args: never
         Returns: {
@@ -926,6 +989,24 @@ export type Database = {
           full_name: string
           perfil_nome: string
           role: string
+          user_id: string
+        }[]
+      }
+      rpc_admin_list_users_v2: {
+        Args: never
+        Returns: {
+          active: boolean
+          blocked: boolean
+          criado_em: string
+          email: string
+          full_name: string
+          perfil_id: string
+          perfil_nome: string
+          primeiro_acesso: boolean
+          roles: Database["public"]["Enums"]["app_role"][]
+          tipo_usuario: string
+          total_sessoes: number
+          ultimo_acesso: string
           user_id: string
         }[]
       }
@@ -962,21 +1043,22 @@ export type Database = {
       rpc_admin_perfil_by_user_id: {
         Args: { _user_id: string }
         Returns: {
-          active: boolean
-          blocked: boolean
           email: string
           full_name: string
           perfil_id: string
           perfil_nome: string
           permissoes: Json
-          primeiro_acesso: boolean
-          roles: string[]
+          roles: Database["public"]["Enums"]["app_role"][]
           user_id: string
         }[]
       }
       rpc_admin_ramo_append: {
         Args: { _rows: Json; _sync_id: string }
         Returns: number
+      }
+      rpc_admin_remover_convite_externo: {
+        Args: { _id: string }
+        Returns: undefined
       }
       rpc_admin_salvar_popup: {
         Args: {
@@ -995,6 +1077,10 @@ export type Database = {
           p_titulo?: string
         }
         Returns: string
+      }
+      rpc_admin_toggle_bloqueio: {
+        Args: { _blocked: boolean; _user_id: string }
+        Returns: undefined
       }
       rpc_admin_update_user: {
         Args: {
