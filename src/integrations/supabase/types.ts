@@ -418,6 +418,75 @@ export type Database = {
         }
         Relationships: []
       }
+      report_destinatarios: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          email: string
+          id: string
+          nome: string | null
+          tipo: Database["public"]["Enums"]["report_tipo"]
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          email: string
+          id?: string
+          nome?: string | null
+          tipo: Database["public"]["Enums"]["report_tipo"]
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          email?: string
+          id?: string
+          nome?: string | null
+          tipo?: Database["public"]["Enums"]["report_tipo"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      report_disparos: {
+        Row: {
+          created_at: string
+          disparado_em: string
+          disparado_por: string | null
+          erro: string | null
+          id: string
+          payload: Json | null
+          periodo_ref: string | null
+          status: string
+          tipo: Database["public"]["Enums"]["report_tipo"]
+          total_destinatarios: number
+        }
+        Insert: {
+          created_at?: string
+          disparado_em?: string
+          disparado_por?: string | null
+          erro?: string | null
+          id?: string
+          payload?: Json | null
+          periodo_ref?: string | null
+          status?: string
+          tipo: Database["public"]["Enums"]["report_tipo"]
+          total_destinatarios?: number
+        }
+        Update: {
+          created_at?: string
+          disparado_em?: string
+          disparado_por?: string | null
+          erro?: string | null
+          id?: string
+          payload?: Json | null
+          periodo_ref?: string | null
+          status?: string
+          tipo?: Database["public"]["Enums"]["report_tipo"]
+          total_destinatarios?: number
+        }
+        Relationships: []
+      }
       user_activity_log: {
         Row: {
           acao: string
@@ -1020,6 +1089,7 @@ export type Database = {
     }
     Enums: {
       app_role: "ADMIN" | "DIRETORIA_GERAL" | "COLABORADOR"
+      report_tipo: "receita_diaria" | "executivo_semanal" | "fechamento_manual"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1148,6 +1218,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["ADMIN", "DIRETORIA_GERAL", "COLABORADOR"],
+      report_tipo: ["receita_diaria", "executivo_semanal", "fechamento_manual"],
     },
   },
 } as const
