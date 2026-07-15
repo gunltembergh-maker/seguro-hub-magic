@@ -546,6 +546,7 @@ export type Database = {
           data_pagamento: string | null
           mes: number | null
           ramo: string | null
+          status_parcela_comissao: string | null
           tipo_de_ramo: string | null
           valor_previsto: number | null
         }
