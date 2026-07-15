@@ -12,6 +12,7 @@ import { useMeuPerfil, hasRole } from "@/hooks/use-meu-perfil";
 import { usePerfis } from "@/hooks/use-admin-data";
 import {
   useAdminUsersV2, useConvitesExternos, useAtividadeUsuario,
+  useSendAuthEmail, usePreCadastrarUsuario, useUpdateUserV2,
   type AdminUserV2, type ConviteExterno,
 } from "@/hooks/use-admin-users-v2";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
