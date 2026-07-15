@@ -499,26 +499,67 @@ function ConvidarExternoDialog({ perfis, onClose, onDone }: { perfis: { id: stri
   );
 }
 
-function NovoInternoDialog({ onClose }: { onClose: () => void }) {
+function NovoInternoDialog({ onClose, perfis }: { onClose: () => void; perfis: { id: string; nome: string }[] }) {
+  const [email, setEmail] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [perfilId, setPerfilId] = useState("");
+  const [sendInvite, setSendInvite] = useState(true);
+  const preCad = usePreCadastrarUsuario();
+  const send = useSendAuthEmail();
+
+  const handleSave = async () => {
+    const clean = email.trim().toLowerCase();
+    if (!/^\S+@\S+\.\S+$/.test(clean)) { toast.error("E-mail inválido"); return; }
+    if (!clean.endsWith(`@${LAVORO_DOMAIN}`)) { toast.error(`Use "Convidar externo" para e-mails fora de @${LAVORO_DOMAIN}`); return; }
+    if (!perfilId) { toast.error("Selecione um perfil"); return; }
+    await preCad.mutateAsync({ email: clean, full_name: fullName, perfil_id: perfilId });
+    if (sendInvite) {
+      try { await send.mutateAsync({ email: clean, tipo: "invite" }); } catch { /* toast handled */ }
+    }
+    onClose();
+  };
+
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Novo cadastro (interno)</DialogTitle>
-          <DialogDescription>Como funciona o cadastro de colaboradores Lavoro</DialogDescription>
+          <DialogTitle>Pré-cadastrar colaborador interno</DialogTitle>
+          <DialogDescription>
+            Cadastre um e-mail <strong>@{LAVORO_DOMAIN}</strong> já com perfil definido. Opcionalmente envie o convite por e-mail agora.
+          </DialogDescription>
         </DialogHeader>
-        <div className="space-y-3 text-sm">
-          <p>Colaboradores com e-mail <strong>@{LAVORO_DOMAIN}</strong> são cadastrados automaticamente quando fazem o primeiro login no Hub.</p>
-          <ol className="ml-4 list-decimal space-y-1 text-muted-foreground">
-            <li>Peça ao colaborador para acessar o Hub e entrar com o login Lavoro.</li>
-            <li>O acesso ficará como <em>Aguardando aprovação</em> nesta tela.</li>
-            <li>Clique em <strong>Aprovar</strong> na linha dele para atribuir o perfil de acesso.</li>
-          </ol>
-          <p className="text-xs text-muted-foreground">
-            Para conceder acesso a alguém fora do domínio Lavoro, use <strong>Convidar externo</strong>.
-          </p>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>E-mail Lavoro</Label>
+            <Input type="email" placeholder={`nome@${LAVORO_DOMAIN}`} value={email} onChange={(e) => setEmail(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label>Nome completo</Label>
+            <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Nome do colaborador" />
+          </div>
+          <div className="space-y-2">
+            <Label>Perfil de acesso</Label>
+            <Select value={perfilId} onValueChange={setPerfilId}>
+              <SelectTrigger><SelectValue placeholder="Selecione um perfil" /></SelectTrigger>
+              <SelectContent>
+                {perfis.map(p => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center justify-between rounded-lg border border-border p-3">
+            <div>
+              <div className="text-sm font-medium">Enviar convite agora</div>
+              <div className="text-xs text-muted-foreground">Envia o e-mail do Supabase Auth para o colaborador definir a senha.</div>
+            </div>
+            <Switch checked={sendInvite} onCheckedChange={setSendInvite} />
+          </div>
         </div>
-        <DialogFooter><Button onClick={onClose}>Entendi</Button></DialogFooter>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={handleSave} disabled={preCad.isPending || send.isPending} className="gap-2">
+            {(preCad.isPending || send.isPending) && <Loader2 className="h-4 w-4 animate-spin" />} Cadastrar
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
