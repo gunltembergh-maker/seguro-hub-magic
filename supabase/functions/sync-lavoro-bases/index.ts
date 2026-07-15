@@ -86,17 +86,55 @@ function normalizeText(s: string): string {
   return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
 }
 
+function normalizeSitePath(path: string): string {
+  const trimmed = path.trim();
+  if (!trimmed) return "";
+  const pathname = (() => {
+    try {
+      return new URL(trimmed).pathname;
+    } catch {
+      return trimmed.split(/[?#]/)[0];
+    }
+  })();
+  const decoded = decodeURIComponent(pathname).replace(/\/Forms\/AllItems\.aspx$/i, "");
+  const withoutTrailingSlash = decoded.replace(/\/+$/g, "");
+  return withoutTrailingSlash.startsWith("/") ? withoutTrailingSlash : `/${withoutTrailingSlash}`;
+}
+
+function sitePathCandidates(): string[] {
+  const configured = normalizeSitePath(SHAREPOINT_SITE_PATH);
+  const candidates: string[] = [];
+  if (configured) candidates.push(configured);
+
+  // Se alguém preencher por engano uma pasta/biblioteca como site path
+  // (ex.: /Financeiro/Financeiro Lavoro), tenta também só o primeiro segmento
+  // e por fim o site raiz do tenant.
+  const firstSegment = configured.split("/").filter(Boolean)[0];
+  if (firstSegment) candidates.push(`/${firstSegment}`);
+  candidates.push("");
+
+  return Array.from(new Set(candidates));
+}
+
 async function resolveSiteId(token: string): Promise<string> {
-  const url = SHAREPOINT_SITE_PATH
-    ? `https://graph.microsoft.com/v1.0/sites/${SHAREPOINT_HOSTNAME}:${SHAREPOINT_SITE_PATH}`
-    : `https://graph.microsoft.com/v1.0/sites/${SHAREPOINT_HOSTNAME}`;
-  const r = await graphGet(token, url);
-  if (!r.ok) {
+  const errors: string[] = [];
+
+  for (const sitePath of sitePathCandidates()) {
+    const url = sitePath
+      ? `https://graph.microsoft.com/v1.0/sites/${SHAREPOINT_HOSTNAME}:${encodeGraphPath(sitePath)}`
+      : `https://graph.microsoft.com/v1.0/sites/${SHAREPOINT_HOSTNAME}`;
+    const r = await graphGet(token, url);
+    if (r.ok) {
+      const j = await r.json();
+      console.log(`[sync-lavoro-bases] Site SharePoint resolvido: ${sitePath || "<root>"}`);
+      return j.id as string;
+    }
+
     const body = await r.text();
-    throw new Error(`Resolve site ("${SHAREPOINT_SITE_PATH || "<root>"}") falhou: ${r.status} ${body.slice(0, 300)}`);
+    errors.push(`${sitePath || "<root>"}: ${r.status} ${body.slice(0, 180)}`);
   }
-  const j = await r.json();
-  return j.id as string;
+
+  throw new Error(`Resolve site falhou para ${SHAREPOINT_HOSTNAME}. Tentativas: ${errors.join(" | ")}`);
 }
 
 async function listDriveObjects(token: string, siteId: string): Promise<SharePointDrive[]> {
