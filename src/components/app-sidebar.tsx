@@ -16,7 +16,11 @@ import {
   Settings,
   BarChart3,
   CornerDownRight,
+  Mail,
 } from "lucide-react";
+
+
+
 
 import logoBranca from "@/assets/logo-branca.png.asset.json";
 import { useMeuPerfil, hasPermission, hasRole } from "@/hooks/use-meu-perfil";
@@ -81,8 +85,10 @@ export function AppSidebar() {
     { title: "Perfis", url: "/admin/perfis", icon: KeyRound, show: isAdmin },
     { title: "Importar Bases", url: "/admin/importar-bases", icon: Upload,
       show: isAdmin || hasPermission(meuPerfil, "menu_importar_gerencial") || hasPermission(meuPerfil, "menu_importar_caixa") },
+    { title: "Emails", url: "/admin/emails", icon: Mail, show: isAdmin },
     { title: "Configurações", url: "/admin/configuracoes", icon: Settings,
       show: hasPermission(meuPerfil, "menu_admin_configuracoes") },
+
   ].filter((i) => i.show);
 
 

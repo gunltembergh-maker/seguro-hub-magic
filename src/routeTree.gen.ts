@@ -30,6 +30,7 @@ import { Route as AuthenticatedDashboardReceitaRouteImport } from './routes/_aut
 import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authenticated/admin/usuarios'
 import { Route as AuthenticatedAdminPerfisRouteImport } from './routes/_authenticated/admin/perfis'
 import { Route as AuthenticatedAdminImportarBasesRouteImport } from './routes/_authenticated/admin/importar-bases'
+import { Route as AuthenticatedAdminEmailsRouteImport } from './routes/_authenticated/admin/emails'
 import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_authenticated/admin/configuracoes'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 
@@ -147,6 +148,12 @@ const AuthenticatedAdminImportarBasesRoute =
     path: '/importar-bases',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminEmailsRoute =
+  AuthenticatedAdminEmailsRouteImport.update({
+    id: '/emails',
+    path: '/emails',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminConfiguracoesRoute =
   AuthenticatedAdminConfiguracoesRouteImport.update({
     id: '/configuracoes',
@@ -175,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/middle': typeof AuthenticatedMiddleRoute
   '/operacional': typeof AuthenticatedOperacionalRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
+  '/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/admin/importar-bases': typeof AuthenticatedAdminImportarBasesRoute
   '/admin/perfis': typeof AuthenticatedAdminPerfisRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
@@ -199,6 +207,7 @@ export interface FileRoutesByTo {
   '/middle': typeof AuthenticatedMiddleRoute
   '/operacional': typeof AuthenticatedOperacionalRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
+  '/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/admin/importar-bases': typeof AuthenticatedAdminImportarBasesRoute
   '/admin/perfis': typeof AuthenticatedAdminPerfisRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
@@ -225,6 +234,7 @@ export interface FileRoutesById {
   '/_authenticated/middle': typeof AuthenticatedMiddleRoute
   '/_authenticated/operacional': typeof AuthenticatedOperacionalRoute
   '/_authenticated/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
+  '/_authenticated/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/_authenticated/admin/importar-bases': typeof AuthenticatedAdminImportarBasesRoute
   '/_authenticated/admin/perfis': typeof AuthenticatedAdminPerfisRoute
   '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
@@ -251,6 +261,7 @@ export interface FileRouteTypes {
     | '/middle'
     | '/operacional'
     | '/admin/configuracoes'
+    | '/admin/emails'
     | '/admin/importar-bases'
     | '/admin/perfis'
     | '/admin/usuarios'
@@ -275,6 +286,7 @@ export interface FileRouteTypes {
     | '/middle'
     | '/operacional'
     | '/admin/configuracoes'
+    | '/admin/emails'
     | '/admin/importar-bases'
     | '/admin/perfis'
     | '/admin/usuarios'
@@ -300,6 +312,7 @@ export interface FileRouteTypes {
     | '/_authenticated/middle'
     | '/_authenticated/operacional'
     | '/_authenticated/admin/configuracoes'
+    | '/_authenticated/admin/emails'
     | '/_authenticated/admin/importar-bases'
     | '/_authenticated/admin/perfis'
     | '/_authenticated/admin/usuarios'
@@ -466,6 +479,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminImportarBasesRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/emails': {
+      id: '/_authenticated/admin/emails'
+      path: '/emails'
+      fullPath: '/admin/emails'
+      preLoaderRoute: typeof AuthenticatedAdminEmailsRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/configuracoes': {
       id: '/_authenticated/admin/configuracoes'
       path: '/configuracoes'
@@ -485,6 +505,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminConfiguracoesRoute: typeof AuthenticatedAdminConfiguracoesRoute
+  AuthenticatedAdminEmailsRoute: typeof AuthenticatedAdminEmailsRoute
   AuthenticatedAdminImportarBasesRoute: typeof AuthenticatedAdminImportarBasesRoute
   AuthenticatedAdminPerfisRoute: typeof AuthenticatedAdminPerfisRoute
   AuthenticatedAdminUsuariosRoute: typeof AuthenticatedAdminUsuariosRoute
@@ -493,6 +514,7 @@ interface AuthenticatedAdminRouteRouteChildren {
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
   {
     AuthenticatedAdminConfiguracoesRoute: AuthenticatedAdminConfiguracoesRoute,
+    AuthenticatedAdminEmailsRoute: AuthenticatedAdminEmailsRoute,
     AuthenticatedAdminImportarBasesRoute: AuthenticatedAdminImportarBasesRoute,
     AuthenticatedAdminPerfisRoute: AuthenticatedAdminPerfisRoute,
     AuthenticatedAdminUsuariosRoute: AuthenticatedAdminUsuariosRoute,
