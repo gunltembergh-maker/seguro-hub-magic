@@ -214,10 +214,10 @@ function formatDateTimeBR(d: Date) {
 
 function useCountdown(target: Date) {
   const [now, setNow] = useState(Date.now());
-  useState(() => {
+  useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
-  });
+  }, []);
   const diff = Math.max(0, target.getTime() - now);
   const h = Math.floor(diff / 3600000);
   const m = Math.floor((diff % 3600000) / 60000);
