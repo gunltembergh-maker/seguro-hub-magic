@@ -8,6 +8,9 @@ import { useMeuPerfil } from "@/hooks/use-meu-perfil";
 import { ShieldAlert, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LoadingSplash } from "@/components/loading-splash";
+import { ViewAsProvider, useViewAs } from "@/contexts/view-as-context";
+import { MinhaVisaoIndicator } from "@/components/minha-visao-indicator";
+import { ViewAsSelector } from "@/components/view-as-selector";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -70,19 +73,39 @@ function AuthenticatedLayout() {
   }
 
   return (
+    <ViewAsProvider>
+      <AuthenticatedShell />
+    </ViewAsProvider>
+  );
+}
+
+function AuthenticatedShell() {
+  const { isImpersonating, viewAsProfile } = useViewAs();
+  return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar />
         <SidebarInset className="flex flex-1 flex-col">
+          {isImpersonating && viewAsProfile && (
+            <div className="flex items-center justify-center gap-2 border-b border-amber-500/50 bg-amber-400/95 px-4 py-1.5 text-xs font-medium text-amber-950">
+              👁 Você está visualizando como{" "}
+              <strong>{viewAsProfile.full_name || viewAsProfile.email}</strong>. Ações executadas
+              usam suas credenciais reais — apenas a UI é filtrada.
+            </div>
+          )}
           <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/85 px-4 backdrop-blur">
             <SidebarTrigger className="text-muted-foreground" />
             <HubHeader />
+            <div className="ml-auto">
+              <ViewAsSelector />
+            </div>
           </header>
           <main className="flex-1">
             <Outlet />
           </main>
         </SidebarInset>
       </div>
+      <MinhaVisaoIndicator />
     </SidebarProvider>
   );
 }
