@@ -583,6 +583,33 @@ export type Database = {
         }
         Relationships: []
       }
+      vw_lavoro_receita_executivo: {
+        Row: {
+          data_emissao: string | null
+          data_pagamento: string | null
+          grupo_status: string | null
+          id: number | null
+          status_parcela: string | null
+          valor: number | null
+        }
+        Insert: {
+          data_emissao?: string | null
+          data_pagamento?: string | null
+          grupo_status?: never
+          id?: number | null
+          status_parcela?: never
+          valor?: number | null
+        }
+        Update: {
+          data_emissao?: string | null
+          data_pagamento?: string | null
+          grupo_status?: never
+          id?: number | null
+          status_parcela?: never
+          valor?: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       divide_safe: {
@@ -858,6 +885,25 @@ export type Database = {
           ano: number
           competencia: number
           mes: number
+        }[]
+      }
+      rpc_receita_executivo_complementares: {
+        Args: { p_ano: number }
+        Returns: {
+          emissoes_ate_2025_a_receber: number
+          posicao_total_vencida: number
+          vencidos_anteriores_2026: number
+        }[]
+      }
+      rpc_receita_executivo_mensal: {
+        Args: { p_ano: number }
+        Returns: {
+          a_receber_futuro: number
+          caixa: number
+          caixa_corrente: number
+          emitido: number
+          mes: number
+          saldo_vencido: number
         }[]
       }
       rpc_receita_kpis: {
