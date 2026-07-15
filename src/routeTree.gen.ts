@@ -23,6 +23,7 @@ import { Route as AuthenticatedDemaisRamosRouteImport } from './routes/_authenti
 import { Route as AuthenticatedComunicadosRouteImport } from './routes/_authenticated/comunicados'
 import { Route as AuthenticatedBeneficiosRouteImport } from './routes/_authenticated/beneficios'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
+import { Route as AuthenticatedDashboardReceitaExecutivoRouteImport } from './routes/_authenticated/dashboard.receita-executivo'
 import { Route as AuthenticatedDashboardReceitaCaixaRouteImport } from './routes/_authenticated/dashboard.receita-caixa'
 import { Route as AuthenticatedDashboardReceitaRouteImport } from './routes/_authenticated/dashboard.receita'
 import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authenticated/admin/usuarios'
@@ -102,6 +103,12 @@ const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedDashboardReceitaExecutivoRoute =
+  AuthenticatedDashboardReceitaExecutivoRouteImport.update({
+    id: '/dashboard/receita-executivo',
+    path: '/dashboard/receita-executivo',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDashboardReceitaCaixaRoute =
   AuthenticatedDashboardReceitaCaixaRouteImport.update({
     id: '/dashboard/receita-caixa',
@@ -159,6 +166,7 @@ export interface FileRoutesByFullPath {
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/dashboard/receita': typeof AuthenticatedDashboardReceitaRoute
   '/dashboard/receita-caixa': typeof AuthenticatedDashboardReceitaCaixaRoute
+  '/dashboard/receita-executivo': typeof AuthenticatedDashboardReceitaExecutivoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -180,6 +188,7 @@ export interface FileRoutesByTo {
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/dashboard/receita': typeof AuthenticatedDashboardReceitaRoute
   '/dashboard/receita-caixa': typeof AuthenticatedDashboardReceitaCaixaRoute
+  '/dashboard/receita-executivo': typeof AuthenticatedDashboardReceitaExecutivoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -203,6 +212,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/_authenticated/dashboard/receita': typeof AuthenticatedDashboardReceitaRoute
   '/_authenticated/dashboard/receita-caixa': typeof AuthenticatedDashboardReceitaCaixaRoute
+  '/_authenticated/dashboard/receita-executivo': typeof AuthenticatedDashboardReceitaExecutivoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -226,6 +236,7 @@ export interface FileRouteTypes {
     | '/admin/usuarios'
     | '/dashboard/receita'
     | '/dashboard/receita-caixa'
+    | '/dashboard/receita-executivo'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -247,6 +258,7 @@ export interface FileRouteTypes {
     | '/admin/usuarios'
     | '/dashboard/receita'
     | '/dashboard/receita-caixa'
+    | '/dashboard/receita-executivo'
   id:
     | '__root__'
     | '/'
@@ -269,6 +281,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/usuarios'
     | '/_authenticated/dashboard/receita'
     | '/_authenticated/dashboard/receita-caixa'
+    | '/_authenticated/dashboard/receita-executivo'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -377,6 +390,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/dashboard/receita-executivo': {
+      id: '/_authenticated/dashboard/receita-executivo'
+      path: '/dashboard/receita-executivo'
+      fullPath: '/dashboard/receita-executivo'
+      preLoaderRoute: typeof AuthenticatedDashboardReceitaExecutivoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard/receita-caixa': {
       id: '/_authenticated/dashboard/receita-caixa'
       path: '/dashboard/receita-caixa'
@@ -456,6 +476,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOperacionalRoute: typeof AuthenticatedOperacionalRoute
   AuthenticatedDashboardReceitaRoute: typeof AuthenticatedDashboardReceitaRoute
   AuthenticatedDashboardReceitaCaixaRoute: typeof AuthenticatedDashboardReceitaCaixaRoute
+  AuthenticatedDashboardReceitaExecutivoRoute: typeof AuthenticatedDashboardReceitaExecutivoRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -473,6 +494,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardReceitaRoute: AuthenticatedDashboardReceitaRoute,
   AuthenticatedDashboardReceitaCaixaRoute:
     AuthenticatedDashboardReceitaCaixaRoute,
+  AuthenticatedDashboardReceitaExecutivoRoute:
+    AuthenticatedDashboardReceitaExecutivoRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -486,13 +509,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
