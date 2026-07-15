@@ -23,7 +23,8 @@ import {
 
 
 import logoBranca from "@/assets/logo-branca.png.asset.json";
-import { useMeuPerfil, hasPermission, hasRole } from "@/hooks/use-meu-perfil";
+import { hasPermission, hasRole } from "@/hooks/use-meu-perfil";
+import { useMeuPerfilEfetivo } from "@/contexts/view-as-context";
 
 
 import {
@@ -64,7 +65,7 @@ export function AppSidebar() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const isActive = (url: string) => pathname === url;
 
-  const { data: meuPerfil } = useMeuPerfil();
+  const meuPerfil = useMeuPerfilEfetivo();
   const isAdmin = hasRole(meuPerfil, "ADMIN");
 
   const dashboardItems = [

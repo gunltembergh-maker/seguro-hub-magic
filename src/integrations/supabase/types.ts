@@ -769,6 +769,31 @@ export type Database = {
           user_id: string
         }[]
       }
+      rpc_admin_list_users_simples: {
+        Args: never
+        Returns: {
+          email: string
+          full_name: string
+          perfil_nome: string
+          role: string
+          user_id: string
+        }[]
+      }
+      rpc_admin_perfil_by_user_id: {
+        Args: { _user_id: string }
+        Returns: {
+          active: boolean
+          blocked: boolean
+          email: string
+          full_name: string
+          perfil_id: string
+          perfil_nome: string
+          permissoes: Json
+          primeiro_acesso: boolean
+          roles: string[]
+          user_id: string
+        }[]
+      }
       rpc_admin_ramo_append: {
         Args: { _rows: Json; _sync_id: string }
         Returns: number
@@ -853,6 +878,25 @@ export type Database = {
         Returns: Json
       }
       rpc_get_meta_anual: { Args: { _ano: number }; Returns: number }
+      rpc_inicio_lavoro_resumo: {
+        Args: never
+        Returns: {
+          atingimento_caixa_mes: number
+          receita_caixa_mes: number
+          receita_caixa_recebida_mes: number
+          receita_competencia_mes: number
+          total_vencido_mes: number
+          ultima_atualizacao: string
+        }[]
+      }
+      rpc_inicio_timestamps: {
+        Args: never
+        Returns: {
+          fonte: string
+          total_linhas: number
+          ultima_atualizacao: string
+        }[]
+      }
       rpc_lavoro_apolices_filtros: {
         Args: never
         Returns: {
