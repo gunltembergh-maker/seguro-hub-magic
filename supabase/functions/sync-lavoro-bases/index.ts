@@ -23,8 +23,18 @@ const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const SHAREPOINT_HOSTNAME = Deno.env.get("LAVORO_SHAREPOINT_HOSTNAME") ?? "seguroslavoro.sharepoint.com";
 const SHAREPOINT_SITE_PATH = Deno.env.get("LAVORO_SHAREPOINT_SITE_PATH") ?? "";
 const GERENCIAL_FILE_PATH = "Financeiro/NF's e Extratos/Controle Gerencial - Financeiro.xlsx";
-const CAIXA_FOLDER_PATH = "Financeiro/Financeiro Lavoro/Planilhas";
+const CAIXA_ROOT_FOLDER = "Financeiro/Financeiro Lavoro/Planilhas";
 const READ_CHUNK = 2500;
+
+// Anos históricos que devem ser sincronizados junto com o ano corrente.
+// O ano corrente fica na raiz de Planilhas/; os anteriores em subpastas Planilhas/<ano>/.
+type CaixaYearTarget = { ano: number; folder: string; nameMatchers: string[] };
+const CAIXA_YEAR_TARGETS: CaixaYearTarget[] = [
+  { ano: 2026, folder: CAIXA_ROOT_FOLDER, nameMatchers: ["controle lavoro bradesco 2026", "controle lavoro bradesco"] },
+  { ano: 2025, folder: `${CAIXA_ROOT_FOLDER}/2025`, nameMatchers: ["controle lavoro bradesco 2025", "controle lavoro bradesco"] },
+  { ano: 2024, folder: `${CAIXA_ROOT_FOLDER}/2024`, nameMatchers: ["controle lavoro bradesco 2024", "controle lavoro bradesco"] },
+  { ano: 2023, folder: `${CAIXA_ROOT_FOLDER}/2023`, nameMatchers: ["controle lavoro - 2023", "controle lavoro 2023", "controle lavoro bradesco 2023", "controle lavoro"] },
+];
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -59,9 +69,10 @@ async function getGraphToken(creds: { tenant_id: string; client_id: string; clie
 
 async function graphGet(token: string, url: string, attempt = 1): Promise<Response> {
   const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-  if ((r.status === 429 || [500, 502, 503, 504].includes(r.status)) && attempt < 4) {
+  if ((r.status === 429 || [500, 502, 503, 504].includes(r.status)) && attempt < 6) {
     const retryAfter = Number(r.headers.get("retry-after"));
-    const wait = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : Math.min(2 ** attempt * 500, 6000);
+    const wait = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : Math.min(2 ** attempt * 750, 15000);
+    console.log(`[sync-lavoro-bases] graphGet retry ${attempt} status=${r.status} wait=${wait}ms url=${url.slice(0, 160)}`);
     await new Promise((resolve) => setTimeout(resolve, wait));
     return graphGet(token, url, attempt + 1);
   }
@@ -185,18 +196,22 @@ async function listFolderChildren(token: string, siteId: string, folderPath: str
   return (j.value || []) as FolderChild[];
 }
 
-async function findCurrentCaixaFile(token: string, siteId: string): Promise<string> {
-  const now = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
-  const ano = now.getFullYear();
-  const children = await listFolderChildren(token, siteId, CAIXA_FOLDER_PATH);
+async function findCaixaFileForYear(token: string, siteId: string, target: CaixaYearTarget): Promise<string | null> {
+  let children: FolderChild[];
+  try {
+    children = await listFolderChildren(token, siteId, target.folder);
+  } catch (err) {
+    console.warn(`[sync-lavoro-bases] Pasta Caixa ${target.ano} indisponível (${target.folder}): ${(err as Error).message}`);
+    return null;
+  }
 
-  const buscarAno = (targetAno: number) => {
-    const needle = normalizeText(`controle lavoro bradesco ${targetAno}`);
-    return children
-      .filter((c) => {
-        const n = normalizeText(c.name);
-        return n.endsWith(".xlsx") && n.includes(needle);
-      })
+  const xlsxChildren = children.filter((c) => normalizeText(c.name).endsWith(".xlsx"));
+  const anoStr = String(target.ano);
+
+  const buscar = (matcher: string) => {
+    const needle = normalizeText(matcher);
+    return xlsxChildren
+      .filter((c) => normalizeText(c.name).includes(needle))
       .sort((a, b) => {
         const ta = a.lastModifiedDateTime ? new Date(a.lastModifiedDateTime).getTime() : 0;
         const tb = b.lastModifiedDateTime ? new Date(b.lastModifiedDateTime).getTime() : 0;
@@ -205,16 +220,28 @@ async function findCurrentCaixaFile(token: string, siteId: string): Promise<stri
       });
   };
 
-  const escolhido = buscarAno(ano)[0] ?? buscarAno(ano - 1)[0];
-  if (!escolhido) {
-    const disponiveis = children.map((c) => c.name).join(" | ");
-    throw new Error(
-      `Arquivo "Controle Lavoro BRADESCO ${ano}" não encontrado em "${CAIXA_FOLDER_PATH}". ` +
-        `Arquivos disponíveis (${children.length}): ${disponiveis.slice(0, 800)}`,
-    );
+  let escolhido: FolderChild | undefined;
+  for (const matcher of target.nameMatchers) {
+    const found = buscar(matcher);
+    // Se estamos em subpasta específica do ano, aceitamos qualquer arquivo que bata.
+    // Se estamos na pasta raiz (ano corrente), exigimos que o nome contenha o ano.
+    const emRaiz = target.folder === CAIXA_ROOT_FOLDER;
+    const filtrado = emRaiz ? found.filter((c) => c.name.includes(anoStr)) : found;
+    if (filtrado.length > 0) {
+      escolhido = filtrado[0];
+      break;
+    }
   }
-  console.log(`[sync-lavoro-bases] Caixa Bradesco selecionado: ${escolhido.name} (mod ${escolhido.lastModifiedDateTime ?? "?"})`);
-  return `${CAIXA_FOLDER_PATH}/${escolhido.name}`;
+
+  if (!escolhido) {
+    console.warn(
+      `[sync-lavoro-bases] Nenhum arquivo Caixa ${target.ano} encontrado em "${target.folder}". Disponíveis: ${children.map((c) => c.name).join(" | ").slice(0, 400)}`,
+    );
+    return null;
+  }
+
+  console.log(`[sync-lavoro-bases] Caixa ${target.ano}: ${escolhido.name} (mod ${escolhido.lastModifiedDateTime ?? "?"})`);
+  return `${target.folder}/${escolhido.name}`;
 }
 
 function colToLetter(col: number): string {
@@ -367,41 +394,80 @@ async function syncGerencialBase(admin: ReturnType<typeof createClient>, token: 
   }
 }
 
+async function syncCaixaSingleFile(
+  admin: ReturnType<typeof createClient>,
+  token: string,
+  siteId: string,
+  caixaPath: string,
+  syncId: string,
+): Promise<{ rows: number; totalReadRows: number; totalComissao: number }> {
+  const target = await resolveDriveItemTarget(token, siteId, caixaPath);
+  const sheet = await resolveWorkbookSheet(token, target, "Descrição Financeira (Caixa)");
+  const dims = await getSheetDimensions(token, target, sheet);
+  const lastCol = colToLetter(dims.columnCount);
+  const headers = ((await readRangeValues(token, target, sheet, `A2:${lastCol}2`))[0] || []).map((h) => String(h ?? "").trim());
+
+  let totalReadRows = 0;
+  let rows = 0;
+  let totalComissao = 0;
+  const batch: Record<string, unknown>[] = [];
+  for (let r = 3; r <= dims.rowCount; r += READ_CHUNK) {
+    const end = Math.min(r + READ_CHUNK - 1, dims.rowCount);
+    const values = await readRangeValues(token, target, sheet, `A${r}:${lastCol}${end}`);
+    for (const rowVals of values) {
+      const raw = rowFromValues(headers, rowVals);
+      if (!raw) continue;
+      const c = convertCaixaRawRow(raw, syncId);
+      if (!c) continue;
+      totalReadRows++;
+      if (!isCaixaComissaoConvertedRow(c)) continue;
+      batch.push(c);
+      rows++;
+      totalComissao += Number(c.valor) || 0;
+    }
+    await flushBatch(admin, "raw_lavoro_caixa_comissao", batch);
+  }
+  return { rows, totalReadRows, totalComissao };
+}
+
 async function syncCaixaBase(admin: ReturnType<typeof createClient>, token: string, siteId: string, result: Record<string, any>): Promise<CaixaSyncResult> {
   const syncId = uuidv4();
   await createPendingSyncLog(admin, syncId, "caixa");
   try {
-    const caixaPath = await findCurrentCaixaFile(token, siteId);
-    result.caixaPath = caixaPath;
-    const target = await resolveDriveItemTarget(token, siteId, caixaPath);
-    const sheet = await resolveWorkbookSheet(token, target, "Descrição Financeira (Caixa)");
-    const dims = await getSheetDimensions(token, target, sheet);
-    const lastCol = colToLetter(dims.columnCount);
-    const headers = ((await readRangeValues(token, target, sheet, `A2:${lastCol}2`))[0] || []).map((h) => String(h ?? "").trim());
+    // Snapshot completo: apagamos a raw antes de inserir todos os anos.
+    const del = await admin.from("raw_lavoro_caixa_comissao").delete().neq("id", -1);
+    if (del.error) throw new Error(`Limpar raw_lavoro_caixa_comissao: ${del.error.message}`);
 
+    const perYear: Record<string, { path: string | null; rows: number; totalRead: number; totalComissao: number; error?: string }> = {};
+    let rowsTotal = 0;
     let totalReadRows = 0;
-    let rows = 0;
     let totalComissao = 0;
-    const batch: Record<string, unknown>[] = [];
-    for (let r = 3; r <= dims.rowCount; r += READ_CHUNK) {
-      const end = Math.min(r + READ_CHUNK - 1, dims.rowCount);
-      const values = await readRangeValues(token, target, sheet, `A${r}:${lastCol}${end}`);
-      for (const rowVals of values) {
-        const raw = rowFromValues(headers, rowVals);
-        if (!raw) continue;
-        const c = convertCaixaRawRow(raw, syncId);
-        if (!c) continue;
-        totalReadRows++;
-        if (!isCaixaComissaoConvertedRow(c)) continue;
-        batch.push(c);
-        rows++;
-        totalComissao += Number(c.valor) || 0;
+
+    for (const yearTarget of CAIXA_YEAR_TARGETS) {
+      const caixaPath = await findCaixaFileForYear(token, siteId, yearTarget);
+      if (!caixaPath) {
+        perYear[String(yearTarget.ano)] = { path: null, rows: 0, totalRead: 0, totalComissao: 0, error: "arquivo não encontrado" };
+        continue;
       }
-      await flushBatch(admin, "raw_lavoro_caixa_comissao", batch);
+      try {
+        const res = await syncCaixaSingleFile(admin, token, siteId, caixaPath, syncId);
+        perYear[String(yearTarget.ano)] = { path: caixaPath, rows: res.rows, totalRead: res.totalReadRows, totalComissao: res.totalComissao };
+        rowsTotal += res.rows;
+        totalReadRows += res.totalReadRows;
+        totalComissao += res.totalComissao;
+      } catch (err: any) {
+        const msg = err?.message ?? String(err);
+        console.error(`[sync-lavoro-bases] CAIXA ${yearTarget.ano} falhou:`, msg);
+        perYear[String(yearTarget.ano)] = { path: caixaPath, rows: 0, totalRead: 0, totalComissao: 0, error: msg };
+      }
     }
 
-    await updateSyncLog(admin, syncId, "caixa", { status: "sucesso", linhas_importadas: rows, mensagem_erro: null });
-    return { syncId, rows, totalReadRows, totalComissao };
+    result.caixaPorAno = perYear;
+    result.caixaPath = perYear[String(CAIXA_YEAR_TARGETS[0].ano)]?.path ?? null;
+
+    await updateSyncLog(admin, syncId, "caixa", { status: "sucesso", linhas_importadas: rowsTotal, mensagem_erro: null });
+    return { syncId, rows: rowsTotal, totalReadRows, totalComissao };
+
   } catch (err: any) {
     await updateSyncLog(admin, syncId, "caixa", { status: "erro", mensagem_erro: err?.message ?? String(err) });
     throw err;
