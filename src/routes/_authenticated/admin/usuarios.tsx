@@ -606,6 +606,25 @@ function UserDetailSheet({ user, onClose }: { user: AdminUserV2; onClose: () => 
             </div>
           </div>
 
+          <div className="rounded-lg border border-border p-3">
+            <div className="mb-2 text-xs font-semibold text-muted-foreground">Ações rápidas</div>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="outline" className="gap-1.5" disabled={sendEmail.isPending}
+                onClick={() => doSend("invite")}>
+                <Mail className="h-3.5 w-3.5" /> Enviar convite
+              </Button>
+              <Button size="sm" variant="outline" className="gap-1.5" disabled={sendEmail.isPending}
+                onClick={() => doSend("magiclink")}>
+                <Mail className="h-3.5 w-3.5" /> Magic link
+              </Button>
+              <Button size="sm" variant="outline" className="gap-1.5" disabled={sendEmail.isPending}
+                onClick={() => doSend("recovery")}>
+                <Mail className="h-3.5 w-3.5" /> Resetar senha
+              </Button>
+            </div>
+          </div>
+
+
           <div>
             <h3 className="mb-2 text-sm font-semibold">Atividade recente</h3>
             {isLoading ? (
