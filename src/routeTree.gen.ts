@@ -20,7 +20,6 @@ import { Route as AuthenticatedGarantiaRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedFinanceiroRouteImport } from './routes/_authenticated/financeiro'
 import { Route as AuthenticatedFacilitiesRouteImport } from './routes/_authenticated/facilities'
 import { Route as AuthenticatedDemaisRamosRouteImport } from './routes/_authenticated/demais-ramos'
-import { Route as AuthenticatedComunicadosRouteImport } from './routes/_authenticated/comunicados'
 import { Route as AuthenticatedBeneficiosRouteImport } from './routes/_authenticated/beneficios'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as AuthenticatedDashboardReportFechamentoRouteImport } from './routes/_authenticated/dashboard.report-fechamento'
@@ -90,12 +89,6 @@ const AuthenticatedDemaisRamosRoute =
   AuthenticatedDemaisRamosRouteImport.update({
     id: '/demais-ramos',
     path: '/demais-ramos',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedComunicadosRoute =
-  AuthenticatedComunicadosRouteImport.update({
-    id: '/comunicados',
-    path: '/comunicados',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedBeneficiosRoute = AuthenticatedBeneficiosRouteImport.update({
@@ -186,7 +179,6 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/beneficios': typeof AuthenticatedBeneficiosRoute
-  '/comunicados': typeof AuthenticatedComunicadosRoute
   '/demais-ramos': typeof AuthenticatedDemaisRamosRoute
   '/facilities': typeof AuthenticatedFacilitiesRoute
   '/financeiro': typeof AuthenticatedFinanceiroRoute
@@ -213,7 +205,6 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/beneficios': typeof AuthenticatedBeneficiosRoute
-  '/comunicados': typeof AuthenticatedComunicadosRoute
   '/demais-ramos': typeof AuthenticatedDemaisRamosRoute
   '/facilities': typeof AuthenticatedFacilitiesRoute
   '/financeiro': typeof AuthenticatedFinanceiroRoute
@@ -242,7 +233,6 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/_authenticated/beneficios': typeof AuthenticatedBeneficiosRoute
-  '/_authenticated/comunicados': typeof AuthenticatedComunicadosRoute
   '/_authenticated/demais-ramos': typeof AuthenticatedDemaisRamosRoute
   '/_authenticated/facilities': typeof AuthenticatedFacilitiesRoute
   '/_authenticated/financeiro': typeof AuthenticatedFinanceiroRoute
@@ -271,7 +261,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/admin'
     | '/beneficios'
-    | '/comunicados'
     | '/demais-ramos'
     | '/facilities'
     | '/financeiro'
@@ -298,7 +287,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/admin'
     | '/beneficios'
-    | '/comunicados'
     | '/demais-ramos'
     | '/facilities'
     | '/financeiro'
@@ -326,7 +314,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/admin'
     | '/_authenticated/beneficios'
-    | '/_authenticated/comunicados'
     | '/_authenticated/demais-ramos'
     | '/_authenticated/facilities'
     | '/_authenticated/financeiro'
@@ -433,13 +420,6 @@ declare module '@tanstack/react-router' {
       path: '/demais-ramos'
       fullPath: '/demais-ramos'
       preLoaderRoute: typeof AuthenticatedDemaisRamosRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/comunicados': {
-      id: '/_authenticated/comunicados'
-      path: '/comunicados'
-      fullPath: '/comunicados'
-      preLoaderRoute: typeof AuthenticatedComunicadosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/beneficios': {
@@ -584,7 +564,6 @@ const AuthenticatedAdminRouteRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
   AuthenticatedBeneficiosRoute: typeof AuthenticatedBeneficiosRoute
-  AuthenticatedComunicadosRoute: typeof AuthenticatedComunicadosRoute
   AuthenticatedDemaisRamosRoute: typeof AuthenticatedDemaisRamosRoute
   AuthenticatedFacilitiesRoute: typeof AuthenticatedFacilitiesRoute
   AuthenticatedFinanceiroRoute: typeof AuthenticatedFinanceiroRoute
@@ -602,7 +581,6 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
   AuthenticatedBeneficiosRoute: AuthenticatedBeneficiosRoute,
-  AuthenticatedComunicadosRoute: AuthenticatedComunicadosRoute,
   AuthenticatedDemaisRamosRoute: AuthenticatedDemaisRamosRoute,
   AuthenticatedFacilitiesRoute: AuthenticatedFacilitiesRoute,
   AuthenticatedFinanceiroRoute: AuthenticatedFinanceiroRoute,
