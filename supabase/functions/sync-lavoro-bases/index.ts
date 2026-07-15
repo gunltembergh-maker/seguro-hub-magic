@@ -25,6 +25,7 @@ const SHAREPOINT_SITE_PATH = Deno.env.get("LAVORO_SHAREPOINT_SITE_PATH") ?? "";
 const GERENCIAL_FILE_PATH = "Financeiro/NF's e Extratos/Controle Gerencial - Financeiro.xlsx";
 const CAIXA_ROOT_FOLDER = "Financeiro/Financeiro Lavoro/Planilhas";
 const READ_CHUNK = 2500;
+const GERENCIAL_READ_CHUNK = 5000;
 
 // Anos históricos que devem ser sincronizados junto com o ano corrente.
 // O ano corrente fica na raiz de Planilhas/; os anteriores em subpastas Planilhas/<ano>/.
