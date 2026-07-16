@@ -170,6 +170,147 @@ function AdminEmailsPage() {
           </p>
         </CardContent>
       </Card>
+
+      <NewsletterDispatch to={to} />
     </div>
+  )
+}
+
+function NewsletterDispatch({ to: defaultTo }: { to: string }) {
+  const [to, setTo] = useState(defaultTo)
+  const [ultimo, setUltimo] = useState<{
+    tipo: string
+    ok: boolean
+    to?: string
+    quandoBR?: string
+    message?: string
+  } | null>(null)
+
+  const sendReceita = useServerFn(sendReceitaDiaria)
+  const sendExec = useServerFn(sendResumoExecutivo)
+
+  const mutReceita = useMutation({
+    mutationFn: async () => (await sendReceita({ data: { to: to.trim() } })) as any,
+    onSuccess: (res) => {
+      setUltimo({ tipo: 'Receita Diária', ok: !!res.ok, ...res })
+      if (res.ok) toast.success('Receita Diária enviada', { description: `Para ${res.to}` })
+      else toast.error('Falha ao enviar Receita Diária', { description: res.message ?? res.reason })
+    },
+    onError: (e: Error) => {
+      setUltimo({ tipo: 'Receita Diária', ok: false, message: e.message })
+      toast.error('Falha ao enviar', { description: e.message })
+    },
+  })
+
+  const mutExec = useMutation({
+    mutationFn: async () => (await sendExec({ data: { to: to.trim() } })) as any,
+    onSuccess: (res) => {
+      setUltimo({ tipo: 'Resumo Executivo Semanal', ok: !!res.ok, ...res })
+      if (res.ok) toast.success('Resumo Executivo enviado', { description: `Para ${res.to}` })
+      else toast.error('Falha ao enviar Resumo Executivo', { description: res.message ?? res.reason })
+    },
+    onError: (e: Error) => {
+      setUltimo({ tipo: 'Resumo Executivo Semanal', ok: false, message: e.message })
+      toast.error('Falha ao enviar', { description: e.message })
+    },
+  })
+
+  const anyPending = mutReceita.isPending || mutExec.isPending
+
+  return (
+    <Card className="mt-6">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Newspaper className="h-4 w-4 text-primary" /> Newsletters Lavoro
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="news-to">Destinatário do disparo de teste</Label>
+          <Input
+            id="news-to"
+            type="email"
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+            placeholder="voce@lavoroseguros.com.br"
+          />
+          <p className="text-xs text-muted-foreground">
+            Dispara agora, com os dados reais do dashboard, para o email informado. Use isto para
+            validar o layout antes de habilitar os destinatários oficiais.
+          </p>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-lg border border-border bg-muted/40 p-4">
+            <div className="flex items-start gap-2">
+              <LineChart className="mt-0.5 h-4 w-4 text-primary" />
+              <div className="flex-1">
+                <p className="font-medium text-sm">Receita — Newsletter Diária</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Assunto: <span className="font-mono">Receita — {new Intl.DateTimeFormat('pt-BR', { month: 'short', year: 'numeric' }).format(new Date()).replace('.', '').replace(' de ', '/')}</span>
+                </p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              className="mt-3 gap-2 w-full"
+              disabled={anyPending || !to.trim()}
+              onClick={() => mutReceita.mutate()}
+            >
+              {mutReceita.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              Disparar Receita agora
+            </Button>
+          </div>
+
+          <div className="rounded-lg border border-border bg-muted/40 p-4">
+            <div className="flex items-start gap-2">
+              <Newspaper className="mt-0.5 h-4 w-4 text-primary" />
+              <div className="flex-1">
+                <p className="font-medium text-sm">Resumo Executivo — Semanal</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  YTD, caixa recebido e alerta de comissão vencida (enxuto, CTA para o Hub).
+                </p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              variant="secondary"
+              className="mt-3 gap-2 w-full"
+              disabled={anyPending || !to.trim()}
+              onClick={() => mutExec.mutate()}
+            >
+              {mutExec.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              Disparar Executivo agora
+            </Button>
+          </div>
+        </div>
+
+        {ultimo && (
+          <div
+            className={`flex items-start gap-3 rounded-lg border p-3 text-sm ${
+              ultimo.ok
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
+                : 'border-red-200 bg-red-50 text-red-900'
+            }`}
+          >
+            {ultimo.ok ? (
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+            ) : (
+              <XCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            )}
+            <div className="space-y-1">
+              <p className="font-medium">
+                {ultimo.tipo}: {ultimo.ok ? 'Enviado' : 'Falhou'}
+              </p>
+              <p className="text-xs opacity-80">
+                {ultimo.ok
+                  ? `Para ${ultimo.to} às ${ultimo.quandoBR}.`
+                  : ultimo.message ?? 'Erro desconhecido'}
+              </p>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }
