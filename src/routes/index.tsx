@@ -12,7 +12,7 @@ function IndexRedirect() {
   const navigate = useNavigate();
   useEffect(() => {
     let done = false;
-    const go = (to: "/hub" | "/auth") => {
+    const go = (to: "/inicio" | "/auth") => {
       if (done) return;
       done = true;
       navigate({ to, replace: true });
@@ -21,13 +21,13 @@ function IndexRedirect() {
     // Aguarda hidratação do session pelo Supabase (PKCE ?code=... ou hash #access_token=...)
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "INITIAL_SESSION" || event === "SIGNED_IN") {
-        go(session ? "/hub" : "/auth");
+        go(session ? "/inicio" : "/auth");
       }
     });
 
     // Fallback caso o evento não dispare rapidamente
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) go("/hub");
+      if (data.session) go("/inicio");
     });
 
     const timeout = setTimeout(() => go("/auth"), 2500);
