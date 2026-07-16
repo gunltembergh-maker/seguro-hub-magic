@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/sidebar";
 
 const primary = [
+  { title: "Início", url: "/inicio", icon: Home },
   { title: "Hub", url: "/hub", icon: Home },
 ];
 
@@ -99,7 +100,7 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="border-b border-sidebar-border">
-        <Link to="/hub" className="flex items-center gap-2 px-2 py-1.5">
+        <Link to="/inicio" className="flex items-center gap-2 px-2 py-1.5">
           <img
             src={logoBranca.url}
             alt="Lavoro Seguros"
