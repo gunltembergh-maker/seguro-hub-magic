@@ -105,7 +105,9 @@ function AuthPage() {
     });
 
     if (error || !data.url) {
-      toast.error("Não foi possível iniciar o login", { description: error.message });
+      toast.error("Não foi possível iniciar o login", {
+        description: error?.message ?? "URL de autenticação não retornada.",
+      });
       setLoading(false);
       return;
     }
