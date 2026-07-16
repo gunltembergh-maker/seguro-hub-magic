@@ -100,8 +100,8 @@ function AuthPage() {
       options: {
         scopes: "email openid profile",
         redirectTo: `${window.location.origin}/auth`,
-        skipBrowserRedirect: true,
       },
+      skipBrowserRedirect: true,
     });
 
     if (error || !data.url) {
