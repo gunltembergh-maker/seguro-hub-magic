@@ -11,21 +11,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMeuPerfil, hasRole } from "@/hooks/use-meu-perfil";
 import { usePerfis } from "@/hooks/use-admin-data";
 import {
-  useAdminUsersV2, useConvitesExternos, useAtividadeUsuario,
-  useSendAuthEmail, usePreCadastrarUsuario, useUpdateUserV2,
+  useAdminUsersV2, useConvitesExternos,
+  useSendAuthEmail,
   type AdminUserV2, type ConviteExterno,
 } from "@/hooks/use-admin-users-v2";
+import { UserFormModal, type UserFormInitial } from "@/components/admin/UserFormModal";
+import { UserDetailSheet } from "@/components/admin/UserDetailSheet";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/_authenticated/admin/usuarios")({
