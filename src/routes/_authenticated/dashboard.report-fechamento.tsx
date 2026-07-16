@@ -24,10 +24,10 @@ export const Route = createFileRoute("/_authenticated/dashboard/report-fechament
 });
 
 // Paleta (Master Doc)
-const NAVY = "#1F2D3D";
-const NAVY_DARK = "#0F1A26";
-const GOLD = "#B89968";
-const AZUL_MED = "#3A5775";
+const NAVY = "#14405C";
+const NAVY_DARK = "#14405C";
+const GOLD = "#00BAF2";
+const AZUL_MED = "#1B5680";
 const VERDE = "#2E7D32";
 const VERMELHO = "#C62828";
 const AMBER = "#ED6C02";
@@ -103,7 +103,7 @@ function KpiCard({ title, value, delta, loading }: { title: string; value: strin
 function Callout({ ano, gran, per, comparar }: { ano: number; gran: Gran; per: number; comparar: boolean }) {
   return (
     <div className="rounded-md border px-3 py-2 text-sm"
-      style={{ background: "#FFF4D6", borderColor: GOLD, color: "#8B6914" }}>
+      style={{ background: "#E6F7FD", borderColor: GOLD, color: "#14405C" }}>
       Período ativo: <strong>{periodoLabel(gran, per)} {ano}</strong>
       {comparar && <> · comparando com <strong>{periodoLabel(gran, per)} {ano - 1}</strong></>}
     </div>
