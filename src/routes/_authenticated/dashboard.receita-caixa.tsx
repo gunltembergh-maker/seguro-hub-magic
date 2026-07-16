@@ -318,6 +318,7 @@ function ReceitaCaixaPage() {
           Nenhum lançamento em <code>raw_lavoro_caixa_comissao</code>. Importe pela tela de Admin → Importar Bases.
         </p>
       )}
+      </div>
     </div>
   );
 }
