@@ -28,9 +28,10 @@ export function HeaderSaudacao({ fullName, lastUpdated, isFetching, onRefresh }:
         <h1 className="font-display text-3xl font-bold tracking-tight text-primary-foreground md:text-4xl">
           {saudacao()}, <span className="text-primary-glow">{primeiro}</span>.
         </h1>
-        <p className="mt-1 text-sm text-primary-foreground/70">
-          Visão consolidada da Lavoro Seguros · {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })}
+        <p className="mt-1 text-sm capitalize text-primary-foreground/80">
+          {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric", timeZone: "America/Sao_Paulo" })}
         </p>
+        <p className="text-xs text-primary-foreground/60">Visão consolidada da Lavoro Seguros</p>
       </div>
       <div className="flex items-center gap-3">
         <div className="text-right text-xs text-primary-foreground/70">

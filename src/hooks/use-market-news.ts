@@ -25,7 +25,8 @@ export function useMarketNews() {
       if (error) throw error;
       return (data ?? []) as NewsItem[];
     },
-    staleTime: 5 * 60_000,
+    staleTime: 60 * 60_000,
+    refetchInterval: 60 * 60_000,
     refetchOnWindowFocus: false,
   });
 }
