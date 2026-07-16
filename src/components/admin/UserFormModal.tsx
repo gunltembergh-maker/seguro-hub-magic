@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { adminPrecadastrarUsuarioFull } from "@/lib/admin-precadastro.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -62,6 +64,7 @@ interface Props {
 
 export function UserFormModal({ open, onOpenChange, initial, onSaved }: Props) {
   const qc = useQueryClient();
+  const precadastrarFn = useServerFn(adminPrecadastrarUsuarioFull);
   const isEdit = !!initial?.isEdit;
 
   const [nome, setNome] = useState("");
@@ -138,17 +141,18 @@ export function UserFormModal({ open, onOpenChange, initial, onSaved }: Props) {
         } as never);
         if (error) throw error;
       } else {
-        const { error } = await supabase.rpc("rpc_admin_precadastrar_usuario_full" as never, {
-          _email: clean,
-          _full_name: nome,
-          _perfil_id: perfilId,
-          _cpf: digits || null,
-          _area: area || null,
-          _gestor: gestor || null,
-          _empresa: empresa || null,
-          _tipo_usuario: tipoUsuario,
-        } as never);
-        if (error) throw error;
+        await precadastrarFn({
+          data: {
+            email: clean,
+            full_name: nome,
+            perfil_id: perfilId,
+            cpf: digits || null,
+            area: area || null,
+            gestor: gestor || null,
+            empresa: empresa || null,
+            tipo_usuario: tipoUsuario,
+          },
+        });
       }
     },
     onSuccess: () => {
