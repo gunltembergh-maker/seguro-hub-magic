@@ -62,6 +62,29 @@ function AuthPage() {
       searchParams.get("error") ||
       hashParams.get("error");
 
+    // Se esta página abriu como popup do SSO, repassa o resultado para a
+    // janela principal e fecha — evita o loop de reabrir /auth dentro do popup.
+    const isPopup = !!window.opener && window.opener !== window;
+    if (isPopup && (oauthError || window.location.hash.includes("access_token"))) {
+      try {
+        if (oauthError) {
+          window.opener.postMessage(
+            { type: "lavoro-sso", ok: false, error: oauthError },
+            window.location.origin,
+          );
+        } else {
+          window.opener.postMessage(
+            { type: "lavoro-sso", ok: true },
+            window.location.origin,
+          );
+        }
+      } catch {
+        // ignora
+      }
+      window.close();
+      return;
+    }
+
     if (oauthError) {
       toast.error("SSO não concluído", { description: oauthError });
       window.history.replaceState({}, document.title, window.location.pathname);
@@ -75,18 +98,38 @@ function AuthPage() {
       if (mounted) setLoading(false);
     });
 
-    // Callback OAuth: sessão chega de forma assíncrona após a Supabase
-    // processar o hash da URL — só então navegamos.
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session) {
         goToHub();
       }
     });
 
+    // Mensagens do popup do SSO
+    const onMessage = (ev: MessageEvent) => {
+      if (ev.origin !== window.location.origin) return;
+      const data = ev.data as { type?: string; ok?: boolean; error?: string } | null;
+      if (!data || data.type !== "lavoro-sso") return;
+      clearAuthPoll();
+      if (data.ok) {
+        // sessão vai chegar via onAuthStateChange; força um refresh do estado
+        supabase.auth.getSession().then(({ data: s }) => {
+          if (s.session) goToHub();
+        });
+      } else {
+        setLoading(false);
+        setAuthMessage(null);
+        toast.error("SSO não concluído", {
+          description: data.error ?? "Falha no login com Microsoft.",
+        });
+      }
+    };
+    window.addEventListener("message", onMessage);
+
     return () => {
       mounted = false;
       clearAuthPoll();
       sub.subscription.unsubscribe();
+      window.removeEventListener("message", onMessage);
     };
   }, [navigate]);
 
