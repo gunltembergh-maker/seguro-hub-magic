@@ -2,11 +2,16 @@ import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useMutation } from '@tanstack/react-query'
 import { useServerFn } from '@tanstack/react-start'
-import { Loader2, Mail, Send, ShieldAlert, CheckCircle2, XCircle } from 'lucide-react'
+import {
+  Loader2, Mail, Send, ShieldAlert, CheckCircle2, XCircle,
+  Newspaper, LineChart,
+} from 'lucide-react'
 import { toast } from 'sonner'
 
 import { useMeuPerfil, hasRole } from '@/hooks/use-meu-perfil'
 import { sendTestEmail } from '@/lib/emails/send-test-email.functions'
+import { sendReceitaDiaria } from '@/lib/emails/send-receita-diaria.functions'
+import { sendResumoExecutivo } from '@/lib/emails/send-resumo-executivo.functions'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
