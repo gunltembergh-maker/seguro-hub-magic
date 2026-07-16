@@ -172,17 +172,10 @@ function AuthPage() {
         <div className="grid w-full items-center gap-12 md:grid-cols-2">
           {/* Coluna esquerda: título institucional */}
           <div className="hidden text-white md:block">
-            <p className="text-xs font-medium uppercase tracking-[0.28em] text-white/60">
+            <p className="text-[10px] font-medium uppercase tracking-[0.32em] text-white/70">
               Hub Corporativo
             </p>
-            <h1 className="mt-4 font-display text-4xl font-semibold leading-tight text-white lg:text-5xl">
-              Lavoro Seguros
-            </h1>
-            <p className="mt-4 max-w-md text-sm leading-relaxed text-white/75">
-              Acesso centralizado para colaboradores. Áreas, ramos, indicadores e
-              operações em um único ambiente seguro.
-            </p>
-            <div className="mt-6 flex items-center gap-2 text-xs text-white/60">
+            <div className="mt-6 flex items-center gap-2 text-xs text-white/70">
               <Lock className="h-3.5 w-3.5" />
               Ambiente restrito · Autenticação Microsoft 365
             </div>
