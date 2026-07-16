@@ -68,7 +68,10 @@ function AuthPage() {
     setLoading(true);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "azure",
-      options: { scopes: "email openid profile", redirectTo: window.location.origin },
+      options: {
+        scopes: "email openid profile",
+        redirectTo: `${window.location.origin}/auth`,
+      },
     });
     if (error) {
       toast.error("Não foi possível iniciar o login", { description: error.message });
