@@ -95,16 +95,23 @@ function AuthPage() {
     setAuthMessage(null);
     clearAuthPoll();
 
+    const popup = window.open(
+      "about:blank",
+      "lavoro-microsoft-sso",
+      "width=520,height=720,left=120,top=80",
+    );
+
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "azure",
       options: {
         scopes: "email openid profile",
         redirectTo: `${window.location.origin}/auth`,
+        skipBrowserRedirect: true,
       },
-      skipBrowserRedirect: true,
     });
 
     if (error || !data.url) {
+      popup?.close();
       toast.error("Não foi possível iniciar o login", {
         description: error?.message ?? "URL de autenticação não retornada.",
       });
@@ -112,16 +119,12 @@ function AuthPage() {
       return;
     }
 
-    const popup = window.open(
-      data.url,
-      "lavoro-microsoft-sso",
-      "width=520,height=720,left=120,top=80,noopener,noreferrer",
-    );
-
     if (!popup) {
       window.location.assign(data.url);
       return;
     }
+
+    popup.location.href = data.url;
 
     setAuthMessage("Conclua o login na janela da Microsoft que foi aberta.");
     const startedAt = Date.now();
