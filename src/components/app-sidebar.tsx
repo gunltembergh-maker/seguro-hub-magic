@@ -162,42 +162,46 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
-        <SidebarGroup>
+        {areas.length > 0 && (
+          <SidebarGroup>
 
-          <SidebarGroupLabel>Áreas</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {areas.map((i) => (
-                <SidebarMenuItem key={i.url}>
-                  <SidebarMenuButton asChild isActive={isActive(i.url)} tooltip={i.title}>
-                    <Link to={i.url}>
-                      <i.icon />
-                      <span>{i.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+            <SidebarGroupLabel>Áreas</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {areas.map((i) => (
+                  <SidebarMenuItem key={i.url}>
+                    <SidebarMenuButton asChild isActive={isActive(i.url)} tooltip={i.title}>
+                      <Link to={i.url}>
+                        <i.icon />
+                        <span>{i.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Ramos</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {ramos.map((i) => (
-                <SidebarMenuItem key={i.url}>
-                  <SidebarMenuButton asChild isActive={isActive(i.url)} tooltip={i.title}>
-                    <Link to={i.url}>
-                      <i.icon />
-                      <span>{i.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {ramos.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Ramos</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {ramos.map((i) => (
+                  <SidebarMenuItem key={i.url}>
+                    <SidebarMenuButton asChild isActive={isActive(i.url)} tooltip={i.title}>
+                      <Link to={i.url}>
+                        <i.icon />
+                        <span>{i.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
 
         {adminItems.length > 0 && (
