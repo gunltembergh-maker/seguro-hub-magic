@@ -31,6 +31,40 @@ function MicrosoftLogo({ className }: { className?: string }) {
   );
 }
 
+async function ensureOAuthSessionFromUrl() {
+  const searchParams = new URLSearchParams(window.location.search);
+  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  const code = searchParams.get("code");
+  const accessToken = hashParams.get("access_token");
+  const refreshToken = hashParams.get("refresh_token");
+
+  if (code) {
+    const { data, error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+    if (error) throw error;
+    return data.session;
+  }
+
+  if (accessToken && refreshToken) {
+    await supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
+  }
+
+  const { data } = await supabase.auth.getSession();
+  return data.session;
+}
+
+async function waitForSession(maxWaitMs = 8000) {
+  const startedAt = Date.now();
+  while (Date.now() - startedAt < maxWaitMs) {
+    const { data } = await supabase.auth.getSession();
+    if (data.session) return data.session;
+    await new Promise((resolve) => window.setTimeout(resolve, 250));
+  }
+  return null;
+}
+
 function AuthPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -65,23 +99,43 @@ function AuthPage() {
     // Se esta página abriu como popup do SSO, repassa o resultado para a
     // janela principal e fecha — evita o loop de reabrir /auth dentro do popup.
     const isPopup = !!window.opener && window.opener !== window;
-    if (isPopup && (oauthError || window.location.hash.includes("access_token"))) {
-      try {
-        if (oauthError) {
+    const hasOAuthCallback =
+      searchParams.has("code") ||
+      window.location.hash.includes("access_token") ||
+      window.location.hash.includes("refresh_token");
+
+    if (isPopup && (oauthError || hasOAuthCallback)) {
+      void (async () => {
+        try {
+          if (oauthError) {
+            window.opener.postMessage(
+              { type: "lavoro-sso", ok: false, error: oauthError },
+              window.location.origin,
+            );
+          } else {
+            const session = await ensureOAuthSessionFromUrl();
+            window.opener.postMessage(
+              {
+                type: "lavoro-sso",
+                ok: !!session,
+                error: session ? undefined : "Não foi possível salvar a sessão do SSO.",
+              },
+              window.location.origin,
+            );
+          }
+        } catch (err) {
           window.opener.postMessage(
-            { type: "lavoro-sso", ok: false, error: oauthError },
+            {
+              type: "lavoro-sso",
+              ok: false,
+              error: err instanceof Error ? err.message : "Falha ao concluir o SSO.",
+            },
             window.location.origin,
           );
-        } else {
-          window.opener.postMessage(
-            { type: "lavoro-sso", ok: true },
-            window.location.origin,
-          );
+        } finally {
+          window.setTimeout(() => window.close(), 150);
         }
-      } catch {
-        // ignora
-      }
-      window.close();
+      })();
       return;
     }
 
@@ -111,9 +165,17 @@ function AuthPage() {
       if (!data || data.type !== "lavoro-sso") return;
       clearAuthPoll();
       if (data.ok) {
-        // sessão vai chegar via onAuthStateChange; força um refresh do estado
-        supabase.auth.getSession().then(({ data: s }) => {
-          if (s.session) goToHub();
+        setAuthMessage("Login concluído. Entrando no Hub...");
+        waitForSession().then((session) => {
+          if (session) {
+            goToHub();
+            return;
+          }
+          setLoading(false);
+          setAuthMessage("SSO concluído, mas a sessão não foi encontrada. Tente novamente.");
+          toast.error("Sessão não encontrada", {
+            description: "O login foi aprovado, mas a sessão não chegou ao navegador principal.",
+          });
         });
       } else {
         setLoading(false);
@@ -138,24 +200,8 @@ function AuthPage() {
     setAuthMessage(null);
     clearAuthPoll();
 
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    if (!supabaseUrl) {
-      toast.error("SSO indisponível", {
-        description: "URL do Supabase não configurada.",
-      });
-      setLoading(false);
-      return;
-    }
-
-    const params = new URLSearchParams({
-      provider: "azure",
-      redirect_to: `${window.location.origin}/auth`,
-      scopes: "email openid profile",
-    });
-    const authUrl = `${supabaseUrl}/auth/v1/authorize?${params.toString()}`;
-
     const popup = window.open(
-      authUrl,
+      "about:blank",
       "lavoro-microsoft-sso",
       "width=520,height=720,left=120,top=80",
     );
@@ -168,6 +214,26 @@ function AuthPage() {
       });
       return;
     }
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "azure",
+      options: {
+        redirectTo: `${window.location.origin}/auth`,
+        scopes: "email openid profile",
+        skipBrowserRedirect: true,
+      },
+    });
+
+    if (error || !data.url) {
+      popup.close();
+      setLoading(false);
+      toast.error("SSO indisponível", {
+        description: error?.message ?? "Não foi possível iniciar o login Microsoft.",
+      });
+      return;
+    }
+
+    popup.location.href = data.url;
 
     setAuthMessage("Conclua o login na janela da Microsoft que foi aberta.");
     const startedAt = Date.now();
