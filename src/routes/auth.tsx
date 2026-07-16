@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import logoBranca from "@/assets/logo-branca.png.asset.json";
-import fundo1 from "@/assets/fundo-1.png.asset.json";
+import fundoPredio from "@/assets/fundo-login-predio.png.asset.json";
 
 const ALLOWED_DOMAIN = "lavoroseguros.com.br";
 // Usuários com login por senha liberado (backdoor)
@@ -78,8 +78,6 @@ function AuthPage() {
             return;
           }
         } else if (hasImplicit) {
-          // fluxo implicit (fallback) — o supabase-js processa automaticamente
-          // ao chamar getSession/onAuthStateChange
           cleanUrl();
         }
 
@@ -128,7 +126,6 @@ function AuthPage() {
         description: error.message ?? "Não foi possível iniciar o login Microsoft.",
       });
     }
-    // Se não houve erro, o navegador está saindo desta página para o Azure.
   };
 
   const handleEmailCheck = (e: React.FormEvent) => {
@@ -145,87 +142,134 @@ function AuthPage() {
   };
 
   return (
-    <div
-      className="relative min-h-screen bg-cover bg-center"
-      style={{ backgroundImage: `url(${fundo1.url})` }}
-    >
-      <div className="absolute inset-0 bg-[#0b2536]/70" />
+    <div className="relative min-h-screen overflow-hidden bg-[#0a1e2c]">
+      {/* Imagem 3D do prédio ao fundo */}
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: `url(${fundoPredio.url})` }}
+        aria-hidden="true"
+      />
+      {/* Camadas de profundidade / vinheta cinematográfica */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse at 70% 35%, rgba(20,64,92,0.25) 0%, rgba(6,20,32,0.85) 75%)",
+        }}
+        aria-hidden="true"
+      />
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(90deg, rgba(6,20,32,0.85) 0%, rgba(6,20,32,0.55) 45%, rgba(6,20,32,0.15) 100%)",
+        }}
+        aria-hidden="true"
+      />
 
-      <div className="relative flex min-h-screen flex-col items-center justify-center px-6 py-12">
-        {/* Logo centralizada acima do card */}
-        <div className="mb-8 flex flex-col items-center">
-          <img
-            src={logoBranca.url}
-            alt="Lavoro Seguros"
-            className="h-14 w-auto drop-shadow-lg"
-          />
-        </div>
+      {/* Logo no canto superior direito */}
+      <div className="absolute right-6 top-6 z-10 flex items-center gap-3">
+        <img
+          src={logoBranca.url}
+          alt="Lavoro Seguros"
+          className="h-9 w-auto drop-shadow-[0_4px_16px_rgba(0,0,0,0.55)]"
+        />
+      </div>
 
-        <div className="w-full max-w-[440px] rounded-2xl bg-white p-8 shadow-2xl">
-          <h1 className="text-center font-display text-xl font-semibold tracking-tight text-[#14405C]">
-            Acessar o Hub Lavoro Seguros
-          </h1>
-
-          <button
-            onClick={handleMicrosoftLogin}
-            disabled={loading}
-            className="mt-6 flex w-full items-center justify-center gap-3 rounded-lg bg-[#0e2a3d] px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-[#14405C] disabled:opacity-70"
-          >
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <MicrosoftLogo className="h-4 w-4" />
-            )}
-            Entrar com Microsoft
-          </button>
-
-          <p className="mt-3 text-center text-xs text-muted-foreground">
-            {authMessage ?? "Para colaboradores da Lavoro Seguros"}
-          </p>
-
-          <div className="my-5 flex items-center gap-3">
-            <div className="h-px flex-1 bg-border" />
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-              ou informe seu e-mail
-            </span>
-            <div className="h-px flex-1 bg-border" />
-          </div>
-
-          <form onSubmit={handleEmailCheck} className="space-y-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-xs">E-mail Corporativo</Label>
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder={`nome@${ALLOWED_DOMAIN}`}
-              />
-            </div>
-            <p className="text-[11px] leading-relaxed text-muted-foreground">
-              O login por senha está desativado para domínios corporativos. Informe seu
-              e-mail para verificar se é possível acessar por senha.
+      <div className="relative z-10 flex min-h-screen items-center px-6 py-16 md:px-16 lg:px-24">
+        <div className="grid w-full items-center gap-12 md:grid-cols-2">
+          {/* Coluna esquerda: título institucional */}
+          <div className="hidden text-white md:block">
+            <p className="text-xs font-medium uppercase tracking-[0.28em] text-white/60">
+              Hub Corporativo
             </p>
-            <Button
-              type="submit"
-              variant="outline"
-              size="sm"
-              className="w-full text-[#14405C]"
-            >
-              Verificar acesso por senha
-            </Button>
-          </form>
+            <h1 className="mt-4 font-display text-4xl font-semibold leading-tight text-white lg:text-5xl">
+              Lavoro Seguros
+            </h1>
+            <p className="mt-4 max-w-md text-sm leading-relaxed text-white/75">
+              Acesso centralizado para colaboradores. Áreas, ramos, indicadores e
+              operações em um único ambiente seguro.
+            </p>
+            <div className="mt-6 flex items-center gap-2 text-xs text-white/60">
+              <Lock className="h-3.5 w-3.5" />
+              Ambiente restrito · Autenticação Microsoft 365
+            </div>
+          </div>
 
-          <div className="mt-6 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-            <Lock className="h-3 w-3" />
-            Acesso somente por convite
+          {/* Coluna direita: card de login */}
+          <div className="mx-auto w-full max-w-[440px] md:ml-auto">
+            <div className="rounded-2xl border border-white/10 bg-white/95 p-8 shadow-[0_25px_80px_-15px_rgba(0,0,0,0.6)] backdrop-blur-xl">
+              <h2 className="text-center font-display text-xl font-semibold tracking-tight text-[#14405C]">
+                Acessar o Hub
+              </h2>
+              <p className="mt-1 text-center text-xs text-muted-foreground">
+                Use sua conta corporativa @{ALLOWED_DOMAIN}
+              </p>
+
+              <button
+                onClick={handleMicrosoftLogin}
+                disabled={loading}
+                className="mt-6 flex w-full items-center justify-center gap-3 rounded-lg bg-[#0e2a3d] px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-[#14405C] disabled:opacity-70"
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <MicrosoftLogo className="h-4 w-4" />
+                )}
+                Entrar com Microsoft
+              </button>
+
+              <p className="mt-3 text-center text-xs text-muted-foreground">
+                {authMessage ?? "Somente colaboradores previamente cadastrados"}
+              </p>
+
+              <div className="my-5 flex items-center gap-3">
+                <div className="h-px flex-1 bg-border" />
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  ou informe seu e-mail
+                </span>
+                <div className="h-px flex-1 bg-border" />
+              </div>
+
+              <form onSubmit={handleEmailCheck} className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="email" className="text-xs">
+                    E-mail Corporativo
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder={`nome@${ALLOWED_DOMAIN}`}
+                  />
+                </div>
+                <p className="text-[11px] leading-relaxed text-muted-foreground">
+                  O login por senha está desativado para domínios corporativos.
+                  Informe seu e-mail para verificar se é possível acessar por senha.
+                </p>
+                <Button
+                  type="submit"
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-[#14405C]"
+                >
+                  Verificar acesso por senha
+                </Button>
+              </form>
+
+              <div className="mt-6 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+                <Lock className="h-3 w-3" />
+                Acesso somente por convite
+              </div>
+            </div>
+
+            <p className="mt-6 text-center text-[11px] text-white/60">
+              © {new Date().getFullYear()} Lavoro Seguros · Acesso restrito
+            </p>
           </div>
         </div>
-
-        <p className="mt-10 text-center text-xs text-white/70">
-          Acesso restrito a colaboradores Lavoro Seguros © {new Date().getFullYear()}
-        </p>
       </div>
     </div>
   );
