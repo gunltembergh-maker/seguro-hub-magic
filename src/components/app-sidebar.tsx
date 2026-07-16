@@ -45,18 +45,18 @@ const primary = [
   { title: "Início", url: "/inicio", icon: Home },
 ];
 
-const areas = [
-  { title: "Financeiro", url: "/financeiro", icon: Landmark },
-  { title: "Jurídico", url: "/juridico", icon: Scale },
-  { title: "Operacional", url: "/operacional", icon: Cog },
-  { title: "Middle", url: "/middle", icon: Layers },
-  { title: "Facilities", url: "/facilities", icon: Wrench },
+const areasAll = [
+  { title: "Financeiro", url: "/financeiro", icon: Landmark, perm: "menu_area_financeiro" },
+  { title: "Jurídico", url: "/juridico", icon: Scale, perm: "menu_area_juridico" },
+  { title: "Operacional", url: "/operacional", icon: Cog, perm: "menu_area_operacional" },
+  { title: "Middle", url: "/middle", icon: Layers, perm: "menu_area_middle" },
+  { title: "Facilities", url: "/facilities", icon: Wrench, perm: "menu_area_facilities" },
 ];
 
-const ramos = [
-  { title: "Garantia", url: "/garantia", icon: ShieldCheck },
-  { title: "Benefícios", url: "/beneficios", icon: HeartPulse },
-  { title: "Demais Ramos", url: "/demais-ramos", icon: Boxes },
+const ramosAll = [
+  { title: "Garantia", url: "/garantia", icon: ShieldCheck, perm: "menu_ramo_garantia" },
+  { title: "Benefícios", url: "/beneficios", icon: HeartPulse, perm: "menu_ramo_beneficios" },
+  { title: "Demais Ramos", url: "/demais-ramos", icon: Boxes, perm: "menu_ramo_demais" },
 ];
 export function AppSidebar() {
   const { state } = useSidebar();
@@ -67,30 +67,32 @@ export function AppSidebar() {
   const meuPerfil = useMeuPerfilEfetivo();
   const isAdmin = hasRole(meuPerfil, "ADMIN");
 
+  const areas = areasAll.filter((i) => isAdmin || hasPermission(meuPerfil, i.perm));
+  const ramos = ramosAll.filter((i) => isAdmin || hasPermission(meuPerfil, i.perm));
+
   const dashboardItems = [
     { title: "Receita", url: "/dashboard/receita",
       show: isAdmin || hasPermission(meuPerfil, "menu_dashboard_receita") },
     { title: "Receita Caixa", url: "/dashboard/receita-caixa",
-      show: isAdmin || hasPermission(meuPerfil, "menu_dashboard_receita_caixa") || hasPermission(meuPerfil, "menu_dashboard_receita") },
+      show: isAdmin || hasPermission(meuPerfil, "menu_dashboard_receita_caixa") },
     { title: "Resumo Executivo", url: "/dashboard/receita-executivo",
-      show: isAdmin || hasPermission(meuPerfil, "menu_dashboard_receita") },
+      show: isAdmin || hasPermission(meuPerfil, "menu_dashboard_receita_executivo") },
     { title: "Report Fechamento", url: "/dashboard/report-fechamento",
-      show: isAdmin || hasPermission(meuPerfil, "menu_dashboard_receita") },
+      show: isAdmin || hasPermission(meuPerfil, "menu_dashboard_report_fechamento") },
   ].filter((i) => i.show);
-  const showDashboards =
-    isAdmin || hasPermission(meuPerfil, "menu_dashboards") || dashboardItems.length > 0;
+  const showDashboards = dashboardItems.length > 0;
 
   const adminItems = [
-    { title: "Usuários", url: "/admin/usuarios", icon: Users, show: isAdmin },
-    { title: "Perfis", url: "/admin/perfis", icon: KeyRound, show: isAdmin },
-    { title: "Comunicados", url: "/admin/comunicados", icon: Megaphone, show: isAdmin },
+    { title: "Usuários", url: "/admin/usuarios", icon: Users, show: isAdmin || hasPermission(meuPerfil, "menu_admin_usuarios") },
+    { title: "Perfis", url: "/admin/perfis", icon: KeyRound, show: isAdmin || hasPermission(meuPerfil, "menu_admin_perfis") },
+    { title: "Comunicados", url: "/admin/comunicados", icon: Megaphone, show: isAdmin || hasPermission(meuPerfil, "menu_admin_comunicados") },
     { title: "Importar Bases", url: "/admin/importar-bases", icon: Upload,
-      show: isAdmin || hasPermission(meuPerfil, "menu_importar_gerencial") || hasPermission(meuPerfil, "menu_importar_caixa") },
-    { title: "Emails", url: "/admin/emails", icon: Mail, show: isAdmin },
-    { title: "Agendamento de E-mail", url: "/admin/emails/schedules", icon: Mail, show: isAdmin },
-    { title: "Log de Emails", url: "/admin/emails/log", icon: Mail, show: isAdmin },
+      show: isAdmin || hasPermission(meuPerfil, "menu_admin_importar") || hasPermission(meuPerfil, "menu_importar_gerencial") || hasPermission(meuPerfil, "menu_importar_caixa") },
+    { title: "Emails", url: "/admin/emails", icon: Mail, show: isAdmin || hasPermission(meuPerfil, "menu_admin_emails") },
+    { title: "Agendamento de E-mail", url: "/admin/emails/schedules", icon: Mail, show: isAdmin || hasPermission(meuPerfil, "menu_admin_emails_schedules") },
+    { title: "Log de Emails", url: "/admin/emails/log", icon: Mail, show: isAdmin || hasPermission(meuPerfil, "menu_admin_emails_log") },
     { title: "Configurações", url: "/admin/configuracoes", icon: Settings,
-      show: hasPermission(meuPerfil, "menu_admin_configuracoes") },
+      show: isAdmin || hasPermission(meuPerfil, "menu_admin_configuracoes") },
 
   ].filter((i) => i.show);
 
