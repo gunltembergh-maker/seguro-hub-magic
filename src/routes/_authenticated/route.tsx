@@ -101,7 +101,13 @@ function AuthenticatedShell() {
               <ViewAsSelector />
             </div>
           </header>
-          <main className="flex-1">
+          <main
+            className="flex-1"
+            style={{
+              background:
+                "linear-gradient(135deg, #14405C 0%, #1B5680 55%, #2E7BB0 100%)",
+            }}
+          >
             <Outlet />
           </main>
         </SidebarInset>
