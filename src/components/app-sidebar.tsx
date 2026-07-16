@@ -87,6 +87,7 @@ export function AppSidebar() {
     { title: "Importar Bases", url: "/admin/importar-bases", icon: Upload,
       show: isAdmin || hasPermission(meuPerfil, "menu_importar_gerencial") || hasPermission(meuPerfil, "menu_importar_caixa") },
     { title: "Emails", url: "/admin/emails", icon: Mail, show: isAdmin },
+    { title: "Agendamento de E-mail", url: "/admin/emails/schedules", icon: Mail, show: isAdmin },
     { title: "Log de Emails", url: "/admin/emails/log", icon: Mail, show: isAdmin },
     { title: "Configurações", url: "/admin/configuracoes", icon: Settings,
       show: hasPermission(meuPerfil, "menu_admin_configuracoes") },
