@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2, Lock } from "lucide-react";
 import { toast } from "sonner";
 
@@ -35,6 +35,15 @@ function AuthPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
+  const [authMessage, setAuthMessage] = useState<string | null>(null);
+  const pollRef = useRef<number | null>(null);
+
+  const clearAuthPoll = () => {
+    if (pollRef.current) {
+      window.clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  };
 
   useEffect(() => {
     let done = false;
@@ -76,23 +85,71 @@ function AuthPage() {
 
     return () => {
       mounted = false;
+      clearAuthPoll();
       sub.subscription.unsubscribe();
     };
   }, [navigate]);
 
   const handleMicrosoftLogin = async () => {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "azure",
-      options: {
-        scopes: "email openid profile",
-        redirectTo: `${window.location.origin}/auth`,
-      },
-    });
-    if (error) {
-      toast.error("Não foi possível iniciar o login", { description: error.message });
+    setAuthMessage(null);
+    clearAuthPoll();
+
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    if (!supabaseUrl) {
+      toast.error("SSO indisponível", {
+        description: "URL do Supabase não configurada.",
+      });
       setLoading(false);
+      return;
     }
+
+    const params = new URLSearchParams({
+      provider: "azure",
+      redirect_to: `${window.location.origin}/auth`,
+      scopes: "email openid profile",
+    });
+    const authUrl = `${supabaseUrl}/auth/v1/authorize?${params.toString()}`;
+
+    const popup = window.open(
+      authUrl,
+      "lavoro-microsoft-sso",
+      "width=520,height=720,left=120,top=80",
+    );
+
+    if (!popup) {
+      setLoading(false);
+      setAuthMessage("O navegador bloqueou a janela de login. Permita pop-ups e tente novamente.");
+      toast.error("Popup bloqueado", {
+        description: "Permita pop-ups para esta página e clique em Entrar com Microsoft novamente.",
+      });
+      return;
+    }
+
+    setAuthMessage("Conclua o login na janela da Microsoft que foi aberta.");
+    const startedAt = Date.now();
+    pollRef.current = window.setInterval(async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData.session) {
+        clearAuthPoll();
+        popup.close();
+        navigate({ to: "/hub", replace: true });
+        return;
+      }
+
+      if (popup.closed) {
+        clearAuthPoll();
+        setLoading(false);
+        setAuthMessage("A janela de login foi fechada antes da conclusão.");
+        return;
+      }
+
+      if (Date.now() - startedAt > 180_000) {
+        clearAuthPoll();
+        setLoading(false);
+        setAuthMessage("Tempo esgotado. Clique novamente para tentar entrar.");
+      }
+    }, 1000);
   };
 
   const handleEmailCheck = (e: React.FormEvent) => {
@@ -144,7 +201,7 @@ function AuthPage() {
           </button>
 
           <p className="mt-3 text-center text-xs text-muted-foreground">
-            Para colaboradores da Lavoro Seguros
+            {authMessage ?? "Para colaboradores da Lavoro Seguros"}
           </p>
 
           <div className="my-5 flex items-center gap-3">
