@@ -43,7 +43,7 @@ function AuthPage() {
     const goToHub = () => {
       if (done) return;
       done = true;
-      navigate({ to: "/hub", replace: true });
+      navigate({ to: "/inicio", replace: true });
     };
 
     const cleanUrl = () => {

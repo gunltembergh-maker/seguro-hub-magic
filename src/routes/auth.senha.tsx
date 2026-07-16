@@ -30,7 +30,7 @@ function AuthSenhaPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/hub", replace: true });
+      if (data.session) navigate({ to: "/inicio", replace: true });
       else setChecking(false);
     });
   }, [navigate]);
@@ -48,7 +48,7 @@ function AuthSenhaPage() {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email: clean, password });
       if (error) throw error;
-      navigate({ to: "/hub", replace: true });
+      navigate({ to: "/inicio", replace: true });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro desconhecido";
       toast.error("Falha no login", { description: message });
