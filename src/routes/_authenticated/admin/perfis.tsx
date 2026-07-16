@@ -84,13 +84,28 @@ function AdminPerfisPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <ul className="space-y-1 text-xs">
-                    {PERMISSION_KEYS.map((k) => (
-                      <li key={k.key} className={p.permissoes[k.key] ? "text-foreground" : "text-muted-foreground/60 line-through"}>
-                        {k.label}
-                      </li>
+                  <div className="space-y-3">
+                    {PERMISSION_GROUPS.map((g) => (
+                      <div key={g.title}>
+                        <h4 className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{g.title}</h4>
+                        <ul className="space-y-0.5 text-xs">
+                          {g.items.map((it) => (
+                            <li
+                              key={it.key}
+                              className={
+                                (it.child ? "pl-3 " : "") +
+                                (p.permissoes[it.key]
+                                  ? "text-foreground"
+                                  : "text-muted-foreground/60 line-through")
+                              }
+                            >
+                              {it.label}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                   <div className="mt-4 flex gap-2">
                     <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setEditing(p)}>
                       <Pencil className="h-3.5 w-3.5" /> Editar
