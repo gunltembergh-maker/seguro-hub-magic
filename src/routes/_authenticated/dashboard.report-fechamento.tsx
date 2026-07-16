@@ -300,6 +300,7 @@ function ReportFechamento() {
           <AbaBase ano={ano} gran={gran} periodo={periodo} />
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }
