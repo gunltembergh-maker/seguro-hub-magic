@@ -53,7 +53,7 @@ export const sendReceitaDiaria = createServerFn({ method: 'POST' })
     try {
       const result = await sendTemplateEmail('receita-diaria', data.to, {
         templateData: { ano, mes, quandoBR, ytd, mtd, comissaoVencidaMes },
-        idempotencyKey: `receita-diaria-${ano}-${mes}-${hoje.getDate()}-${data.to}`,
+        idempotencyKey: `receita-diaria-${ano}-${mes}-${hoje.getDate()}-${data.to}-${Date.now()}`,
       })
 
       // Log dispatch (best-effort; ignore FK/permission errors)
