@@ -118,7 +118,11 @@ function AuthPage() {
     );
 
     if (!popup) {
-      window.location.assign(authUrl);
+      setLoading(false);
+      setAuthMessage("O navegador bloqueou a janela de login. Permita pop-ups e tente novamente.");
+      toast.error("Popup bloqueado", {
+        description: "Permita pop-ups para esta página e clique em Entrar com Microsoft novamente.",
+      });
       return;
     }
 
