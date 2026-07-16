@@ -96,10 +96,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         property: "og:description",
         content:
-          "Portal interno de colaboradores da Lavoro Seguros — comunicados, áreas e atalhos em um só lugar.",
+          "Hub interno da Lavoro Seguros: acesso centralizado a Financeiro, Jurídico, Operacional, Middle, Facilities, Garantia, Benefícios e demais ramos.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Hub Lavoro Seguros" },
+      { name: "twitter:description", content: "Hub interno da Lavoro Seguros: acesso centralizado a Financeiro, Jurídico, Operacional, Middle, Facilities, Garantia, Benefícios e demais ramos." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1a48e13f-72a7-441a-8447-aa93cd654a0c/id-preview-11177ae9--ae780930-9fc8-45f0-9908-31d89569a898.lovable.app-1784228819348.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1a48e13f-72a7-441a-8447-aa93cd654a0c/id-preview-11177ae9--ae780930-9fc8-45f0-9908-31d89569a898.lovable.app-1784228819348.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
