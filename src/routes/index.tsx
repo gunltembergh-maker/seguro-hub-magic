@@ -11,9 +11,31 @@ export const Route = createFileRoute("/")({
 function IndexRedirect() {
   const navigate = useNavigate();
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      navigate({ to: data.session ? "/hub" : "/auth", replace: true });
+    let done = false;
+    const go = (to: "/hub" | "/auth") => {
+      if (done) return;
+      done = true;
+      navigate({ to, replace: true });
+    };
+
+    // Aguarda hidratação do session pelo Supabase (PKCE ?code=... ou hash #access_token=...)
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "INITIAL_SESSION" || event === "SIGNED_IN") {
+        go(session ? "/hub" : "/auth");
+      }
     });
+
+    // Fallback caso o evento não dispare rapidamente
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) go("/hub");
+    });
+
+    const timeout = setTimeout(() => go("/auth"), 2500);
+
+    return () => {
+      sub.subscription.unsubscribe();
+      clearTimeout(timeout);
+    };
   }, [navigate]);
   return <LoadingSplash />;
 }
