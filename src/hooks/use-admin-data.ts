@@ -22,16 +22,78 @@ export interface PerfilAcesso {
   updated_at: string;
 }
 
-export const PERMISSION_KEYS = [
-  { key: "menu_inicio", label: "Menu Início" },
-  { key: "menu_dashboards", label: "Dashboards (pai)" },
-  { key: "menu_dashboard_receita", label: "Dashboard de Receita" },
-  { key: "menu_importar_gerencial", label: "Importar Base Gerencial" },
-  { key: "menu_importar_caixa", label: "Importar Caixa Bradesco" },
-  { key: "menu_admin_usuarios", label: "Admin — Usuários" },
-  { key: "menu_admin_perfis", label: "Admin — Perfis" },
-  { key: "menu_admin_configuracoes", label: "Admin — Configurações" },
-] as const;
+export interface PermissionItem {
+  key: string;
+  label: string;
+  desc?: string;
+  child?: boolean;
+}
+
+export interface PermissionGroup {
+  title: string;
+  items: PermissionItem[];
+}
+
+/**
+ * Catálogo mestre de permissões (pai/filho).
+ * Qualquer chave nova aqui aparece automaticamente em TODOS os perfis já
+ * existentes como desabilitada — o admin decide habilitar por perfil.
+ */
+export const PERMISSION_GROUPS: PermissionGroup[] = [
+  {
+    title: "Menu Principal",
+    items: [
+      { key: "menu_inicio", label: "Hub (Início)", desc: "Tela inicial com blocos e atualizações" },
+    ],
+  },
+  {
+    title: "Dashboards",
+    items: [
+      { key: "menu_dashboards", label: "Dashboards", desc: "Controle mestre do grupo Dashboards" },
+      { key: "menu_dashboard_receita", label: "↳ Receita", desc: "Dashboard de Receita (Competência x Caixa)", child: true },
+      { key: "menu_dashboard_receita_caixa", label: "↳ Receita Caixa", desc: "Detalhamento por caixa", child: true },
+      { key: "menu_dashboard_receita_executivo", label: "↳ Resumo Executivo", desc: "Visão executiva consolidada", child: true },
+      { key: "menu_dashboard_report_fechamento", label: "↳ Report Fechamento", desc: "Report de fechamento mensal", child: true },
+    ],
+  },
+  {
+    title: "Áreas",
+    items: [
+      { key: "menu_area_financeiro", label: "Financeiro" },
+      { key: "menu_area_juridico", label: "Jurídico" },
+      { key: "menu_area_operacional", label: "Operacional" },
+      { key: "menu_area_middle", label: "Middle" },
+      { key: "menu_area_facilities", label: "Facilities" },
+    ],
+  },
+  {
+    title: "Ramos",
+    items: [
+      { key: "menu_ramo_garantia", label: "Garantia" },
+      { key: "menu_ramo_beneficios", label: "Benefícios" },
+      { key: "menu_ramo_demais", label: "Demais Ramos" },
+    ],
+  },
+  {
+    title: "Administração",
+    items: [
+      { key: "menu_admin_usuarios", label: "Usuários", desc: "Gestão de usuários do Hub" },
+      { key: "menu_admin_perfis", label: "Perfis de Acesso", desc: "Esta tela — gerenciar perfis" },
+      { key: "menu_admin_comunicados", label: "Comunicados", desc: "Popups e comunicados internos" },
+      { key: "menu_admin_importar", label: "Importar Bases", desc: "Página de upload de bases" },
+      { key: "menu_importar_gerencial", label: "↳ Base Gerencial (Lavoro)", desc: "Upload da base gerencial", child: true },
+      { key: "menu_importar_caixa", label: "↳ Caixa Bradesco", desc: "Upload da base de caixa", child: true },
+      { key: "menu_admin_emails", label: "E-mails", desc: "Destinatários e templates" },
+      { key: "menu_admin_emails_schedules", label: "↳ Agendamentos", desc: "Configurar disparos recorrentes", child: true },
+      { key: "menu_admin_emails_log", label: "↳ Log de E-mails", desc: "Histórico de envios", child: true },
+      { key: "menu_admin_configuracoes", label: "Configurações", desc: "Configurações gerais do Hub" },
+    ],
+  },
+];
+
+/** Lista plana de todas as chaves — mantida para retro-compatibilidade. */
+export const PERMISSION_KEYS = PERMISSION_GROUPS.flatMap((g) => g.items);
+
 
 
 export function useAdminUsers() {
