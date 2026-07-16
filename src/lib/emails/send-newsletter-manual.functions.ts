@@ -81,8 +81,8 @@ export const dispararNewsletterManual = createServerFn({ method: 'POST' })
       context.supabase.rpc('rpc_receita_executivo_mensal' as never, { p_ano: data.ano } as never),
     ])
 
-    const ytd = (ytdRes.data as any[])?.[0] ?? null
-    const mtd = (mtdRes.data as any[])?.[0] ?? null
+    const ytd = ((ytdRes.data as unknown) as any[])?.[0] ?? null
+    const mtd = ((mtdRes.data as unknown) as any[])?.[0] ?? null
     const linhaMes = (((vencidoRes.data as unknown) as any[]) ?? []).find((r) => Number(r.mes) === data.mes)
     const comissaoVencidaMes = Number(linhaMes?.saldo_vencido ?? 0)
     const quandoBR = new Date().toLocaleString('pt-BR', {
