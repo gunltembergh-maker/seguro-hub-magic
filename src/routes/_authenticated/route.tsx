@@ -114,14 +114,14 @@ function AuthenticatedShell() {
             </div>
           </header>
           <main className="relative flex-1 bg-background">
-            <div
-              className="pointer-events-none absolute inset-y-0 right-0 w-[65%] bg-cover bg-right bg-no-repeat opacity-70 [mask-image:linear-gradient(to_left,black_0%,black_55%,transparent_100%)]"
-              style={{ backgroundImage: `url(${fundoHub.url})` }}
-              aria-hidden="true"
-            />
             <div className="relative">
               <Outlet />
             </div>
+            <div
+              className="pointer-events-none fixed inset-y-0 right-0 z-40 w-[55%] bg-cover bg-right bg-no-repeat opacity-40 mix-blend-screen [mask-image:linear-gradient(to_left,black_0%,black_50%,transparent_100%)]"
+              style={{ backgroundImage: `url(${fundoHub.url})` }}
+              aria-hidden="true"
+            />
           </main>
         </SidebarInset>
       </div>
