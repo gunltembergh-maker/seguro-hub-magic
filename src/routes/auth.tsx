@@ -143,36 +143,28 @@ function AuthPage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#0a1e2c]">
-      {/* Imagem 3D do prédio ao fundo */}
+      {/* Imagem 3D do prédio com o logo Lavoro Seguros integrado ao fundo */}
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: `url(${fundoPredio.url})` }}
         aria-hidden="true"
       />
-      {/* Camadas de profundidade / vinheta cinematográfica */}
+      {/* Vinheta lateral suave — escurece só o lado direito para o card, preserva o logo no fundo */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse at 70% 35%, rgba(20,64,92,0.25) 0%, rgba(6,20,32,0.85) 75%)",
-        }}
-        aria-hidden="true"
-      />
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "linear-gradient(90deg, rgba(6,20,32,0.85) 0%, rgba(6,20,32,0.55) 45%, rgba(6,20,32,0.15) 100%)",
+            "linear-gradient(90deg, rgba(6,20,32,0.05) 0%, rgba(6,20,32,0.15) 40%, rgba(6,20,32,0.75) 100%)",
         }}
         aria-hidden="true"
       />
 
-      {/* Logo no canto superior direito */}
-      <div className="absolute right-6 top-6 z-10 flex items-center gap-3">
+      {/* Marca sutil no canto superior esquerdo (o hero logo já vive no fundo) */}
+      <div className="absolute left-6 top-6 z-10 hidden items-center gap-3 md:flex">
         <img
           src={logoBranca.url}
           alt="Lavoro Seguros"
-          className="h-9 w-auto drop-shadow-[0_4px_16px_rgba(0,0,0,0.55)]"
+          className="h-8 w-auto opacity-90 drop-shadow-[0_4px_16px_rgba(0,0,0,0.55)]"
         />
       </div>
 
@@ -180,17 +172,10 @@ function AuthPage() {
         <div className="grid w-full items-center gap-12 md:grid-cols-2">
           {/* Coluna esquerda: título institucional */}
           <div className="hidden text-white md:block">
-            <p className="text-xs font-medium uppercase tracking-[0.28em] text-white/60">
+            <p className="text-[10px] font-medium uppercase tracking-[0.32em] text-white/70">
               Hub Corporativo
             </p>
-            <h1 className="mt-4 font-display text-4xl font-semibold leading-tight text-white lg:text-5xl">
-              Lavoro Seguros
-            </h1>
-            <p className="mt-4 max-w-md text-sm leading-relaxed text-white/75">
-              Acesso centralizado para colaboradores. Áreas, ramos, indicadores e
-              operações em um único ambiente seguro.
-            </p>
-            <div className="mt-6 flex items-center gap-2 text-xs text-white/60">
+            <div className="mt-6 flex items-center gap-2 text-xs text-white/70">
               <Lock className="h-3.5 w-3.5" />
               Ambiente restrito · Autenticação Microsoft 365
             </div>
