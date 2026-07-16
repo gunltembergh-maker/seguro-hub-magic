@@ -64,6 +64,7 @@ interface Props {
 
 export function UserFormModal({ open, onOpenChange, initial, onSaved }: Props) {
   const qc = useQueryClient();
+  const precadastrarFn = useServerFn(adminPrecadastrarUsuarioFull);
   const isEdit = !!initial?.isEdit;
 
   const [nome, setNome] = useState("");
