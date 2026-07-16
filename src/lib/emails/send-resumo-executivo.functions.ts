@@ -66,7 +66,7 @@ export const sendResumoExecutivo = createServerFn({ method: 'POST' })
     try {
       const result = await sendTemplateEmail('resumo-executivo-semanal', data.to, {
         templateData: { ano, mes, semanaAno, quandoBR, ytd, posicaoTotalVencida, vencidosAnteriores },
-        idempotencyKey: `executivo-semanal-${ano}-w${semanaAno}-${data.to}`,
+        idempotencyKey: `executivo-semanal-${ano}-w${semanaAno}-${data.to}-${Date.now()}`,
       })
 
       try {
