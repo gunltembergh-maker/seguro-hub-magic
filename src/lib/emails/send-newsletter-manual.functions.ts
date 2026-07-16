@@ -81,9 +81,13 @@ export const dispararNewsletterManual = createServerFn({ method: 'POST' })
       context.supabase.rpc('rpc_receita_executivo_mensal' as never, { p_ano: data.ano } as never),
     ])
 
-    const ytd = ((ytdRes.data as unknown) as any[])?.[0] ?? null
+    const ytdKpis = ((ytdRes.data as unknown) as any[])?.[0] ?? null
     const mtd = ((mtdRes.data as unknown) as any[])?.[0] ?? null
-    const linhaMes = (((vencidoRes.data as unknown) as any[]) ?? []).find((r) => Number(r.mes) === data.mes)
+    const linhasMensais = (((vencidoRes.data as unknown) as any[]) ?? []) as Array<{
+      mes: number; emitido: number; caixa: number; caixa_corrente: number;
+      saldo_vencido: number; a_receber_futuro: number | null;
+    }>
+    const linhaMes = linhasMensais.find((r) => Number(r.mes) === data.mes)
     const comissaoVencidaMes = Number(linhaMes?.saldo_vencido ?? 0)
     const quandoBR = new Date().toLocaleString('pt-BR', {
       timeZone: 'America/Sao_Paulo',
@@ -91,7 +95,33 @@ export const dispararNewsletterManual = createServerFn({ method: 'POST' })
       hour: '2-digit', minute: '2-digit',
     })
 
-    const templateData = { ano: data.ano, mes: data.mes, quandoBR, ytd, mtd, comissaoVencidaMes }
+    let templateData: Record<string, any>
+    if (data.modulo === 'executivo_lavoro') {
+      const ytdLinhas = linhasMensais.filter((r) => Number(r.mes) <= data.mes)
+      const emitido = ytdLinhas.reduce((a, r) => a + Number(r.emitido || 0), 0)
+      const caixaEsperado = ytdLinhas.reduce((a, r) => a + Number(r.caixa || 0), 0)
+      const caixaRecebido = ytdLinhas.reduce((a, r) => a + Number(r.caixa_corrente || 0), 0)
+      const aReceberFuturo = Number(linhaMes?.a_receber_futuro ?? 0)
+      const pctCaixa = caixaEsperado > 0 ? caixaRecebido / caixaEsperado : 0
+      const mesDetalhe = linhaMes
+        ? {
+            emitido: Number(linhaMes.emitido || 0),
+            caixa: Number(linhaMes.caixa || 0),
+            caixaCorrente: Number(linhaMes.caixa_corrente || 0),
+            saldoVencido: Number(linhaMes.saldo_vencido || 0),
+            aReceberFuturo: Number(linhaMes.a_receber_futuro ?? 0),
+          }
+        : null
+      templateData = {
+        ano: data.ano,
+        mes: data.mes,
+        quandoBR,
+        ytd: { emitido, caixaEsperado, caixaRecebido, aReceberFuturo, pctCaixa },
+        mesDetalhe,
+      }
+    } else {
+      templateData = { ano: data.ano, mes: data.mes, quandoBR, ytd: ytdKpis, mtd, comissaoVencidaMes }
+    }
     const templateName = TEMPLATE_BY_MODULO[data.modulo]
 
     // 4) Fan-out
