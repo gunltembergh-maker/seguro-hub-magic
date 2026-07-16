@@ -436,39 +436,54 @@ export type Database = {
       profiles: {
         Row: {
           active: boolean
+          area: string | null
           blocked: boolean
+          cpf: string | null
           created_at: string
           email: string
+          empresa: string | null
           full_name: string | null
+          gestor: string | null
           id: string
           perfil_id: string | null
           primeiro_acesso: boolean
+          tipo_usuario: string
           ultimo_acesso: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           active?: boolean
+          area?: string | null
           blocked?: boolean
+          cpf?: string | null
           created_at?: string
           email: string
+          empresa?: string | null
           full_name?: string | null
+          gestor?: string | null
           id?: string
           perfil_id?: string | null
           primeiro_acesso?: boolean
+          tipo_usuario?: string
           ultimo_acesso?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           active?: boolean
+          area?: string | null
           blocked?: boolean
+          cpf?: string | null
           created_at?: string
           email?: string
+          empresa?: string | null
           full_name?: string | null
+          gestor?: string | null
           id?: string
           perfil_id?: string | null
           primeiro_acesso?: boolean
+          tipo_usuario?: string
           ultimo_acesso?: string | null
           updated_at?: string
           user_id?: string
@@ -1054,6 +1069,7 @@ export type Database = {
         Returns: string
       }
       rpc_admin_delete_perfil: { Args: { _id: string }; Returns: undefined }
+      rpc_admin_detalhe_usuario: { Args: { _user_id: string }; Returns: Json }
       rpc_admin_excluir_popup: { Args: { p_id: string }; Returns: Json }
       rpc_admin_excluir_usuario: {
         Args: { _user_id: string }
@@ -1194,6 +1210,19 @@ export type Database = {
         Args: { _email: string; _full_name: string; _perfil_id: string }
         Returns: string
       }
+      rpc_admin_precadastrar_usuario_full: {
+        Args: {
+          _area?: string
+          _cpf?: string
+          _email: string
+          _empresa?: string
+          _full_name: string
+          _gestor?: string
+          _perfil_id: string
+          _tipo_usuario?: string
+        }
+        Returns: string
+      }
       rpc_admin_ramo_append: {
         Args: { _rows: Json; _sync_id: string }
         Returns: number
@@ -1228,6 +1257,20 @@ export type Database = {
         Args: {
           _active: boolean
           _blocked: boolean
+          _perfil_id: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
+      rpc_admin_update_user_full: {
+        Args: {
+          _active: boolean
+          _area?: string
+          _blocked: boolean
+          _cpf?: string
+          _empresa?: string
+          _full_name: string
+          _gestor?: string
           _perfil_id: string
           _user_id: string
         }
