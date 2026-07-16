@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { SendNewsletterButton } from "@/components/admin/SendNewsletterButton";
 
 export const Route = createFileRoute("/_authenticated/dashboard/receita")({
   component: DashboardReceitaLavoro,
@@ -410,6 +411,7 @@ function DashboardReceitaLavoro() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <SendNewsletterButton modulo="receita_lavoro" ano={ano} mes={mesRef} />
             <span className="text-xs flex items-center gap-1 text-[#DFDBBE]/80">
               <Clock className="h-3 w-3 text-[#73A7B7]" />
               Dados atualizados em: {fmtTs(ultimaAtQ.data)}
