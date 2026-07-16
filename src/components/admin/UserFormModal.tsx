@@ -140,17 +140,18 @@ export function UserFormModal({ open, onOpenChange, initial, onSaved }: Props) {
         } as never);
         if (error) throw error;
       } else {
-        const { error } = await supabase.rpc("rpc_admin_precadastrar_usuario_full" as never, {
-          _email: clean,
-          _full_name: nome,
-          _perfil_id: perfilId,
-          _cpf: digits || null,
-          _area: area || null,
-          _gestor: gestor || null,
-          _empresa: empresa || null,
-          _tipo_usuario: tipoUsuario,
-        } as never);
-        if (error) throw error;
+        await precadastrarFn({
+          data: {
+            email: clean,
+            full_name: nome,
+            perfil_id: perfilId,
+            cpf: digits || null,
+            area: area || null,
+            gestor: gestor || null,
+            empresa: empresa || null,
+            tipo_usuario: tipoUsuario,
+          },
+        });
       }
     },
     onSuccess: () => {
