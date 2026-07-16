@@ -191,13 +191,12 @@ function ReportFechamento() {
   const staleAlerta = ultimaTs && (Date.now() - ultimaTs.getTime()) > 24 * 3600_000;
 
   return (
-    <div className="min-h-screen p-6" style={{ background: "#14405C" }}>
-      <div className="rounded-xl bg-background p-6 space-y-4 shadow-sm">
+    <div className="min-h-screen p-6 space-y-4" style={{ background: "#14405C" }}>
       {/* Header + filtro */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: NAVY }}>Report Fechamento</h1>
-          <p className="text-sm text-muted-foreground">Visão consolidada da base gerencial</p>
+          <h1 className="text-2xl font-bold text-white">Report Fechamento</h1>
+          <p className="text-sm text-white/70">Visão consolidada da base gerencial</p>
         </div>
         <div className="flex items-center gap-2">
           <SendNewsletterButton modulo="fechamento_lavoro" ano={ano} mes={gran === "MENSAL" ? periodo : new Date().getMonth() + 1} />
@@ -300,7 +299,6 @@ function ReportFechamento() {
           <AbaBase ano={ano} gran={gran} periodo={periodo} />
         </TabsContent>
       </Tabs>
-      </div>
     </div>
   );
 }
