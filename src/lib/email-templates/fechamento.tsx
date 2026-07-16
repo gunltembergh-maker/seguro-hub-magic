@@ -51,7 +51,7 @@ const FechamentoEmail = ({
   return (
     <Html lang="pt-BR" dir="ltr">
       <Head />
-      <Preview>Fechamento Lavoro Seguros — {mesLongo} de {ano}</Preview>
+      <Preview>{`Fechamento Lavoro Seguros — ${mesLongo} de ${ano}`}</Preview>
       <Body style={main}>
         <Container style={container}>
           <Section style={header}>

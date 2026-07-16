@@ -67,7 +67,7 @@ const ReceitaLavoroEmail = ({
   return (
     <Html lang="pt-BR" dir="ltr">
       <Head />
-      <Preview>Receita Lavoro Seguros — {mesLongo} de {ano}</Preview>
+      <Preview>{`Receita Lavoro Seguros — ${mesLongo} de ${ano}`}</Preview>
       <Body style={main}>
         <Container style={container}>
           <Section style={header}>
