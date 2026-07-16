@@ -24,7 +24,13 @@ function InicioHome() {
     effectivePermissoes.menu_dashboards === true;
 
   return (
-    <div className="relative min-h-full">
+    <div
+      className="relative min-h-full"
+      style={{
+        background:
+          "linear-gradient(135deg, #14405C 0%, #1B5680 55%, #2E7BB0 100%)",
+      }}
+    >
       <div className="relative p-6 md:p-8 lg:p-10">
         <div className="mx-auto max-w-[1400px] space-y-6">
           <HeaderSaudacao

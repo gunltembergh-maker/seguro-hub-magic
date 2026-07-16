@@ -84,7 +84,7 @@ function AuthenticatedShell() {
   const { isImpersonating, viewAsProfile } = useViewAs();
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-background">
+      <div className="flex min-h-screen w-full bg-sidebar">
         <AppSidebar />
         <SidebarInset className="flex flex-1 flex-col">
           {isImpersonating && viewAsProfile && (
@@ -101,13 +101,7 @@ function AuthenticatedShell() {
               <ViewAsSelector />
             </div>
           </header>
-          <main
-            className="flex-1"
-            style={{
-              background:
-                "linear-gradient(135deg, #14405C 0%, #1B5680 55%, #2E7BB0 100%)",
-            }}
-          >
+          <main className="flex-1 bg-background">
             <Outlet />
           </main>
         </SidebarInset>
