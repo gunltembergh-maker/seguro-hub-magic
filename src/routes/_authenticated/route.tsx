@@ -45,19 +45,30 @@ function AuthenticatedLayout() {
   }
 
   if (!perfil || perfil.blocked || !perfil.active) {
+    // perfil == null → domínio não autorizado / não pré-cadastrado (trigger bloqueou no Auth)
+    // perfil.blocked/!active → aguardando liberação do admin
+    const negado = !perfil;
+    const titulo = negado
+      ? "Acesso não autorizado"
+      : "Solicitação de acesso em análise";
+    const mensagem = negado
+      ? "Seu e-mail não está cadastrado no Hub Lavoro Seguros. O acesso é restrito a colaboradores previamente autorizados. Solicite ao administrador o pré-cadastro do seu e-mail."
+      : "Seu acesso ao Hub Lavoro foi registrado e aguarda aprovação de um administrador. Você receberá acesso assim que for liberado.";
+
     return (
       <div className="grid min-h-screen place-items-center bg-background p-6">
         <div className="max-w-md rounded-xl border border-border bg-card p-8 text-center shadow-sm">
-          <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-amber-500/10 text-amber-600">
+          <div
+            className={`mx-auto grid h-12 w-12 place-items-center rounded-full ${
+              negado
+                ? "bg-red-500/10 text-red-600"
+                : "bg-amber-500/10 text-amber-600"
+            }`}
+          >
             <ShieldAlert className="h-6 w-6" />
           </div>
-          <h1 className="mt-4 font-display text-xl font-semibold">
-            Solicitação de acesso em análise
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Seu acesso ao Hub Lavoro foi registrado e aguarda aprovação de um
-            administrador. Você receberá acesso assim que for liberado.
-          </p>
+          <h1 className="mt-4 font-display text-xl font-semibold">{titulo}</h1>
+          <p className="mt-2 text-sm text-muted-foreground">{mensagem}</p>
           <Button
             variant="outline"
             className="mt-6 gap-2"
