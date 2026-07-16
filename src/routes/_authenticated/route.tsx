@@ -118,7 +118,7 @@ function AuthenticatedShell() {
               <Outlet />
             </div>
             <div
-              className="pointer-events-none fixed inset-y-0 right-0 z-40 w-[55%] bg-cover bg-right bg-no-repeat opacity-40 mix-blend-screen [mask-image:linear-gradient(to_left,black_0%,black_50%,transparent_100%)]"
+              className="pointer-events-none fixed inset-y-0 right-0 z-40 w-[70%] bg-cover bg-right bg-no-repeat opacity-80 mix-blend-screen [filter:brightness(1.45)_contrast(1.35)] [mask-image:linear-gradient(to_left,black_0%,black_68%,transparent_100%)]"
               style={{ backgroundImage: `url(${fundoHub.url})` }}
               aria-hidden="true"
             />
