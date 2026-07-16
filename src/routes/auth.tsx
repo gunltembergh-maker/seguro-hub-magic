@@ -159,8 +159,8 @@ function AuthPage() {
         aria-hidden="true"
       />
 
-      {/* Logo Lavoro no topo, centralizada */}
-      <div className="absolute inset-x-0 top-8 z-10 flex justify-center">
+      {/* Logo Lavoro canto superior esquerdo */}
+      <div className="absolute left-8 top-8 z-10">
         <img
           src={logoBranca.url}
           alt="Lavoro Seguros"
@@ -176,7 +176,7 @@ function AuthPage() {
                 Acessar o Hub
               </h2>
               <p className="mt-1 text-center text-xs text-muted-foreground">
-                Use sua conta corporativa @{ALLOWED_DOMAIN}
+                Acesso exclusivo para colaboradores Lavoro Seguros via SSO Microsoft (@{ALLOWED_DOMAIN})
               </p>
 
               <button
@@ -219,8 +219,8 @@ function AuthPage() {
                   />
                 </div>
                 <p className="text-[11px] leading-relaxed text-muted-foreground">
-                  O login por senha está desativado para domínios corporativos.
-                  Informe seu e-mail para verificar se é possível acessar por senha.
+                  O login por e-mail e senha é restrito a pessoas autorizadas.
+                  Informe seu e-mail para verificar se possui acesso liberado.
                 </p>
                 <Button
                   type="submit"
