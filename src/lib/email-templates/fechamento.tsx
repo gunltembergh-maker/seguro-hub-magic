@@ -27,104 +27,68 @@ import {
   periodoRefLongo,
 } from './_shared'
 
-export interface ReceitaLavoroProps {
+export interface FechamentoProps {
   ano: number
   mes: number
   quandoBR?: string
-  mtd: {
-    receita_competencia: number
-    receita_caixa: number
-    meta_periodo: number
+  mes_metricas?: {
+    emitido: number
+    caixa: number
+    meta: number
     atingimento: number
-    defasagem: number
-    previsto_caixa: number
-    atingimento_caixa: number
   }
-  comissaoVencidaMes?: number
 }
 
-const empty = {
-  receita_competencia: 0,
-  receita_caixa: 0,
-  meta_periodo: 0,
-  atingimento: 0,
-  defasagem: 0,
-  previsto_caixa: 0,
-  atingimento_caixa: 0,
-}
+const emptyMes = { emitido: 0, caixa: 0, meta: 0, atingimento: 0 }
 
-const ReceitaLavoroEmail = ({
+const FechamentoEmail = ({
   ano,
   mes,
   quandoBR,
-  mtd = empty,
-  comissaoVencidaMes = 0,
-}: ReceitaLavoroProps) => {
+  mes_metricas = emptyMes,
+}: FechamentoProps) => {
   const mesLongo = MESES_PT_LONGO[mes - 1]
-  const mesUp = mesLongo.toUpperCase()
-  const atMtd = Number(mtd?.atingimento ?? 0)
-  const abaixo = atMtd < 1
   return (
     <Html lang="pt-BR" dir="ltr">
       <Head />
-      <Preview>Receita Lavoro Seguros — {mesLongo} de {ano}</Preview>
+      <Preview>Fechamento Lavoro Seguros — {mesLongo} de {ano}</Preview>
       <Body style={main}>
         <Container style={container}>
           <Section style={header}>
             <Img src={LOGO_BRANCA_URL} width="180" alt="Lavoro Seguros" style={logo} />
-            <Text style={tag}>NEWSLETTER · RECEITA</Text>
+            <Text style={tag}>NEWSLETTER · FECHAMENTO</Text>
             <Heading as="h1" style={h1}>
               {mesLongo}/{ano}
             </Heading>
           </Section>
 
           <Section style={block}>
-            <Text style={sectionTitle}>Resultados de {mesLongo}/{ano}</Text>
+            <Text style={sectionTitle}>Fechamento de {mesLongo}/{ano}</Text>
             <Row>
               <Column style={colHalf}>
-                <Kpi label={`A RECEBER EM ${mesUp}`} hint="Previsto caixa" value={BRL(mtd?.previsto_caixa)} accent={L.amber} />
+                <Kpi label="EMITIDO NO MÊS" value={BRL(mes_metricas.emitido)} accent={L.navy} />
               </Column>
               <Column style={colHalf}>
-                <Kpi label={`RECEITA CAIXA EM ${mesUp}`} hint="Recebido efetivamente" value={BRL(mtd?.receita_caixa)} accent={L.green} />
+                <Kpi label="CAIXA RECEBIDO NO MÊS" value={BRL(mes_metricas.caixa)} accent={L.green} />
               </Column>
             </Row>
             <Row>
               <Column style={colHalf}>
-                <Compact label="Receita Competência" value={BRL(mtd?.receita_competencia)} />
+                <Kpi label="META DO MÊS" value={BRL(mes_metricas.meta)} accent={L.blueLight} />
               </Column>
               <Column style={colHalf}>
-                <Compact label={`Meta (${mesLongo})`} value={BRL(mtd?.meta_periodo)} />
-              </Column>
-            </Row>
-            <Row>
-              <Column style={colHalf}>
-                <Compact
-                  label="Atingimento (Comp.)"
-                  value={PCT(mtd?.atingimento)}
-                  valueColor={abaixo ? L.red : L.green}
-                />
-              </Column>
-              <Column style={colHalf}>
-                <Compact
-                  label="Defasagem"
-                  value={BRL(mtd?.defasagem)}
-                  valueColor={Number(mtd?.defasagem ?? 0) < 0 ? L.red : L.green}
+                <Kpi
+                  label="ATINGIMENTO"
+                  value={PCT(mes_metricas.atingimento)}
+                  accent={Number(mes_metricas.atingimento) >= 1 ? L.green : L.amber}
                 />
               </Column>
             </Row>
           </Section>
 
-          {comissaoVencidaMes > 0 && (
-            <Section style={alertBanner}>
-              <Text style={alertText}>
-                ⚠️ <strong>Comissão vencida no mês:</strong> {BRL(comissaoVencidaMes)}
-              </Text>
-            </Section>
-          )}
-
           <Section style={ctaWrap}>
-            <Button style={cta} href={`${SITE_URL}/dashboard/receita`}>
-              Ver dashboard completo no Hub →
+            <Button style={cta} href={`${SITE_URL}/dashboard/report-fechamento`}>
+              Ver Report de Fechamento no Hub →
             </Button>
           </Section>
 
@@ -140,51 +104,36 @@ const ReceitaLavoroEmail = ({
   )
 }
 
-function Kpi({ label, hint, value, accent }: { label: string; hint: string; value: string; accent: string }) {
+function Kpi({ label, value, accent }: { label: string; value: string; accent: string }) {
   return (
     <div style={{ ...kpiCard, borderLeft: `4px solid ${accent}` }}>
       <Text style={kpiLabel}>{label}</Text>
-      <Text style={{ ...kpiHint, color: accent }}>{hint}</Text>
       <Text style={kpiValue}>{value}</Text>
     </div>
   )
 }
 
-function Compact({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
-  return (
-    <div style={compactCard}>
-      <Text style={compactLabel}>{label}</Text>
-      <Text style={{ ...compactValue, color: valueColor || L.textDark }}>{value}</Text>
-    </div>
-  )
-}
-
 export const template = {
-  component: ReceitaLavoroEmail,
+  component: FechamentoEmail,
   subject: (data: Record<string, any>) => {
     const ano = data?.ano ?? new Date().getFullYear()
     const mes = data?.mes ?? new Date().getMonth() + 1
-    return `Receita Lavoro Seguros - ${periodoRefLongo(ano, mes)}`
+    return `Fechamento Lavoro Seguros - ${periodoRefLongo(ano, mes)}`
   },
-  displayName: 'Receita — Newsletter Mensal',
+  displayName: 'Fechamento — Newsletter Mensal',
   previewData: {
     ano: new Date().getFullYear(),
     mes: new Date().getMonth() + 1,
     quandoBR: nowBR(),
-    mtd: {
-      receita_competencia: 620_000,
-      receita_caixa: 480_000,
-      meta_periodo: 750_000,
-      atingimento: 0.83,
-      defasagem: 140_000,
-      previsto_caixa: 690_000,
-      atingimento_caixa: 0.7,
+    mes_metricas: {
+      emitido: 1_240_000,
+      caixa: 872_000,
+      meta: 1_100_000,
+      atingimento: 1.12,
     },
-    comissaoVencidaMes: 82_500,
   },
 } satisfies TemplateEntry
 
-// ─── Styles ────────────────────────────────────────────────────────────
 const tabular = { fontVariantNumeric: 'tabular-nums' as const }
 const main = { backgroundColor: '#ffffff', fontFamily: "'Helvetica Neue', Arial, sans-serif", margin: 0, padding: 0 }
 const container = { margin: '0 auto', padding: '24px 16px', maxWidth: '620px' }
@@ -195,15 +144,9 @@ const h1 = { color: '#FFFFFF', fontSize: '26px', fontWeight: 700, margin: 0, let
 const block = { background: L.card, padding: '18px 20px', borderLeft: `1px solid ${L.border}`, borderRight: `1px solid ${L.border}` }
 const sectionTitle = { color: L.textMuted, fontSize: '11px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.06em', margin: '0 0 10px' }
 const colHalf = { paddingRight: '6px', paddingLeft: '6px', paddingBottom: '10px', verticalAlign: 'top' as const, width: '50%' }
-const kpiCard = { background: '#F8FAFC', borderRadius: '8px', padding: '12px 14px' }
+const kpiCard = { background: '#F8FAFC', borderRadius: '8px', padding: '14px 16px' }
 const kpiLabel = { color: L.textMuted, fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.05em', margin: 0, lineHeight: 1.3 }
-const kpiHint = { fontSize: '11px', margin: '2px 0 4px' }
-const kpiValue = { ...tabular, fontSize: '22px', fontWeight: 700, color: L.navyDark, margin: 0, letterSpacing: '-0.3px' }
-const compactCard = { background: '#F8FAFC', border: `1px solid ${L.border}`, borderRadius: '6px', padding: '10px 12px' }
-const compactLabel = { color: L.textMuted, fontSize: '10px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.05em', margin: 0 }
-const compactValue = { ...tabular, fontSize: '17px', fontWeight: 700, margin: '4px 0 0', letterSpacing: '-0.2px' }
-const alertBanner = { background: '#FEF3C7', borderLeft: `4px solid ${L.amber}`, padding: '12px 16px', margin: '0', borderRight: `1px solid ${L.border}` }
-const alertText = { color: '#7C2D12', fontSize: '13px', margin: 0, lineHeight: '20px' }
+const kpiValue = { ...tabular, fontSize: '24px', fontWeight: 700, color: L.navyDark, margin: '6px 0 0', letterSpacing: '-0.3px' }
 const ctaWrap = { background: L.card, padding: '20px', textAlign: 'center' as const, borderRadius: '0 0 10px 10px', border: `1px solid ${L.border}`, borderTop: 'none' }
 const cta = { background: L.blue, color: L.navyDark, padding: '12px 24px', borderRadius: '6px', fontSize: '14px', fontWeight: 700, textDecoration: 'none', display: 'inline-block' }
 const hr = { borderColor: 'transparent', margin: '16px 0 4px' }

@@ -3,6 +3,7 @@
 export const LAVORO_COLORS = {
   navy: '#14405C',
   navyDark: '#0E2E43',
+  blueLight: '#8AAFC9',
   blue: '#00BAF2',
   amber: '#D97706',
   red: '#DC2626',
@@ -21,8 +22,8 @@ export const SITE_URL =
   process.env.LOVABLE_APP_URL ||
   'https://project--ae780930-9fc8-45f0-9908-31d89569a898.lovable.app'
 
-// White logo (for dark navy header). Asset id from src/assets/logo-branca.png.asset.json.
-export const LOGO_BRANCA_URL = `${SITE_URL}/__l5e/assets-v1/67b635fc-94fb-475d-a9b5-dbab30f2127e/logo-branca.png`
+// White Lavoro Seguros logo — oficial (source: Logo_Lavoro_Branca-2.png).
+export const LOGO_BRANCA_URL = `${SITE_URL}/__l5e/assets-v1/7869490b-ef06-42fc-a753-2a6967781570/logo-lavoro-branca.png`
 
 export const MESES_PT = [
   'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
@@ -33,6 +34,10 @@ export const MESES_PT_LONGO = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ]
+
+/** Formata o período de referência para uso em Subject: "Junho de 2026". */
+export const periodoRefLongo = (ano: number, mes: number) =>
+  `${MESES_PT_LONGO[mes - 1]} de ${ano}`
 
 export const BRL = (v: number | null | undefined) =>
   Number(v || 0).toLocaleString('pt-BR', {
@@ -55,3 +60,9 @@ export const nowBR = () =>
     hour: '2-digit',
     minute: '2-digit',
   })
+
+// Padrão de footer para todos os templates Lavoro.
+export const FOOTER_ASSINATURA = {
+  time: 'Equipe de Dados & AI',
+  empresa: 'Lavoro Seguros',
+}
