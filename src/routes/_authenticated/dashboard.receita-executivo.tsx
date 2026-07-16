@@ -16,9 +16,9 @@ export const Route = createFileRoute("/_authenticated/dashboard/receita-executiv
 });
 
 // ── Paleta (Master Doc) ──────────────────────────────────────────────
-const NAVY = "#0F2A43";
-const AZUL_CLARO = "#7FA8C4";
-const LARANJA = "#D98418";
+const NAVY = "#14405C";
+const AZUL_CLARO = "#8AAFC9";
+const LARANJA = "#00BAF2";
 const VERDE = "#1E7F4F";
 const FUNDO = "#F4F6F8";
 
