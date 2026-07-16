@@ -9,7 +9,6 @@ const InputSchema = z.object({
   modulo: ModuloEnum,
   ano: z.number().int().min(2020).max(2100),
   mes: z.number().int().min(1).max(12),
-  /** Se fornecido, sobrescreve a lista cadastrada. Útil para testes. */
   destinatariosOverride: z.array(z.string().email()).optional(),
 })
 
@@ -34,43 +33,44 @@ export const dispararNewsletterManual = createServerFn({ method: 'POST' })
     })
     if (!isAdmin) throw new Error('Apenas administradores podem disparar newsletters.')
 
-    // 1) Coleta destinatários
-    let destinatarios: string[]
+    // 1) Coleta destinatários (via RPC segura, com join no profile)
+    let destinatarios: Array<{ email: string }>
     if (data.destinatariosOverride && data.destinatariosOverride.length > 0) {
-      destinatarios = data.destinatariosOverride
+      destinatarios = data.destinatariosOverride.map((email) => ({ email }))
     } else {
-      const { data: rows, error } = await context.supabase
-        .from('email_destinatarios_automaticos' as any)
-        .select('email')
-        .eq('modulo', data.modulo)
-        .eq('ativo', true)
+      const { data: rows, error } = await context.supabase.rpc(
+        'rpc_listar_destinatarios_automaticos' as never,
+        { p_modulo: data.modulo } as never,
+      )
       if (error) throw new Error(error.message)
-      destinatarios = ((rows ?? []) as any[]).map((r) => r.email as string)
+      destinatarios = (((rows ?? []) as unknown) as any[])
+        .filter((r) => r.ativo && r.email)
+        .map((r) => ({ email: r.email as string }))
     }
 
     if (destinatarios.length === 0) {
       return { ok: false, motivo: 'sem_destinatarios', total: 0, enviados: 0, falhas: 0 }
     }
 
-    // 2) Cria registro de disparo (manual → nunca conflita com o índice único)
+    // 2) Cria registro de disparo (manual → forcado_por = userId, escapa do índice único)
+    const hojeISO = new Date().toISOString().slice(0, 10)
     const periodo_ref = `${data.ano}-${String(data.mes).padStart(2, '0')}`
     const { data: disparoIns, error: disparoErr } = await context.supabase
-      .from('email_disparos_automaticos' as any)
+      .from('email_disparos_automaticos' as never)
       .insert({
         modulo: data.modulo,
-        data_referencia: new Date().toISOString().slice(0, 10),
+        data_envio: hojeISO,
         periodo_ref,
         status: 'em_processamento',
-        origem: 'manual',
-        disparado_por: context.userId,
+        forcado_por: context.userId,
         total_destinatarios: destinatarios.length,
-      })
+      } as never)
       .select('id')
       .single()
     if (disparoErr) throw new Error(disparoErr.message)
     const disparoId = (disparoIns as any).id as string
 
-    // 3) Coleta dados do template (uma vez só)
+    // 3) Coleta dados do template (uma vez)
     const [ytdRes, mtdRes, vencidoRes] = await Promise.all([
       context.supabase.rpc('rpc_lavoro_receita_kpis' as never, {
         p_ano: data.ano, p_mes: data.mes, p_periodo: 'YTD',
@@ -91,9 +91,7 @@ export const dispararNewsletterManual = createServerFn({ method: 'POST' })
       hour: '2-digit', minute: '2-digit',
     })
 
-    const templateData = {
-      ano: data.ano, mes: data.mes, quandoBR, ytd, mtd, comissaoVencidaMes,
-    }
+    const templateData = { ano: data.ano, mes: data.mes, quandoBR, ytd, mtd, comissaoVencidaMes }
     const templateName = TEMPLATE_BY_MODULO[data.modulo]
 
     // 4) Fan-out
@@ -101,7 +99,7 @@ export const dispararNewsletterManual = createServerFn({ method: 'POST' })
     let enviados = 0
     let falhas = 0
     const detalhes: any[] = []
-    for (const to of destinatarios) {
+    for (const { email: to } of destinatarios) {
       try {
         const r = await sendTemplateEmail(templateName, to, {
           templateData,
@@ -119,17 +117,17 @@ export const dispararNewsletterManual = createServerFn({ method: 'POST' })
     }
 
     const status =
-      falhas === 0 ? 'concluido' : enviados === 0 ? 'falha' : 'falha_parcial'
+      falhas === 0 ? 'concluido' : enviados === 0 ? 'falha_total' : 'falha_parcial'
 
     await context.supabase
-      .from('email_disparos_automaticos' as any)
+      .from('email_disparos_automaticos' as never)
       .update({
         status,
-        total_enviados: enviados,
+        total_sucessos: enviados,
         total_falhas: falhas,
-        concluido_em: new Date().toISOString(),
-        detalhes: { destinatarios, falhas: detalhes },
-      })
+        finalizado_em: new Date().toISOString(),
+        detalhes_erro: detalhes.length > 0 ? detalhes : null,
+      } as never)
       .eq('id', disparoId)
 
     return { ok: true, disparoId, total: destinatarios.length, enviados, falhas, status }
