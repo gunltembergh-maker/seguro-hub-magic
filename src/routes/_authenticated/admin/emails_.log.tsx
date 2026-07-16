@@ -31,7 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-export const Route = createFileRoute("/_authenticated/admin/emails/log")({
+export const Route = createFileRoute("/_authenticated/admin/emails_/log")({
   component: EmailsLogPage,
 });
 

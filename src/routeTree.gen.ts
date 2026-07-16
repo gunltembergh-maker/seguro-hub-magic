@@ -33,8 +33,8 @@ import { Route as AuthenticatedAdminEmailsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_authenticated/admin/configuracoes'
 import { Route as AuthenticatedAdminComunicadosRouteImport } from './routes/_authenticated/admin/comunicados'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
-import { Route as AuthenticatedAdminEmailsSchedulesRouteImport } from './routes/_authenticated/admin/emails.schedules'
-import { Route as AuthenticatedAdminEmailsLogRouteImport } from './routes/_authenticated/admin/emails.log'
+import { Route as AuthenticatedAdminEmailsSchedulesRouteImport } from './routes/_authenticated/admin/emails_.schedules'
+import { Route as AuthenticatedAdminEmailsLogRouteImport } from './routes/_authenticated/admin/emails_.log'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -170,15 +170,15 @@ const LovableEmailTransactionalPreviewRoute =
   } as any)
 const AuthenticatedAdminEmailsSchedulesRoute =
   AuthenticatedAdminEmailsSchedulesRouteImport.update({
-    id: '/schedules',
-    path: '/schedules',
-    getParentRoute: () => AuthenticatedAdminEmailsRoute,
+    id: '/emails_/schedules',
+    path: '/emails/schedules',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
 const AuthenticatedAdminEmailsLogRoute =
   AuthenticatedAdminEmailsLogRouteImport.update({
-    id: '/log',
-    path: '/log',
-    getParentRoute: () => AuthenticatedAdminEmailsRoute,
+    id: '/emails_/log',
+    path: '/emails/log',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -196,7 +196,7 @@ export interface FileRoutesByFullPath {
   '/operacional': typeof AuthenticatedOperacionalRoute
   '/admin/comunicados': typeof AuthenticatedAdminComunicadosRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
-  '/admin/emails': typeof AuthenticatedAdminEmailsRouteWithChildren
+  '/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/admin/importar-bases': typeof AuthenticatedAdminImportarBasesRoute
   '/admin/perfis': typeof AuthenticatedAdminPerfisRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
@@ -223,7 +223,7 @@ export interface FileRoutesByTo {
   '/operacional': typeof AuthenticatedOperacionalRoute
   '/admin/comunicados': typeof AuthenticatedAdminComunicadosRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
-  '/admin/emails': typeof AuthenticatedAdminEmailsRouteWithChildren
+  '/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/admin/importar-bases': typeof AuthenticatedAdminImportarBasesRoute
   '/admin/perfis': typeof AuthenticatedAdminPerfisRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
@@ -252,7 +252,7 @@ export interface FileRoutesById {
   '/_authenticated/operacional': typeof AuthenticatedOperacionalRoute
   '/_authenticated/admin/comunicados': typeof AuthenticatedAdminComunicadosRoute
   '/_authenticated/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
-  '/_authenticated/admin/emails': typeof AuthenticatedAdminEmailsRouteWithChildren
+  '/_authenticated/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/_authenticated/admin/importar-bases': typeof AuthenticatedAdminImportarBasesRoute
   '/_authenticated/admin/perfis': typeof AuthenticatedAdminPerfisRoute
   '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
@@ -260,8 +260,8 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/receita-caixa': typeof AuthenticatedDashboardReceitaCaixaRoute
   '/_authenticated/dashboard/receita-executivo': typeof AuthenticatedDashboardReceitaExecutivoRoute
   '/_authenticated/dashboard/report-fechamento': typeof AuthenticatedDashboardReportFechamentoRoute
-  '/_authenticated/admin/emails/log': typeof AuthenticatedAdminEmailsLogRoute
-  '/_authenticated/admin/emails/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
+  '/_authenticated/admin/emails_/log': typeof AuthenticatedAdminEmailsLogRoute
+  '/_authenticated/admin/emails_/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRouteTypes {
@@ -344,8 +344,8 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/receita-caixa'
     | '/_authenticated/dashboard/receita-executivo'
     | '/_authenticated/dashboard/report-fechamento'
-    | '/_authenticated/admin/emails/log'
-    | '/_authenticated/admin/emails/schedules'
+    | '/_authenticated/admin/emails_/log'
+    | '/_authenticated/admin/emails_/schedules'
     | '/lovable/email/transactional/preview'
   fileRoutesById: FileRoutesById
 }
@@ -526,57 +526,45 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admin/emails/schedules': {
-      id: '/_authenticated/admin/emails/schedules'
-      path: '/schedules'
+    '/_authenticated/admin/emails_/schedules': {
+      id: '/_authenticated/admin/emails_/schedules'
+      path: '/emails/schedules'
       fullPath: '/admin/emails/schedules'
       preLoaderRoute: typeof AuthenticatedAdminEmailsSchedulesRouteImport
-      parentRoute: typeof AuthenticatedAdminEmailsRoute
+      parentRoute: typeof AuthenticatedAdminRouteRoute
     }
-    '/_authenticated/admin/emails/log': {
-      id: '/_authenticated/admin/emails/log'
-      path: '/log'
+    '/_authenticated/admin/emails_/log': {
+      id: '/_authenticated/admin/emails_/log'
+      path: '/emails/log'
       fullPath: '/admin/emails/log'
       preLoaderRoute: typeof AuthenticatedAdminEmailsLogRouteImport
-      parentRoute: typeof AuthenticatedAdminEmailsRoute
+      parentRoute: typeof AuthenticatedAdminRouteRoute
     }
   }
 }
-
-interface AuthenticatedAdminEmailsRouteChildren {
-  AuthenticatedAdminEmailsLogRoute: typeof AuthenticatedAdminEmailsLogRoute
-  AuthenticatedAdminEmailsSchedulesRoute: typeof AuthenticatedAdminEmailsSchedulesRoute
-}
-
-const AuthenticatedAdminEmailsRouteChildren: AuthenticatedAdminEmailsRouteChildren =
-  {
-    AuthenticatedAdminEmailsLogRoute: AuthenticatedAdminEmailsLogRoute,
-    AuthenticatedAdminEmailsSchedulesRoute:
-      AuthenticatedAdminEmailsSchedulesRoute,
-  }
-
-const AuthenticatedAdminEmailsRouteWithChildren =
-  AuthenticatedAdminEmailsRoute._addFileChildren(
-    AuthenticatedAdminEmailsRouteChildren,
-  )
 
 interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminComunicadosRoute: typeof AuthenticatedAdminComunicadosRoute
   AuthenticatedAdminConfiguracoesRoute: typeof AuthenticatedAdminConfiguracoesRoute
-  AuthenticatedAdminEmailsRoute: typeof AuthenticatedAdminEmailsRouteWithChildren
+  AuthenticatedAdminEmailsRoute: typeof AuthenticatedAdminEmailsRoute
   AuthenticatedAdminImportarBasesRoute: typeof AuthenticatedAdminImportarBasesRoute
   AuthenticatedAdminPerfisRoute: typeof AuthenticatedAdminPerfisRoute
   AuthenticatedAdminUsuariosRoute: typeof AuthenticatedAdminUsuariosRoute
+  AuthenticatedAdminEmailsLogRoute: typeof AuthenticatedAdminEmailsLogRoute
+  AuthenticatedAdminEmailsSchedulesRoute: typeof AuthenticatedAdminEmailsSchedulesRoute
 }
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
   {
     AuthenticatedAdminComunicadosRoute: AuthenticatedAdminComunicadosRoute,
     AuthenticatedAdminConfiguracoesRoute: AuthenticatedAdminConfiguracoesRoute,
-    AuthenticatedAdminEmailsRoute: AuthenticatedAdminEmailsRouteWithChildren,
+    AuthenticatedAdminEmailsRoute: AuthenticatedAdminEmailsRoute,
     AuthenticatedAdminImportarBasesRoute: AuthenticatedAdminImportarBasesRoute,
     AuthenticatedAdminPerfisRoute: AuthenticatedAdminPerfisRoute,
     AuthenticatedAdminUsuariosRoute: AuthenticatedAdminUsuariosRoute,
+    AuthenticatedAdminEmailsLogRoute: AuthenticatedAdminEmailsLogRoute,
+    AuthenticatedAdminEmailsSchedulesRoute:
+      AuthenticatedAdminEmailsSchedulesRoute,
   }
 
 const AuthenticatedAdminRouteRouteWithChildren =
@@ -633,3 +621,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

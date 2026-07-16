@@ -31,7 +31,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 
-export const Route = createFileRoute('/_authenticated/admin/emails/schedules')({
+export const Route = createFileRoute('/_authenticated/admin/emails_/schedules')({
   component: SchedulesPage,
 })
 
