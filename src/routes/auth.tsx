@@ -95,36 +95,32 @@ function AuthPage() {
     setAuthMessage(null);
     clearAuthPoll();
 
-    const popup = window.open(
-      "about:blank",
-      "lavoro-microsoft-sso",
-      "width=520,height=720,left=120,top=80",
-    );
-
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "azure",
-      options: {
-        scopes: "email openid profile",
-        redirectTo: `${window.location.origin}/auth`,
-        skipBrowserRedirect: true,
-      },
-    });
-
-    if (error || !data.url) {
-      popup?.close();
-      toast.error("Não foi possível iniciar o login", {
-        description: error?.message ?? "URL de autenticação não retornada.",
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    if (!supabaseUrl) {
+      toast.error("SSO indisponível", {
+        description: "URL do Supabase não configurada.",
       });
       setLoading(false);
       return;
     }
 
+    const params = new URLSearchParams({
+      provider: "azure",
+      redirect_to: `${window.location.origin}/auth`,
+      scopes: "email openid profile",
+    });
+    const authUrl = `${supabaseUrl}/auth/v1/authorize?${params.toString()}`;
+
+    const popup = window.open(
+      authUrl,
+      "lavoro-microsoft-sso",
+      "width=520,height=720,left=120,top=80",
+    );
+
     if (!popup) {
-      window.location.assign(data.url);
+      window.location.assign(authUrl);
       return;
     }
-
-    popup.location.href = data.url;
 
     setAuthMessage("Conclua o login na janela da Microsoft que foi aberta.");
     const startedAt = Date.now();
