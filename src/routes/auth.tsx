@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import logoBranca from "@/assets/logo-branca.png.asset.json";
 import fundo1 from "@/assets/fundo-1.png.asset.json";
-import { LoadingSplash } from "@/components/loading-splash";
 
 const ALLOWED_DOMAIN = "lavoroseguros.com.br";
 // Usuários com login por senha liberado (backdoor)
@@ -18,7 +17,6 @@ const ALLOWED_PASSWORD_EMAILS = new Set([
 ]);
 
 export const Route = createFileRoute("/auth")({
-  ssr: false,
   component: AuthPage,
 });
 
@@ -35,22 +33,37 @@ function MicrosoftLogo({ className }: { className?: string }) {
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [checking, setChecking] = useState(true);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
 
   useEffect(() => {
     let done = false;
+    let mounted = true;
     const goToHub = () => {
       if (done) return;
       done = true;
       navigate({ to: "/hub", replace: true });
     };
 
+    const searchParams = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const oauthError =
+      searchParams.get("error_description") ||
+      hashParams.get("error_description") ||
+      searchParams.get("error") ||
+      hashParams.get("error");
+
+    if (oauthError) {
+      toast.error("SSO não concluído", { description: oauthError });
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     // Checagem inicial (pode incluir hash do OAuth callback)
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) goToHub();
-      else setChecking(false);
+      else if (mounted) setLoading(false);
+    }).catch(() => {
+      if (mounted) setLoading(false);
     });
 
     // Callback OAuth: sessão chega de forma assíncrona após a Supabase
@@ -61,7 +74,10 @@ function AuthPage() {
       }
     });
 
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
   }, [navigate]);
 
   const handleMicrosoftLogin = async () => {
@@ -91,8 +107,6 @@ function AuthPage() {
       description: `Este e-mail deve acessar via Microsoft SSO. O login por senha está restrito.`,
     });
   };
-
-  if (checking) return <LoadingSplash />;
 
   return (
     <div
