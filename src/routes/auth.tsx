@@ -219,8 +219,8 @@ function AuthPage() {
                   />
                 </div>
                 <p className="text-[11px] leading-relaxed text-muted-foreground">
-                  O login por senha está desativado para domínios corporativos.
-                  Informe seu e-mail para verificar se é possível acessar por senha.
+                  O login por e-mail e senha é restrito a pessoas autorizadas.
+                  Informe seu e-mail para verificar se possui acesso liberado.
                 </p>
                 <Button
                   type="submit"
