@@ -176,7 +176,8 @@ function ReceitaCaixaPage() {
   };
 
   return (
-    <div className="p-4 lg:p-6 space-y-4">
+    <div className="min-h-screen p-4 lg:p-6" style={{ background: "#14405C" }}>
+      <div className="rounded-xl bg-background p-4 lg:p-6 space-y-4 shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
@@ -317,6 +318,7 @@ function ReceitaCaixaPage() {
           Nenhum lançamento em <code>raw_lavoro_caixa_comissao</code>. Importe pela tela de Admin → Importar Bases.
         </p>
       )}
+      </div>
     </div>
   );
 }

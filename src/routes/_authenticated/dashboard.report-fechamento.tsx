@@ -191,7 +191,8 @@ function ReportFechamento() {
   const staleAlerta = ultimaTs && (Date.now() - ultimaTs.getTime()) > 24 * 3600_000;
 
   return (
-    <div className="space-y-4 p-6">
+    <div className="min-h-screen p-6" style={{ background: "#14405C" }}>
+      <div className="rounded-xl bg-background p-6 space-y-4 shadow-sm">
       {/* Header + filtro */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
@@ -299,6 +300,7 @@ function ReportFechamento() {
           <AbaBase ano={ano} gran={gran} periodo={periodo} />
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }
