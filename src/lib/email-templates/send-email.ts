@@ -10,9 +10,10 @@ const SITE_NAME = "Hub Lavoro Seguros"
 // SENDER_DOMAIN is the verified sender subdomain FQDN (e.g., "notify.example.com").
 // It MUST match the subdomain delegated to Lovable's nameservers. NEVER use the root domain.
 const SENDER_DOMAIN = "notify.hub.lavoroseguros.com.br"
-// FROM_DOMAIN is the domain shown in the From: header (e.g., "example.com").
-// Can be the root domain when display_from_root is enabled — this is cosmetic only.
-const FROM_DOMAIN = "hub.lavoroseguros.com.br"
+// FROM_DOMAIN é o domínio exibido no cabeçalho From:. Igualar ao SENDER_DOMAIN
+// evita o "em nome de / via" no Gmail (acontece quando o domínio do From difere
+// do domínio de envio/DKIM).
+const FROM_DOMAIN = "notify.hub.lavoroseguros.com.br"
 
 export type SendTemplateEmailResult =
   | { sent: true }
