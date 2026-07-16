@@ -81,7 +81,7 @@ function AuthPage() {
     const clean = email.trim().toLowerCase();
     if (!clean) return;
     if (ALLOWED_PASSWORD_EMAILS.has(clean)) {
-      navigate({ to: "/auth/senha", search: { email: clean } as never });
+      navigate({ to: "/auth/senha" });
       return;
     }
     toast.info("Login por senha desativado", {
