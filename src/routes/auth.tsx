@@ -149,40 +149,28 @@ function AuthPage() {
         style={{ backgroundImage: `url(${fundoPredio.url})` }}
         aria-hidden="true"
       />
-      {/* Vinheta lateral suave — escurece só o lado direito para o card, preserva o logo no fundo */}
+      {/* Vinheta suave central para dar contraste ao card */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(90deg, rgba(6,20,32,0.05) 0%, rgba(6,20,32,0.15) 40%, rgba(6,20,32,0.75) 100%)",
+            "radial-gradient(ellipse at center, rgba(6,20,32,0.55) 0%, rgba(6,20,32,0.75) 100%)",
         }}
         aria-hidden="true"
       />
 
-      {/* Marca sutil no canto superior esquerdo (o hero logo já vive no fundo) */}
-      <div className="absolute left-6 top-6 z-10 hidden items-center gap-3 md:flex">
+      {/* Logo Lavoro no topo, centralizada */}
+      <div className="absolute inset-x-0 top-8 z-10 flex justify-center">
         <img
           src={logoBranca.url}
           alt="Lavoro Seguros"
-          className="h-8 w-auto opacity-90 drop-shadow-[0_4px_16px_rgba(0,0,0,0.55)]"
+          className="h-10 w-auto drop-shadow-[0_6px_20px_rgba(0,0,0,0.6)]"
         />
       </div>
 
-      <div className="relative z-10 flex min-h-screen items-center px-6 py-16 md:px-16 lg:px-24">
-        <div className="grid w-full items-center gap-12 md:grid-cols-2">
-          {/* Coluna esquerda: título institucional */}
-          <div className="hidden text-white md:block">
-            <p className="text-[10px] font-medium uppercase tracking-[0.32em] text-white/70">
-              Hub Corporativo
-            </p>
-            <div className="mt-6 flex items-center gap-2 text-xs text-white/70">
-              <Lock className="h-3.5 w-3.5" />
-              Ambiente restrito · Autenticação Microsoft 365
-            </div>
-          </div>
-
-          {/* Coluna direita: card de login */}
-          <div className="mx-auto w-full max-w-[440px] md:ml-auto">
+      <div className="relative z-10 flex min-h-screen items-center justify-center px-6 py-24">
+        {/* Card de login centralizado */}
+        <div className="w-full max-w-[440px]">
             <div className="rounded-2xl border border-[#B8DCE9]/60 bg-[#DDECF3]/95 p-8 shadow-[0_25px_80px_-15px_rgba(0,0,0,0.6)] backdrop-blur-xl">
               <h2 className="text-center font-display text-xl font-semibold tracking-tight text-[#14405C]">
                 Acessar o Hub
