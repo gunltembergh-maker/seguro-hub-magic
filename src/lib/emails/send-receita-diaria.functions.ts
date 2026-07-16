@@ -40,7 +40,7 @@ export const sendReceitaDiaria = createServerFn({ method: 'POST' })
 
     const ytd = (ytdRes.data as any[])?.[0] ?? null
     const mtd = (mtdRes.data as any[])?.[0] ?? null
-    const linhaMes = ((vencidoRes.data as any[]) ?? []).find((r) => Number(r.mes) === mes)
+    const linhaMes = (((vencidoRes.data as unknown) as any[]) ?? []).find((r) => Number(r.mes) === mes)
     const comissaoVencidaMes = Number(linhaMes?.saldo_vencido ?? 0)
 
     const quandoBR = new Date().toLocaleString('pt-BR', {
