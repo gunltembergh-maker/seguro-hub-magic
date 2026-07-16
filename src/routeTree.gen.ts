@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthSenhaRouteImport } from './routes/auth.senha'
 import { Route as AuthenticatedOperacionalRouteImport } from './routes/_authenticated/operacional'
 import { Route as AuthenticatedMiddleRouteImport } from './routes/_authenticated/middle'
 import { Route as AuthenticatedJuridicoRouteImport } from './routes/_authenticated/juridico'
@@ -49,6 +50,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthSenhaRoute = AuthSenhaRouteImport.update({
+  id: '/senha',
+  path: '/senha',
+  getParentRoute: () => AuthRoute,
 } as any)
 const AuthenticatedOperacionalRoute =
   AuthenticatedOperacionalRouteImport.update({
@@ -183,7 +189,7 @@ const AuthenticatedAdminEmailsLogRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/beneficios': typeof AuthenticatedBeneficiosRoute
   '/demais-ramos': typeof AuthenticatedDemaisRamosRoute
@@ -194,6 +200,7 @@ export interface FileRoutesByFullPath {
   '/juridico': typeof AuthenticatedJuridicoRoute
   '/middle': typeof AuthenticatedMiddleRoute
   '/operacional': typeof AuthenticatedOperacionalRoute
+  '/auth/senha': typeof AuthSenhaRoute
   '/admin/comunicados': typeof AuthenticatedAdminComunicadosRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/admin/emails': typeof AuthenticatedAdminEmailsRoute
@@ -210,7 +217,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/beneficios': typeof AuthenticatedBeneficiosRoute
   '/demais-ramos': typeof AuthenticatedDemaisRamosRoute
@@ -221,6 +228,7 @@ export interface FileRoutesByTo {
   '/juridico': typeof AuthenticatedJuridicoRoute
   '/middle': typeof AuthenticatedMiddleRoute
   '/operacional': typeof AuthenticatedOperacionalRoute
+  '/auth/senha': typeof AuthSenhaRoute
   '/admin/comunicados': typeof AuthenticatedAdminComunicadosRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/admin/emails': typeof AuthenticatedAdminEmailsRoute
@@ -239,7 +247,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/_authenticated/beneficios': typeof AuthenticatedBeneficiosRoute
   '/_authenticated/demais-ramos': typeof AuthenticatedDemaisRamosRoute
@@ -250,6 +258,7 @@ export interface FileRoutesById {
   '/_authenticated/juridico': typeof AuthenticatedJuridicoRoute
   '/_authenticated/middle': typeof AuthenticatedMiddleRoute
   '/_authenticated/operacional': typeof AuthenticatedOperacionalRoute
+  '/auth/senha': typeof AuthSenhaRoute
   '/_authenticated/admin/comunicados': typeof AuthenticatedAdminComunicadosRoute
   '/_authenticated/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/_authenticated/admin/emails': typeof AuthenticatedAdminEmailsRoute
@@ -279,6 +288,7 @@ export interface FileRouteTypes {
     | '/juridico'
     | '/middle'
     | '/operacional'
+    | '/auth/senha'
     | '/admin/comunicados'
     | '/admin/configuracoes'
     | '/admin/emails'
@@ -306,6 +316,7 @@ export interface FileRouteTypes {
     | '/juridico'
     | '/middle'
     | '/operacional'
+    | '/auth/senha'
     | '/admin/comunicados'
     | '/admin/configuracoes'
     | '/admin/emails'
@@ -334,6 +345,7 @@ export interface FileRouteTypes {
     | '/_authenticated/juridico'
     | '/_authenticated/middle'
     | '/_authenticated/operacional'
+    | '/auth/senha'
     | '/_authenticated/admin/comunicados'
     | '/_authenticated/admin/configuracoes'
     | '/_authenticated/admin/emails'
@@ -352,7 +364,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  AuthRoute: typeof AuthRoute
+  AuthRoute: typeof AuthRouteWithChildren
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
 
@@ -378,6 +390,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/auth/senha': {
+      id: '/auth/senha'
+      path: '/senha'
+      fullPath: '/auth/senha'
+      preLoaderRoute: typeof AuthSenhaRouteImport
+      parentRoute: typeof AuthRoute
     }
     '/_authenticated/operacional': {
       id: '/_authenticated/operacional'
@@ -612,10 +631,20 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface AuthRouteChildren {
+  AuthSenhaRoute: typeof AuthSenhaRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthSenhaRoute: AuthSenhaRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  AuthRoute: AuthRoute,
+  AuthRoute: AuthRouteWithChildren,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }
 export const routeTree = rootRouteImport
