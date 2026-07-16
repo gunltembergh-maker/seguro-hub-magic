@@ -92,7 +92,7 @@ function BigStatCard({
       {loading ? (
         <div className="h-10 mt-2 w-40 bg-gray-100 rounded animate-pulse" />
       ) : (
-        <p className="text-3xl font-bold mt-2" style={{ color: "#1B2A3D" }}>{value}</p>
+        <p className="text-3xl font-bold mt-2" style={{ color: "#14405C" }}>{value}</p>
       )}
     </div>
   );
@@ -355,13 +355,13 @@ function DashboardReceitaLavoro() {
     };
   }, [comparativoQ.data]);
 
-  const CORES_LINHAS = ["#0A2337", "#4B6D88", "#73A7B7", "#9B6B4A"];
+  const CORES_LINHAS = ["#14405C", "#4B6D88", "#00BAF2", "#8AAFC9"];
 
   return (
-    <div className="min-h-screen p-6" style={{ background: "#082537" }}>
+    <div className="min-h-screen p-6" style={{ background: "#14405C" }}>
       <style>{`
-        .lavoro-receita { font-family: 'Source Sans 3', system-ui, sans-serif; color: #0A2337; }
-        .lavoro-receita .title-serif { font-family: 'DM Serif Display', 'Playfair Display', Georgia, serif; font-weight: 400; color: #DFDBBE; }
+        .lavoro-receita { font-family: 'Source Sans 3', system-ui, sans-serif; color: #14405C; }
+        .lavoro-receita .title-serif { font-family: 'Inter', system-ui, sans-serif; font-weight: 400; color: #FFFFFF; }
       `}</style>
       <div className="lavoro-receita">
         {/* Header */}
@@ -370,11 +370,11 @@ function DashboardReceitaLavoro() {
             <h1 className="title-serif" style={{ fontSize: 32, letterSpacing: "-0.5px", margin: 0 }}>
               Receita Lavoro Seguros
             </h1>
-            <ChevronRight className="h-4 w-4 text-[#DFDBBE]/40" />
+            <ChevronRight className="h-4 w-4 text-[#FFFFFF]/40" />
             <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-md bg-white/10 backdrop-blur-sm border border-white/15">
-              <Calendar className="h-3.5 w-3.5 text-[#73A7B7]" />
+              <Calendar className="h-3.5 w-3.5 text-[#00BAF2]" />
               <Select value={String(ano)} onValueChange={(v) => setAno(Number(v))}>
-                <SelectTrigger className="bg-transparent border-0 h-6 w-[90px] focus:ring-0 p-0 text-[#DFDBBE]">
+                <SelectTrigger className="bg-transparent border-0 h-6 w-[90px] focus:ring-0 p-0 text-[#FFFFFF]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -384,7 +384,7 @@ function DashboardReceitaLavoro() {
             </div>
             <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-md bg-white/10 backdrop-blur-sm border border-white/15">
               <Select value={String(mesRef)} onValueChange={(v) => setMesRef(Number(v))}>
-                <SelectTrigger className="bg-transparent border-0 h-6 w-[80px] focus:ring-0 p-0 text-[#DFDBBE]">
+                <SelectTrigger className="bg-transparent border-0 h-6 w-[80px] focus:ring-0 p-0 text-[#FFFFFF]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -402,7 +402,7 @@ function DashboardReceitaLavoro() {
                   key={k}
                   onClick={() => setPeriodo(k as Periodo)}
                   className={`px-3 py-1 text-xs font-semibold ${
-                    periodo === k ? "bg-[#73A7B7] text-[#082537]" : "bg-white/10 text-[#DFDBBE]"
+                    periodo === k ? "bg-[#00BAF2] text-[#14405C]" : "bg-white/10 text-[#FFFFFF]"
                   }`}
                 >
                   {label}
@@ -412,13 +412,13 @@ function DashboardReceitaLavoro() {
           </div>
           <div className="flex items-center gap-3">
             <SendNewsletterButton modulo="receita_lavoro" ano={ano} mes={mesRef} />
-            <span className="text-xs flex items-center gap-1 text-[#DFDBBE]/80">
-              <Clock className="h-3 w-3 text-[#73A7B7]" />
+            <span className="text-xs flex items-center gap-1 text-[#FFFFFF]/80">
+              <Clock className="h-3 w-3 text-[#00BAF2]" />
               Dados atualizados em: {fmtTs(ultimaAtQ.data)}
             </span>
             <Button
               variant="outline" size="sm"
-              className="h-6 text-xs gap-1 border-[#DFDBBE]/30 text-[#DFDBBE] bg-transparent hover:bg-white/10 hover:text-[#DFDBBE]"
+              className="h-6 text-xs gap-1 border-[#FFFFFF]/30 text-[#FFFFFF] bg-transparent hover:bg-white/10 hover:text-[#FFFFFF]"
               onClick={handleRefresh} disabled={isRefreshing}
             >
               <RefreshCw className={`h-3 w-3 ${isRefreshing ? "animate-spin" : ""}`} />
@@ -432,12 +432,12 @@ function DashboardReceitaLavoro() {
           <BigStatCard
             title={`A receber em ${periodoLabel}`}
             subtitle="Previsto Caixa (parcelas emitidas por data de pagamento)"
-            value={BRL(kpis?.previsto_caixa)} accent="#9B6B4A" loading={kpisQ.isLoading}
+            value={BRL(kpis?.previsto_caixa)} accent="#8AAFC9" loading={kpisQ.isLoading}
           />
           <BigStatCard
             title={`Receita Caixa em ${periodoLabel}`}
             subtitle="Receita Caixa (efetivamente recebido)"
-            value={BRL(kpis?.receita_caixa)} accent="#0A2337" loading={kpisQ.isLoading}
+            value={BRL(kpis?.receita_caixa)} accent="#14405C" loading={kpisQ.isLoading}
           />
         </div>
 
@@ -510,12 +510,12 @@ function DashboardReceitaLavoro() {
                   <YAxis hide />
                   <Tooltip formatter={(v: any) => BRL(Number(v))} />
                   <Legend wrapperStyle={{ fontSize: 12, color: "#0F172A", fontWeight: 600 }} />
-                  <Bar dataKey={String(ano - 1)} fill="#73A7B7">
+                  <Bar dataKey={String(ano - 1)} fill="#00BAF2">
                     <LabelList dataKey={String(ano - 1)} position="top"
                       formatter={(v: any) => (Number(v) > 0 ? BRL_COMPACT(Number(v)) : "")}
                       style={{ fontSize: 13, fill: "#0F172A", fontWeight: 700 }} />
                   </Bar>
-                  <Bar dataKey={String(ano)} fill="#1B2A3D">
+                  <Bar dataKey={String(ano)} fill="#14405C">
                     <LabelList dataKey={String(ano)} position="top"
                       formatter={(v: any) => (Number(v) > 0 ? BRL_COMPACT(Number(v)) : "")}
                       style={{ fontSize: 13, fill: "#0F172A", fontWeight: 700 }} />
@@ -534,12 +534,12 @@ function DashboardReceitaLavoro() {
                   <YAxis hide />
                   <Tooltip formatter={(v: any) => BRL(Number(v))} />
                   <Legend wrapperStyle={{ fontSize: 12, color: "#0F172A", fontWeight: 600 }} />
-                  <Bar dataKey={String(ano - 1)} fill="#9B6B4A">
+                  <Bar dataKey={String(ano - 1)} fill="#8AAFC9">
                     <LabelList dataKey={String(ano - 1)} position="top"
                       formatter={(v: any) => (Number(v) > 0 ? BRL_COMPACT(Number(v)) : "")}
                       style={{ fontSize: 13, fill: "#0F172A", fontWeight: 700 }} />
                   </Bar>
-                  <Bar dataKey={String(ano)} fill="#0A2337">
+                  <Bar dataKey={String(ano)} fill="#14405C">
                     <LabelList dataKey={String(ano)} position="top"
                       formatter={(v: any) => (Number(v) > 0 ? BRL_COMPACT(Number(v)) : "")}
                       style={{ fontSize: 13, fill: "#0F172A", fontWeight: 700 }} />
@@ -600,7 +600,7 @@ function DashboardReceitaLavoro() {
         {/* Detalhamento operacional */}
         <Collapsible open={detOpen} onOpenChange={setDetOpen}>
           <CollapsibleTrigger asChild>
-            <button className="w-full flex items-center justify-between px-4 py-2.5 rounded-md bg-white/10 border border-white/15 text-[#DFDBBE] text-sm font-semibold hover:bg-white/15 transition-colors">
+            <button className="w-full flex items-center justify-between px-4 py-2.5 rounded-md bg-white/10 border border-white/15 text-[#FFFFFF] text-sm font-semibold hover:bg-white/15 transition-colors">
               <span>Ver detalhamento operacional completo</span>
               <ChevronDown className={`h-4 w-4 transition-transform ${detOpen ? "rotate-180" : ""}`} />
             </button>
@@ -628,9 +628,9 @@ function DashboardReceitaLavoro() {
                     <YAxis tick={{ fontSize: 11 }} tickFormatter={BRL_COMPACT} width={80} />
                     <Tooltip formatter={(v: any) => BRL(Number(v))} />
                     <Legend wrapperStyle={{ fontSize: 11 }} />
-                    <Bar dataKey="Competência" fill="#0A2337" />
-                    <Bar dataKey="Caixa" fill="#73A7B7" />
-                    <Line type="monotone" dataKey="Meta" stroke="#9B6B4A" strokeWidth={2} dot={{ r: 3 }} />
+                    <Bar dataKey="Competência" fill="#14405C" />
+                    <Bar dataKey="Caixa" fill="#00BAF2" />
+                    <Line type="monotone" dataKey="Meta" stroke="#8AAFC9" strokeWidth={2} dot={{ r: 3 }} />
                   </ComposedChart>
                 </ResponsiveContainer>
               </div>
@@ -684,7 +684,7 @@ function DashboardReceitaLavoro() {
                       <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={BRL_COMPACT} />
                       <YAxis dataKey="tipo_de_ramo" type="category" tick={{ fontSize: 11 }} width={120} />
                       <Tooltip formatter={(v: any) => BRL(Number(v))} />
-                      <Bar dataKey="receita" fill="#0A2337" />
+                      <Bar dataKey="receita" fill="#14405C" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -698,7 +698,7 @@ function DashboardReceitaLavoro() {
                       <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={BRL_COMPACT} />
                       <YAxis dataKey="ramo" type="category" tick={{ fontSize: 11 }} width={140} />
                       <Tooltip formatter={(v: any) => BRL(Number(v))} />
-                      <Bar dataKey="receita" fill="#73A7B7" />
+                      <Bar dataKey="receita" fill="#00BAF2" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
