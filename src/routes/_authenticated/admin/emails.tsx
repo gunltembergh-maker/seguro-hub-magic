@@ -75,11 +75,8 @@ function AdminEmailsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3 text-sm whitespace-nowrap">
-          <a href="/admin/emails/destinatarios" className="text-primary underline underline-offset-4 hover:opacity-80">
-            Destinatários →
-          </a>
           <a href="/admin/emails/schedules" className="text-primary underline underline-offset-4 hover:opacity-80">
-            Agendamentos →
+            Agendamentos e destinatários →
           </a>
           <a href="/admin/emails/log" className="text-primary underline underline-offset-4 hover:opacity-80">
             Log →

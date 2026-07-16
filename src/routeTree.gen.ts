@@ -35,7 +35,6 @@ import { Route as AuthenticatedAdminComunicadosRouteImport } from './routes/_aut
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as AuthenticatedAdminEmailsSchedulesRouteImport } from './routes/_authenticated/admin/emails.schedules'
 import { Route as AuthenticatedAdminEmailsLogRouteImport } from './routes/_authenticated/admin/emails.log'
-import { Route as AuthenticatedAdminEmailsDestinatariosRouteImport } from './routes/_authenticated/admin/emails.destinatarios'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -181,12 +180,6 @@ const AuthenticatedAdminEmailsLogRoute =
     path: '/log',
     getParentRoute: () => AuthenticatedAdminEmailsRoute,
   } as any)
-const AuthenticatedAdminEmailsDestinatariosRoute =
-  AuthenticatedAdminEmailsDestinatariosRouteImport.update({
-    id: '/destinatarios',
-    path: '/destinatarios',
-    getParentRoute: () => AuthenticatedAdminEmailsRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -211,7 +204,6 @@ export interface FileRoutesByFullPath {
   '/dashboard/receita-caixa': typeof AuthenticatedDashboardReceitaCaixaRoute
   '/dashboard/receita-executivo': typeof AuthenticatedDashboardReceitaExecutivoRoute
   '/dashboard/report-fechamento': typeof AuthenticatedDashboardReportFechamentoRoute
-  '/admin/emails/destinatarios': typeof AuthenticatedAdminEmailsDestinatariosRoute
   '/admin/emails/log': typeof AuthenticatedAdminEmailsLogRoute
   '/admin/emails/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -239,7 +231,6 @@ export interface FileRoutesByTo {
   '/dashboard/receita-caixa': typeof AuthenticatedDashboardReceitaCaixaRoute
   '/dashboard/receita-executivo': typeof AuthenticatedDashboardReceitaExecutivoRoute
   '/dashboard/report-fechamento': typeof AuthenticatedDashboardReportFechamentoRoute
-  '/admin/emails/destinatarios': typeof AuthenticatedAdminEmailsDestinatariosRoute
   '/admin/emails/log': typeof AuthenticatedAdminEmailsLogRoute
   '/admin/emails/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -269,7 +260,6 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/receita-caixa': typeof AuthenticatedDashboardReceitaCaixaRoute
   '/_authenticated/dashboard/receita-executivo': typeof AuthenticatedDashboardReceitaExecutivoRoute
   '/_authenticated/dashboard/report-fechamento': typeof AuthenticatedDashboardReportFechamentoRoute
-  '/_authenticated/admin/emails/destinatarios': typeof AuthenticatedAdminEmailsDestinatariosRoute
   '/_authenticated/admin/emails/log': typeof AuthenticatedAdminEmailsLogRoute
   '/_authenticated/admin/emails/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -299,7 +289,6 @@ export interface FileRouteTypes {
     | '/dashboard/receita-caixa'
     | '/dashboard/receita-executivo'
     | '/dashboard/report-fechamento'
-    | '/admin/emails/destinatarios'
     | '/admin/emails/log'
     | '/admin/emails/schedules'
     | '/lovable/email/transactional/preview'
@@ -327,7 +316,6 @@ export interface FileRouteTypes {
     | '/dashboard/receita-caixa'
     | '/dashboard/receita-executivo'
     | '/dashboard/report-fechamento'
-    | '/admin/emails/destinatarios'
     | '/admin/emails/log'
     | '/admin/emails/schedules'
     | '/lovable/email/transactional/preview'
@@ -356,7 +344,6 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/receita-caixa'
     | '/_authenticated/dashboard/receita-executivo'
     | '/_authenticated/dashboard/report-fechamento'
-    | '/_authenticated/admin/emails/destinatarios'
     | '/_authenticated/admin/emails/log'
     | '/_authenticated/admin/emails/schedules'
     | '/lovable/email/transactional/preview'
@@ -553,26 +540,16 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminEmailsLogRouteImport
       parentRoute: typeof AuthenticatedAdminEmailsRoute
     }
-    '/_authenticated/admin/emails/destinatarios': {
-      id: '/_authenticated/admin/emails/destinatarios'
-      path: '/destinatarios'
-      fullPath: '/admin/emails/destinatarios'
-      preLoaderRoute: typeof AuthenticatedAdminEmailsDestinatariosRouteImport
-      parentRoute: typeof AuthenticatedAdminEmailsRoute
-    }
   }
 }
 
 interface AuthenticatedAdminEmailsRouteChildren {
-  AuthenticatedAdminEmailsDestinatariosRoute: typeof AuthenticatedAdminEmailsDestinatariosRoute
   AuthenticatedAdminEmailsLogRoute: typeof AuthenticatedAdminEmailsLogRoute
   AuthenticatedAdminEmailsSchedulesRoute: typeof AuthenticatedAdminEmailsSchedulesRoute
 }
 
 const AuthenticatedAdminEmailsRouteChildren: AuthenticatedAdminEmailsRouteChildren =
   {
-    AuthenticatedAdminEmailsDestinatariosRoute:
-      AuthenticatedAdminEmailsDestinatariosRoute,
     AuthenticatedAdminEmailsLogRoute: AuthenticatedAdminEmailsLogRoute,
     AuthenticatedAdminEmailsSchedulesRoute:
       AuthenticatedAdminEmailsSchedulesRoute,

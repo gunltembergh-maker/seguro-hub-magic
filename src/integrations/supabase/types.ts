@@ -153,124 +153,112 @@ export type Database = {
       }
       email_destinatarios_automaticos: {
         Row: {
+          adicionado_por: string | null
           ativo: boolean
-          created_at: string
-          created_by: string | null
-          email: string
+          atualizado_em: string
+          criado_em: string
           id: string
           modulo: string
-          nome: string
-          updated_at: string
+          user_id: string
         }
         Insert: {
+          adicionado_por?: string | null
           ativo?: boolean
-          created_at?: string
-          created_by?: string | null
-          email: string
+          atualizado_em?: string
+          criado_em?: string
           id?: string
           modulo: string
-          nome: string
-          updated_at?: string
+          user_id: string
         }
         Update: {
+          adicionado_por?: string | null
           ativo?: boolean
-          created_at?: string
-          created_by?: string | null
-          email?: string
+          atualizado_em?: string
+          criado_em?: string
           id?: string
           modulo?: string
-          nome?: string
-          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
       email_disparos_automaticos: {
         Row: {
-          concluido_em: string | null
-          created_at: string
-          data_referencia: string
-          detalhes: Json | null
-          disparado_por: string | null
+          data_envio: string
+          detalhes_erro: Json | null
+          disparado_em: string
+          finalizado_em: string | null
+          forcado_por: string | null
           id: string
-          iniciado_em: string
           modulo: string
-          motivo_skip: string | null
-          origem: string
           periodo_ref: string | null
           status: string
           total_destinatarios: number
-          total_enviados: number
           total_falhas: number
+          total_sucessos: number
         }
         Insert: {
-          concluido_em?: string | null
-          created_at?: string
-          data_referencia: string
-          detalhes?: Json | null
-          disparado_por?: string | null
+          data_envio: string
+          detalhes_erro?: Json | null
+          disparado_em?: string
+          finalizado_em?: string | null
+          forcado_por?: string | null
           id?: string
-          iniciado_em?: string
           modulo: string
-          motivo_skip?: string | null
-          origem?: string
-          periodo_ref?: string | null
-          status: string
-          total_destinatarios?: number
-          total_enviados?: number
-          total_falhas?: number
-        }
-        Update: {
-          concluido_em?: string | null
-          created_at?: string
-          data_referencia?: string
-          detalhes?: Json | null
-          disparado_por?: string | null
-          id?: string
-          iniciado_em?: string
-          modulo?: string
-          motivo_skip?: string | null
-          origem?: string
           periodo_ref?: string | null
           status?: string
           total_destinatarios?: number
-          total_enviados?: number
           total_falhas?: number
+          total_sucessos?: number
+        }
+        Update: {
+          data_envio?: string
+          detalhes_erro?: Json | null
+          disparado_em?: string
+          finalizado_em?: string | null
+          forcado_por?: string | null
+          id?: string
+          modulo?: string
+          periodo_ref?: string | null
+          status?: string
+          total_destinatarios?: number
+          total_falhas?: number
+          total_sucessos?: number
         }
         Relationships: []
       }
       email_schedules_config: {
         Row: {
           ativo: boolean
-          created_at: string
-          dia_mes: number | null
-          dia_semana: number | null
-          frequencia: string
-          horario_brt: string
+          atualizado_em: string
+          cron_jobid: number | null
+          dias_semana: number[]
+          hora_brt: string
           modulo: string
-          updated_at: string
-          updated_by: string | null
+          motivo_pausa: string | null
+          pausado_em: string | null
+          pausado_por: string | null
         }
         Insert: {
           ativo?: boolean
-          created_at?: string
-          dia_mes?: number | null
-          dia_semana?: number | null
-          frequencia?: string
-          horario_brt?: string
+          atualizado_em?: string
+          cron_jobid?: number | null
+          dias_semana?: number[]
+          hora_brt?: string
           modulo: string
-          updated_at?: string
-          updated_by?: string | null
+          motivo_pausa?: string | null
+          pausado_em?: string | null
+          pausado_por?: string | null
         }
         Update: {
           ativo?: boolean
-          created_at?: string
-          dia_mes?: number | null
-          dia_semana?: number | null
-          frequencia?: string
-          horario_brt?: string
+          atualizado_em?: string
+          cron_jobid?: number | null
+          dias_semana?: number[]
+          hora_brt?: string
           modulo?: string
-          updated_at?: string
-          updated_by?: string | null
+          motivo_pausa?: string | null
+          pausado_em?: string | null
+          pausado_por?: string | null
         }
         Relationships: []
       }
@@ -1040,6 +1028,10 @@ export type Database = {
         Args: { _tipo: string; _user_id: string }
         Returns: boolean
       }
+      rpc_adicionar_destinatario_automatico: {
+        Args: { p_modulo: string; p_user_id: string }
+        Returns: string
+      }
       rpc_admin_approve_user: {
         Args: { _perfil_id: string; _user_id: string }
         Returns: undefined
@@ -1260,6 +1252,24 @@ export type Database = {
         }
         Returns: string
       }
+      rpc_atualizar_schedule_config: {
+        Args: {
+          p_ativo: boolean
+          p_dias_semana: number[]
+          p_hora_brt: string
+          p_modulo: string
+        }
+        Returns: Json
+      }
+      rpc_buscar_usuarios_hub: {
+        Args: { p_busca?: string }
+        Returns: {
+          email: string
+          nome: string
+          role: string
+          user_id: string
+        }[]
+      }
       rpc_comissao_vencida_por_canal: {
         Args: { p_ano: number; p_mes?: number; p_periodo?: string }
         Returns: {
@@ -1336,6 +1346,21 @@ export type Database = {
           mostrar_nome_hub: boolean
           paginas: string[]
           titulo: string
+        }[]
+      }
+      rpc_historico_disparos: {
+        Args: { p_limit?: number; p_modulo: string }
+        Returns: {
+          data_envio: string
+          detalhes_erro: Json
+          disparado_em: string
+          finalizado_em: string
+          forcado_por_nome: string
+          id: string
+          status: string
+          total_destinatarios: number
+          total_falhas: number
+          total_sucessos: number
         }[]
       }
       rpc_inicio_lavoro_resumo: {
@@ -1489,6 +1514,19 @@ export type Database = {
         Returns: undefined
       }
       rpc_lavoro_ultima_atualizacao: { Args: never; Returns: string }
+      rpc_listar_destinatarios_automaticos: {
+        Args: { p_modulo: string }
+        Returns: {
+          adicionado_por_nome: string
+          ativo: boolean
+          criado_em: string
+          email: string
+          id: string
+          nome: string
+          role: string
+          user_id: string
+        }[]
+      }
       rpc_meu_perfil: {
         Args: never
         Returns: {
@@ -1505,6 +1543,10 @@ export type Database = {
         }[]
       }
       rpc_permitir_login_senha: { Args: never; Returns: boolean }
+      rpc_proxima_execucao_schedule: {
+        Args: { p_modulo: string }
+        Returns: string
+      }
       rpc_receita_caixa_comparativo_anual: {
         Args: { _anos: number[] }
         Returns: {
@@ -1586,9 +1628,17 @@ export type Database = {
         }[]
       }
       rpc_registrar_acesso: { Args: never; Returns: undefined }
+      rpc_remover_destinatario_automatico: {
+        Args: { p_id: string }
+        Returns: boolean
+      }
       rpc_set_meta_anual: {
         Args: { _ano: number; _valor: number }
         Returns: undefined
+      }
+      rpc_toggle_schedule: {
+        Args: { p_modulo: string; p_motivo?: string }
+        Returns: boolean
       }
     }
     Enums: {
