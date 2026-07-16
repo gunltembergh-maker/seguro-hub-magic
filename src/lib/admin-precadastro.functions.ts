@@ -28,10 +28,10 @@ export const adminPrecadastrarUsuarioFull = createServerFn({ method: "POST" })
     if (cpfDigits && cpfDigits.length !== 11) throw new Error("CPF inválido");
 
     const email = data.email.trim().toLowerCase();
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { lavoroAdmin } = await import("@/integrations/supabase/lavoro-admin.server");
 
     // 1) Create auth user (no password → user will set on first access via invite/magic link)
-    const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+    const { data: created, error: createErr } = await lavoroAdmin.auth.admin.createUser({
       email,
       email_confirm: false,
       user_metadata: { full_name: data.full_name },
@@ -43,7 +43,7 @@ export const adminPrecadastrarUsuarioFull = createServerFn({ method: "POST" })
     const authUserId = created.user.id;
 
     // 2) Upsert profile (a trigger may already have created a minimal row)
-    const { error: upErr } = await supabaseAdmin
+    const { error: upErr } = await lavoroAdmin
       .from("profiles")
       .upsert(
         {
@@ -64,7 +64,7 @@ export const adminPrecadastrarUsuarioFull = createServerFn({ method: "POST" })
       );
     if (upErr) {
       // rollback auth user to avoid orphans
-      await supabaseAdmin.auth.admin.deleteUser(authUserId).catch(() => {});
+      await lavoroAdmin.auth.admin.deleteUser(authUserId).catch(() => {});
       throw new Error(upErr.message);
     }
 
