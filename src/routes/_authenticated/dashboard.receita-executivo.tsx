@@ -9,6 +9,7 @@ import { AlertTriangle, Calendar } from "lucide-react";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { SendNewsletterButton } from "@/components/admin/SendNewsletterButton";
 
 export const Route = createFileRoute("/_authenticated/dashboard/receita-executivo")({
   component: DashboardReceitaExecutivo,
@@ -182,6 +183,7 @@ function DashboardReceitaExecutivo() {
             <div className="text-xs" style={{ color: "#6B7280" }}>
               Dados atualizados em: <span className="font-medium">{fmtAtualizacao(ultAtualQ.data)}</span>
             </div>
+            <SendNewsletterButton modulo="executivo_lavoro" ano={ano} mes={mesLimiteYtd} />
           </div>
         </div>
 

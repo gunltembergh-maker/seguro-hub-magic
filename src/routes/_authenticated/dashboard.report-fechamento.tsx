@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { SendNewsletterButton } from "@/components/admin/SendNewsletterButton";
 
 export const Route = createFileRoute("/_authenticated/dashboard/report-fechamento")({
   component: ReportFechamento,
@@ -197,9 +198,12 @@ function ReportFechamento() {
           <h1 className="text-2xl font-bold" style={{ color: NAVY }}>Report Fechamento</h1>
           <p className="text-sm text-muted-foreground">Visão consolidada da base gerencial</p>
         </div>
-        <Button onClick={exportExcel} className="gap-2" style={{ background: NAVY_DARK }}>
-          <Download className="h-4 w-4" /> Exportar Excel
-        </Button>
+        <div className="flex items-center gap-2">
+          <SendNewsletterButton modulo="fechamento_lavoro" ano={ano} mes={gran === "MENSAL" ? periodo : new Date().getMonth() + 1} />
+          <Button onClick={exportExcel} className="gap-2" style={{ background: NAVY_DARK }}>
+            <Download className="h-4 w-4" /> Exportar Excel
+          </Button>
+        </div>
       </div>
 
       {staleAlerta && (
