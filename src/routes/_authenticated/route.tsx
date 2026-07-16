@@ -12,6 +12,7 @@ import { ViewAsProvider, useViewAs } from "@/contexts/view-as-context";
 import { MinhaVisaoIndicator } from "@/components/minha-visao-indicator";
 import { ViewAsSelector } from "@/components/view-as-selector";
 import { PopupComunicado } from "@/components/popup-comunicado";
+import fundoHub from "@/assets/fundo-hub.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
