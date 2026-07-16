@@ -151,6 +151,129 @@ export type Database = {
         }
         Relationships: []
       }
+      email_destinatarios_automaticos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          created_by: string | null
+          email: string
+          id: string
+          modulo: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          email: string
+          id?: string
+          modulo: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          email?: string
+          id?: string
+          modulo?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      email_disparos_automaticos: {
+        Row: {
+          concluido_em: string | null
+          created_at: string
+          data_referencia: string
+          detalhes: Json | null
+          disparado_por: string | null
+          id: string
+          iniciado_em: string
+          modulo: string
+          motivo_skip: string | null
+          origem: string
+          periodo_ref: string | null
+          status: string
+          total_destinatarios: number
+          total_enviados: number
+          total_falhas: number
+        }
+        Insert: {
+          concluido_em?: string | null
+          created_at?: string
+          data_referencia: string
+          detalhes?: Json | null
+          disparado_por?: string | null
+          id?: string
+          iniciado_em?: string
+          modulo: string
+          motivo_skip?: string | null
+          origem?: string
+          periodo_ref?: string | null
+          status: string
+          total_destinatarios?: number
+          total_enviados?: number
+          total_falhas?: number
+        }
+        Update: {
+          concluido_em?: string | null
+          created_at?: string
+          data_referencia?: string
+          detalhes?: Json | null
+          disparado_por?: string | null
+          id?: string
+          iniciado_em?: string
+          modulo?: string
+          motivo_skip?: string | null
+          origem?: string
+          periodo_ref?: string | null
+          status?: string
+          total_destinatarios?: number
+          total_enviados?: number
+          total_falhas?: number
+        }
+        Relationships: []
+      }
+      email_schedules_config: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          dia_mes: number | null
+          dia_semana: number | null
+          frequencia: string
+          horario_brt: string
+          modulo: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          dia_mes?: number | null
+          dia_semana?: number | null
+          frequencia?: string
+          horario_brt?: string
+          modulo: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          dia_mes?: number | null
+          dia_semana?: number | null
+          frequencia?: string
+          horario_brt?: string
+          modulo?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -184,6 +307,24 @@ export type Database = {
           recipient_email?: string
           status?: string
           template_name?: string
+        }
+        Relationships: []
+      }
+      feriados_nacionais: {
+        Row: {
+          created_at: string
+          data: string
+          descricao: string
+        }
+        Insert: {
+          created_at?: string
+          data: string
+          descricao: string
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          descricao?: string
         }
         Relationships: []
       }
@@ -884,6 +1025,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin_or_diretoria: { Args: { _user_id: string }; Returns: boolean }
+      is_dia_util: { Args: { _data: string }; Returns: boolean }
       is_dominio_lavoro: { Args: { _email: string }; Returns: boolean }
       is_email_permitido: { Args: { _email: string }; Returns: boolean }
       normalize_categoria_financeira: {
