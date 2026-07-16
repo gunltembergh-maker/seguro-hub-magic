@@ -360,24 +360,15 @@ function SchedulesPage() {
           </div>
 
           <div className="flex flex-wrap gap-2 justify-between pt-2 border-t">
-            <div className="flex gap-2">
-              <Button
-                onClick={handleDisparar}
-                disabled={disparando}
-                variant="outline"
-                className="gap-2"
-              >
-                {disparando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                {disparando ? 'Disparando...' : 'Disparar agora'}
-              </Button>
-              <Button
-                onClick={handleTogglePausar}
-                variant="outline"
-                className="gap-2"
-              >
-                {config?.ativo ? '⏸ Pausar' : '▶ Reativar'}
-              </Button>
-            </div>
+            <Button
+              onClick={handleDisparar}
+              disabled={disparando}
+              variant="outline"
+              className="gap-2"
+            >
+              {disparando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              {disparando ? 'Disparando...' : 'Disparar agora'}
+            </Button>
             <Button
               onClick={handleSalvar}
               disabled={!alterado || salvando}
@@ -387,6 +378,7 @@ function SchedulesPage() {
               {salvando ? 'Salvando...' : 'Salvar alterações'}
             </Button>
           </div>
+
         </CardContent>
       </Card>
 
