@@ -6,7 +6,7 @@ import { Loader2, Plus, Pencil, Trash2, ShieldAlert, Lock } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useMeuPerfil, hasRole } from "@/hooks/use-meu-perfil";
-import { usePerfis, PERMISSION_KEYS, type PerfilAcesso } from "@/hooks/use-admin-data";
+import { usePerfis, PERMISSION_KEYS, PERMISSION_GROUPS, type PerfilAcesso } from "@/hooks/use-admin-data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
