@@ -12,7 +12,6 @@ import { useMeuPerfil, hasRole } from "@/hooks/use-meu-perfil";
 import { usePerfis } from "@/hooks/use-admin-data";
 import {
   useAdminUsersV2, useConvitesExternos,
-  useSendAuthEmail,
   type AdminUserV2, type ConviteExterno,
 } from "@/hooks/use-admin-users-v2";
 import { UserFormModal, type UserFormInitial } from "@/components/admin/UserFormModal";
@@ -79,15 +78,30 @@ function AdminUsuariosPage() {
   const [perfilFilter, setPerfilFilter] = useState("Todos");
 
   const [approving, setApproving] = useState<AdminUserV2 | null>(null);
-  const [editing, setEditing] = useState<AdminUserV2 | null>(null);
   const [detailUser, setDetailUser] = useState<AdminUserV2 | null>(null);
   const [deletingUser, setDeletingUser] = useState<AdminUserV2 | null>(null);
   const [convidarOpen, setConvidarOpen] = useState(false);
-  const [convidarInternoOpen, setConvidarInternoOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [formInitial, setFormInitial] = useState<UserFormInitial | null>(null);
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["admin-users-v2"] });
     qc.invalidateQueries({ queryKey: ["admin-convites-externos"] });
+    qc.invalidateQueries({ queryKey: ["admin-detalhe-usuario"] });
+  };
+
+  const openCreate = () => { setFormInitial(null); setFormOpen(true); };
+  const openEdit = (u: AdminUserV2) => {
+    setFormInitial({
+      isEdit: true,
+      user_id: u.user_id,
+      email: u.email,
+      full_name: u.full_name,
+      perfil_id: u.perfil_id,
+      blocked: u.blocked,
+      active: u.active,
+    });
+    setFormOpen(true);
   };
 
   const metrics = useMemo(() => {
@@ -166,8 +180,8 @@ function AdminUsuariosPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setConvidarInternoOpen(true)} className="gap-2">
-            <Plus className="h-4 w-4" /> Novo cadastro
+          <Button variant="outline" onClick={openCreate} className="gap-2">
+            <Plus className="h-4 w-4" /> Pré-cadastrar Usuário
           </Button>
           <Button onClick={() => setConvidarOpen(true)} className="gap-2">
             <Mail className="h-4 w-4" /> Convidar externo
@@ -276,7 +290,7 @@ function AdminUsuariosPage() {
                     </TableHeader>
                     <TableBody>
                       {filtered.map(u => (
-                        <TableRow key={u.user_id}>
+                        <TableRow key={u.user_id} className="cursor-pointer" onClick={() => setDetailUser(u)}>
                           <TableCell className="font-medium">{u.full_name ?? "—"}</TableCell>
                           <TableCell className="text-muted-foreground">{u.email}</TableCell>
                           <TableCell><TipoBadge u={u} /></TableCell>
@@ -284,7 +298,7 @@ function AdminUsuariosPage() {
                           <TableCell><StatusBadge u={u} /></TableCell>
                           <TableCell className="text-center tabular-nums">{u.total_sessoes}</TableCell>
                           <TableCell className="text-muted-foreground">{formatUltimoAcesso(u.ultimo_acesso)}</TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                             <div className="flex justify-end gap-1">
                               <Button size="sm" variant="ghost" title="Ver detalhes" onClick={() => setDetailUser(u)}>
                                 <Activity className="h-4 w-4" />
@@ -294,7 +308,7 @@ function AdminUsuariosPage() {
                                   <UserCheck className="h-3.5 w-3.5" /> Aprovar
                                 </Button>
                               )}
-                              <Button size="sm" variant="ghost" title="Editar" onClick={() => setEditing(u)}>
+                              <Button size="sm" variant="ghost" title="Editar" onClick={() => openEdit(u)}>
                                 <Pencil className="h-4 w-4" />
                               </Button>
                               <Button
@@ -336,20 +350,27 @@ function AdminUsuariosPage() {
         <ApproveDialog user={approving} perfis={perfis ?? []} onClose={() => setApproving(null)}
           onDone={() => { setApproving(null); refresh(); }} />
       )}
-      {editing && (
-        <EditDialog user={editing} perfis={perfis ?? []} onClose={() => setEditing(null)}
-          onDone={() => { setEditing(null); refresh(); }} />
-      )}
-      {detailUser && (
-        <UserDetailSheet user={detailUser} onClose={() => setDetailUser(null)} />
-      )}
+
+      <UserFormModal
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        initial={formInitial}
+        onSaved={refresh}
+      />
+
+      <UserDetailSheet
+        user={detailUser}
+        open={!!detailUser}
+        onOpenChange={(o) => !o && setDetailUser(null)}
+        onEdit={(u) => { setDetailUser(null); openEdit(u); }}
+        onDelete={(u) => { setDetailUser(null); setDeletingUser(u); }}
+      />
+
       {convidarOpen && (
         <ConvidarExternoDialog perfis={perfis ?? []} onClose={() => setConvidarOpen(false)}
           onDone={() => { setConvidarOpen(false); refresh(); }} />
       )}
-      {convidarInternoOpen && (
-        <NovoInternoDialog perfis={perfis ?? []} onClose={() => setConvidarInternoOpen(false)} />
-      )}
+
       {deletingUser && (
         <AlertDialog open onOpenChange={(o) => !o && setDeletingUser(null)}>
           <AlertDialogContent>
@@ -418,61 +439,6 @@ function ApproveDialog({ user, perfis, onClose, onDone }: { user: AdminUserV2; p
   );
 }
 
-function EditDialog({ user, perfis, onClose, onDone }: { user: AdminUserV2; perfis: { id: string; nome: string }[]; onClose: () => void; onDone: () => void }) {
-  const [fullName, setFullName] = useState(user.full_name ?? "");
-  const [perfilId, setPerfilId] = useState(user.perfil_id ?? "");
-  const [blocked, setBlocked] = useState(user.blocked);
-  const [active, setActive] = useState(user.active);
-  const mut = useUpdateUserV2();
-  return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent>
-        <DialogHeader><DialogTitle>Editar usuário</DialogTitle></DialogHeader>
-        <div className="space-y-4">
-          <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs">
-            <div className="text-muted-foreground">E-mail (não editável)</div>
-            <div className="font-medium">{user.email}</div>
-          </div>
-          <div className="space-y-2">
-            <Label>Nome completo</Label>
-            <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Nome do colaborador" />
-          </div>
-          <div className="space-y-2">
-            <Label>Perfil de acesso</Label>
-            <Select value={perfilId} onValueChange={setPerfilId}>
-              <SelectTrigger><SelectValue placeholder="Sem perfil" /></SelectTrigger>
-              <SelectContent>
-                {perfis.map(p => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center justify-between rounded-lg border border-border p-3">
-            <div><div className="text-sm font-medium">Ativo</div><div className="text-xs text-muted-foreground">Usuário pode entrar no Hub</div></div>
-            <Switch checked={active} onCheckedChange={setActive} />
-          </div>
-          <div className="flex items-center justify-between rounded-lg border border-border p-3">
-            <div><div className="text-sm font-medium">Bloqueado</div><div className="text-xs text-muted-foreground">Impede o login (bane no auth)</div></div>
-            <Switch checked={blocked} onCheckedChange={setBlocked} />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button
-            onClick={() => mut.mutate(
-              { user_id: user.user_id, full_name: fullName, perfil_id: perfilId || null, blocked, active },
-              { onSuccess: () => onDone() },
-            )}
-            disabled={mut.isPending}
-            className="gap-2"
-          >
-            {mut.isPending && <Loader2 className="h-4 w-4 animate-spin" />} Salvar
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 function ConvidarExternoDialog({ perfis, onClose, onDone }: { perfis: { id: string; nome: string }[]; onClose: () => void; onDone: () => void }) {
   const [email, setEmail] = useState("");
   const [perfilId, setPerfilId] = useState("");
@@ -480,14 +446,14 @@ function ConvidarExternoDialog({ perfis, onClose, onDone }: { perfis: { id: stri
     mutationFn: async () => {
       const clean = email.trim().toLowerCase();
       if (!/^\S+@\S+\.\S+$/.test(clean)) throw new Error("E-mail inválido");
-      if (clean.endsWith(`@${LAVORO_DOMAIN}`)) throw new Error(`Use "Novo cadastro" para e-mails @${LAVORO_DOMAIN}`);
+      if (clean.endsWith(`@${LAVORO_DOMAIN}`)) throw new Error(`Use "Pré-cadastrar Usuário" para e-mails @${LAVORO_DOMAIN}`);
       if (!perfilId) throw new Error("Selecione um perfil");
       const { error } = await supabase.rpc("rpc_admin_convidar_externo" as never, {
         _email: clean, _perfil_id: perfilId,
       } as never);
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Convite externo criado", { description: "O usuário poderá entrar via login e será aprovado automaticamente." }); onDone(); },
+    onSuccess: () => { toast.success("Convite externo criado"); onDone(); },
     onError: (e: Error) => toast.error("Falha ao convidar", { description: e.message }),
   });
   return (
@@ -513,9 +479,6 @@ function ConvidarExternoDialog({ perfis, onClose, onDone }: { perfis: { id: stri
               </SelectContent>
             </Select>
           </div>
-          <div className="rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-            Peça ao usuário para entrar no Hub. Ao fazer login pela primeira vez, ele será aprovado automaticamente com o perfil escolhido.
-          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
@@ -525,162 +488,6 @@ function ConvidarExternoDialog({ perfis, onClose, onDone }: { perfis: { id: stri
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function NovoInternoDialog({ onClose, perfis }: { onClose: () => void; perfis: { id: string; nome: string }[] }) {
-  const [email, setEmail] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [perfilId, setPerfilId] = useState("");
-  const [sendInvite, setSendInvite] = useState(true);
-  const preCad = usePreCadastrarUsuario();
-  const send = useSendAuthEmail();
-
-  const handleSave = async () => {
-    const clean = email.trim().toLowerCase();
-    if (!/^\S+@\S+\.\S+$/.test(clean)) { toast.error("E-mail inválido"); return; }
-    if (!clean.endsWith(`@${LAVORO_DOMAIN}`)) { toast.error(`Use "Convidar externo" para e-mails fora de @${LAVORO_DOMAIN}`); return; }
-    if (!perfilId) { toast.error("Selecione um perfil"); return; }
-    await preCad.mutateAsync({ email: clean, full_name: fullName, perfil_id: perfilId });
-    if (sendInvite) {
-      try { await send.mutateAsync({ email: clean, tipo: "invite" }); } catch { /* toast handled */ }
-    }
-    onClose();
-  };
-
-  return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Pré-cadastrar colaborador interno</DialogTitle>
-          <DialogDescription>
-            Cadastre um e-mail <strong>@{LAVORO_DOMAIN}</strong> já com perfil definido. Opcionalmente envie o convite por e-mail agora.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label>E-mail Lavoro</Label>
-            <Input type="email" placeholder={`nome@${LAVORO_DOMAIN}`} value={email} onChange={(e) => setEmail(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label>Nome completo</Label>
-            <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Nome do colaborador" />
-          </div>
-          <div className="space-y-2">
-            <Label>Perfil de acesso</Label>
-            <Select value={perfilId} onValueChange={setPerfilId}>
-              <SelectTrigger><SelectValue placeholder="Selecione um perfil" /></SelectTrigger>
-              <SelectContent>
-                {perfis.map(p => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center justify-between rounded-lg border border-border p-3">
-            <div>
-              <div className="text-sm font-medium">Enviar convite agora</div>
-              <div className="text-xs text-muted-foreground">Envia o e-mail do Supabase Auth para o colaborador definir a senha.</div>
-            </div>
-            <Switch checked={sendInvite} onCheckedChange={setSendInvite} />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={handleSave} disabled={preCad.isPending || send.isPending} className="gap-2">
-            {(preCad.isPending || send.isPending) && <Loader2 className="h-4 w-4 animate-spin" />} Cadastrar
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function UserDetailSheet({ user, onClose }: { user: AdminUserV2; onClose: () => void }) {
-  const sendEmail = useSendAuthEmail();
-  const doSend = (tipo: "invite" | "magiclink" | "recovery") =>
-    sendEmail.mutate({ user_id: user.user_id, email: user.email, tipo });
-
-  const { data: atividades, isLoading } = useAtividadeUsuario(user.user_id);
-  return (
-    <Sheet open onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>{user.full_name ?? user.email}</SheetTitle>
-          <SheetDescription>{user.email}</SheetDescription>
-        </SheetHeader>
-        <div className="mt-6 space-y-6">
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="rounded-lg border border-border p-3">
-              <div className="text-xs text-muted-foreground">Perfil</div>
-              <div className="font-medium">{user.perfil_nome ?? "—"}</div>
-            </div>
-            <div className="rounded-lg border border-border p-3">
-              <div className="text-xs text-muted-foreground">Tipo</div>
-              <div className="font-medium capitalize">{user.tipo_usuario}</div>
-            </div>
-            <div className="rounded-lg border border-border p-3">
-              <div className="text-xs text-muted-foreground">Cadastrado em</div>
-              <div className="font-medium">{formatDate(user.criado_em)}</div>
-            </div>
-            <div className="rounded-lg border border-border p-3">
-              <div className="text-xs text-muted-foreground">Último acesso</div>
-              <div className="font-medium">{formatUltimoAcesso(user.ultimo_acesso)}</div>
-            </div>
-            <div className="rounded-lg border border-border p-3">
-              <div className="text-xs text-muted-foreground">Sessões totais</div>
-              <div className="font-medium tabular-nums">{user.total_sessoes}</div>
-            </div>
-            <div className="rounded-lg border border-border p-3">
-              <div className="text-xs text-muted-foreground">Papéis</div>
-              <div className="font-medium">{user.roles.join(", ") || "—"}</div>
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-border p-3">
-            <div className="mb-2 text-xs font-semibold text-muted-foreground">Ações rápidas</div>
-            <div className="flex flex-wrap gap-2">
-              <Button size="sm" variant="outline" className="gap-1.5" disabled={sendEmail.isPending}
-                onClick={() => doSend("invite")}>
-                <Mail className="h-3.5 w-3.5" /> Enviar convite
-              </Button>
-              <Button size="sm" variant="outline" className="gap-1.5" disabled={sendEmail.isPending}
-                onClick={() => doSend("magiclink")}>
-                <Mail className="h-3.5 w-3.5" /> Magic link
-              </Button>
-              <Button size="sm" variant="outline" className="gap-1.5" disabled={sendEmail.isPending}
-                onClick={() => doSend("recovery")}>
-                <Mail className="h-3.5 w-3.5" /> Resetar senha
-              </Button>
-            </div>
-          </div>
-
-
-          <div>
-            <h3 className="mb-2 text-sm font-semibold">Atividade recente</h3>
-            {isLoading ? (
-              <div className="grid place-items-center py-8"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>
-            ) : !atividades?.length ? (
-              <p className="text-sm text-muted-foreground">Nenhuma atividade registrada.</p>
-            ) : (
-              <ul className="space-y-2">
-                {atividades.map((a, i) => (
-                  <li key={i} className="rounded-md border border-border p-2 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium capitalize">{a.tipo === "sessao" ? "🔓 Sessão iniciada" : a.tipo}</span>
-                      <span className="text-muted-foreground">{formatDate(a.momento)}</span>
-                    </div>
-                    {Object.keys(a.detalhes ?? {}).length > 0 && (
-                      <pre className="mt-1 overflow-x-auto text-[10px] text-muted-foreground">
-                        {JSON.stringify(a.detalhes, null, 2)}
-                      </pre>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-      </SheetContent>
-    </Sheet>
   );
 }
 
