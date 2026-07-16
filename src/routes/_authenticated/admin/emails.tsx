@@ -74,12 +74,17 @@ function AdminEmailsPage() {
             <span className="font-medium">notify.hub.lavoroseguros.com.br</span>.
           </p>
         </div>
-        <a
-          href="/admin/emails/log"
-          className="text-sm text-primary underline underline-offset-4 hover:opacity-80 whitespace-nowrap"
-        >
-          Ver log de envios →
-        </a>
+        <div className="flex items-center gap-3 text-sm whitespace-nowrap">
+          <a href="/admin/emails/destinatarios" className="text-primary underline underline-offset-4 hover:opacity-80">
+            Destinatários →
+          </a>
+          <a href="/admin/emails/schedules" className="text-primary underline underline-offset-4 hover:opacity-80">
+            Agendamentos →
+          </a>
+          <a href="/admin/emails/log" className="text-primary underline underline-offset-4 hover:opacity-80">
+            Log →
+          </a>
+        </div>
       </header>
 
       <Card>
