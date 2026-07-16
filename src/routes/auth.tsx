@@ -183,7 +183,7 @@ function AuthPage() {
 
           {/* Coluna direita: card de login */}
           <div className="mx-auto w-full max-w-[440px] md:ml-auto">
-            <div className="rounded-2xl border border-white/10 bg-white/95 p-8 shadow-[0_25px_80px_-15px_rgba(0,0,0,0.6)] backdrop-blur-xl">
+            <div className="rounded-2xl border border-[#B8DCE9]/60 bg-[#DDECF3]/95 p-8 shadow-[0_25px_80px_-15px_rgba(0,0,0,0.6)] backdrop-blur-xl">
               <h2 className="text-center font-display text-xl font-semibold tracking-tight text-[#14405C]">
                 Acessar o Hub
               </h2>
