@@ -376,6 +376,36 @@ export type Database = {
         }
         Relationships: []
       }
+      market_news_cache: {
+        Row: {
+          categoria: string
+          criado_em: string
+          fonte: string
+          id: string
+          link: string
+          publicado_em: string | null
+          titulo: string
+        }
+        Insert: {
+          categoria: string
+          criado_em?: string
+          fonte: string
+          id?: string
+          link: string
+          publicado_em?: string | null
+          titulo: string
+        }
+        Update: {
+          categoria?: string
+          criado_em?: string
+          fonte?: string
+          id?: string
+          link?: string
+          publicado_em?: string | null
+          titulo?: string
+        }
+        Relationships: []
+      }
       notificacoes_admin: {
         Row: {
           created_at: string

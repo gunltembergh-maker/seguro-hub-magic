@@ -16,6 +16,7 @@ import { Route as AuthSenhaRouteImport } from './routes/auth.senha'
 import { Route as AuthenticatedOperacionalRouteImport } from './routes/_authenticated/operacional'
 import { Route as AuthenticatedMiddleRouteImport } from './routes/_authenticated/middle'
 import { Route as AuthenticatedJuridicoRouteImport } from './routes/_authenticated/juridico'
+import { Route as AuthenticatedInicioRouteImport } from './routes/_authenticated/inicio'
 import { Route as AuthenticatedHubRouteImport } from './routes/_authenticated/hub'
 import { Route as AuthenticatedGarantiaRouteImport } from './routes/_authenticated/garantia'
 import { Route as AuthenticatedFinanceiroRouteImport } from './routes/_authenticated/financeiro'
@@ -70,6 +71,11 @@ const AuthenticatedMiddleRoute = AuthenticatedMiddleRouteImport.update({
 const AuthenticatedJuridicoRoute = AuthenticatedJuridicoRouteImport.update({
   id: '/juridico',
   path: '/juridico',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedInicioRoute = AuthenticatedInicioRouteImport.update({
+  id: '/inicio',
+  path: '/inicio',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedHubRoute = AuthenticatedHubRouteImport.update({
@@ -197,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/financeiro': typeof AuthenticatedFinanceiroRoute
   '/garantia': typeof AuthenticatedGarantiaRoute
   '/hub': typeof AuthenticatedHubRoute
+  '/inicio': typeof AuthenticatedInicioRoute
   '/juridico': typeof AuthenticatedJuridicoRoute
   '/middle': typeof AuthenticatedMiddleRoute
   '/operacional': typeof AuthenticatedOperacionalRoute
@@ -225,6 +232,7 @@ export interface FileRoutesByTo {
   '/financeiro': typeof AuthenticatedFinanceiroRoute
   '/garantia': typeof AuthenticatedGarantiaRoute
   '/hub': typeof AuthenticatedHubRoute
+  '/inicio': typeof AuthenticatedInicioRoute
   '/juridico': typeof AuthenticatedJuridicoRoute
   '/middle': typeof AuthenticatedMiddleRoute
   '/operacional': typeof AuthenticatedOperacionalRoute
@@ -255,6 +263,7 @@ export interface FileRoutesById {
   '/_authenticated/financeiro': typeof AuthenticatedFinanceiroRoute
   '/_authenticated/garantia': typeof AuthenticatedGarantiaRoute
   '/_authenticated/hub': typeof AuthenticatedHubRoute
+  '/_authenticated/inicio': typeof AuthenticatedInicioRoute
   '/_authenticated/juridico': typeof AuthenticatedJuridicoRoute
   '/_authenticated/middle': typeof AuthenticatedMiddleRoute
   '/_authenticated/operacional': typeof AuthenticatedOperacionalRoute
@@ -285,6 +294,7 @@ export interface FileRouteTypes {
     | '/financeiro'
     | '/garantia'
     | '/hub'
+    | '/inicio'
     | '/juridico'
     | '/middle'
     | '/operacional'
@@ -313,6 +323,7 @@ export interface FileRouteTypes {
     | '/financeiro'
     | '/garantia'
     | '/hub'
+    | '/inicio'
     | '/juridico'
     | '/middle'
     | '/operacional'
@@ -342,6 +353,7 @@ export interface FileRouteTypes {
     | '/_authenticated/financeiro'
     | '/_authenticated/garantia'
     | '/_authenticated/hub'
+    | '/_authenticated/inicio'
     | '/_authenticated/juridico'
     | '/_authenticated/middle'
     | '/_authenticated/operacional'
@@ -417,6 +429,13 @@ declare module '@tanstack/react-router' {
       path: '/juridico'
       fullPath: '/juridico'
       preLoaderRoute: typeof AuthenticatedJuridicoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/inicio': {
+      id: '/_authenticated/inicio'
+      path: '/inicio'
+      fullPath: '/inicio'
+      preLoaderRoute: typeof AuthenticatedInicioRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/hub': {
@@ -599,6 +618,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFinanceiroRoute: typeof AuthenticatedFinanceiroRoute
   AuthenticatedGarantiaRoute: typeof AuthenticatedGarantiaRoute
   AuthenticatedHubRoute: typeof AuthenticatedHubRoute
+  AuthenticatedInicioRoute: typeof AuthenticatedInicioRoute
   AuthenticatedJuridicoRoute: typeof AuthenticatedJuridicoRoute
   AuthenticatedMiddleRoute: typeof AuthenticatedMiddleRoute
   AuthenticatedOperacionalRoute: typeof AuthenticatedOperacionalRoute
@@ -616,6 +636,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFinanceiroRoute: AuthenticatedFinanceiroRoute,
   AuthenticatedGarantiaRoute: AuthenticatedGarantiaRoute,
   AuthenticatedHubRoute: AuthenticatedHubRoute,
+  AuthenticatedInicioRoute: AuthenticatedInicioRoute,
   AuthenticatedJuridicoRoute: AuthenticatedJuridicoRoute,
   AuthenticatedMiddleRoute: AuthenticatedMiddleRoute,
   AuthenticatedOperacionalRoute: AuthenticatedOperacionalRoute,
