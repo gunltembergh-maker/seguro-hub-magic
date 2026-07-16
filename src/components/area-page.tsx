@@ -10,48 +10,67 @@ interface AreaPageProps {
   sections?: { title: string; description: string }[];
 }
 
+const NAVY = "#14405C";
+
 export function AreaPage({ icon: Icon, title, subtitle, description, sections = [] }: AreaPageProps) {
   return (
-    <div className="mx-auto max-w-7xl px-6 py-8 md:py-10">
-      <div className="flex items-start gap-4">
-        <div className="grid h-14 w-14 place-items-center rounded-xl gradient-accent text-primary-foreground shadow-elegant">
-          <Icon className="h-6 w-6" />
+    <div className="min-h-screen p-6 md:p-8 lg:p-10" style={{ background: NAVY }}>
+      <div className="mx-auto max-w-7xl">
+        <div className="flex items-start gap-4">
+          <div
+            className="grid h-14 w-14 place-items-center rounded-xl text-white shadow-lg"
+            style={{ background: "#00BAF2" }}
+          >
+            <Icon className="h-6 w-6" />
+          </div>
+          <div>
+            <Badge
+              variant="outline"
+              className="border-white/30 bg-white/10 text-white hover:bg-white/15"
+            >
+              Área
+            </Badge>
+            <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-white md:text-4xl">
+              {title}
+            </h1>
+            <p className="mt-1 max-w-2xl text-white/70">{subtitle}</p>
+          </div>
         </div>
-        <div>
-          <Badge variant="outline" className="border-primary/20 bg-primary/5 text-primary">
-            Área
-          </Badge>
-          <h1 className="mt-2 font-display text-3xl font-bold tracking-tight md:text-4xl">{title}</h1>
-          <p className="mt-1 max-w-2xl text-muted-foreground">{subtitle}</p>
+
+        <Card className="mt-8 border-gray-200 bg-white shadow-sm">
+          <CardHeader>
+            <CardTitle className="font-display text-lg" style={{ color: NAVY }}>
+              Sobre esta área
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm leading-relaxed text-gray-600">{description}</p>
+          </CardContent>
+        </Card>
+
+        {sections.length > 0 && (
+          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {sections.map((s) => (
+              <Card
+                key={s.title}
+                className="border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md"
+              >
+                <CardHeader>
+                  <CardTitle className="font-display text-base" style={{ color: NAVY }}>
+                    {s.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-600">{s.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-10 rounded-xl border border-dashed border-white/25 bg-white/5 p-6 text-center text-sm text-white/70">
+          Esta área está pronta para receber conteúdo, integrações e ferramentas específicas do time.
         </div>
-      </div>
-
-      <Card className="mt-8 shadow-card">
-        <CardHeader>
-          <CardTitle className="font-display text-lg">Sobre esta área</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>
-        </CardContent>
-      </Card>
-
-      {sections.length > 0 && (
-        <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {sections.map((s) => (
-            <Card key={s.title} className="shadow-card transition-shadow hover:shadow-elegant">
-              <CardHeader>
-                <CardTitle className="font-display text-base">{s.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">{s.description}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      <div className="mt-10 rounded-xl border border-dashed border-border bg-muted/30 p-6 text-center text-sm text-muted-foreground">
-        Esta área está pronta para receber conteúdo, integrações e ferramentas específicas do time.
       </div>
     </div>
   );
