@@ -1,7 +1,8 @@
 import type { ComponentType } from 'react'
 import { template as testeTemplate } from './teste'
-import { template as receitaDiariaTemplate } from './receita-diaria'
-import { template as resumoExecutivoTemplate } from './resumo-executivo-semanal'
+import { template as receitaTemplate } from './receita-diaria'
+import { template as executivoTemplate } from './resumo-executivo-semanal'
+import { template as fechamentoTemplate } from './fechamento'
 
 export interface TemplateEntry {
   component: ComponentType<any>
@@ -14,6 +15,10 @@ export interface TemplateEntry {
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   teste: testeTemplate,
-  'receita-diaria': receitaDiariaTemplate,
-  'resumo-executivo-semanal': resumoExecutivoTemplate,
+  'receita-lavoro': receitaTemplate,
+  'executivo-lavoro': executivoTemplate,
+  'fechamento-lavoro': fechamentoTemplate,
+  // Aliases legados (compat)
+  'receita-diaria': receitaTemplate,
+  'resumo-executivo-semanal': executivoTemplate,
 }
