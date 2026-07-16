@@ -115,7 +115,7 @@ function AuthenticatedShell() {
           </header>
           <main className="relative flex-1 bg-background">
             <div
-              className="pointer-events-none absolute inset-0 bg-cover bg-center opacity-[0.06]"
+              className="pointer-events-none absolute inset-y-0 right-0 w-[45%] bg-contain bg-right bg-no-repeat opacity-[0.12]"
               style={{ backgroundImage: `url(${fundoHub.url})` }}
               aria-hidden="true"
             />
