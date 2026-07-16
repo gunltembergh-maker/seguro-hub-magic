@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2, Lock } from "lucide-react";
 import { toast } from "sonner";
 
@@ -35,6 +35,15 @@ function AuthPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
+  const [authMessage, setAuthMessage] = useState<string | null>(null);
+  const pollRef = useRef<number | null>(null);
+
+  const clearAuthPoll = () => {
+    if (pollRef.current) {
+      window.clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  };
 
   useEffect(() => {
     let done = false;
@@ -76,23 +85,66 @@ function AuthPage() {
 
     return () => {
       mounted = false;
+      clearAuthPoll();
       sub.subscription.unsubscribe();
     };
   }, [navigate]);
 
   const handleMicrosoftLogin = async () => {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
+    setAuthMessage(null);
+    clearAuthPoll();
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "azure",
       options: {
         scopes: "email openid profile",
         redirectTo: `${window.location.origin}/auth`,
+        skipBrowserRedirect: true,
       },
     });
-    if (error) {
+
+    if (error || !data.url) {
       toast.error("Não foi possível iniciar o login", { description: error.message });
       setLoading(false);
+      return;
     }
+
+    const popup = window.open(
+      data.url,
+      "lavoro-microsoft-sso",
+      "width=520,height=720,left=120,top=80,noopener,noreferrer",
+    );
+
+    if (!popup) {
+      window.location.assign(data.url);
+      return;
+    }
+
+    setAuthMessage("Conclua o login na janela da Microsoft que foi aberta.");
+    const startedAt = Date.now();
+    pollRef.current = window.setInterval(async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData.session) {
+        clearAuthPoll();
+        popup.close();
+        navigate({ to: "/hub", replace: true });
+        return;
+      }
+
+      if (popup.closed) {
+        clearAuthPoll();
+        setLoading(false);
+        setAuthMessage("A janela de login foi fechada antes da conclusão.");
+        return;
+      }
+
+      if (Date.now() - startedAt > 180_000) {
+        clearAuthPoll();
+        setLoading(false);
+        setAuthMessage("Tempo esgotado. Clique novamente para tentar entrar.");
+      }
+    }, 1000);
   };
 
   const handleEmailCheck = (e: React.FormEvent) => {
@@ -144,7 +196,7 @@ function AuthPage() {
           </button>
 
           <p className="mt-3 text-center text-xs text-muted-foreground">
-            Para colaboradores da Lavoro Seguros
+            {authMessage ?? "Para colaboradores da Lavoro Seguros"}
           </p>
 
           <div className="my-5 flex items-center gap-3">
