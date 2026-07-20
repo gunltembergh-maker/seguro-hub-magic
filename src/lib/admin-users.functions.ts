@@ -115,8 +115,8 @@ export const adminSendAuthEmail = createServerFn({ method: "POST" })
         html,
         text,
         purpose: "transactional",
-        label: `auth:${data.tipo}`,
-        idempotency_key: `admin-auth-${data.tipo}-${data.email}-${crypto.randomUUID()}`,
+        label: `auth:${effectiveTipo}`,
+        idempotency_key: `admin-auth-${effectiveTipo}-${data.email}-${crypto.randomUUID()}`,
       },
       { apiKey, sendUrl: process.env.LOVABLE_SEND_URL },
     );
