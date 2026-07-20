@@ -1,16 +1,10 @@
 import * as React from 'react'
-
 import {
-  Body,
-  Button,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Link,
-  Preview,
-  Text,
+  Body, Button, Container, Head, Heading, Html, Link, Preview, Section, Text,
 } from '@react-email/components'
+import {
+  main, container, header, brand, brandSub, card, h1, text, link, button, footer,
+} from './_lavoro-shared'
 
 interface InviteEmailProps {
   siteName: string
@@ -18,31 +12,33 @@ interface InviteEmailProps {
   confirmationUrl: string
 }
 
-export const InviteEmail = ({
-  siteName,
-  siteUrl,
-  confirmationUrl,
-}: InviteEmailProps) => (
-  <Html lang="en" dir="ltr">
+export const InviteEmail = ({ siteName, siteUrl, confirmationUrl }: InviteEmailProps) => (
+  <Html lang="pt-BR" dir="ltr">
     <Head />
-    <Preview>You've been invited to join {siteName}</Preview>
+    <Preview>Você foi convidado para o {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>You've been invited</Heading>
-        <Text style={text}>
-          You've been invited to join{' '}
-          <Link href={siteUrl} style={link}>
-            <strong>{siteName}</strong>
-          </Link>
-          . Click the button below to accept the invitation and create your
-          account.
-        </Text>
-        <Button style={button} href={confirmationUrl}>
-          Accept Invitation
-        </Button>
+        <Section style={header}>
+          <Heading style={brand}>Lavoro Seguros</Heading>
+          <Text style={brandSub}>Hub Interno</Text>
+        </Section>
+        <Section style={card}>
+          <Heading as="h2" style={h1}>Você foi convidado 👋</Heading>
+          <Text style={text}>
+            Você recebeu um convite para acessar o{' '}
+            <Link href={siteUrl} style={link}><strong>{siteName}</strong></Link>.
+            Clique no botão abaixo para ativar sua conta e definir sua senha.
+          </Text>
+          <div style={{ textAlign: 'center', margin: '24px 0' }}>
+            <Button style={button} href={confirmationUrl}>Aceitar convite</Button>
+          </div>
+          <Text style={text}>
+            Este link é pessoal e expira em breve. Se você não estava esperando este
+            convite, pode ignorar esta mensagem com segurança.
+          </Text>
+        </Section>
         <Text style={footer}>
-          If you weren't expecting this invitation, you can safely ignore this
-          email.
+          © {new Date().getFullYear()} Lavoro Seguros — Hub Interno
         </Text>
       </Container>
     </Body>
@@ -50,28 +46,3 @@ export const InviteEmail = ({
 )
 
 export default InviteEmail
-
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 20px',
-}
-const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
-}
-const link = { color: 'inherit', textDecoration: 'underline' }
-const button = {
-  backgroundColor: '#000000',
-  color: '#ffffff',
-  fontSize: '14px',
-  borderRadius: '8px',
-  padding: '12px 20px',
-  textDecoration: 'none',
-}
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }

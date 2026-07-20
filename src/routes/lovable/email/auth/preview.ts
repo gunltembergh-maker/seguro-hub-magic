@@ -18,7 +18,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = "seguro-hub-magic"
+const SITE_NAME = "Hub Lavoro Seguros"
 const ROOT_DOMAIN = "hub.lavoroseguros.com.br"
 
 // Sample data for preview mode ONLY (not used in actual email sending).
