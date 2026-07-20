@@ -37,6 +37,7 @@ import { Route as AuthenticatedAdminComunicadosRouteImport } from './routes/_aut
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as ApiPublicHooksDispatchScheduledNewslettersRouteImport } from './routes/api/public/hooks/dispatch-scheduled-newsletters'
 import { Route as AuthenticatedAdminEmailsSchedulesRouteImport } from './routes/_authenticated/admin/emails_.schedules'
 import { Route as AuthenticatedAdminEmailsLogRouteImport } from './routes/_authenticated/admin/emails_.log'
 
@@ -192,6 +193,12 @@ const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   path: '/lovable/email/auth/preview',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksDispatchScheduledNewslettersRoute =
+  ApiPublicHooksDispatchScheduledNewslettersRouteImport.update({
+    id: '/api/public/hooks/dispatch-scheduled-newsletters',
+    path: '/api/public/hooks/dispatch-scheduled-newsletters',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAdminEmailsSchedulesRoute =
   AuthenticatedAdminEmailsSchedulesRouteImport.update({
     id: '/emails_/schedules',
@@ -232,6 +239,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/report-fechamento': typeof AuthenticatedDashboardReportFechamentoRoute
   '/admin/emails/log': typeof AuthenticatedAdminEmailsLogRoute
   '/admin/emails/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
+  '/api/public/hooks/dispatch-scheduled-newsletters': typeof ApiPublicHooksDispatchScheduledNewslettersRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -263,6 +271,7 @@ export interface FileRoutesByTo {
   '/dashboard/report-fechamento': typeof AuthenticatedDashboardReportFechamentoRoute
   '/admin/emails/log': typeof AuthenticatedAdminEmailsLogRoute
   '/admin/emails/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
+  '/api/public/hooks/dispatch-scheduled-newsletters': typeof ApiPublicHooksDispatchScheduledNewslettersRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -296,6 +305,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/report-fechamento': typeof AuthenticatedDashboardReportFechamentoRoute
   '/_authenticated/admin/emails_/log': typeof AuthenticatedAdminEmailsLogRoute
   '/_authenticated/admin/emails_/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
+  '/api/public/hooks/dispatch-scheduled-newsletters': typeof ApiPublicHooksDispatchScheduledNewslettersRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -329,6 +339,7 @@ export interface FileRouteTypes {
     | '/dashboard/report-fechamento'
     | '/admin/emails/log'
     | '/admin/emails/schedules'
+    | '/api/public/hooks/dispatch-scheduled-newsletters'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
@@ -360,6 +371,7 @@ export interface FileRouteTypes {
     | '/dashboard/report-fechamento'
     | '/admin/emails/log'
     | '/admin/emails/schedules'
+    | '/api/public/hooks/dispatch-scheduled-newsletters'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
@@ -392,6 +404,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/report-fechamento'
     | '/_authenticated/admin/emails_/log'
     | '/_authenticated/admin/emails_/schedules'
+    | '/api/public/hooks/dispatch-scheduled-newsletters'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
@@ -401,6 +414,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
+  ApiPublicHooksDispatchScheduledNewslettersRoute: typeof ApiPublicHooksDispatchScheduledNewslettersRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
@@ -604,6 +618,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/dispatch-scheduled-newsletters': {
+      id: '/api/public/hooks/dispatch-scheduled-newsletters'
+      path: '/api/public/hooks/dispatch-scheduled-newsletters'
+      fullPath: '/api/public/hooks/dispatch-scheduled-newsletters'
+      preLoaderRoute: typeof ApiPublicHooksDispatchScheduledNewslettersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin/emails_/schedules': {
       id: '/_authenticated/admin/emails_/schedules'
       path: '/emails/schedules'
@@ -706,6 +727,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
+  ApiPublicHooksDispatchScheduledNewslettersRoute:
+    ApiPublicHooksDispatchScheduledNewslettersRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
