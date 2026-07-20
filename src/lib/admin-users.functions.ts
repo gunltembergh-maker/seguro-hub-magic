@@ -46,19 +46,30 @@ export const adminSendAuthEmail = createServerFn({ method: "POST" })
       data.redirect_to ??
       `${siteUrl}/auth`;
 
-    const { data: linkData, error } = await supabaseAdmin.auth.admin.generateLink({
-      type: data.tipo,
+    let effectiveTipo: "invite" | "magiclink" | "recovery" = data.tipo;
+    let linkResp = await supabaseAdmin.auth.admin.generateLink({
+      type: effectiveTipo,
       email: data.email,
       options: { redirectTo },
     });
 
-    if (error) {
-      const msg = (error.message || "").toLowerCase();
-      if (data.tipo === "invite" && (msg.includes("already been registered") || msg.includes("already registered") || msg.includes("already exists"))) {
-        throw new Error('Este e-mail já está cadastrado. Use "Magic link" ou "Resetar senha" para reenviar o acesso.');
+    // Fallback: se o convite falhar por usuário já cadastrado, envia magic link automaticamente
+    if (linkResp.error && effectiveTipo === "invite") {
+      const msg = (linkResp.error.message || "").toLowerCase();
+      if (msg.includes("already been registered") || msg.includes("already registered") || msg.includes("already exists")) {
+        effectiveTipo = "magiclink";
+        linkResp = await supabaseAdmin.auth.admin.generateLink({
+          type: "magiclink",
+          email: data.email,
+          options: { redirectTo },
+        });
       }
-      console.error(`[adminSendAuthEmail] ${data.tipo} link failed`, error);
-      throw new Error(error.message || `Falha ao gerar link de ${data.tipo}`);
+    }
+
+    const { data: linkData, error } = linkResp;
+    if (error) {
+      console.error(`[adminSendAuthEmail] ${effectiveTipo} link failed`, error);
+      throw new Error(error.message || `Falha ao gerar link de ${effectiveTipo}`);
     }
 
     const confirmationUrl = linkData?.properties?.action_link;
