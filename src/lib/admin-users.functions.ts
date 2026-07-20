@@ -25,44 +25,90 @@ export const adminSendAuthEmail = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { lavoroAdmin: supabaseAdmin } = await import("@/integrations/supabase/lavoro-admin.server");
+    const { render } = await import("@react-email/render");
+    const { sendLovableEmail } = await import("@lovable.dev/email-js");
+    const React = await import("react");
+    const { InviteEmail } = await import("@/lib/email-templates/invite");
+    const { MagicLinkEmail } = await import("@/lib/email-templates/magic-link");
+    const { RecoveryEmail } = await import("@/lib/email-templates/recovery");
+
+    const apiKey = process.env.LOVABLE_API_KEY;
+    if (!apiKey) {
+      throw new Error("LOVABLE_API_KEY não configurada para envio de e-mail.");
+    }
+
+    const siteUrl = (process.env.PUBLIC_SITE_URL ?? "https://hub.lavoroseguros.com.br").replace(/\/$/, "");
+    const siteName = "Hub Lavoro Seguros";
+    const senderDomain = "notify.hub.lavoroseguros.com.br";
+    const from = `${siteName} <noreply@${senderDomain}>`;
 
     const redirectTo =
       data.redirect_to ??
-      (process.env.PUBLIC_SITE_URL ? `${process.env.PUBLIC_SITE_URL}/auth` : undefined);
+      `${siteUrl}/auth`;
 
-    if (data.tipo === "invite") {
-      const { error } = await supabaseAdmin.auth.admin.inviteUserByEmail(data.email, {
-        redirectTo,
-      });
-      if (error) {
-        const msg = (error.message || "").toLowerCase();
-        if (msg.includes("already been registered") || msg.includes("already registered") || msg.includes("already exists")) {
-          throw new Error('Este e-mail já está cadastrado. Use "Magic link" ou "Resetar senha" para reenviar o acesso.');
-        }
-        throw new Error(error.message);
+    const { data: linkData, error } = await supabaseAdmin.auth.admin.generateLink({
+      type: data.tipo,
+      email: data.email,
+      options: { redirectTo },
+    });
+
+    if (error) {
+      const msg = (error.message || "").toLowerCase();
+      if (data.tipo === "invite" && (msg.includes("already been registered") || msg.includes("already registered") || msg.includes("already exists"))) {
+        throw new Error('Este e-mail já está cadastrado. Use "Magic link" ou "Resetar senha" para reenviar o acesso.');
       }
-    } else if (data.tipo === "magiclink") {
-      // generateLink com admin API dispara o Send Email Hook do Supabase
-      const { error } = await supabaseAdmin.auth.admin.generateLink({
-        type: "magiclink",
-        email: data.email,
-        options: { redirectTo },
-      });
-      if (error) {
-        console.error("[adminSendAuthEmail] magiclink failed", error);
-        throw new Error(error.message || JSON.stringify(error) || "Falha ao enviar magic link");
-      }
-    } else if (data.tipo === "recovery") {
-      const { error } = await supabaseAdmin.auth.admin.generateLink({
-        type: "recovery",
-        email: data.email,
-        options: { redirectTo },
-      });
-      if (error) {
-        console.error("[adminSendAuthEmail] recovery failed", error);
-        throw new Error(error.message || JSON.stringify(error) || "Falha ao enviar recuperação");
-      }
+      console.error(`[adminSendAuthEmail] ${data.tipo} link failed`, error);
+      throw new Error(error.message || `Falha ao gerar link de ${data.tipo}`);
     }
+
+    const confirmationUrl = linkData?.properties?.action_link;
+    if (!confirmationUrl) {
+      console.error("[adminSendAuthEmail] generateLink returned no action_link", linkData);
+      throw new Error("O Supabase não retornou o link de autenticação.");
+    }
+
+    const emailConfig = {
+      invite: {
+        subject: "Você foi convidado — Hub Lavoro Seguros",
+        element: React.createElement(InviteEmail, {
+          siteName,
+          siteUrl,
+          confirmationUrl,
+        }),
+      },
+      magiclink: {
+        subject: "Seu link de acesso — Hub Lavoro Seguros",
+        element: React.createElement(MagicLinkEmail, {
+          siteName,
+          confirmationUrl,
+        }),
+      },
+      recovery: {
+        subject: "Redefinição de senha — Hub Lavoro Seguros",
+        element: React.createElement(RecoveryEmail, {
+          siteName,
+          confirmationUrl,
+        }),
+      },
+    }[data.tipo];
+
+    const html = await render(emailConfig.element);
+    const text = await render(emailConfig.element, { plainText: true });
+
+    await sendLovableEmail(
+      {
+        to: data.email,
+        from,
+        sender_domain: senderDomain,
+        subject: emailConfig.subject,
+        html,
+        text,
+        purpose: "transactional",
+        label: `auth:${data.tipo}`,
+        idempotency_key: `admin-auth-${data.tipo}-${data.email}-${crypto.randomUUID()}`,
+      },
+      { apiKey, sendUrl: process.env.LOVABLE_SEND_URL },
+    );
 
     if (data.user_id) {
       await context.supabase.rpc("rpc_admin_log_convite" as never, {
