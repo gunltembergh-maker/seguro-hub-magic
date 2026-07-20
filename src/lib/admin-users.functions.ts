@@ -24,7 +24,7 @@ export const adminSendAuthEmail = createServerFn({ method: "POST" })
   .inputValidator((i) => SendEmailInput.parse(i))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { lavoroAdmin: supabaseAdmin } = await import("@/integrations/supabase/lavoro-admin.server");
 
     const redirectTo =
       data.redirect_to ??
