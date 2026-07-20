@@ -46,18 +46,26 @@ export const adminSendAuthEmail = createServerFn({ method: "POST" })
       data.redirect_to ??
       `${siteUrl}/auth`;
 
-    let effectiveTipo: "invite" | "magiclink" | "recovery" = data.tipo;
+    // effectiveTipo controla apenas qual template/assunto será enviado.
+    // Mantemos o tipo escolhido pelo admin (ex.: "invite") mesmo quando o
+    // usuário já existe, para permitir reenvio e validação do layout.
+    const effectiveTipo: "invite" | "magiclink" | "recovery" = data.tipo;
+
     let linkResp = await supabaseAdmin.auth.admin.generateLink({
-      type: effectiveTipo,
+      type: data.tipo,
       email: data.email,
       options: { redirectTo },
     });
 
-    // Fallback: se o convite falhar por usuário já cadastrado, envia magic link automaticamente
-    if (linkResp.error && effectiveTipo === "invite") {
+    // Fallback: se "invite" falhar porque o e-mail já está cadastrado,
+    // gera um magiclink válido e ainda assim envia o template de convite.
+    if (linkResp.error && data.tipo === "invite") {
       const msg = (linkResp.error.message || "").toLowerCase();
-      if (msg.includes("already been registered") || msg.includes("already registered") || msg.includes("already exists")) {
-        effectiveTipo = "magiclink";
+      if (
+        msg.includes("already been registered") ||
+        msg.includes("already registered") ||
+        msg.includes("already exists")
+      ) {
         linkResp = await supabaseAdmin.auth.admin.generateLink({
           type: "magiclink",
           email: data.email,
