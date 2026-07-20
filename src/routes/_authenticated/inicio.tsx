@@ -7,6 +7,7 @@ import { AcessoRapidoCard } from "@/components/hub/acesso-rapido-card";
 import { UltimasAtualizacoesCard } from "@/components/hub/ultimas-atualizacoes-card";
 import { BlocoLavoroKpis } from "@/components/hub/bloco-lavoro-kpis";
 import { MuralNoticias } from "@/components/inicio/mural-noticias";
+import { WelcomeModal } from "@/components/welcome-modal";
 
 export const Route = createFileRoute("/_authenticated/inicio")({
   component: InicioHome,
