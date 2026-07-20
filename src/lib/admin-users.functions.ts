@@ -34,7 +34,13 @@ export const adminSendAuthEmail = createServerFn({ method: "POST" })
       const { error } = await supabaseAdmin.auth.admin.inviteUserByEmail(data.email, {
         redirectTo,
       });
-      if (error) throw new Error(error.message);
+      if (error) {
+        const msg = (error.message || "").toLowerCase();
+        if (msg.includes("already been registered") || msg.includes("already registered") || msg.includes("already exists")) {
+          throw new Error('Este e-mail já está cadastrado. Use "Magic link" ou "Resetar senha" para reenviar o acesso.');
+        }
+        throw new Error(error.message);
+      }
     } else if (data.tipo === "magiclink") {
       const { error } = await supabaseAdmin.auth.admin.generateLink({
         type: "magiclink",
