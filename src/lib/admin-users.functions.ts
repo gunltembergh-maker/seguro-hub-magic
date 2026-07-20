@@ -39,7 +39,7 @@ export const adminSendAuthEmail = createServerFn({ method: "POST" })
 
     const siteUrl = (process.env.PUBLIC_SITE_URL ?? "https://hub.lavoroseguros.com.br").replace(/\/$/, "");
     const siteName = "Hub Lavoro Seguros";
-    const senderDomain = "hub.lavoroseguros.com.br";
+    const senderDomain = "notify.hub.lavoroseguros.com.br";
     const from = `${siteName} <noreply@${senderDomain}>`;
 
     const redirectTo =
