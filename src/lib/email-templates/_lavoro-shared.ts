@@ -27,7 +27,7 @@ export const header = {
 export const logoImg = {
   display: "block",
   margin: "0 auto",
-  height: "44px",
+  height: "28px",
   width: "auto",
 };
 // Compat: templates antigos ainda importam `brand` / `brandSub`.
