@@ -20,7 +20,7 @@ export const container = {
 };
 export const header = {
   backgroundColor: NAVY,
-  padding: "32px 24px 24px",
+  padding: "20px 24px 16px",
   borderRadius: "10px 10px 0 0",
   textAlign: "center" as const,
 };
