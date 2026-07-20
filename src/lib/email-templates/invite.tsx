@@ -31,30 +31,34 @@ export const InviteEmail = ({ confirmationUrl, userName, userEmail }: InviteEmai
           <Section style={accentBar}>&nbsp;</Section>
 
           <Section style={card}>
-            <Text style={eyebrow}>Convite de acesso</Text>
-            <Heading as="h1" style={h1}>
-              {titleName}, seu acesso ao Hub Lavoro Seguros está pronto 🎯
+            <Heading as="h1" style={{ ...h1, margin: '0 0 16px' }}>
+              Olá, {titleName}! <span style={{ fontSize: '22px' }}>👋</span>
             </Heading>
 
             <Text style={text}>
-              Você foi convidado para acessar o <strong>Hub Lavoro Seguros</strong>,
-              a plataforma interna corporativa da Lavoro.
+              Você foi convidado para acessar o <strong>Hub Lavoro Seguros</strong> — a
+              plataforma interna corporativa da Lavoro.
             </Text>
 
             <Text style={text}>
-              O acesso é <strong>exclusivo via SSO Microsoft</strong>, com o seu
-              e-mail corporativo <strong>@lavoroseguros.com.br</strong>.
+              Aqui você acompanha, em um só lugar, indicadores de receita, relatórios
+              executivos e as principais informações da operação. Tudo feito para
+              apoiar o seu dia a dia.
             </Text>
 
-            <div style={buttonWrap}>
+            <Text style={{ ...eyebrow, textAlign: 'center' as const, margin: '26px 0 10px' }}>
+              🔒 Acesso exclusivo
+            </Text>
+
+            <div style={{ ...buttonWrap, margin: '0 0 14px' }}>
               <Button style={button} href={confirmationUrl}>
-                Aceitar convite e entrar
+                Entrar com Microsoft (SSO)
               </Button>
             </div>
 
             <Text style={ssoLine}>
-              Ao clicar, você será direcionado para autenticar com{' '}
-              <span style={ssoStrong}>Entrar com Microsoft</span>.
+              Autenticação com seu e-mail corporativo{' '}
+              <span style={ssoStrong}>@lavoroseguros.com.br</span>.
             </Text>
 
             <Text style={expiryNote}>
@@ -63,8 +67,8 @@ export const InviteEmail = ({ confirmationUrl, userName, userEmail }: InviteEmai
 
             <Text style={infoBox}>
               ✓ Seu perfil já está <strong>pré-aprovado</strong> pela{' '}
-              <strong>Equipe de Dados e IA</strong>. Basta autenticar com sua
-              conta Microsoft Lavoro Seguros.
+              <strong>Equipe de Dados e IA</strong>. Basta autenticar com sua conta
+              Microsoft Lavoro Seguros.
             </Text>
 
             <div style={divider}>&nbsp;</div>
