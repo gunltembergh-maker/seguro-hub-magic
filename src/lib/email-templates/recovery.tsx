@@ -1,10 +1,9 @@
 import * as React from 'react'
 import {
   Body, Button, Container, Head, Heading, Html, Img, Preview, Section, Text,
-  Row, Column,
 } from '@react-email/components'
 import {
-  main, container, header, logoImg, headerTag, accentBar, card, eyebrow, h1, text,
+  main, container, header, logoImg, accentBar, card, eyebrow, h1, text,
   button, buttonWrap, infoBox, ssoLine, ssoStrong, expiryNote, divider, footer, footerStrong,
   LOGO_URL, displayName,
 } from './_lavoro-shared'
@@ -18,28 +17,22 @@ interface RecoveryEmailProps {
 
 export const RecoveryEmail = ({ confirmationUrl, userName, userEmail }: RecoveryEmailProps) => {
   const name = displayName(userName, userEmail)
+  const titleName = name || 'Boas-vindas'
   return (
     <Html lang="pt-BR" dir="ltr">
       <Head />
-      <Preview>Redefinição de senha — Hub Lavoro Seguros</Preview>
+      <Preview>{titleName}, redefinição de senha do Hub Lavoro Seguros</Preview>
       <Body style={main}>
         <Container style={container}>
           <Section style={header}>
-            <Row style={{ width: '100%' }}>
-              <Column>
-                <Img src={LOGO_URL} alt="Lavoro Seguros" style={logoImg} />
-              </Column>
-              <Column>
-                <Text style={headerTag}>Hub Lavoro Seguros</Text>
-              </Column>
-            </Row>
+            <Img src={LOGO_URL} alt="Lavoro Seguros" style={logoImg} />
           </Section>
           <Section style={accentBar}>&nbsp;</Section>
 
           <Section style={card}>
             <Text style={eyebrow}>Redefinição de senha</Text>
             <Heading as="h1" style={h1}>
-              {name ? `Olá, ${name} 👋` : 'Olá 👋'}
+              {titleName}, redefinição de senha do Hub Lavoro Seguros 🔒
             </Heading>
 
             <Text style={text}>
