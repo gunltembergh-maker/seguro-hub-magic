@@ -32,6 +32,7 @@ function InicioHome() {
           "linear-gradient(135deg, #14405C 0%, #1B5680 55%, #2E7BB0 100%)",
       }}
     >
+      <WelcomeModal />
       <div className="relative p-6 md:p-8 lg:p-10">
         <div className="mx-auto max-w-[1400px] space-y-6">
           <HeaderSaudacao
