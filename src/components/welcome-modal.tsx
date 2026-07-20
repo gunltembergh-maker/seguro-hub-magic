@@ -106,6 +106,17 @@ export function WelcomeModal() {
             Explore, questione, decida. O Hub foi feito para caminhar com você
             — e evoluir junto.
           </p>
+          <div
+            className="mt-4 flex items-start gap-2.5 rounded-lg px-3.5 py-3 text-sm"
+            style={{ background: "rgba(0,186,242,0.08)", color: "#14405C" }}
+          >
+            <Sparkles className="mt-0.5 h-4 w-4 shrink-0" style={{ color: "#00BAF2" }} />
+            <span>
+              <strong>A cada mês, uma novidade será lançada.</strong> Fique por
+              dentro — o Hub está sempre evoluindo com você.
+            </span>
+          </div>
+
         </div>
 
         {/* Footer */}
