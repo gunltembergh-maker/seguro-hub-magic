@@ -1,157 +1,170 @@
 // Estilos compartilhados dos e-mails de auth do Hub Lavoro Seguros
+// Visual moderno, executivo e minimalista.
 export const NAVY = "#14405C";
+export const NAVY_DEEP = "#0E2E43";
 export const CYAN = "#00BAF2";
 export const STEEL = "#8AAFC9";
-export const LIGHT_BG = "#DDECF3";
+export const LIGHT_BG = "#EEF5FA";
+export const BORDER = "#E5EAF0";
+export const TEXT = "#1F2937";
+export const MUTED = "#6B7280";
 
-// Logo Lavoro branca (com nome) - CDN Lovable, servida no domínio do Hub.
 export const LOGO_URL =
   "https://hub.lavoroseguros.com.br/__l5e/assets-v1/7869490b-ef06-42fc-a753-2a6967781570/logo-lavoro-branca.png";
 
 export const main = {
-  backgroundColor: "#ffffff",
+  backgroundColor: "#F4F6F9",
   fontFamily:
-    "-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif",
-};
-export const container = {
-  maxWidth: "600px",
-  margin: "0 auto",
-  padding: "32px 20px",
-};
-export const header = {
-  backgroundColor: NAVY,
-  padding: "20px 24px 16px",
-  borderRadius: "10px 10px 0 0",
-  textAlign: "center" as const,
-};
-export const logoImg = {
-  display: "block",
-  margin: "0 auto",
-  height: "28px",
-  width: "auto",
-};
-// Compat: templates antigos ainda importam `brand` / `brandSub`.
-export const brand = {
-  color: "#ffffff",
-  fontSize: "20px",
-  fontWeight: 700 as const,
-  letterSpacing: "0.5px",
+    "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
   margin: 0,
+  padding: "32px 0",
 };
-export const brandSub = {
-  color: CYAN,
-  fontSize: "12px",
-  letterSpacing: "1.5px",
+
+export const container = {
+  maxWidth: "560px",
+  margin: "0 auto",
+  backgroundColor: "#ffffff",
+  borderRadius: "14px",
+  overflow: "hidden",
+  boxShadow: "0 8px 30px rgba(14, 46, 67, 0.08)",
+  border: `1px solid ${BORDER}`,
+};
+
+// Header navy sólido, compacto, com logo pequena alinhada à esquerda
+// e etiqueta discreta "HUB LAVORO SEGUROS" à direita.
+export const header = {
+  background: `linear-gradient(135deg, ${NAVY_DEEP} 0%, ${NAVY} 100%)`,
+  padding: "22px 32px",
+};
+
+export const headerRow = {
+  width: "100%",
+} as const;
+
+export const logoImg = {
+  height: "22px",
+  width: "auto",
+  display: "block",
+};
+
+export const headerTag = {
+  color: "rgba(255,255,255,0.72)",
+  fontSize: "10px",
+  fontWeight: 700 as const,
+  letterSpacing: "2.2px",
   textTransform: "uppercase" as const,
-  margin: "6px 0 0",
+  margin: 0,
+  textAlign: "right" as const,
 };
-export const subHeader = {
-  backgroundColor: LIGHT_BG,
-  padding: "14px 24px",
-  textAlign: "center" as const,
-  borderLeft: "1px solid #e5e7eb",
-  borderRight: "1px solid #e5e7eb",
+
+// Faixa cyan fininha, apenas como fio decorativo entre header e conteúdo
+export const accentBar = {
+  height: "3px",
+  background: `linear-gradient(90deg, ${CYAN} 0%, ${STEEL} 100%)`,
+  lineHeight: "3px",
+  fontSize: 0,
 };
-export const subHeaderText = {
-  color: NAVY,
-  fontSize: "13px",
+
+export const card = {
+  padding: "36px 32px 28px",
+  backgroundColor: "#ffffff",
+};
+
+export const eyebrow = {
+  color: CYAN,
+  fontSize: "11px",
   fontWeight: 700 as const,
   letterSpacing: "2px",
   textTransform: "uppercase" as const,
-  margin: 0,
+  margin: "0 0 12px",
 };
-export const card = {
-  border: "1px solid #e5e7eb",
-  borderTop: "none",
-  borderRadius: "0 0 10px 10px",
-  padding: "28px 24px",
-  backgroundColor: "#ffffff",
-};
+
 export const h1 = {
-  fontSize: "20px",
+  fontSize: "22px",
+  lineHeight: "30px",
   fontWeight: 700 as const,
-  color: NAVY,
-  margin: "0 0 16px",
+  color: NAVY_DEEP,
+  margin: "0 0 18px",
+  letterSpacing: "-0.2px",
 };
+
 export const text = {
-  fontSize: "14px",
-  color: "#374151",
-  lineHeight: "22px",
-  margin: "0 0 16px",
+  fontSize: "15px",
+  color: TEXT,
+  lineHeight: "24px",
+  margin: "0 0 14px",
 };
+
 export const link = { color: NAVY, textDecoration: "underline" };
+
+// CTA principal — moderno, alto contraste
 export const button = {
   backgroundColor: NAVY,
   color: "#ffffff",
-  fontSize: "14px",
+  fontSize: "15px",
   fontWeight: 600 as const,
-  borderRadius: "8px",
-  padding: "12px 22px",
+  borderRadius: "10px",
+  padding: "14px 28px",
   textDecoration: "none",
   display: "inline-block",
+  boxShadow: "0 4px 12px rgba(20, 64, 92, 0.25)",
 };
-// Caixa "Entrar com Microsoft"
-export const ssoBox = {
-  border: `1px solid ${STEEL}`,
-  backgroundColor: "#f8fbfd",
-  borderRadius: "8px",
-  padding: "16px 18px",
-  margin: "8px 0 20px",
+
+export const buttonWrap = {
   textAlign: "center" as const,
+  margin: "28px 0 12px",
 };
-export const ssoTitle = {
-  fontSize: "13px",
-  fontWeight: 700 as const,
-  color: NAVY,
-  margin: "0 0 10px",
-  letterSpacing: "0.5px",
-};
-export const ssoBadge = {
-  display: "inline-block",
-  padding: "10px 16px",
-  border: "1px solid #d1d5db",
-  borderRadius: "6px",
-  backgroundColor: "#ffffff",
-  color: "#111827",
-  fontSize: "13px",
-  fontWeight: 600 as const,
-};
+
+// Bloco informativo (perfil pré-aprovado) — sem borda-esquerda pesada
 export const infoBox = {
   backgroundColor: LIGHT_BG,
-  borderLeft: `4px solid ${CYAN}`,
-  padding: "12px 16px",
-  borderRadius: "4px",
-  margin: "0 0 20px",
+  padding: "14px 18px",
+  borderRadius: "10px",
+  margin: "20px 0 8px",
   fontSize: "13px",
-  color: NAVY,
+  color: NAVY_DEEP,
   lineHeight: "20px",
 };
+
+// Linha SSO inline, sem "caixa dentro de caixa"
+export const ssoLine = {
+  fontSize: "13px",
+  color: MUTED,
+  margin: "0 0 4px",
+  textAlign: "center" as const,
+};
+
+export const ssoStrong = {
+  color: NAVY_DEEP,
+  fontWeight: 700 as const,
+};
+
 export const expiryNote = {
   fontSize: "12px",
-  color: "#6b7280",
+  color: MUTED,
   textAlign: "center" as const,
-  margin: "12px 0 0",
-  fontStyle: "italic" as const,
+  margin: "10px 0 0",
 };
+
+export const divider = {
+  borderTop: `1px solid ${BORDER}`,
+  margin: "28px 0 20px",
+  height: 0,
+  lineHeight: 0,
+  fontSize: 0,
+};
+
 export const footer = {
+  padding: "0 32px 28px",
   fontSize: "11px",
-  color: "#9ca3af",
+  color: MUTED,
   textAlign: "center" as const,
-  margin: "20px 0 0",
   lineHeight: "18px",
 };
 
-export const codeStyle = {
-  fontFamily: "Courier, monospace",
-  fontSize: "26px",
+export const footerStrong = {
+  color: NAVY_DEEP,
   fontWeight: 700 as const,
-  color: NAVY,
-  backgroundColor: LIGHT_BG,
-  padding: "12px 18px",
-  borderRadius: "8px",
-  letterSpacing: "4px",
-  display: "inline-block",
-  margin: "0 0 20px",
 };
 
 // Helper: extrai "Primeiro Último" do nome completo ou do e-mail.
