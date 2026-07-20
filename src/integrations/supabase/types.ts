@@ -1095,6 +1095,7 @@ export type Database = {
         Args: { _tipo: string; _user_id: string }
         Returns: boolean
       }
+      retry_lavoro_sync_if_needed: { Args: never; Returns: undefined }
       rpc_adicionar_destinatario_automatico: {
         Args: { p_modulo: string; p_user_id: string }
         Returns: string
