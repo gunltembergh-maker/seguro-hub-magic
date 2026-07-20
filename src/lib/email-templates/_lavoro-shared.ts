@@ -183,3 +183,44 @@ export function displayName(nome?: string | null, email?: string | null): string
   if (parts.length === 1) return cap(parts[0]);
   return `${cap(parts[0])} ${cap(parts[parts.length - 1])}`;
 }
+
+// ---------- Compat shims (templates legados: signup, email-change, reauthentication) ----------
+export const brand = {
+  color: "#ffffff",
+  fontSize: "18px",
+  fontWeight: 700 as const,
+  letterSpacing: "0.3px",
+  margin: 0,
+};
+export const brandSub = {
+  color: CYAN,
+  fontSize: "11px",
+  letterSpacing: "2px",
+  textTransform: "uppercase" as const,
+  margin: "6px 0 0",
+};
+export const subHeader = {
+  backgroundColor: LIGHT_BG,
+  padding: "12px 24px",
+  textAlign: "center" as const,
+};
+export const subHeaderText = {
+  color: NAVY,
+  fontSize: "12px",
+  fontWeight: 700 as const,
+  letterSpacing: "2px",
+  textTransform: "uppercase" as const,
+  margin: 0,
+};
+export const codeStyle = {
+  fontFamily: "Courier, monospace",
+  fontSize: "26px",
+  fontWeight: 700 as const,
+  color: NAVY,
+  backgroundColor: LIGHT_BG,
+  padding: "12px 18px",
+  borderRadius: "8px",
+  letterSpacing: "4px",
+  display: "inline-block",
+  margin: "0 0 20px",
+};
