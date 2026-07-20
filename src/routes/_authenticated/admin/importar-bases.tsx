@@ -168,22 +168,23 @@ function ImportarBasesPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
-      <header className="mb-6">
-        <h1 className="font-display text-2xl font-bold tracking-tight">Importação de Bases</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Cada nova importação vira a versão atual — cargas anteriores ficam guardadas como histórico.
-        </p>
+      <div className="rounded-xl bg-white p-6 shadow-sm text-foreground">
+        <header className="mb-6">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-[#14405C]">Importação de Bases</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Cada nova importação vira a versão atual — cargas anteriores ficam guardadas como histórico.
+          </p>
+        </header>
 
-      </header>
+        <SharePointSyncCard />
 
-      <SharePointSyncCard />
+        <div className="mt-6 grid gap-6 md:grid-cols-2">
+          {canGer && <GerencialCard />}
+          {canCx && <CaixaCard />}
+        </div>
 
-      <div className="mt-6 grid gap-6 md:grid-cols-2">
-        {canGer && <GerencialCard />}
-        {canCx && <CaixaCard />}
+        <HistoricoImportacoes />
       </div>
-
-      <HistoricoImportacoes />
     </div>
   );
 }
