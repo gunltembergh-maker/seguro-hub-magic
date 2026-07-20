@@ -100,9 +100,10 @@ export const adminSendAuthEmail = createServerFn({ method: "POST" })
       console.warn("[adminSendAuthEmail] profile lookup failed", e);
     }
 
+    const subjectName = (userName ?? "").trim() || "Você";
     const emailConfig = {
       invite: {
-        subject: "Você foi convidado — Hub Lavoro Seguros",
+        subject: `${subjectName}, seu acesso ao Hub Lavoro Seguros está pronto`,
         element: React.createElement(InviteEmail, {
           siteName,
           siteUrl,
@@ -112,7 +113,7 @@ export const adminSendAuthEmail = createServerFn({ method: "POST" })
         }),
       },
       magiclink: {
-        subject: "Seu link de acesso — Hub Lavoro Seguros",
+        subject: `${subjectName}, seu acesso ao Hub Lavoro Seguros está pronto`,
         element: React.createElement(MagicLinkEmail, {
           siteName,
           confirmationUrl,
@@ -121,7 +122,7 @@ export const adminSendAuthEmail = createServerFn({ method: "POST" })
         }),
       },
       recovery: {
-        subject: "Redefinição de senha — Hub Lavoro Seguros",
+        subject: `${subjectName}, redefinição de senha do Hub Lavoro Seguros`,
         element: React.createElement(RecoveryEmail, {
           siteName,
           confirmationUrl,
