@@ -101,7 +101,7 @@ export const adminSendAuthEmail = createServerFn({ method: "POST" })
           confirmationUrl,
         }),
       },
-    }[data.tipo];
+    }[effectiveTipo];
 
     const html = await render(emailConfig.element);
     const text = await render(emailConfig.element, { plainText: true });
