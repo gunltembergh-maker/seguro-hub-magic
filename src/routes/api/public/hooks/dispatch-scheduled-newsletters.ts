@@ -22,7 +22,7 @@ async function handle(request: Request): Promise<Response> {
   const provided = request.headers.get('apikey') || request.headers.get('x-apikey')
   if (provided !== expected) return json({ error: 'unauthorized' }, 401)
 
-  const { supabaseAdmin } = await import('@/integrations/supabase/client.server')
+  const { lavoroAdmin: supabaseAdmin } = await import('@/integrations/supabase/lavoro-admin.server')
 
   // Hora atual em BRT (America/Sao_Paulo)
   const nowBRT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))

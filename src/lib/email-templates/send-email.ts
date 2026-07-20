@@ -65,7 +65,7 @@ export async function sendTemplateEmail(
       : template.subject
 
   const messageId = options.idempotencyKey || crypto.randomUUID()
-  const { supabaseAdmin } = await import('@/integrations/supabase/client.server')
+  const { lavoroAdmin: supabaseAdmin } = await import('@/integrations/supabase/lavoro-admin.server')
 
   const logInsert = async (status: string, error_message: string | null = null) => {
     try {
