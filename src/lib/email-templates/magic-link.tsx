@@ -32,12 +32,12 @@ export const MagicLinkEmail = ({ confirmationUrl, userName, userEmail }: MagicLi
           <Section style={card}>
             <Text style={eyebrow}>Link de acesso</Text>
             <Heading as="h1" style={h1}>
-              {name ? `Olá, ${name} 👋` : 'Olá 👋'}
+              {titleName}, seu acesso ao Hub Lavoro Seguros está pronto 🎯
             </Heading>
 
             <Text style={text}>
               Recebemos uma solicitação de acesso ao <strong>Hub Lavoro Seguros</strong>,
-              a plataforma interna corporativa da Lavoro.
+              sua plataforma interna corporativa.
             </Text>
 
             <Text style={text}>
