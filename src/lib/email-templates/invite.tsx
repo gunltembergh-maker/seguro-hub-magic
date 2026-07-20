@@ -31,11 +31,13 @@ export const InviteEmail = ({ confirmationUrl, userName, userEmail }: InviteEmai
           </Section>
           <Section style={card}>
             <Heading as="h2" style={h1}>
-              {name ? `Olá, ${name} 👋` : 'Olá 👋'}
+              {name
+                ? `${name}, seu acesso ao Hub Lavoro Seguros está pronto 🎯`
+                : 'Seu acesso ao Hub Lavoro Seguros está pronto 🎯'}
             </Heading>
             <Text style={text}>
               Você foi convidado para acessar o <strong>Hub Lavoro Seguros</strong>,
-              sua plataforma interna de gestão, indicadores e conteúdo corporativo.
+              sua plataforma interna corporativa.
             </Text>
             <Text style={text}>
               O acesso é <strong>exclusivo via SSO</strong> e deve ser feito com o
@@ -50,9 +52,9 @@ export const InviteEmail = ({ confirmationUrl, userName, userEmail }: InviteEmai
             </Section>
 
             <Text style={infoBox}>
-              ✅ Seu perfil já está <strong>pré-aprovado</strong> pela equipe de
-              administração. Basta aceitar o convite abaixo e autenticar com sua
-              conta Microsoft Lavoro Seguros.
+              ✅ Seu perfil já está <strong>pré-aprovado</strong> pela{' '}
+              <strong>Equipe de Dados e IA</strong>. Basta aceitar o convite abaixo
+              e autenticar com sua conta Microsoft Lavoro Seguros.
             </Text>
 
             <div style={{ textAlign: 'center', margin: '24px 0 8px' }}>
