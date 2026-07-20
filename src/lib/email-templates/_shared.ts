@@ -18,9 +18,10 @@ export const LAVORO_COLORS = {
 // Absolute URL used by email clients to fetch images (must be reachable
 // externally — CDN asset paths resolve on any of the project's app URLs).
 export const SITE_URL =
+  process.env.PUBLIC_SITE_URL ||
   process.env.SITE_URL ||
   process.env.LOVABLE_APP_URL ||
-  'https://project--ae780930-9fc8-45f0-9908-31d89569a898.lovable.app'
+  'https://hub.lavoroseguros.com.br'
 
 // White Lavoro Seguros logo — oficial (source: Logo_Lavoro_Branca-2.png).
 export const LOGO_BRANCA_URL = `${SITE_URL}/__l5e/assets-v1/7869490b-ef06-42fc-a753-2a6967781570/logo-lavoro-branca.png`
