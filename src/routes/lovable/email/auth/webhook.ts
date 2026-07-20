@@ -12,8 +12,8 @@ import { ReauthenticationEmail } from '@/lib/email-templates/reauthentication'
 
 // Configuration
 const SITE_NAME = 'Hub Lavoro Seguros'
-const SENDER_DOMAIN = 'notify.hub.lavoroseguros.com.br'
-const FROM_DOMAIN = 'notify.hub.lavoroseguros.com.br'
+const SENDER_DOMAIN = 'hub.lavoroseguros.com.br'
+const FROM_DOMAIN = 'hub.lavoroseguros.com.br'
 const ROOT_DOMAIN = 'hub.lavoroseguros.com.br'
 const SITE_URL = `https://${ROOT_DOMAIN}`
 const FROM = `${SITE_NAME} <noreply@${FROM_DOMAIN}>`
