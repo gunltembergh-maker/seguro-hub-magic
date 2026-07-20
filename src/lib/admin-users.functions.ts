@@ -42,17 +42,15 @@ export const adminSendAuthEmail = createServerFn({ method: "POST" })
         throw new Error(error.message);
       }
     } else if (data.tipo === "magiclink") {
-      const { error } = await supabaseAdmin.auth.admin.generateLink({
-        type: "magiclink",
+      // signInWithOtp dispara o e-mail via webhook do Supabase (generateLink apenas retorna o link, não envia)
+      const { error } = await supabaseAdmin.auth.signInWithOtp({
         email: data.email,
-        options: { redirectTo },
+        options: { emailRedirectTo: redirectTo, shouldCreateUser: false },
       });
       if (error) throw new Error(error.message);
     } else if (data.tipo === "recovery") {
-      const { error } = await supabaseAdmin.auth.admin.generateLink({
-        type: "recovery",
-        email: data.email,
-        options: { redirectTo },
+      const { error } = await supabaseAdmin.auth.resetPasswordForEmail(data.email, {
+        redirectTo,
       });
       if (error) throw new Error(error.message);
     }
