@@ -30,6 +30,21 @@ export const logoImg = {
   height: "44px",
   width: "auto",
 };
+// Compat: templates antigos ainda importam `brand` / `brandSub`.
+export const brand = {
+  color: "#ffffff",
+  fontSize: "20px",
+  fontWeight: 700 as const,
+  letterSpacing: "0.5px",
+  margin: 0,
+};
+export const brandSub = {
+  color: CYAN,
+  fontSize: "12px",
+  letterSpacing: "1.5px",
+  textTransform: "uppercase" as const,
+  margin: "6px 0 0",
+};
 export const subHeader = {
   backgroundColor: LIGHT_BG,
   padding: "14px 24px",
