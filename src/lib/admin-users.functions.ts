@@ -86,6 +86,20 @@ export const adminSendAuthEmail = createServerFn({ method: "POST" })
       throw new Error("O Supabase não retornou o link de autenticação.");
     }
 
+    // Busca nome do usuário para personalizar a saudação.
+    let userName: string | null = null;
+    try {
+      const { data: profile } = await supabaseAdmin
+        .from("profiles" as never)
+        .select("nome_completo,nome" as never)
+        .eq("email" as never, data.email as never)
+        .maybeSingle();
+      const p = profile as { nome_completo?: string | null; nome?: string | null } | null;
+      userName = p?.nome_completo ?? p?.nome ?? null;
+    } catch (e) {
+      console.warn("[adminSendAuthEmail] profile lookup failed", e);
+    }
+
     const emailConfig = {
       invite: {
         subject: "Você foi convidado — Hub Lavoro Seguros",
@@ -93,6 +107,8 @@ export const adminSendAuthEmail = createServerFn({ method: "POST" })
           siteName,
           siteUrl,
           confirmationUrl,
+          userName,
+          userEmail: data.email,
         }),
       },
       magiclink: {
@@ -100,6 +116,8 @@ export const adminSendAuthEmail = createServerFn({ method: "POST" })
         element: React.createElement(MagicLinkEmail, {
           siteName,
           confirmationUrl,
+          userName,
+          userEmail: data.email,
         }),
       },
       recovery: {
@@ -107,6 +125,8 @@ export const adminSendAuthEmail = createServerFn({ method: "POST" })
         element: React.createElement(RecoveryEmail, {
           siteName,
           confirmationUrl,
+          userName,
+          userEmail: data.email,
         }),
       },
     }[effectiveTipo];
