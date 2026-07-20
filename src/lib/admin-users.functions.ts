@@ -42,17 +42,26 @@ export const adminSendAuthEmail = createServerFn({ method: "POST" })
         throw new Error(error.message);
       }
     } else if (data.tipo === "magiclink") {
-      // signInWithOtp dispara o e-mail via webhook do Supabase (generateLink apenas retorna o link, não envia)
-      const { error } = await supabaseAdmin.auth.signInWithOtp({
+      // generateLink com admin API dispara o Send Email Hook do Supabase
+      const { error } = await supabaseAdmin.auth.admin.generateLink({
+        type: "magiclink",
         email: data.email,
-        options: { emailRedirectTo: redirectTo, shouldCreateUser: false },
+        options: { redirectTo },
       });
-      if (error) throw new Error(error.message);
+      if (error) {
+        console.error("[adminSendAuthEmail] magiclink failed", error);
+        throw new Error(error.message || JSON.stringify(error) || "Falha ao enviar magic link");
+      }
     } else if (data.tipo === "recovery") {
-      const { error } = await supabaseAdmin.auth.resetPasswordForEmail(data.email, {
-        redirectTo,
+      const { error } = await supabaseAdmin.auth.admin.generateLink({
+        type: "recovery",
+        email: data.email,
+        options: { redirectTo },
       });
-      if (error) throw new Error(error.message);
+      if (error) {
+        console.error("[adminSendAuthEmail] recovery failed", error);
+        throw new Error(error.message || JSON.stringify(error) || "Falha ao enviar recuperação");
+      }
     }
 
     if (data.user_id) {
