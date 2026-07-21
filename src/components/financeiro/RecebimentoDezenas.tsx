@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { useQueries } from "@tanstack/react-query";
+import { useEffect, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -15,12 +15,15 @@ const BRL = (v: number | null | undefined) =>
 const DEZENAS = ["1-10", "11-20", "21-31"] as const;
 type Dezena = (typeof DEZENAS)[number];
 
-type PrevisaoRow = {
+const EMPRESAS = ["L Farias", "Taicons", "ZIN"] as const;
+type Empresa = (typeof EMPRESAS)[number];
+
+type RpcRow = {
   ano: number;
   mes: number;
-  dezena: string;
-  empresa_faturada: string;
-  valor_a_receber: number;
+  dezena: Dezena;
+  empresa: Empresa;
+  valor: number;
 };
 
 function nowBRT() {
@@ -28,58 +31,79 @@ function nowBRT() {
 }
 
 export function RecebimentoDezenas() {
-  // Mês atual + próximos 3 (janela de 4 meses)
-  const janela = useMemo(() => {
-    const now = nowBRT();
-    return Array.from({ length: 4 }).map((_, i) => {
-      const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-      return { ano: d.getFullYear(), mes: d.getMonth() + 1 };
-    });
+  const queryClient = useQueryClient();
+
+  // Mês âncora = mês atual (Brasília)
+  const ancora = useMemo(() => {
+    const d = nowBRT();
+    return { ano: d.getFullYear(), mes: d.getMonth() + 1 };
   }, []);
 
-  const results = useQueries({
-    queries: janela.map(({ ano, mes }) => ({
-      queryKey: ["lavoro-previsao-dezena", ano, mes],
-      queryFn: async () => {
-        const { data, error } = await supabase.rpc("rpc_lavoro_apolices_previsao_dezena" as never, {
-          p_ano: ano,
-          p_mes: mes,
-        } as never);
-        if (error) throw error;
-        return (data || []) as PrevisaoRow[];
-      },
-      staleTime: 5 * 60 * 1000,
-    })),
+  const janela = useMemo(() => {
+    const base = new Date(ancora.ano, ancora.mes - 1, 1);
+    return Array.from({ length: 4 }).map((_, i) => {
+      const d = new Date(base.getFullYear(), base.getMonth() + i, 1);
+      return { ano: d.getFullYear(), mes: d.getMonth() + 1 };
+    });
+  }, [ancora]);
+
+  const queryKey = ["lavoro-recebimento-dezenas-empresas", ancora.ano, ancora.mes];
+
+  const { data, isLoading, error } = useQuery({
+    queryKey,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc(
+        "rpc_lavoro_recebimento_dezenas_empresas" as never,
+        { p_ano: ancora.ano, p_mes: ancora.mes } as never,
+      );
+      if (error) throw error;
+      return (data || []) as RpcRow[];
+    },
+    staleTime: 5 * 60 * 1000,
   });
 
-  const isLoading = results.some((r) => r.isLoading);
-  const error = results.find((r) => r.error)?.error as Error | undefined;
+  // Realtime: sempre que uma nova sincronização terminar com sucesso, revalida
+  useEffect(() => {
+    const channel = supabase
+      .channel("lavoro-sync-log-recebimento-dezenas")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "lavoro_sync_log" },
+        (payload) => {
+          const row = (payload.new ?? payload.old) as { status?: string } | null;
+          if (!row || row.status === "sucesso") {
+            queryClient.invalidateQueries({ queryKey });
+          }
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient, queryKey]);
 
-  // Agrega por (ano, mes) e dezena → total
-  const linhas = useMemo(() => {
-    return janela.map(({ ano, mes }, i) => {
-      const rows = results[i].data || [];
-      const porDezena: Record<Dezena, number> = { "1-10": 0, "11-20": 0, "21-31": 0 };
-      for (const r of rows) {
-        if (r.ano !== ano || r.mes !== mes) continue;
-        const d = (r.dezena as Dezena) || null;
-        if (d && d in porDezena) porDezena[d] += Number(r.valor_a_receber || 0);
-      }
-      const total = porDezena["1-10"] + porDezena["11-20"] + porDezena["21-31"];
-      return { ano, mes, ...porDezena, total };
-    });
-  }, [results, janela]);
-
-  const totaisColuna = useMemo(() => {
-    const t: Record<Dezena | "total", number> = { "1-10": 0, "11-20": 0, "21-31": 0, total: 0 };
-    for (const l of linhas) {
-      t["1-10"] += l["1-10"];
-      t["11-20"] += l["11-20"];
-      t["21-31"] += l["21-31"];
-      t.total += l.total;
+  // Índice para lookup rápido
+  const idx = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const r of data || []) {
+      map.set(`${r.ano}-${r.mes}-${r.dezena}-${r.empresa}`, Number(r.valor || 0));
     }
-    return t;
-  }, [linhas]);
+    return map;
+  }, [data]);
+
+  const getVal = (ano: number, mes: number, dezena: Dezena, empresa: Empresa) =>
+    idx.get(`${ano}-${mes}-${dezena}-${empresa}`) ?? 0;
+
+  const totalMes = (ano: number, mes: number) =>
+    DEZENAS.reduce(
+      (acc, d) => acc + EMPRESAS.reduce((a, e) => a + getVal(ano, mes, d, e), 0),
+      0,
+    );
+
+  const totalJanelaEmpresaDezena = (empresa: Empresa, dezena: Dezena) =>
+    janela.reduce((acc, { ano, mes }) => acc + getVal(ano, mes, dezena, empresa), 0);
+
+  const totalJanela = janela.reduce((acc, { ano, mes }) => acc + totalMes(ano, mes), 0);
 
   const janelaLabel = useMemo(() => {
     const ini = janela[0];
@@ -97,7 +121,7 @@ export function RecebimentoDezenas() {
             Recebimento por Dezenas
           </h3>
           <p className="text-xs text-gray-500">
-            Previsão de comissão a receber — {janelaLabel} (mês atual + próximos 3)
+            Previsão de comissão (a receber + pago) — {janelaLabel} • Empresas: L Farias, Taicons e ZIN
           </p>
         </div>
         <span
@@ -111,13 +135,13 @@ export function RecebimentoDezenas() {
       <div className="p-4 md:p-5">
         {error && (
           <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-            Não foi possível carregar a previsão: {error.message}
+            Não foi possível carregar a previsão: {(error as Error).message}
           </div>
         )}
 
         {isLoading ? (
           <div className="space-y-2">
-            {Array.from({ length: 4 }).map((_, i) => (
+            {Array.from({ length: 5 }).map((_, i) => (
               <Skeleton key={i} className="h-9 w-full" />
             ))}
           </div>
@@ -126,31 +150,55 @@ export function RecebimentoDezenas() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Mês</TableHead>
+                  <TableHead rowSpan={2} className="align-bottom">Mês</TableHead>
                   {DEZENAS.map((d) => (
-                    <TableHead key={d} className="text-right">
+                    <TableHead
+                      key={d}
+                      colSpan={EMPRESAS.length}
+                      className="border-l border-gray-200 text-center"
+                      style={{ color: NAVY }}
+                    >
                       Dezena {d}
                     </TableHead>
                   ))}
-                  <TableHead className="text-right">Total do mês</TableHead>
+                  <TableHead rowSpan={2} className="border-l border-gray-200 text-right align-bottom">
+                    Total do mês
+                  </TableHead>
+                </TableRow>
+                <TableRow>
+                  {DEZENAS.flatMap((d) =>
+                    EMPRESAS.map((e, i) => (
+                      <TableHead
+                        key={`${d}-${e}`}
+                        className={`text-right text-[11px] font-medium text-gray-500 ${i === 0 ? "border-l border-gray-200" : ""}`}
+                      >
+                        {e}
+                      </TableHead>
+                    )),
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {linhas.map((l) => (
-                  <TableRow key={`${l.ano}-${l.mes}`}>
+                {janela.map(({ ano, mes }) => (
+                  <TableRow key={`${ano}-${mes}`}>
                     <TableCell className="font-medium" style={{ color: NAVY }}>
-                      {MESES[l.mes - 1]}/{l.ano}
+                      {MESES[mes - 1]}/{ano}
                     </TableCell>
-                    {DEZENAS.map((d) => (
-                      <TableCell key={d} className="text-right font-mono tabular-nums">
-                        {BRL(l[d])}
-                      </TableCell>
-                    ))}
+                    {DEZENAS.flatMap((d) =>
+                      EMPRESAS.map((e, i) => (
+                        <TableCell
+                          key={`${d}-${e}`}
+                          className={`text-right font-mono tabular-nums ${i === 0 ? "border-l border-gray-200" : ""}`}
+                        >
+                          {BRL(getVal(ano, mes, d, e))}
+                        </TableCell>
+                      )),
+                    )}
                     <TableCell
-                      className="text-right font-mono font-semibold tabular-nums"
+                      className="border-l border-gray-200 text-right font-mono font-semibold tabular-nums"
                       style={{ color: NAVY }}
                     >
-                      {BRL(l.total)}
+                      {BRL(totalMes(ano, mes))}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -158,20 +206,22 @@ export function RecebimentoDezenas() {
                   <TableCell className="font-semibold" style={{ color: NAVY }}>
                     Total da janela
                   </TableCell>
-                  {DEZENAS.map((d) => (
-                    <TableCell
-                      key={d}
-                      className="text-right font-mono font-semibold tabular-nums"
-                      style={{ color: NAVY }}
-                    >
-                      {BRL(totaisColuna[d])}
-                    </TableCell>
-                  ))}
+                  {DEZENAS.flatMap((d) =>
+                    EMPRESAS.map((e, i) => (
+                      <TableCell
+                        key={`${d}-${e}`}
+                        className={`text-right font-mono font-semibold tabular-nums ${i === 0 ? "border-l border-gray-200" : ""}`}
+                        style={{ color: NAVY }}
+                      >
+                        {BRL(totalJanelaEmpresaDezena(e, d))}
+                      </TableCell>
+                    )),
+                  )}
                   <TableCell
-                    className="text-right font-mono font-bold tabular-nums"
+                    className="border-l border-gray-200 text-right font-mono font-bold tabular-nums"
                     style={{ color: CYAN }}
                   >
-                    {BRL(totaisColuna.total)}
+                    {BRL(totalJanela)}
                   </TableCell>
                 </TableRow>
               </TableBody>
