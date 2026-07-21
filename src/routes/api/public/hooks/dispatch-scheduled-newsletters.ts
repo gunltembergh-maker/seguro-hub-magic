@@ -102,9 +102,25 @@ async function handle(request: Request): Promise<Response> {
         .from('profiles' as never)
         .select('user_id,email,active,blocked' as never)
         .in('user_id' as never, userIds as never)
-      destinatarios = ((profs ?? []) as any[])
-        .filter((p) => p.email && p.active !== false && !p.blocked)
-        .map((p) => ({ email: String(p.email) }))
+      const profByUser = new Map<string, any>()
+      for (const p of ((profs ?? []) as any[])) profByUser.set(p.user_id, p)
+      const emails: string[] = []
+      for (const uid of userIds) {
+        const p = profByUser.get(uid)
+        if (p && (p.active === false || p.blocked)) continue
+        let email: string | null = p?.email ? String(p.email) : null
+        if (!email) {
+          // Fallback: buscar em auth.users caso profile.email esteja vazio
+          try {
+            const { data: u } = await (supabaseAdmin as any).auth.admin.getUserById(uid)
+            email = u?.user?.email ?? null
+          } catch (e) {
+            console.warn('[dispatch] auth.getUserById falhou', uid, e)
+          }
+        }
+        if (email) emails.push(email)
+      }
+      destinatarios = Array.from(new Set(emails.map((e) => e.toLowerCase()))).map((email) => ({ email }))
     }
 
     await supabaseAdmin
