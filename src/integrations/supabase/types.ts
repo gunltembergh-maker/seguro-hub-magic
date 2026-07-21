@@ -1547,6 +1547,16 @@ export type Database = {
         }[]
       }
       rpc_lavoro_get_meta_anual: { Args: { p_ano: number }; Returns: number }
+      rpc_lavoro_recebimento_dezenas_empresas: {
+        Args: { p_ano: number; p_mes: number }
+        Returns: {
+          ano: number
+          dezena: string
+          empresa: string
+          mes: number
+          valor: number
+        }[]
+      }
       rpc_lavoro_receita_caixa_comparativo_anual: {
         Args: { p_anos: number[] }
         Returns: {
