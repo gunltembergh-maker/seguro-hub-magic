@@ -97,6 +97,9 @@ export async function dispatchNewsletterCore(opts: {
 
   const templateName = TEMPLATE_BY_MODULO[modulo]
   const periodo_ref = `${ano}-${String(mes).padStart(2, '0')}`
+  // Chave de idempotência precisa incluir o DIA — caso contrário a API
+  // trata envios do mesmo mês como duplicata e responde ok sem entregar.
+  const hojeISO = new Date().toISOString().slice(0, 10)
 
   const { sendTemplateEmail } = await import('@/lib/email-templates/send-email')
   let enviados = 0
@@ -106,7 +109,7 @@ export async function dispatchNewsletterCore(opts: {
     try {
       const r = await sendTemplateEmail(templateName, to, {
         templateData,
-        idempotencyKey: `${modulo}-${idempotencyPrefix}-${periodo_ref}-${to}`,
+        idempotencyKey: `${modulo}-${idempotencyPrefix}-${hojeISO}-${to}`,
       })
       if (r.sent) enviados++
       else {
