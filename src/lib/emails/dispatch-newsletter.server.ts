@@ -109,7 +109,7 @@ export async function dispatchNewsletterCore(opts: {
     try {
       const r = await sendTemplateEmail(templateName, to, {
         templateData,
-        idempotencyKey: `${modulo}-${idempotencyPrefix}-${periodo_ref}-${to}`,
+        idempotencyKey: `${modulo}-${idempotencyPrefix}-${hojeISO}-${to}`,
       })
       if (r.sent) enviados++
       else {
