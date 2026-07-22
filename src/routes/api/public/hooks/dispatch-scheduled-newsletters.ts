@@ -59,12 +59,13 @@ async function handle(request: Request): Promise<Response> {
       continue
     }
 
-    // Tenta reservar o disparo do dia (índice único bloqueia duplicatas automáticas)
+    // Tenta reservar o disparo do dia+slot (índice único bloqueia duplicatas do mesmo horário)
     const { data: disparoIns, error: disparoErr } = await supabaseAdmin
       .from('email_disparos_automaticos' as never)
       .insert({
         modulo,
         data_envio: hojeISO,
+        hora_slot: scheduledHM,
         status: 'em_processamento',
         forcado_por: null,
         periodo_ref: `${yyyy}-${String(mmNum).padStart(2, '0')}`,
@@ -72,6 +73,7 @@ async function handle(request: Request): Promise<Response> {
       } as never)
       .select('id')
       .single()
+
 
     if (disparoErr) {
       // Já disparado hoje (conflito no índice único) — silencioso

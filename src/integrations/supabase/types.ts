@@ -188,6 +188,7 @@ export type Database = {
           disparado_em: string
           finalizado_em: string | null
           forcado_por: string | null
+          hora_slot: string | null
           id: string
           modulo: string
           periodo_ref: string | null
@@ -202,6 +203,7 @@ export type Database = {
           disparado_em?: string
           finalizado_em?: string | null
           forcado_por?: string | null
+          hora_slot?: string | null
           id?: string
           modulo: string
           periodo_ref?: string | null
@@ -216,6 +218,7 @@ export type Database = {
           disparado_em?: string
           finalizado_em?: string | null
           forcado_por?: string | null
+          hora_slot?: string | null
           id?: string
           modulo?: string
           periodo_ref?: string | null
