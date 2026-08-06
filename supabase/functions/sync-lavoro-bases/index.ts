@@ -761,13 +761,15 @@ async function runSyncJob(
   requestedBase: "all" | "gerencial" | "caixa",
   authHeader: string | null,
   attempt: number,
+  opts?: { resume?: GerencialResume; chainCaixa?: boolean },
 ) {
   const result: Record<string, any> = { ok: false, base: requestedBase, attempt };
   const runGerencial = requestedBase === "all" || requestedBase === "gerencial";
   const runCaixa = requestedBase === "caixa";
-  const chainCaixaAfter = requestedBase === "all";
+  let chainCaixaAfter = requestedBase === "all" || opts?.chainCaixa === true;
 
-  console.log(`[sync-lavoro-bases] START base=${requestedBase} attempt=${attempt}`);
+  console.log(`[sync-lavoro-bases] START base=${requestedBase} attempt=${attempt}${opts?.resume ? ` resume=${opts.resume.startRow}` : ""}`);
+
 
   let creds: ReturnType<typeof loadLavoroCredentials>;
   let token: string;
