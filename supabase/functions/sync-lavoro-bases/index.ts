@@ -635,6 +635,33 @@ async function createPendingSyncLog(admin: ReturnType<typeof createClient>, sync
   });
 }
 
+// Evita execuções concorrentes da mesma base (crons duplicados / retries
+// sobrepostos). Duas execuções simultâneas dividem o mesmo orçamento de CPU do
+// worker e ambas morrem com "CPU Time exceeded".
+const RUNNING_WINDOW_MIN = 12;
+
+async function isBaseRunning(admin: ReturnType<typeof createClient>, base: "gerencial" | "caixa"): Promise<boolean> {
+  try {
+    const since = new Date(Date.now() - RUNNING_WINDOW_MIN * 60_000).toISOString();
+    const { data, error } = await admin
+      .from("lavoro_sync_log")
+      .select("id, mensagem_erro, criado_em")
+      .eq("base", base)
+      .eq("status", "erro")
+      .gte("criado_em", since)
+      .order("criado_em", { ascending: false })
+      .limit(20);
+    if (error) return false;
+    return (data ?? []).some((r: any) => {
+      const m = String(r.mensagem_erro ?? "");
+      return m.startsWith("Sync iniciado") || m.startsWith("Em progresso");
+    });
+  } catch {
+    return false;
+  }
+}
+
+
 async function updateSyncLog(
   admin: ReturnType<typeof createClient>,
   syncId: string,
