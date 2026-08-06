@@ -865,17 +865,28 @@ Deno.serve(async (req) => {
     const requestedBase = body?.base === "gerencial" || body?.base === "caixa" ? body.base : "all";
     const attempt = Math.max(1, Math.min(MAX_ATTEMPTS, Number(body?.attempt) || 1));
     const authHeader = req.headers.get("Authorization");
+    const rawResume = body?.gerencialResume;
+    const resume: GerencialResume | undefined =
+      rawResume && typeof rawResume.syncId === "string" && Number(rawResume.startRow) > 0
+        ? {
+            syncId: rawResume.syncId,
+            startRow: Number(rawResume.startRow),
+            rowsSoFar: Number(rawResume.rowsSoFar) || 0,
+          }
+        : undefined;
+    const opts = { resume, chainCaixa: body?.chainCaixa === true };
     if (body?.wait === true) {
-      const result = await runSyncJob(admin, requestedBase, authHeader, attempt);
+      const result = await runSyncJob(admin, requestedBase, authHeader, attempt, opts);
       return new Response(JSON.stringify({ ok: true, status: "completed", base: requestedBase, attempt, result }), { headers });
     }
 
     EdgeRuntime.waitUntil(
-      runSyncJob(admin, requestedBase, authHeader, attempt).catch((err) => {
+      runSyncJob(admin, requestedBase, authHeader, attempt, opts).catch((err) => {
         console.error("[sync-lavoro-bases] waitUntil unhandled:", err?.message ?? String(err));
       }),
     );
     return new Response(JSON.stringify({ ok: true, status: "accepted", base: requestedBase, attempt }), { headers });
+
   } catch (err: any) {
     const msg = err?.message ?? String(err);
     console.error("[sync-lavoro-bases] ERROR:", msg);
