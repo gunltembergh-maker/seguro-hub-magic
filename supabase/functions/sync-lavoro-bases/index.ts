@@ -120,7 +120,8 @@ async function closeWorkbookSession(token: string, target: DriveItemTarget, sess
 type SharePointDrive = { id: string; name: string; webUrl?: string };
 type DrivePathTarget = { driveId: string | null; driveName: string; relativePath: string };
 type DriveItemTarget = DrivePathTarget & { itemId: string; itemName: string; driveId: string };
-type FolderChild = { name: string; lastModifiedDateTime?: string };
+type FolderChild = { name: string; lastModifiedDateTime?: string; folder?: { childCount?: number } };
+type FoundFile = { name: string; path: string; lastModifiedDateTime?: string };
 type WorkbookSheet = { id: string; name: string };
 
 function encodeGraphPath(path: string): string {
