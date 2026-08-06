@@ -28,7 +28,7 @@ const CAIXA_LEGACY_FOLDER = "Financeiro/Financeiro Lavoro/Planilhas";
 // anos anteriores em subpastas <ano>/).
 const CAIXA_ROOT_FOLDER = `${CAIXA_LEGACY_FOLDER}/DRE e DFC`;
 const READ_CHUNK = 2500;
-const GERENCIAL_READ_CHUNK = 5000;
+const GERENCIAL_READ_CHUNK = 2500;
 
 // Anos históricos que devem ser sincronizados junto com o ano corrente.
 type CaixaYearTarget = { ano: number; folders: string[]; nameMatchers: string[] };
