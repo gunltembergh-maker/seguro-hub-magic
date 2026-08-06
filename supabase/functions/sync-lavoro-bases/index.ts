@@ -534,6 +534,7 @@ async function syncCaixaSingleFile(
 
 async function syncCaixaBase(admin: ReturnType<typeof createClient>, token: string, siteId: string, result: Record<string, any>): Promise<CaixaSyncResult> {
   const syncId = uuidv4();
+  _caixaFilesCache = null; // redescobre os arquivos a cada sync (pastas podem mudar)
   await createPendingSyncLog(admin, syncId, "caixa");
   try {
     // Snapshot completo: apagamos a raw antes de inserir todos os anos.
