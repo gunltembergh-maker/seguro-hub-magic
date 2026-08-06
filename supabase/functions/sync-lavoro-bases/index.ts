@@ -443,7 +443,9 @@ async function syncGerencialBase(
   siteId: string,
   authHeader: string | null,
   resume?: GerencialResume,
+  chainCaixa?: boolean,
 ): Promise<GerencialSyncResult & { partial?: boolean; nextRow?: number }> {
+
   const syncId = resume?.syncId ?? uuidv4();
   let sessionId: string | undefined;
   let target: DriveItemTarget | undefined;
