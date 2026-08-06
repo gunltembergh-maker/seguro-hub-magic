@@ -795,14 +795,19 @@ async function runSyncJob(
   }
 
   if (runGerencial) {
-    if (await isBaseRunning(admin, "gerencial")) {
+    if (!opts?.resume && (await isBaseRunning(admin, "gerencial"))) {
       console.log("[sync-lavoro-bases] SKIP gerencial: já existe execução em andamento");
       result.gerencial = { skipped: "em_andamento" };
+      chainCaixaAfter = false;
     } else {
       try {
-        const res = await syncGerencialBase(admin, token, siteId);
+        const res = await syncGerencialBase(admin, token, siteId, authHeader, opts?.resume, chainCaixaAfter);
         result.gerencial = res;
+        // Enquanto a carga do gerencial estiver fatiada, o caixa é encadeado
+        // pela última fatia (evita duas cargas pesadas simultâneas).
+        if ((res as any).partial) chainCaixaAfter = false;
       } catch (err: any) {
+
         const msg = err?.message ?? String(err);
         console.error("[sync-lavoro-bases] GERENCIAL ERROR:", msg);
         if (attempt < MAX_ATTEMPTS) {
