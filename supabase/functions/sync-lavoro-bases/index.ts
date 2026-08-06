@@ -120,7 +120,8 @@ async function closeWorkbookSession(token: string, target: DriveItemTarget, sess
 type SharePointDrive = { id: string; name: string; webUrl?: string };
 type DrivePathTarget = { driveId: string | null; driveName: string; relativePath: string };
 type DriveItemTarget = DrivePathTarget & { itemId: string; itemName: string; driveId: string };
-type FolderChild = { name: string; lastModifiedDateTime?: string };
+type FolderChild = { name: string; lastModifiedDateTime?: string; folder?: { childCount?: number } };
+type FoundFile = { name: string; path: string; lastModifiedDateTime?: string };
 type WorkbookSheet = { id: string; name: string };
 
 function encodeGraphPath(path: string): string {
@@ -223,8 +224,8 @@ async function listFolderChildren(token: string, siteId: string, folderPath: str
   const target = await resolveDrivePathTarget(token, siteId, folderPath);
   const enc = encodeGraphPath(target.relativePath);
   const url = target.driveId
-    ? `https://graph.microsoft.com/v1.0/sites/${siteId}/drives/${target.driveId}/root:/${enc}:/children?$select=name,lastModifiedDateTime&$top=200`
-    : `https://graph.microsoft.com/v1.0/sites/${siteId}/drive/root:/${enc}:/children?$select=name,lastModifiedDateTime&$top=200`;
+    ? `https://graph.microsoft.com/v1.0/sites/${siteId}/drives/${target.driveId}/root:/${enc}:/children?$select=name,lastModifiedDateTime,folder&$top=200`
+    : `https://graph.microsoft.com/v1.0/sites/${siteId}/drive/root:/${enc}:/children?$select=name,lastModifiedDateTime,folder&$top=200`;
   const r = await graphGet(token, url);
   if (!r.ok) {
     const body = await r.text();
@@ -234,21 +235,57 @@ async function listFolderChildren(token: string, siteId: string, folderPath: str
   return (j.value || []) as FolderChild[];
 }
 
-async function findCaixaFileForYear(token: string, siteId: string, target: CaixaYearTarget): Promise<string | null> {
+// Varre a pasta e subpastas (a planilha do Bradesco foi movida para "DRE e DFC",
+// então a busca não pode depender de um caminho fixo).
+async function listXlsxRecursive(
+  token: string,
+  siteId: string,
+  folderPath: string,
+  depth = 2,
+): Promise<FoundFile[]> {
   let children: FolderChild[];
   try {
-    children = await listFolderChildren(token, siteId, target.folder);
+    children = await listFolderChildren(token, siteId, folderPath);
   } catch (err) {
-    console.warn(`[sync-lavoro-bases] Pasta Caixa ${target.ano} indisponível (${target.folder}): ${(err as Error).message}`);
-    return null;
+    console.warn(`[sync-lavoro-bases] Pasta indisponível (${folderPath}): ${(err as Error).message}`);
+    return [];
   }
 
-  const xlsxChildren = children.filter((c) => normalizeText(c.name).endsWith(".xlsx"));
+  const files: FoundFile[] = [];
+  for (const c of children) {
+    const childPath = `${folderPath}/${c.name}`;
+    if (c.folder) {
+      if (depth > 0) files.push(...(await listXlsxRecursive(token, siteId, childPath, depth - 1)));
+    } else if (normalizeText(c.name).endsWith(".xlsx") && !c.name.startsWith("~$")) {
+      files.push({ name: c.name, path: childPath, lastModifiedDateTime: c.lastModifiedDateTime });
+    }
+  }
+  return files;
+}
+
+let _caixaFilesCache: FoundFile[] | null = null;
+async function getCaixaFiles(token: string, siteId: string): Promise<FoundFile[]> {
+  if (!_caixaFilesCache) {
+    _caixaFilesCache = await listXlsxRecursive(token, siteId, CAIXA_ROOT_FOLDER, 3);
+    console.log(
+      `[sync-lavoro-bases] Arquivos xlsx encontrados em "${CAIXA_ROOT_FOLDER}": ${_caixaFilesCache
+        .map((f) => f.path)
+        .join(" | ")
+        .slice(0, 1200)}`,
+    );
+  }
+  return _caixaFilesCache;
+}
+
+async function findCaixaFileForYear(token: string, siteId: string, target: CaixaYearTarget): Promise<string | null> {
+  const arquivos = await getCaixaFiles(token, siteId);
+  if (arquivos.length === 0) return null;
+
   const anoStr = String(target.ano);
 
   const buscar = (matcher: string) => {
     const needle = normalizeText(matcher);
-    return xlsxChildren
+    return arquivos
       .filter((c) => normalizeText(c.name).includes(needle))
       .sort((a, b) => {
         const ta = a.lastModifiedDateTime ? new Date(a.lastModifiedDateTime).getTime() : 0;
@@ -258,29 +295,31 @@ async function findCaixaFileForYear(token: string, siteId: string, target: Caixa
       });
   };
 
-  let escolhido: FolderChild | undefined;
+  let escolhido: FoundFile | undefined;
   for (const matcher of target.nameMatchers) {
     const found = buscar(matcher);
-    // Se estamos em subpasta específica do ano, aceitamos qualquer arquivo que bata.
-    // Se estamos na pasta raiz (ano corrente), exigimos que o nome contenha o ano.
-    const emRaiz = target.folder === CAIXA_ROOT_FOLDER;
-    const filtrado = emRaiz ? found.filter((c) => c.name.includes(anoStr)) : found;
-    if (filtrado.length > 0) {
-      escolhido = filtrado[0];
+    // Exige o ano no nome do arquivo ou no caminho (pasta do ano).
+    const comAno = found.filter((c) => c.name.includes(anoStr) || c.path.includes(`/${anoStr}/`));
+    if (comAno.length > 0) {
+      escolhido = comAno[0];
       break;
     }
   }
 
   if (!escolhido) {
     console.warn(
-      `[sync-lavoro-bases] Nenhum arquivo Caixa ${target.ano} encontrado em "${target.folder}". Disponíveis: ${children.map((c) => c.name).join(" | ").slice(0, 400)}`,
+      `[sync-lavoro-bases] Nenhum arquivo Caixa ${target.ano} encontrado. Disponíveis: ${arquivos
+        .map((c) => c.path)
+        .join(" | ")
+        .slice(0, 600)}`,
     );
     return null;
   }
 
-  console.log(`[sync-lavoro-bases] Caixa ${target.ano}: ${escolhido.name} (mod ${escolhido.lastModifiedDateTime ?? "?"})`);
-  return `${target.folder}/${escolhido.name}`;
+  console.log(`[sync-lavoro-bases] Caixa ${target.ano}: ${escolhido.path} (mod ${escolhido.lastModifiedDateTime ?? "?"})`);
+  return escolhido.path;
 }
+
 
 function colToLetter(col: number): string {
   let s = "";
@@ -495,6 +534,7 @@ async function syncCaixaSingleFile(
 
 async function syncCaixaBase(admin: ReturnType<typeof createClient>, token: string, siteId: string, result: Record<string, any>): Promise<CaixaSyncResult> {
   const syncId = uuidv4();
+  _caixaFilesCache = null; // redescobre os arquivos a cada sync (pastas podem mudar)
   await createPendingSyncLog(admin, syncId, "caixa");
   try {
     // Snapshot completo: apagamos a raw antes de inserir todos os anos.
