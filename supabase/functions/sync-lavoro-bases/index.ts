@@ -762,34 +762,45 @@ async function runSyncJob(
   }
 
   if (runGerencial) {
-    try {
-      const res = await syncGerencialBase(admin, token, siteId);
-      result.gerencial = res;
-    } catch (err: any) {
-      const msg = err?.message ?? String(err);
-      console.error("[sync-lavoro-bases] GERENCIAL ERROR:", msg);
-      if (attempt < MAX_ATTEMPTS) {
-        await scheduleRetry(admin, authHeader, "gerencial", attempt + 1, msg);
-      } else {
-        await notifyAdmins(admin, `Sync Lavoro gerencial falhou após ${MAX_ATTEMPTS} tentativas`, { error: msg });
+    if (await isBaseRunning(admin, "gerencial")) {
+      console.log("[sync-lavoro-bases] SKIP gerencial: já existe execução em andamento");
+      result.gerencial = { skipped: "em_andamento" };
+    } else {
+      try {
+        const res = await syncGerencialBase(admin, token, siteId);
+        result.gerencial = res;
+      } catch (err: any) {
+        const msg = err?.message ?? String(err);
+        console.error("[sync-lavoro-bases] GERENCIAL ERROR:", msg);
+        if (attempt < MAX_ATTEMPTS) {
+          await scheduleRetry(admin, authHeader, "gerencial", attempt + 1, msg);
+        } else {
+          await notifyAdmins(admin, `Sync Lavoro gerencial falhou após ${MAX_ATTEMPTS} tentativas`, { error: msg });
+        }
       }
     }
   }
 
   if (runCaixa) {
-    try {
-      const res = await syncCaixaBase(admin, token, siteId, result);
-      result.caixa = res;
-    } catch (err: any) {
-      const msg = err?.message ?? String(err);
-      console.error("[sync-lavoro-bases] CAIXA ERROR:", msg);
-      if (attempt < MAX_ATTEMPTS) {
-        await scheduleRetry(admin, authHeader, "caixa", attempt + 1, msg);
-      } else {
-        await notifyAdmins(admin, `Sync Lavoro caixa falhou após ${MAX_ATTEMPTS} tentativas`, { error: msg });
+    if (await isBaseRunning(admin, "caixa")) {
+      console.log("[sync-lavoro-bases] SKIP caixa: já existe execução em andamento");
+      result.caixa = { skipped: "em_andamento" };
+    } else {
+      try {
+        const res = await syncCaixaBase(admin, token, siteId, result);
+        result.caixa = res;
+      } catch (err: any) {
+        const msg = err?.message ?? String(err);
+        console.error("[sync-lavoro-bases] CAIXA ERROR:", msg);
+        if (attempt < MAX_ATTEMPTS) {
+          await scheduleRetry(admin, authHeader, "caixa", attempt + 1, msg);
+        } else {
+          await notifyAdmins(admin, `Sync Lavoro caixa falhou após ${MAX_ATTEMPTS} tentativas`, { error: msg });
+        }
       }
     }
   }
+
 
   if (chainCaixaAfter) {
     await triggerFollowUp(authHeader, "caixa", 1, "chain-after-gerencial");
