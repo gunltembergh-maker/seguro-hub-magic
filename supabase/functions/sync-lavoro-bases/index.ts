@@ -505,7 +505,9 @@ async function syncGerencialBase(
       console.log(`[sync-lavoro-bases] Gerencial parcial: continua na linha ${r}`);
       await triggerFollowUp(authHeader, "gerencial", 1, "resume-gerencial", {
         gerencialResume: { syncId, startRow: r, rowsSoFar: rows } satisfies GerencialResume,
+        chainCaixa: chainCaixa === true,
       });
+
       return { syncId, rows, ramos: 0, totalComissaoBruta, comissaoBrutaComEmissao, partial: true, nextRow: r };
     }
 
