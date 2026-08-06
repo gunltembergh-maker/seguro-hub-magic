@@ -282,62 +282,60 @@ async function listXlsxRecursive(
   return files;
 }
 
-let _caixaFilesCache: FoundFile[] | null = null;
-async function getCaixaFiles(token: string, siteId: string): Promise<FoundFile[]> {
-  if (!_caixaFilesCache) {
-    _caixaFilesCache = await listXlsxRecursive(token, siteId, CAIXA_ROOT_FOLDER, 3);
-    console.log(
-      `[sync-lavoro-bases] Arquivos xlsx encontrados em "${CAIXA_ROOT_FOLDER}": ${_caixaFilesCache
-        .map((f) => f.path)
-        .join(" | ")
-        .slice(0, 1200)}`,
-    );
-  }
-  return _caixaFilesCache;
+const _caixaFolderCache = new Map<string, FoundFile[]>();
+async function listXlsxInFolder(token: string, siteId: string, folderPath: string): Promise<FoundFile[]> {
+  const cached = _caixaFolderCache.get(folderPath);
+  if (cached) return cached;
+  const files = await listXlsxRecursive(token, siteId, folderPath, 0);
+  _caixaFolderCache.set(folderPath, files);
+  return files;
 }
 
 async function findCaixaFileForYear(token: string, siteId: string, target: CaixaYearTarget): Promise<string | null> {
-  const arquivos = await getCaixaFiles(token, siteId);
-  if (arquivos.length === 0) return null;
-
   const anoStr = String(target.ano);
+  const outroAno = /(20\d{2})/g;
 
-  const buscar = (matcher: string) => {
-    const needle = normalizeText(matcher);
-    return arquivos
-      .filter((c) => normalizeText(c.name).includes(needle))
-      .sort((a, b) => {
-        const ta = a.lastModifiedDateTime ? new Date(a.lastModifiedDateTime).getTime() : 0;
-        const tb = b.lastModifiedDateTime ? new Date(b.lastModifiedDateTime).getTime() : 0;
-        if (tb !== ta) return tb - ta;
-        return b.name.localeCompare(a.name);
-      });
-  };
+  const ordenar = (arr: FoundFile[]) =>
+    [...arr].sort((a, b) => {
+      const ta = a.lastModifiedDateTime ? new Date(a.lastModifiedDateTime).getTime() : 0;
+      const tb = b.lastModifiedDateTime ? new Date(b.lastModifiedDateTime).getTime() : 0;
+      if (tb !== ta) return tb - ta;
+      return b.name.localeCompare(a.name);
+    });
 
-  let escolhido: FoundFile | undefined;
-  for (const matcher of target.nameMatchers) {
-    const found = buscar(matcher);
-    // Exige o ano no nome do arquivo ou no caminho (pasta do ano).
-    const comAno = found.filter((c) => c.name.includes(anoStr) || c.path.includes(`/${anoStr}/`));
-    if (comAno.length > 0) {
-      escolhido = comAno[0];
-      break;
+  const disponiveis: string[] = [];
+  for (const folder of target.folders) {
+    const arquivos = await listXlsxInFolder(token, siteId, folder);
+    if (arquivos.length === 0) continue;
+    disponiveis.push(...arquivos.map((a) => a.path));
+
+    // Descarta arquivos cujo nome cita explicitamente outro ano.
+    const candidatos = arquivos.filter((a) => {
+      const anos = a.name.match(outroAno) ?? [];
+      return anos.length === 0 || anos.includes(anoStr);
+    });
+
+    for (const matcher of target.nameMatchers) {
+      const needle = normalizeText(matcher);
+      const found = ordenar(candidatos.filter((c) => normalizeText(c.name).includes(needle)));
+      if (found.length > 0) {
+        const escolhido = found[0];
+        console.log(
+          `[sync-lavoro-bases] Caixa ${target.ano}: ${escolhido.path} (mod ${escolhido.lastModifiedDateTime ?? "?"})`,
+        );
+        return escolhido.path;
+      }
     }
   }
 
-  if (!escolhido) {
-    console.warn(
-      `[sync-lavoro-bases] Nenhum arquivo Caixa ${target.ano} encontrado. Disponíveis: ${arquivos
-        .map((c) => c.path)
-        .join(" | ")
-        .slice(0, 600)}`,
-    );
-    return null;
-  }
-
-  console.log(`[sync-lavoro-bases] Caixa ${target.ano}: ${escolhido.path} (mod ${escolhido.lastModifiedDateTime ?? "?"})`);
-  return escolhido.path;
+  console.warn(
+    `[sync-lavoro-bases] Nenhum arquivo Caixa ${target.ano} encontrado em ${target.folders.join(" | ")}. Disponíveis: ${disponiveis
+      .join(" | ")
+      .slice(0, 600)}`,
+  );
+  return null;
 }
+
 
 
 function colToLetter(col: number): string {
