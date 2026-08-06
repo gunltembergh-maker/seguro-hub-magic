@@ -721,6 +721,7 @@ async function triggerFollowUp(
   base: "gerencial" | "caixa",
   attempt: number,
   trigger: string,
+  extra?: Record<string, unknown>,
 ) {
   try {
     const res = await fetch(`${SUPABASE_URL}/functions/v1/sync-lavoro-bases`, {
@@ -729,13 +730,14 @@ async function triggerFollowUp(
         "Content-Type": "application/json",
         ...(authHeader ? { Authorization: authHeader } : { Authorization: `Bearer ${SERVICE_KEY}` }),
       },
-      body: JSON.stringify({ trigger, base, attempt }),
+      body: JSON.stringify({ trigger, base, attempt, ...(extra ?? {}) }),
     });
     console.log(`[sync-lavoro-bases] Follow-up ${base} (attempt ${attempt}) disparado: HTTP ${res.status}`);
   } catch (err: any) {
     console.error(`[sync-lavoro-bases] Falha ao disparar follow-up ${base}:`, err?.message ?? String(err));
   }
 }
+
 
 async function scheduleRetry(
   admin: ReturnType<typeof createClient>,
