@@ -429,17 +429,33 @@ async function resolveAutoHeaderRow(token: string, target: DriveItemTarget, shee
 type GerencialSyncResult = { syncId: string; rows: number; ramos: number; totalComissaoBruta: number; comissaoBrutaComEmissao: number };
 type CaixaSyncResult = { syncId: string; rows: number; totalReadRows: number; totalComissao: number };
 
-async function syncGerencialBase(admin: ReturnType<typeof createClient>, token: string, siteId: string): Promise<GerencialSyncResult> {
-  const syncId = uuidv4();
-  await createPendingSyncLog(admin, syncId, "gerencial");
+export type GerencialResume = { syncId: string; startRow: number; rowsSoFar: number };
+
+// Máximo de chunks processados por invocação. O worker tem orçamento de CPU
+// limitado: ler + converter a planilha inteira (19k+ linhas) numa única
+// execução estourava "CPU Time exceeded". Agora a carga é retomada em
+// invocações encadeadas.
+const GERENCIAL_MAX_CHUNKS_PER_RUN = 2;
+
+async function syncGerencialBase(
+  admin: ReturnType<typeof createClient>,
+  token: string,
+  siteId: string,
+  authHeader: string | null,
+  resume?: GerencialResume,
+): Promise<GerencialSyncResult & { partial?: boolean; nextRow?: number }> {
+  const syncId = resume?.syncId ?? uuidv4();
   let sessionId: string | undefined;
   let target: DriveItemTarget | undefined;
   try {
-    // Snapshot completo: apaga as raws antes de reinserir (parity com caixa).
-    const delG = await admin.from("raw_lavoro_gerencial").delete().neq("sync_id", "00000000-0000-0000-0000-000000000000");
-    if (delG.error) throw new Error(`Limpar raw_lavoro_gerencial: ${delG.error.message}`);
-    const delR = await admin.from("raw_lavoro_depara_ramo").delete().neq("sync_id", "00000000-0000-0000-0000-000000000000");
-    if (delR.error) throw new Error(`Limpar raw_lavoro_depara_ramo: ${delR.error.message}`);
+    if (!resume) {
+      await createPendingSyncLog(admin, syncId, "gerencial");
+      // Snapshot completo: apaga as raws antes de reinserir (parity com caixa).
+      const delG = await admin.from("raw_lavoro_gerencial").delete().neq("sync_id", "00000000-0000-0000-0000-000000000000");
+      if (delG.error) throw new Error(`Limpar raw_lavoro_gerencial: ${delG.error.message}`);
+      const delR = await admin.from("raw_lavoro_depara_ramo").delete().neq("sync_id", "00000000-0000-0000-0000-000000000000");
+      if (delR.error) throw new Error(`Limpar raw_lavoro_depara_ramo: ${delR.error.message}`);
+    }
 
     target = await resolveDriveItemTarget(token, siteId, GERENCIAL_FILE_PATH);
     sessionId = await createWorkbookSession(token, target);
@@ -448,15 +464,16 @@ async function syncGerencialBase(admin: ReturnType<typeof createClient>, token: 
     const dims = await getSheetDimensions(token, target, sheet, sessionId);
     const lastCol = colToLetter(dims.columnCount);
     const headers = ((await readRangeValues(token, target, sheet, `A2:${lastCol}2`, sessionId))[0] || []).map((h) => String(h ?? "").trim());
-    console.log(`[sync-lavoro-bases] Gerencial dims: ${dims.rowCount} linhas x ${dims.columnCount} colunas`);
+    console.log(`[sync-lavoro-bases] Gerencial dims: ${dims.rowCount} linhas x ${dims.columnCount} colunas (início na linha ${resume?.startRow ?? 3})`);
 
-    let rows = 0;
+    let rows = resume?.rowsSoFar ?? 0;
     let totalComissaoBruta = 0;
     let comissaoBrutaComEmissao = 0;
     const batch: Record<string, unknown>[] = [];
     const totalChunks = Math.ceil(Math.max(0, dims.rowCount - 2) / GERENCIAL_READ_CHUNK);
-    let chunkIdx = 0;
-    for (let r = 3; r <= dims.rowCount; r += GERENCIAL_READ_CHUNK) {
+    let r = resume?.startRow ?? 3;
+    let chunksThisRun = 0;
+    while (r <= dims.rowCount && chunksThisRun < GERENCIAL_MAX_CHUNKS_PER_RUN) {
       const end = Math.min(r + GERENCIAL_READ_CHUNK - 1, dims.rowCount);
       const values = await readRangeValues(token, target, sheet, `A${r}:${lastCol}${end}`, sessionId);
       for (const rowVals of values) {
@@ -470,13 +487,24 @@ async function syncGerencialBase(admin: ReturnType<typeof createClient>, token: 
         if (c.data_emissao) comissaoBrutaComEmissao += Number(c.comissao_bruta) || 0;
       }
       await flushBatch(admin, "raw_lavoro_gerencial", batch);
-      chunkIdx++;
+      chunksThisRun++;
+      r = end + 1;
+      const chunkIdx = Math.ceil((r - 3) / GERENCIAL_READ_CHUNK);
       // Heartbeat de progresso a cada chunk (também detectável na UI).
       await updateSyncLog(admin, syncId, "gerencial", {
         status: "erro",
         linhas_importadas: rows,
         mensagem_erro: `Em progresso: chunk ${chunkIdx}/${totalChunks} (${rows} linhas)`,
       });
+    }
+
+    if (r <= dims.rowCount) {
+      // Ainda há linhas: encadeia a continuação numa nova invocação.
+      console.log(`[sync-lavoro-bases] Gerencial parcial: continua na linha ${r}`);
+      await triggerFollowUp(authHeader, "gerencial", 1, "resume-gerencial", {
+        gerencialResume: { syncId, startRow: r, rowsSoFar: rows } satisfies GerencialResume,
+      });
+      return { syncId, rows, ramos: 0, totalComissaoBruta, comissaoBrutaComEmissao, partial: true, nextRow: r };
     }
 
     const ramoSheet = await resolveWorkbookSheet(token, target, "aux Ramo", sessionId);
@@ -486,9 +514,9 @@ async function syncGerencialBase(admin: ReturnType<typeof createClient>, token: 
     const ramoHeaders = ((await readRangeValues(token, target, ramoSheet, `A${headerRow}:${ramoLastCol}${headerRow}`, sessionId))[0] || []).map((h) => String(h ?? "").trim());
     let ramos = 0;
     const ramoBatch: Record<string, unknown>[] = [];
-    for (let r = headerRow + 1; r <= ramoDims.rowCount; r += READ_CHUNK) {
-      const end = Math.min(r + READ_CHUNK - 1, ramoDims.rowCount);
-      const values = await readRangeValues(token, target, ramoSheet, `A${r}:${ramoLastCol}${end}`, sessionId);
+    for (let rr = headerRow + 1; rr <= ramoDims.rowCount; rr += READ_CHUNK) {
+      const end = Math.min(rr + READ_CHUNK - 1, ramoDims.rowCount);
+      const values = await readRangeValues(token, target, ramoSheet, `A${rr}:${ramoLastCol}${end}`, sessionId);
       for (const rowVals of values) {
         const raw = rowFromValues(ramoHeaders, rowVals);
         if (!raw) continue;
@@ -510,6 +538,7 @@ async function syncGerencialBase(admin: ReturnType<typeof createClient>, token: 
       await closeWorkbookSession(token, target, sessionId);
     }
   }
+
 }
 
 
