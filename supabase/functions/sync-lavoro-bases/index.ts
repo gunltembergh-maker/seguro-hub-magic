@@ -23,19 +23,38 @@ const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const SHAREPOINT_HOSTNAME = Deno.env.get("LAVORO_SHAREPOINT_HOSTNAME") ?? "seguroslavoro.sharepoint.com";
 const SHAREPOINT_SITE_PATH = Deno.env.get("LAVORO_SHAREPOINT_SITE_PATH") ?? "";
 const GERENCIAL_FILE_PATH = "Financeiro/NF's e Extratos/Controle Gerencial - Financeiro.xlsx";
-const CAIXA_ROOT_FOLDER = "Financeiro/Financeiro Lavoro/Planilhas";
+const CAIXA_LEGACY_FOLDER = "Financeiro/Financeiro Lavoro/Planilhas";
+// A base do Bradesco foi movida para a pasta "DRE e DFC" (ano corrente na raiz,
+// anos anteriores em subpastas <ano>/).
+const CAIXA_ROOT_FOLDER = `${CAIXA_LEGACY_FOLDER}/DRE e DFC`;
 const READ_CHUNK = 2500;
 const GERENCIAL_READ_CHUNK = 5000;
 
 // Anos históricos que devem ser sincronizados junto com o ano corrente.
-// O ano corrente fica na raiz de Planilhas/; os anteriores em subpastas Planilhas/<ano>/.
-type CaixaYearTarget = { ano: number; folder: string; nameMatchers: string[] };
+type CaixaYearTarget = { ano: number; folders: string[]; nameMatchers: string[] };
 const CAIXA_YEAR_TARGETS: CaixaYearTarget[] = [
-  { ano: 2026, folder: CAIXA_ROOT_FOLDER, nameMatchers: ["controle lavoro bradesco 2026", "controle lavoro bradesco"] },
-  { ano: 2025, folder: `${CAIXA_ROOT_FOLDER}/2025`, nameMatchers: ["controle lavoro bradesco 2025", "controle lavoro bradesco"] },
-  { ano: 2024, folder: `${CAIXA_ROOT_FOLDER}/2024`, nameMatchers: ["controle lavoro bradesco 2024", "controle lavoro bradesco"] },
-  { ano: 2023, folder: `${CAIXA_ROOT_FOLDER}/2023`, nameMatchers: ["controle lavoro - 2023", "controle lavoro 2023", "controle lavoro bradesco 2023", "controle lavoro"] },
+  {
+    ano: 2026,
+    folders: [CAIXA_ROOT_FOLDER, CAIXA_LEGACY_FOLDER, `${CAIXA_ROOT_FOLDER}/2026`, `${CAIXA_LEGACY_FOLDER}/2026`],
+    nameMatchers: ["controle lavoro bradesco 2026", "controle lavoro bradesco"],
+  },
+  {
+    ano: 2025,
+    folders: [`${CAIXA_ROOT_FOLDER}/2025`, `${CAIXA_LEGACY_FOLDER}/2025`],
+    nameMatchers: ["controle lavoro bradesco 2025", "controle lavoro bradesco"],
+  },
+  {
+    ano: 2024,
+    folders: [`${CAIXA_ROOT_FOLDER}/2024`, `${CAIXA_LEGACY_FOLDER}/2024`],
+    nameMatchers: ["controle lavoro bradesco 2024", "controle lavoro bradesco"],
+  },
+  {
+    ano: 2023,
+    folders: [`${CAIXA_ROOT_FOLDER}/2023`, `${CAIXA_LEGACY_FOLDER}/2023`],
+    nameMatchers: ["controle lavoro - 2023", "controle lavoro 2023", "controle lavoro bradesco 2023", "controle lavoro"],
+  },
 ];
+
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -263,62 +282,60 @@ async function listXlsxRecursive(
   return files;
 }
 
-let _caixaFilesCache: FoundFile[] | null = null;
-async function getCaixaFiles(token: string, siteId: string): Promise<FoundFile[]> {
-  if (!_caixaFilesCache) {
-    _caixaFilesCache = await listXlsxRecursive(token, siteId, CAIXA_ROOT_FOLDER, 3);
-    console.log(
-      `[sync-lavoro-bases] Arquivos xlsx encontrados em "${CAIXA_ROOT_FOLDER}": ${_caixaFilesCache
-        .map((f) => f.path)
-        .join(" | ")
-        .slice(0, 1200)}`,
-    );
-  }
-  return _caixaFilesCache;
+const _caixaFolderCache = new Map<string, FoundFile[]>();
+async function listXlsxInFolder(token: string, siteId: string, folderPath: string): Promise<FoundFile[]> {
+  const cached = _caixaFolderCache.get(folderPath);
+  if (cached) return cached;
+  const files = await listXlsxRecursive(token, siteId, folderPath, 0);
+  _caixaFolderCache.set(folderPath, files);
+  return files;
 }
 
 async function findCaixaFileForYear(token: string, siteId: string, target: CaixaYearTarget): Promise<string | null> {
-  const arquivos = await getCaixaFiles(token, siteId);
-  if (arquivos.length === 0) return null;
-
   const anoStr = String(target.ano);
+  const outroAno = /(20\d{2})/g;
 
-  const buscar = (matcher: string) => {
-    const needle = normalizeText(matcher);
-    return arquivos
-      .filter((c) => normalizeText(c.name).includes(needle))
-      .sort((a, b) => {
-        const ta = a.lastModifiedDateTime ? new Date(a.lastModifiedDateTime).getTime() : 0;
-        const tb = b.lastModifiedDateTime ? new Date(b.lastModifiedDateTime).getTime() : 0;
-        if (tb !== ta) return tb - ta;
-        return b.name.localeCompare(a.name);
-      });
-  };
+  const ordenar = (arr: FoundFile[]) =>
+    [...arr].sort((a, b) => {
+      const ta = a.lastModifiedDateTime ? new Date(a.lastModifiedDateTime).getTime() : 0;
+      const tb = b.lastModifiedDateTime ? new Date(b.lastModifiedDateTime).getTime() : 0;
+      if (tb !== ta) return tb - ta;
+      return b.name.localeCompare(a.name);
+    });
 
-  let escolhido: FoundFile | undefined;
-  for (const matcher of target.nameMatchers) {
-    const found = buscar(matcher);
-    // Exige o ano no nome do arquivo ou no caminho (pasta do ano).
-    const comAno = found.filter((c) => c.name.includes(anoStr) || c.path.includes(`/${anoStr}/`));
-    if (comAno.length > 0) {
-      escolhido = comAno[0];
-      break;
+  const disponiveis: string[] = [];
+  for (const folder of target.folders) {
+    const arquivos = await listXlsxInFolder(token, siteId, folder);
+    if (arquivos.length === 0) continue;
+    disponiveis.push(...arquivos.map((a) => a.path));
+
+    // Descarta arquivos cujo nome cita explicitamente outro ano.
+    const candidatos = arquivos.filter((a) => {
+      const anos = a.name.match(outroAno) ?? [];
+      return anos.length === 0 || anos.includes(anoStr);
+    });
+
+    for (const matcher of target.nameMatchers) {
+      const needle = normalizeText(matcher);
+      const found = ordenar(candidatos.filter((c) => normalizeText(c.name).includes(needle)));
+      if (found.length > 0) {
+        const escolhido = found[0];
+        console.log(
+          `[sync-lavoro-bases] Caixa ${target.ano}: ${escolhido.path} (mod ${escolhido.lastModifiedDateTime ?? "?"})`,
+        );
+        return escolhido.path;
+      }
     }
   }
 
-  if (!escolhido) {
-    console.warn(
-      `[sync-lavoro-bases] Nenhum arquivo Caixa ${target.ano} encontrado. Disponíveis: ${arquivos
-        .map((c) => c.path)
-        .join(" | ")
-        .slice(0, 600)}`,
-    );
-    return null;
-  }
-
-  console.log(`[sync-lavoro-bases] Caixa ${target.ano}: ${escolhido.path} (mod ${escolhido.lastModifiedDateTime ?? "?"})`);
-  return escolhido.path;
+  console.warn(
+    `[sync-lavoro-bases] Nenhum arquivo Caixa ${target.ano} encontrado em ${target.folders.join(" | ")}. Disponíveis: ${disponiveis
+      .join(" | ")
+      .slice(0, 600)}`,
+  );
+  return null;
 }
+
 
 
 function colToLetter(col: number): string {
@@ -534,7 +551,7 @@ async function syncCaixaSingleFile(
 
 async function syncCaixaBase(admin: ReturnType<typeof createClient>, token: string, siteId: string, result: Record<string, any>): Promise<CaixaSyncResult> {
   const syncId = uuidv4();
-  _caixaFilesCache = null; // redescobre os arquivos a cada sync (pastas podem mudar)
+  _caixaFolderCache.clear(); // redescobre os arquivos a cada sync (pastas podem mudar)
   await createPendingSyncLog(admin, syncId, "caixa");
   try {
     // Snapshot completo: apagamos a raw antes de inserir todos os anos.
