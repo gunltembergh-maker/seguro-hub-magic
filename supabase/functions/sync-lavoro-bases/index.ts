@@ -28,7 +28,7 @@ const CAIXA_LEGACY_FOLDER = "Financeiro/Financeiro Lavoro/Planilhas";
 // anos anteriores em subpastas <ano>/).
 const CAIXA_ROOT_FOLDER = `${CAIXA_LEGACY_FOLDER}/DRE e DFC`;
 const READ_CHUNK = 2500;
-const GERENCIAL_READ_CHUNK = 5000;
+const GERENCIAL_READ_CHUNK = 2500;
 
 // Anos históricos que devem ser sincronizados junto com o ano corrente.
 type CaixaYearTarget = { ano: number; folders: string[]; nameMatchers: string[] };
@@ -429,17 +429,35 @@ async function resolveAutoHeaderRow(token: string, target: DriveItemTarget, shee
 type GerencialSyncResult = { syncId: string; rows: number; ramos: number; totalComissaoBruta: number; comissaoBrutaComEmissao: number };
 type CaixaSyncResult = { syncId: string; rows: number; totalReadRows: number; totalComissao: number };
 
-async function syncGerencialBase(admin: ReturnType<typeof createClient>, token: string, siteId: string): Promise<GerencialSyncResult> {
-  const syncId = uuidv4();
-  await createPendingSyncLog(admin, syncId, "gerencial");
+export type GerencialResume = { syncId: string; startRow: number; rowsSoFar: number };
+
+// Máximo de chunks processados por invocação. O worker tem orçamento de CPU
+// limitado: ler + converter a planilha inteira (19k+ linhas) numa única
+// execução estourava "CPU Time exceeded". Agora a carga é retomada em
+// invocações encadeadas.
+const GERENCIAL_MAX_CHUNKS_PER_RUN = 2;
+
+async function syncGerencialBase(
+  admin: ReturnType<typeof createClient>,
+  token: string,
+  siteId: string,
+  authHeader: string | null,
+  resume?: GerencialResume,
+  chainCaixa?: boolean,
+): Promise<GerencialSyncResult & { partial?: boolean; nextRow?: number }> {
+
+  const syncId = resume?.syncId ?? uuidv4();
   let sessionId: string | undefined;
   let target: DriveItemTarget | undefined;
   try {
-    // Snapshot completo: apaga as raws antes de reinserir (parity com caixa).
-    const delG = await admin.from("raw_lavoro_gerencial").delete().neq("sync_id", "00000000-0000-0000-0000-000000000000");
-    if (delG.error) throw new Error(`Limpar raw_lavoro_gerencial: ${delG.error.message}`);
-    const delR = await admin.from("raw_lavoro_depara_ramo").delete().neq("sync_id", "00000000-0000-0000-0000-000000000000");
-    if (delR.error) throw new Error(`Limpar raw_lavoro_depara_ramo: ${delR.error.message}`);
+    if (!resume) {
+      await createPendingSyncLog(admin, syncId, "gerencial");
+      // Snapshot completo: apaga as raws antes de reinserir (parity com caixa).
+      const delG = await admin.from("raw_lavoro_gerencial").delete().neq("sync_id", "00000000-0000-0000-0000-000000000000");
+      if (delG.error) throw new Error(`Limpar raw_lavoro_gerencial: ${delG.error.message}`);
+      const delR = await admin.from("raw_lavoro_depara_ramo").delete().neq("sync_id", "00000000-0000-0000-0000-000000000000");
+      if (delR.error) throw new Error(`Limpar raw_lavoro_depara_ramo: ${delR.error.message}`);
+    }
 
     target = await resolveDriveItemTarget(token, siteId, GERENCIAL_FILE_PATH);
     sessionId = await createWorkbookSession(token, target);
@@ -448,15 +466,16 @@ async function syncGerencialBase(admin: ReturnType<typeof createClient>, token: 
     const dims = await getSheetDimensions(token, target, sheet, sessionId);
     const lastCol = colToLetter(dims.columnCount);
     const headers = ((await readRangeValues(token, target, sheet, `A2:${lastCol}2`, sessionId))[0] || []).map((h) => String(h ?? "").trim());
-    console.log(`[sync-lavoro-bases] Gerencial dims: ${dims.rowCount} linhas x ${dims.columnCount} colunas`);
+    console.log(`[sync-lavoro-bases] Gerencial dims: ${dims.rowCount} linhas x ${dims.columnCount} colunas (início na linha ${resume?.startRow ?? 3})`);
 
-    let rows = 0;
+    let rows = resume?.rowsSoFar ?? 0;
     let totalComissaoBruta = 0;
     let comissaoBrutaComEmissao = 0;
     const batch: Record<string, unknown>[] = [];
     const totalChunks = Math.ceil(Math.max(0, dims.rowCount - 2) / GERENCIAL_READ_CHUNK);
-    let chunkIdx = 0;
-    for (let r = 3; r <= dims.rowCount; r += GERENCIAL_READ_CHUNK) {
+    let r = resume?.startRow ?? 3;
+    let chunksThisRun = 0;
+    while (r <= dims.rowCount && chunksThisRun < GERENCIAL_MAX_CHUNKS_PER_RUN) {
       const end = Math.min(r + GERENCIAL_READ_CHUNK - 1, dims.rowCount);
       const values = await readRangeValues(token, target, sheet, `A${r}:${lastCol}${end}`, sessionId);
       for (const rowVals of values) {
@@ -470,13 +489,26 @@ async function syncGerencialBase(admin: ReturnType<typeof createClient>, token: 
         if (c.data_emissao) comissaoBrutaComEmissao += Number(c.comissao_bruta) || 0;
       }
       await flushBatch(admin, "raw_lavoro_gerencial", batch);
-      chunkIdx++;
+      chunksThisRun++;
+      r = end + 1;
+      const chunkIdx = Math.ceil((r - 3) / GERENCIAL_READ_CHUNK);
       // Heartbeat de progresso a cada chunk (também detectável na UI).
       await updateSyncLog(admin, syncId, "gerencial", {
         status: "erro",
         linhas_importadas: rows,
         mensagem_erro: `Em progresso: chunk ${chunkIdx}/${totalChunks} (${rows} linhas)`,
       });
+    }
+
+    if (r <= dims.rowCount) {
+      // Ainda há linhas: encadeia a continuação numa nova invocação.
+      console.log(`[sync-lavoro-bases] Gerencial parcial: continua na linha ${r}`);
+      await triggerFollowUp(authHeader, "gerencial", 1, "resume-gerencial", {
+        gerencialResume: { syncId, startRow: r, rowsSoFar: rows } satisfies GerencialResume,
+        chainCaixa: chainCaixa === true,
+      });
+
+      return { syncId, rows, ramos: 0, totalComissaoBruta, comissaoBrutaComEmissao, partial: true, nextRow: r };
     }
 
     const ramoSheet = await resolveWorkbookSheet(token, target, "aux Ramo", sessionId);
@@ -486,9 +518,9 @@ async function syncGerencialBase(admin: ReturnType<typeof createClient>, token: 
     const ramoHeaders = ((await readRangeValues(token, target, ramoSheet, `A${headerRow}:${ramoLastCol}${headerRow}`, sessionId))[0] || []).map((h) => String(h ?? "").trim());
     let ramos = 0;
     const ramoBatch: Record<string, unknown>[] = [];
-    for (let r = headerRow + 1; r <= ramoDims.rowCount; r += READ_CHUNK) {
-      const end = Math.min(r + READ_CHUNK - 1, ramoDims.rowCount);
-      const values = await readRangeValues(token, target, ramoSheet, `A${r}:${ramoLastCol}${end}`, sessionId);
+    for (let rr = headerRow + 1; rr <= ramoDims.rowCount; rr += READ_CHUNK) {
+      const end = Math.min(rr + READ_CHUNK - 1, ramoDims.rowCount);
+      const values = await readRangeValues(token, target, ramoSheet, `A${rr}:${ramoLastCol}${end}`, sessionId);
       for (const rowVals of values) {
         const raw = rowFromValues(ramoHeaders, rowVals);
         if (!raw) continue;
@@ -510,6 +542,7 @@ async function syncGerencialBase(admin: ReturnType<typeof createClient>, token: 
       await closeWorkbookSession(token, target, sessionId);
     }
   }
+
 }
 
 
@@ -635,6 +668,33 @@ async function createPendingSyncLog(admin: ReturnType<typeof createClient>, sync
   });
 }
 
+// Evita execuções concorrentes da mesma base (crons duplicados / retries
+// sobrepostos). Duas execuções simultâneas dividem o mesmo orçamento de CPU do
+// worker e ambas morrem com "CPU Time exceeded".
+const RUNNING_WINDOW_MIN = 12;
+
+async function isBaseRunning(admin: ReturnType<typeof createClient>, base: "gerencial" | "caixa"): Promise<boolean> {
+  try {
+    const since = new Date(Date.now() - RUNNING_WINDOW_MIN * 60_000).toISOString();
+    const { data, error } = await admin
+      .from("lavoro_sync_log")
+      .select("id, mensagem_erro, criado_em")
+      .eq("base", base)
+      .eq("status", "erro")
+      .gte("criado_em", since)
+      .order("criado_em", { ascending: false })
+      .limit(20);
+    if (error) return false;
+    return (data ?? []).some((r: any) => {
+      const m = String(r.mensagem_erro ?? "");
+      return m.startsWith("Sync iniciado") || m.startsWith("Em progresso");
+    });
+  } catch {
+    return false;
+  }
+}
+
+
 async function updateSyncLog(
   admin: ReturnType<typeof createClient>,
   syncId: string,
@@ -665,6 +725,7 @@ async function triggerFollowUp(
   base: "gerencial" | "caixa",
   attempt: number,
   trigger: string,
+  extra?: Record<string, unknown>,
 ) {
   try {
     const res = await fetch(`${SUPABASE_URL}/functions/v1/sync-lavoro-bases`, {
@@ -673,13 +734,14 @@ async function triggerFollowUp(
         "Content-Type": "application/json",
         ...(authHeader ? { Authorization: authHeader } : { Authorization: `Bearer ${SERVICE_KEY}` }),
       },
-      body: JSON.stringify({ trigger, base, attempt }),
+      body: JSON.stringify({ trigger, base, attempt, ...(extra ?? {}) }),
     });
     console.log(`[sync-lavoro-bases] Follow-up ${base} (attempt ${attempt}) disparado: HTTP ${res.status}`);
   } catch (err: any) {
     console.error(`[sync-lavoro-bases] Falha ao disparar follow-up ${base}:`, err?.message ?? String(err));
   }
 }
+
 
 async function scheduleRetry(
   admin: ReturnType<typeof createClient>,
@@ -703,13 +765,15 @@ async function runSyncJob(
   requestedBase: "all" | "gerencial" | "caixa",
   authHeader: string | null,
   attempt: number,
+  opts?: { resume?: GerencialResume; chainCaixa?: boolean },
 ) {
   const result: Record<string, any> = { ok: false, base: requestedBase, attempt };
   const runGerencial = requestedBase === "all" || requestedBase === "gerencial";
   const runCaixa = requestedBase === "caixa";
-  const chainCaixaAfter = requestedBase === "all";
+  let chainCaixaAfter = requestedBase === "all" || opts?.chainCaixa === true;
 
-  console.log(`[sync-lavoro-bases] START base=${requestedBase} attempt=${attempt}`);
+  console.log(`[sync-lavoro-bases] START base=${requestedBase} attempt=${attempt}${opts?.resume ? ` resume=${opts.resume.startRow}` : ""}`);
+
 
   let creds: ReturnType<typeof loadLavoroCredentials>;
   let token: string;
@@ -735,34 +799,50 @@ async function runSyncJob(
   }
 
   if (runGerencial) {
-    try {
-      const res = await syncGerencialBase(admin, token, siteId);
-      result.gerencial = res;
-    } catch (err: any) {
-      const msg = err?.message ?? String(err);
-      console.error("[sync-lavoro-bases] GERENCIAL ERROR:", msg);
-      if (attempt < MAX_ATTEMPTS) {
-        await scheduleRetry(admin, authHeader, "gerencial", attempt + 1, msg);
-      } else {
-        await notifyAdmins(admin, `Sync Lavoro gerencial falhou após ${MAX_ATTEMPTS} tentativas`, { error: msg });
+    if (!opts?.resume && (await isBaseRunning(admin, "gerencial"))) {
+      console.log("[sync-lavoro-bases] SKIP gerencial: já existe execução em andamento");
+      result.gerencial = { skipped: "em_andamento" };
+      chainCaixaAfter = false;
+    } else {
+      try {
+        const res = await syncGerencialBase(admin, token, siteId, authHeader, opts?.resume, chainCaixaAfter);
+        result.gerencial = res;
+        // Enquanto a carga do gerencial estiver fatiada, o caixa é encadeado
+        // pela última fatia (evita duas cargas pesadas simultâneas).
+        if ((res as any).partial) chainCaixaAfter = false;
+      } catch (err: any) {
+
+        const msg = err?.message ?? String(err);
+        console.error("[sync-lavoro-bases] GERENCIAL ERROR:", msg);
+        if (attempt < MAX_ATTEMPTS) {
+          await scheduleRetry(admin, authHeader, "gerencial", attempt + 1, msg);
+        } else {
+          await notifyAdmins(admin, `Sync Lavoro gerencial falhou após ${MAX_ATTEMPTS} tentativas`, { error: msg });
+        }
       }
     }
   }
 
   if (runCaixa) {
-    try {
-      const res = await syncCaixaBase(admin, token, siteId, result);
-      result.caixa = res;
-    } catch (err: any) {
-      const msg = err?.message ?? String(err);
-      console.error("[sync-lavoro-bases] CAIXA ERROR:", msg);
-      if (attempt < MAX_ATTEMPTS) {
-        await scheduleRetry(admin, authHeader, "caixa", attempt + 1, msg);
-      } else {
-        await notifyAdmins(admin, `Sync Lavoro caixa falhou após ${MAX_ATTEMPTS} tentativas`, { error: msg });
+    if (await isBaseRunning(admin, "caixa")) {
+      console.log("[sync-lavoro-bases] SKIP caixa: já existe execução em andamento");
+      result.caixa = { skipped: "em_andamento" };
+    } else {
+      try {
+        const res = await syncCaixaBase(admin, token, siteId, result);
+        result.caixa = res;
+      } catch (err: any) {
+        const msg = err?.message ?? String(err);
+        console.error("[sync-lavoro-bases] CAIXA ERROR:", msg);
+        if (attempt < MAX_ATTEMPTS) {
+          await scheduleRetry(admin, authHeader, "caixa", attempt + 1, msg);
+        } else {
+          await notifyAdmins(admin, `Sync Lavoro caixa falhou após ${MAX_ATTEMPTS} tentativas`, { error: msg });
+        }
       }
     }
   }
+
 
   if (chainCaixaAfter) {
     await triggerFollowUp(authHeader, "caixa", 1, "chain-after-gerencial");
@@ -785,17 +865,28 @@ Deno.serve(async (req) => {
     const requestedBase = body?.base === "gerencial" || body?.base === "caixa" ? body.base : "all";
     const attempt = Math.max(1, Math.min(MAX_ATTEMPTS, Number(body?.attempt) || 1));
     const authHeader = req.headers.get("Authorization");
+    const rawResume = body?.gerencialResume;
+    const resume: GerencialResume | undefined =
+      rawResume && typeof rawResume.syncId === "string" && Number(rawResume.startRow) > 0
+        ? {
+            syncId: rawResume.syncId,
+            startRow: Number(rawResume.startRow),
+            rowsSoFar: Number(rawResume.rowsSoFar) || 0,
+          }
+        : undefined;
+    const opts = { resume, chainCaixa: body?.chainCaixa === true };
     if (body?.wait === true) {
-      const result = await runSyncJob(admin, requestedBase, authHeader, attempt);
+      const result = await runSyncJob(admin, requestedBase, authHeader, attempt, opts);
       return new Response(JSON.stringify({ ok: true, status: "completed", base: requestedBase, attempt, result }), { headers });
     }
 
     EdgeRuntime.waitUntil(
-      runSyncJob(admin, requestedBase, authHeader, attempt).catch((err) => {
+      runSyncJob(admin, requestedBase, authHeader, attempt, opts).catch((err) => {
         console.error("[sync-lavoro-bases] waitUntil unhandled:", err?.message ?? String(err));
       }),
     );
     return new Response(JSON.stringify({ ok: true, status: "accepted", base: requestedBase, attempt }), { headers });
+
   } catch (err: any) {
     const msg = err?.message ?? String(err);
     console.error("[sync-lavoro-bases] ERROR:", msg);
