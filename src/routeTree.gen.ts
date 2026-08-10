@@ -24,6 +24,7 @@ import { Route as AuthenticatedFacilitiesRouteImport } from './routes/_authentic
 import { Route as AuthenticatedDemaisRamosRouteImport } from './routes/_authenticated/demais-ramos'
 import { Route as AuthenticatedBeneficiosRouteImport } from './routes/_authenticated/beneficios'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
+import { Route as AuthenticatedGarantiaAnaliseLimiteRouteImport } from './routes/_authenticated/garantia_.analise-limite'
 import { Route as AuthenticatedDashboardReportFechamentoRouteImport } from './routes/_authenticated/dashboard.report-fechamento'
 import { Route as AuthenticatedDashboardReceitaExecutivoRouteImport } from './routes/_authenticated/dashboard.receita-executivo'
 import { Route as AuthenticatedDashboardReceitaCaixaRouteImport } from './routes/_authenticated/dashboard.receita-caixa'
@@ -117,6 +118,12 @@ const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedGarantiaAnaliseLimiteRoute =
+  AuthenticatedGarantiaAnaliseLimiteRouteImport.update({
+    id: '/garantia_/analise-limite',
+    path: '/garantia/analise-limite',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDashboardReportFechamentoRoute =
   AuthenticatedDashboardReportFechamentoRouteImport.update({
     id: '/dashboard/report-fechamento',
@@ -237,6 +244,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/receita-caixa': typeof AuthenticatedDashboardReceitaCaixaRoute
   '/dashboard/receita-executivo': typeof AuthenticatedDashboardReceitaExecutivoRoute
   '/dashboard/report-fechamento': typeof AuthenticatedDashboardReportFechamentoRoute
+  '/garantia/analise-limite': typeof AuthenticatedGarantiaAnaliseLimiteRoute
   '/admin/emails/log': typeof AuthenticatedAdminEmailsLogRoute
   '/admin/emails/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
   '/api/public/hooks/dispatch-scheduled-newsletters': typeof ApiPublicHooksDispatchScheduledNewslettersRoute
@@ -269,6 +277,7 @@ export interface FileRoutesByTo {
   '/dashboard/receita-caixa': typeof AuthenticatedDashboardReceitaCaixaRoute
   '/dashboard/receita-executivo': typeof AuthenticatedDashboardReceitaExecutivoRoute
   '/dashboard/report-fechamento': typeof AuthenticatedDashboardReportFechamentoRoute
+  '/garantia/analise-limite': typeof AuthenticatedGarantiaAnaliseLimiteRoute
   '/admin/emails/log': typeof AuthenticatedAdminEmailsLogRoute
   '/admin/emails/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
   '/api/public/hooks/dispatch-scheduled-newsletters': typeof ApiPublicHooksDispatchScheduledNewslettersRoute
@@ -303,6 +312,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/receita-caixa': typeof AuthenticatedDashboardReceitaCaixaRoute
   '/_authenticated/dashboard/receita-executivo': typeof AuthenticatedDashboardReceitaExecutivoRoute
   '/_authenticated/dashboard/report-fechamento': typeof AuthenticatedDashboardReportFechamentoRoute
+  '/_authenticated/garantia_/analise-limite': typeof AuthenticatedGarantiaAnaliseLimiteRoute
   '/_authenticated/admin/emails_/log': typeof AuthenticatedAdminEmailsLogRoute
   '/_authenticated/admin/emails_/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
   '/api/public/hooks/dispatch-scheduled-newsletters': typeof ApiPublicHooksDispatchScheduledNewslettersRoute
@@ -337,6 +347,7 @@ export interface FileRouteTypes {
     | '/dashboard/receita-caixa'
     | '/dashboard/receita-executivo'
     | '/dashboard/report-fechamento'
+    | '/garantia/analise-limite'
     | '/admin/emails/log'
     | '/admin/emails/schedules'
     | '/api/public/hooks/dispatch-scheduled-newsletters'
@@ -369,6 +380,7 @@ export interface FileRouteTypes {
     | '/dashboard/receita-caixa'
     | '/dashboard/receita-executivo'
     | '/dashboard/report-fechamento'
+    | '/garantia/analise-limite'
     | '/admin/emails/log'
     | '/admin/emails/schedules'
     | '/api/public/hooks/dispatch-scheduled-newsletters'
@@ -402,6 +414,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/receita-caixa'
     | '/_authenticated/dashboard/receita-executivo'
     | '/_authenticated/dashboard/report-fechamento'
+    | '/_authenticated/garantia_/analise-limite'
     | '/_authenticated/admin/emails_/log'
     | '/_authenticated/admin/emails_/schedules'
     | '/api/public/hooks/dispatch-scheduled-newsletters'
@@ -525,6 +538,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/garantia_/analise-limite': {
+      id: '/_authenticated/garantia_/analise-limite'
+      path: '/garantia/analise-limite'
+      fullPath: '/garantia/analise-limite'
+      preLoaderRoute: typeof AuthenticatedGarantiaAnaliseLimiteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard/report-fechamento': {
@@ -687,6 +707,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardReceitaCaixaRoute: typeof AuthenticatedDashboardReceitaCaixaRoute
   AuthenticatedDashboardReceitaExecutivoRoute: typeof AuthenticatedDashboardReceitaExecutivoRoute
   AuthenticatedDashboardReportFechamentoRoute: typeof AuthenticatedDashboardReportFechamentoRoute
+  AuthenticatedGarantiaAnaliseLimiteRoute: typeof AuthenticatedGarantiaAnaliseLimiteRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -708,6 +729,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedDashboardReceitaExecutivoRoute,
   AuthenticatedDashboardReportFechamentoRoute:
     AuthenticatedDashboardReportFechamentoRoute,
+  AuthenticatedGarantiaAnaliseLimiteRoute:
+    AuthenticatedGarantiaAnaliseLimiteRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -736,13 +759,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
