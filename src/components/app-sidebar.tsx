@@ -54,9 +54,22 @@ const areasAll = [
   { title: "Facilities", url: "/facilities", icon: Wrench, perm: "menu_area_facilities" },
 ];
 
-const ramosAll = [
-  { title: "Garantia", url: "/garantia", icon: ShieldCheck, perm: "menu_ramo_garantia" },
-  { title: "Análise de Limite", url: "/garantia/analise-limite", icon: FileSearch, perm: "menu_ramo_garantia" },
+type RamoItem = {
+  title: string;
+  url: string;
+  icon: typeof ShieldCheck;
+  perm: string;
+  children?: { title: string; url: string; icon: typeof ShieldCheck }[];
+};
+
+const ramosAll: RamoItem[] = [
+  {
+    title: "Garantia",
+    url: "/garantia",
+    icon: ShieldCheck,
+    perm: "menu_ramo_garantia",
+    children: [{ title: "Análise de Limite", url: "/garantia/analise-limite", icon: FileSearch }],
+  },
   { title: "Benefícios", url: "/beneficios", icon: HeartPulse, perm: "menu_ramo_beneficios" },
   { title: "Demais Ramos", url: "/demais-ramos", icon: Boxes, perm: "menu_ramo_demais" },
 ];
@@ -190,16 +203,35 @@ export function AppSidebar() {
             <SidebarGroupLabel>Ramos</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {ramos.map((i) => (
-                  <SidebarMenuItem key={i.url}>
-                    <SidebarMenuButton asChild isActive={isActive(i.url)} tooltip={i.title}>
-                      <Link to={i.url}>
-                        <i.icon />
-                        <span>{i.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {ramos.map((i) => {
+                  const aberto = pathname === i.url || pathname.startsWith(i.url + "/");
+                  return (
+                    <SidebarMenuItem key={i.url}>
+                      <SidebarMenuButton asChild isActive={isActive(i.url)} tooltip={i.title}>
+                        <Link to={i.url}>
+                          <i.icon />
+                          <span>{i.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                      {!collapsed &&
+                        aberto &&
+                        i.children?.map((c) => (
+                          <SidebarMenuButton
+                            key={c.url}
+                            asChild
+                            isActive={isActive(c.url)}
+                            tooltip={c.title}
+                            className="pl-6"
+                          >
+                            <Link to={c.url}>
+                              <CornerDownRight />
+                              <span>{c.title}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        ))}
+                    </SidebarMenuItem>
+                  );
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
