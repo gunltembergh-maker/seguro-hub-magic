@@ -503,13 +503,23 @@ async function syncGerencialBase(
     if (r <= dims.rowCount) {
       // Ainda há linhas: encadeia a continuação numa nova invocação.
       console.log(`[sync-lavoro-bases] Gerencial parcial: continua na linha ${r}`);
-      await triggerFollowUp(authHeader, "gerencial", 1, "resume-gerencial", {
+      const ok = await triggerFollowUp(authHeader, "gerencial", 1, "resume-gerencial", {
         gerencialResume: { syncId, startRow: r, rowsSoFar: rows } satisfies GerencialResume,
         chainCaixa: chainCaixa === true,
       });
+      if (!ok) {
+        // Sem continuação a carga ficaria "Em progresso" para sempre e
+        // bloquearia as próximas execuções: marca como erro para o retry pegar.
+        await updateSyncLog(admin, syncId, "gerencial", {
+          status: "erro",
+          linhas_importadas: rows,
+          mensagem_erro: `Falha ao encadear continuação a partir da linha ${r}`,
+        });
+      }
 
       return { syncId, rows, ramos: 0, totalComissaoBruta, comissaoBrutaComEmissao, partial: true, nextRow: r };
     }
+
 
     const ramoSheet = await resolveWorkbookSheet(token, target, "aux Ramo", sessionId);
     const ramoDims = await getSheetDimensions(token, target, ramoSheet, sessionId);
