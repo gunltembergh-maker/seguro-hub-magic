@@ -8,6 +8,7 @@ import {
   Layers,
   Wrench,
   ShieldCheck,
+  FileSearch,
   HeartPulse,
   Boxes,
   Users,
