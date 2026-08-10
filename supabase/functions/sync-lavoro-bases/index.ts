@@ -503,13 +503,23 @@ async function syncGerencialBase(
     if (r <= dims.rowCount) {
       // Ainda há linhas: encadeia a continuação numa nova invocação.
       console.log(`[sync-lavoro-bases] Gerencial parcial: continua na linha ${r}`);
-      await triggerFollowUp(authHeader, "gerencial", 1, "resume-gerencial", {
+      const ok = await triggerFollowUp(authHeader, "gerencial", 1, "resume-gerencial", {
         gerencialResume: { syncId, startRow: r, rowsSoFar: rows } satisfies GerencialResume,
         chainCaixa: chainCaixa === true,
       });
+      if (!ok) {
+        // Sem continuação a carga ficaria "Em progresso" para sempre e
+        // bloquearia as próximas execuções: marca como erro para o retry pegar.
+        await updateSyncLog(admin, syncId, "gerencial", {
+          status: "erro",
+          linhas_importadas: rows,
+          mensagem_erro: `Falha ao encadear continuação a partir da linha ${r}`,
+        });
+      }
 
       return { syncId, rows, ramos: 0, totalComissaoBruta, comissaoBrutaComEmissao, partial: true, nextRow: r };
     }
+
 
     const ramoSheet = await resolveWorkbookSheet(token, target, "aux Ramo", sessionId);
     const ramoDims = await getSheetDimensions(token, target, ramoSheet, sessionId);
@@ -721,26 +731,35 @@ async function updateSyncLog(
 const MAX_ATTEMPTS = 3;
 
 async function triggerFollowUp(
-  authHeader: string | null,
+  _authHeader: string | null,
   base: "gerencial" | "caixa",
   attempt: number,
   trigger: string,
   extra?: Record<string, unknown>,
-) {
-  try {
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/sync-lavoro-bases`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(authHeader ? { Authorization: authHeader } : { Authorization: `Bearer ${SERVICE_KEY}` }),
-      },
-      body: JSON.stringify({ trigger, base, attempt, ...(extra ?? {}) }),
-    });
-    console.log(`[sync-lavoro-bases] Follow-up ${base} (attempt ${attempt}) disparado: HTTP ${res.status}`);
-  } catch (err: any) {
-    console.error(`[sync-lavoro-bases] Falha ao disparar follow-up ${base}:`, err?.message ?? String(err));
+): Promise<boolean> {
+  // Sempre usa a service key: o header repassado pelo chamador (cron/anon)
+  // pode expirar ou ser rejeitado e a continuação nunca acontecia.
+  for (let i = 1; i <= 3; i++) {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/sync-lavoro-bases`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${SERVICE_KEY}`,
+          apikey: SERVICE_KEY,
+        },
+        body: JSON.stringify({ trigger, base, attempt, ...(extra ?? {}) }),
+      });
+      console.log(`[sync-lavoro-bases] Follow-up ${base} (attempt ${attempt}) try ${i}: HTTP ${res.status}`);
+      if (res.ok) return true;
+    } catch (err: any) {
+      console.error(`[sync-lavoro-bases] Falha ao disparar follow-up ${base} (try ${i}):`, err?.message ?? String(err));
+    }
+    await new Promise((r) => setTimeout(r, 2000 * i));
   }
+  return false;
 }
+
 
 
 async function scheduleRetry(
