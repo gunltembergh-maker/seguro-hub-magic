@@ -203,16 +203,35 @@ export function AppSidebar() {
             <SidebarGroupLabel>Ramos</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {ramos.map((i) => (
-                  <SidebarMenuItem key={i.url}>
-                    <SidebarMenuButton asChild isActive={isActive(i.url)} tooltip={i.title}>
-                      <Link to={i.url}>
-                        <i.icon />
-                        <span>{i.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {ramos.map((i) => {
+                  const aberto = pathname === i.url || pathname.startsWith(i.url + "/");
+                  return (
+                    <SidebarMenuItem key={i.url}>
+                      <SidebarMenuButton asChild isActive={isActive(i.url)} tooltip={i.title}>
+                        <Link to={i.url}>
+                          <i.icon />
+                          <span>{i.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                      {!collapsed &&
+                        aberto &&
+                        i.children?.map((c) => (
+                          <SidebarMenuButton
+                            key={c.url}
+                            asChild
+                            isActive={isActive(c.url)}
+                            tooltip={c.title}
+                            className="pl-6"
+                          >
+                            <Link to={c.url}>
+                              <CornerDownRight />
+                              <span>{c.title}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        ))}
+                    </SidebarMenuItem>
+                  );
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
