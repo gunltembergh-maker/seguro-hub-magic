@@ -55,6 +55,7 @@ const areasAll = [
 
 const ramosAll = [
   { title: "Garantia", url: "/garantia", icon: ShieldCheck, perm: "menu_ramo_garantia" },
+  { title: "Análise de Limite", url: "/garantia/analise-limite", icon: FileSearch, perm: "menu_ramo_garantia" },
   { title: "Benefícios", url: "/beneficios", icon: HeartPulse, perm: "menu_ramo_beneficios" },
   { title: "Demais Ramos", url: "/demais-ramos", icon: Boxes, perm: "menu_ramo_demais" },
 ];
