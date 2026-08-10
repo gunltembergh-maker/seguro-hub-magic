@@ -54,7 +54,15 @@ const areasAll = [
   { title: "Facilities", url: "/facilities", icon: Wrench, perm: "menu_area_facilities" },
 ];
 
-const ramosAll = [
+type RamoItem = {
+  title: string;
+  url: string;
+  icon: typeof ShieldCheck;
+  perm: string;
+  children?: { title: string; url: string; icon: typeof ShieldCheck }[];
+};
+
+const ramosAll: RamoItem[] = [
   {
     title: "Garantia",
     url: "/garantia",
