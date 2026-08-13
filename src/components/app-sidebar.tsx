@@ -74,10 +74,16 @@ const ramosAll: RamoItem[] = [
   { title: "Demais Ramos", url: "/demais-ramos", icon: Boxes, perm: "menu_ramo_demais" },
 ];
 export function AppSidebar() {
-  const { state } = useSidebar();
+  const { state, setOpen, setOpenMobile, isMobile } = useSidebar();
   const collapsed = state === "collapsed";
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const isActive = (url: string) => pathname === url;
+
+  // Recolher o menu principal ao navegar para itens filhos/submenu.
+  const collapseOnNavigate = () => {
+    if (isMobile) setOpenMobile(false);
+    else setOpen(false);
+  };
 
   const meuPerfil = useMeuPerfilEfetivo();
   const isAdmin = hasRole(meuPerfil, "ADMIN");
