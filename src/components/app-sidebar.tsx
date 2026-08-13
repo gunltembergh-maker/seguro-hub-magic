@@ -314,6 +314,7 @@ export function AppSidebar() {
                       item={i}
                       isActiveParent={isActive(i.url ?? "")}
                       hasActiveChild={hasActiveChild}
+                      isActiveChild={isActive}
                       collapsed={collapsed}
                       onChildNavigate={collapseOnNavigate}
                     />
