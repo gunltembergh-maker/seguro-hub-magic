@@ -153,7 +153,7 @@ function CollapsibleNavItem({
               <SidebarMenuSubButton
                 key={c.url}
                 asChild
-                isActive={false}
+                isActive={isActiveChild(c.url)}
               >
                 <Link to={c.url} onClick={onChildNavigate} className="flex items-center gap-2">
                   <ChildIcon className="h-3.5 w-3.5 shrink-0" />
