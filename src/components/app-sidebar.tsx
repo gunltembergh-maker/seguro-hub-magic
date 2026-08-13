@@ -74,10 +74,16 @@ const ramosAll: RamoItem[] = [
   { title: "Demais Ramos", url: "/demais-ramos", icon: Boxes, perm: "menu_ramo_demais" },
 ];
 export function AppSidebar() {
-  const { state } = useSidebar();
+  const { state, setOpen, setOpenMobile, isMobile } = useSidebar();
   const collapsed = state === "collapsed";
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const isActive = (url: string) => pathname === url;
+
+  // Recolher o menu principal ao navegar para itens filhos/submenu.
+  const collapseOnNavigate = () => {
+    if (isMobile) setOpenMobile(false);
+    else setOpen(false);
+  };
 
   const meuPerfil = useMeuPerfilEfetivo();
   const isAdmin = hasRole(meuPerfil, "ADMIN");
@@ -165,7 +171,7 @@ export function AppSidebar() {
                 {dashboardItems.map((i) => (
                   <SidebarMenuItem key={i.url}>
                     <SidebarMenuButton asChild isActive={isActive(i.url)} tooltip={i.title} className="pl-6">
-                      <Link to={i.url}>
+                      <Link to={i.url} onClick={collapseOnNavigate}>
                         <CornerDownRight />
                         <span>{i.title}</span>
                       </Link>
@@ -223,7 +229,7 @@ export function AppSidebar() {
                             tooltip={c.title}
                             className="pl-6"
                           >
-                            <Link to={c.url}>
+                            <Link to={c.url} onClick={collapseOnNavigate}>
                               <CornerDownRight />
                               <span>{c.title}</span>
                             </Link>
