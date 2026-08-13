@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Home,
@@ -18,16 +19,15 @@ import {
   BarChart3,
   CornerDownRight,
   Mail,
+  ChevronRight,
+  type LucideIcon,
 } from "lucide-react";
-
-
-
 
 import logoBranca from "@/assets/logo-branca.png.asset.json";
 import { hasPermission, hasRole } from "@/hooks/use-meu-perfil";
 import { useMeuPerfilEfetivo } from "@/contexts/view-as-context";
 
-
+import { cn } from "@/lib/utils";
 import {
   Sidebar,
   SidebarContent,
@@ -38,6 +38,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
@@ -54,25 +56,118 @@ const areasAll = [
   { title: "Facilities", url: "/facilities", icon: Wrench, perm: "menu_area_facilities" },
 ];
 
-type RamoItem = {
+type ChildItem = { title: string; url: string; icon: LucideIcon };
+
+type CollapsibleItem = {
   title: string;
-  url: string;
-  icon: typeof ShieldCheck;
-  perm: string;
-  children?: { title: string; url: string; icon: typeof ShieldCheck }[];
+  url?: string;
+  icon: LucideIcon;
+  tooltip: string;
+  perm?: string;
+  children?: ChildItem[];
 };
 
-const ramosAll: RamoItem[] = [
+const ramosAll: CollapsibleItem[] = [
   {
     title: "Garantia",
     url: "/garantia",
     icon: ShieldCheck,
+    tooltip: "Garantia",
     perm: "menu_ramo_garantia",
     children: [{ title: "Análise de Limite", url: "/garantia/analise-limite", icon: FileSearch }],
   },
-  { title: "Benefícios", url: "/beneficios", icon: HeartPulse, perm: "menu_ramo_beneficios" },
-  { title: "Demais Ramos", url: "/demais-ramos", icon: Boxes, perm: "menu_ramo_demais" },
+  { title: "Benefícios", url: "/beneficios", icon: HeartPulse, tooltip: "Benefícios", perm: "menu_ramo_beneficios" },
+  { title: "Demais Ramos", url: "/demais-ramos", icon: Boxes, tooltip: "Demais Ramos", perm: "menu_ramo_demais" },
 ];
+
+/**
+ * Item de menu com subitens recolhíveis.
+ * Os filhos ficam ocultos por padrão e aparecem ao passar o mouse ou clicar.
+ * Se a rota ativa for um filho, o grupo abre automaticamente para manter o destorte.
+ */
+function CollapsibleNavItem({
+  item,
+  isActiveParent,
+  hasActiveChild,
+  collapsed,
+  onChildNavigate,
+}: {
+  item: CollapsibleItem;
+  isActiveParent: boolean;
+  hasActiveChild: boolean;
+  collapsed: boolean;
+  onChildNavigate: () => void;
+}) {
+  const [pinned, setPinned] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const open = pinned || hovered || hasActiveChild;
+  const Icon = item.icon;
+
+  const toggle = () => setPinned((p) => !p);
+
+  return (
+    <SidebarMenuItem
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <SidebarMenuButton
+        asChild={!!item.url}
+        isActive={isActiveParent}
+        tooltip={item.tooltip}
+        onClick={item.url ? undefined : toggle}
+      >
+        {item.url ? (
+          <Link to={item.url} onClick={toggle}>
+            <Icon />
+            <span>{item.title}</span>
+            {item.children && item.children.length > 0 && (
+              <ChevronRight
+                className={cn(
+                  "ml-auto h-4 w-4 shrink-0 text-sidebar-foreground/50 transition-transform duration-200",
+                  open && "rotate-90",
+                )}
+              />
+            )}
+          </Link>
+        ) : (
+          <button type="button" onClick={toggle} className="flex w-full items-center gap-2">
+            <Icon />
+            <span>{item.title}</span>
+            {item.children && item.children.length > 0 && (
+              <ChevronRight
+                className={cn(
+                  "ml-auto h-4 w-4 shrink-0 text-sidebar-foreground/50 transition-transform duration-200",
+                  open && "rotate-90",
+                )}
+              />
+            )}
+          </button>
+        )}
+      </SidebarMenuButton>
+
+      {open && !collapsed && item.children && (
+        <SidebarMenuSub>
+          {item.children.map((c) => {
+            const ChildIcon = c.icon;
+            return (
+              <SidebarMenuSubButton
+                key={c.url}
+                asChild
+                isActive={false}
+              >
+                <Link to={c.url} onClick={onChildNavigate} className="flex items-center gap-2">
+                  <ChildIcon className="h-3.5 w-3.5 shrink-0" />
+                  <span>{c.title}</span>
+                </Link>
+              </SidebarMenuSubButton>
+            );
+          })}
+        </SidebarMenuSub>
+      )}
+    </SidebarMenuItem>
+  );
+}
+
 export function AppSidebar() {
   const { state, setOpen, setOpenMobile, isMobile } = useSidebar();
   const collapsed = state === "collapsed";
@@ -89,7 +184,7 @@ export function AppSidebar() {
   const isAdmin = hasRole(meuPerfil, "ADMIN");
 
   const areas = areasAll.filter((i) => isAdmin || hasPermission(meuPerfil, i.perm));
-  const ramos = ramosAll.filter((i) => isAdmin || hasPermission(meuPerfil, i.perm));
+  const ramos = ramosAll.filter((i) => isAdmin || (i.perm ? hasPermission(meuPerfil, i.perm) : true));
 
   const dashboardItems = [
     { title: "Receita", url: "/dashboard/receita",
@@ -102,6 +197,7 @@ export function AppSidebar() {
       show: isAdmin || hasPermission(meuPerfil, "menu_dashboard_report_fechamento") },
   ].filter((i) => i.show);
   const showDashboards = dashboardItems.length > 0;
+  const hasActiveDashboardChild = dashboardItems.some((i) => isActive(i.url));
 
   const adminItems = [
     { title: "Usuários", url: "/admin/usuarios", icon: Users, show: isAdmin || hasPermission(meuPerfil, "menu_admin_usuarios") },
@@ -114,10 +210,19 @@ export function AppSidebar() {
     { title: "Log de Emails", url: "/admin/emails/log", icon: Mail, show: isAdmin || hasPermission(meuPerfil, "menu_admin_emails_log") },
     { title: "Configurações", url: "/admin/configuracoes", icon: Settings,
       show: isAdmin || hasPermission(meuPerfil, "menu_admin_configuracoes") },
-
   ].filter((i) => i.show);
 
-
+  // Item "Dashboards" agrupador com filhos recolhíveis
+  const dashboardsCollapsible: CollapsibleItem = {
+    title: "Dashboards",
+    icon: BarChart3,
+    tooltip: "Dashboards",
+    children: dashboardItems.map((d) => ({
+      title: d.title,
+      url: d.url,
+      icon: CornerDownRight,
+    })),
+  };
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
@@ -128,7 +233,6 @@ export function AppSidebar() {
             alt="Lavoro Seguros"
             className={collapsed ? "h-7 w-7 shrink-0 object-contain" : "h-8 w-auto object-contain"}
           />
-
           {!collapsed && (
             <div className="flex flex-col leading-tight">
               <span className="font-display text-sm font-semibold text-sidebar-foreground">Lavoro Seguros</span>
@@ -136,8 +240,8 @@ export function AppSidebar() {
             </div>
           )}
         </Link>
-
       </SidebarHeader>
+
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Principal</SidebarGroupLabel>
@@ -162,22 +266,13 @@ export function AppSidebar() {
             <SidebarGroupLabel>Dashboards</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton isActive={false} tooltip="Dashboards" className="pointer-events-none opacity-80">
-                    <BarChart3 />
-                    <span>Dashboards</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                {dashboardItems.map((i) => (
-                  <SidebarMenuItem key={i.url}>
-                    <SidebarMenuButton asChild isActive={isActive(i.url)} tooltip={i.title} className="pl-6">
-                      <Link to={i.url} onClick={collapseOnNavigate}>
-                        <CornerDownRight />
-                        <span>{i.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                <CollapsibleNavItem
+                  item={dashboardsCollapsible}
+                  isActiveParent={false}
+                  hasActiveChild={hasActiveDashboardChild}
+                  collapsed={collapsed}
+                  onChildNavigate={collapseOnNavigate}
+                />
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -185,7 +280,6 @@ export function AppSidebar() {
 
         {areas.length > 0 && (
           <SidebarGroup>
-
             <SidebarGroupLabel>Áreas</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
@@ -210,39 +304,22 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 {ramos.map((i) => {
-                  const aberto = pathname === i.url || pathname.startsWith(i.url + "/");
+                  const hasActiveChild = !!i.children?.some((c) => isActive(c.url));
                   return (
-                    <SidebarMenuItem key={i.url}>
-                      <SidebarMenuButton asChild isActive={isActive(i.url)} tooltip={i.title}>
-                        <Link to={i.url}>
-                          <i.icon />
-                          <span>{i.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                      {!collapsed &&
-                        aberto &&
-                        i.children?.map((c) => (
-                          <SidebarMenuButton
-                            key={c.url}
-                            asChild
-                            isActive={isActive(c.url)}
-                            tooltip={c.title}
-                            className="pl-6"
-                          >
-                            <Link to={c.url} onClick={collapseOnNavigate}>
-                              <CornerDownRight />
-                              <span>{c.title}</span>
-                            </Link>
-                          </SidebarMenuButton>
-                        ))}
-                    </SidebarMenuItem>
+                    <CollapsibleNavItem
+                      key={i.title}
+                      item={i}
+                      isActiveParent={isActive(i.url ?? "")}
+                      hasActiveChild={hasActiveChild}
+                      collapsed={collapsed}
+                      onChildNavigate={collapseOnNavigate}
+                    />
                   );
                 })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
         )}
-
 
         {adminItems.length > 0 && (
           <SidebarGroup>
@@ -264,6 +341,7 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
       </SidebarContent>
+
       <SidebarFooter className="border-t border-sidebar-border">
         {!collapsed && (
           <p className="px-2 py-1 text-[11px] text-sidebar-foreground/50">
