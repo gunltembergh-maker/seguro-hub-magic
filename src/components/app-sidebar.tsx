@@ -89,12 +89,14 @@ function CollapsibleNavItem({
   item,
   isActiveParent,
   hasActiveChild,
+  isActiveChild,
   collapsed,
   onChildNavigate,
 }: {
   item: CollapsibleItem;
   isActiveParent: boolean;
   hasActiveChild: boolean;
+  isActiveChild: (url: string) => boolean;
   collapsed: boolean;
   onChildNavigate: () => void;
 }) {
