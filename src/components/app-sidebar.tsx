@@ -272,6 +272,7 @@ export function AppSidebar() {
                   item={dashboardsCollapsible}
                   isActiveParent={false}
                   hasActiveChild={hasActiveDashboardChild}
+                  isActiveChild={isActive}
                   collapsed={collapsed}
                   onChildNavigate={collapseOnNavigate}
                 />
