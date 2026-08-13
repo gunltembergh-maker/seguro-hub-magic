@@ -229,7 +229,7 @@ export function AppSidebar() {
                             tooltip={c.title}
                             className="pl-6"
                           >
-                            <Link to={c.url}>
+                            <Link to={c.url} onClick={collapseOnNavigate}>
                               <CornerDownRight />
                               <span>{c.title}</span>
                             </Link>
