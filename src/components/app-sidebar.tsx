@@ -171,7 +171,7 @@ export function AppSidebar() {
                 {dashboardItems.map((i) => (
                   <SidebarMenuItem key={i.url}>
                     <SidebarMenuButton asChild isActive={isActive(i.url)} tooltip={i.title} className="pl-6">
-                      <Link to={i.url}>
+                      <Link to={i.url} onClick={collapseOnNavigate}>
                         <CornerDownRight />
                         <span>{i.title}</span>
                       </Link>
