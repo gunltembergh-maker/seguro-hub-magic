@@ -4487,11 +4487,12 @@ const LIM_LOGO_MAP = {
   newe: 'assets/Newe-logo.png',
   mitsui: 'assets/Mitisui-logo.png',
   axa: 'assets/axa-logo.png',
+  now: 'assets/now-logo.png',
   fator: 'assets/fator.png',
 };
 
 // Todas as seguradoras integradas são consultadas por padrão — sem seleção manual.
-const LIM_ALL_SEGURADORAS = ['jns', 'junto', 'essor', 'sombrero', 'newe', 'mitsui', 'axa', 'fator'];
+const LIM_ALL_SEGURADORAS = ['jns', 'junto', 'essor', 'sombrero', 'newe', 'mitsui', 'axa', 'now', 'fator'];
 const LIM_LABELS = {
   jns: 'JNS Seguros',
   junto: 'Junto Seguros',
@@ -4500,6 +4501,7 @@ const LIM_LABELS = {
   newe: 'NEWE Seguros',
   mitsui: 'Mitsui Sumitomo',
   axa: 'AXA Seguros',
+  now: 'Now Seguros',
   fator: 'Fator Seguradora',
 };
 
@@ -4598,9 +4600,18 @@ function classifyErrorMessage(message) {
   // bloqueio que apenas cita "corretora" (ex.: "bloqueado para esta corretora") não é
   // o mesmo aviso de negócio de tomador nomeado com outro corretor.
   if (t.includes('nomead') && (t.includes('corretor') || t.includes('broker'))) return 'nomeado';
+  // Junto: "Corretor não possui permissão para visualizar o Tomador." — mesma família
+  // de "nomeado com outro corretor" (o tomador já pertence a outro corretor de registro
+  // na seguradora), só que sem a palavra "nomeado" nessa formulação específica.
+  if (t.includes('corretor') && t.includes('permiss')) return 'nomeado';
   if (t.includes('tempo limite') || t.includes('timeout') || t.includes('respond')) return 'sem_resposta';
   if (['motor de crédito', 'motor de credito', 'problema ao rodar', 'instável', 'instavel', 'indisponív', 'indisponiv']
     .some(kw => t.includes(kw))) return 'instavel';
+  // "Risco negado por questões técnicas" (JNS): é decisão de negócio (risco negado),
+  // não instabilidade passageira do motor — o "por questões técnicas" aqui é o jargão
+  // da própria JNS para negativa de crédito, não um convite a tentar de novo. Badge
+  // neutro "Sem limite", não âmbar "Instável" nem vermelho "Erro".
+  if (t.includes('negado') && (t.includes('técnic') || t.includes('tecnic'))) return 'sem_limite';
   if (t.includes('bloquead')) return 'bloqueado';
   return 'erro';
 }
@@ -4615,7 +4626,7 @@ function normalizeLimiteResultado(r) {
   if (key === 'jns') return normalizeLimiteJns(r.dados);
   if (key === 'junto') return normalizeLimiteJunto(r.dados);
   if (key === 'fator') return normalizeLimiteFator(r.dados);
-  if (['essor', 'sombrero', 'newe', 'mitsui', 'axa'].includes(key)) return normalizeLimiteOnpoint(r.dados);
+  if (['essor', 'sombrero', 'newe', 'mitsui', 'axa', 'now'].includes(key)) return normalizeLimiteOnpoint(r.dados);
   return { statusKey: 'erro', modalidades: [], mensagem: 'Seguradora desconhecida.' };
 }
 
