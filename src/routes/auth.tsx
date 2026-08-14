@@ -111,11 +111,16 @@ function AuthPage() {
     setLoading(true);
     setAuthMessage("Redirecionando para a Microsoft...");
 
-    const { error } = await supabase.auth.signInWithOAuth({
+    // A Microsoft recusa ser carregada em iframe (preview do editor).
+    // Nesse caso abrimos o consentimento em uma aba de topo.
+    const isEmbedded = typeof window !== "undefined" && window.self !== window.top;
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "azure",
       options: {
         redirectTo: `${window.location.origin}/auth`,
         scopes: "email openid profile",
+        skipBrowserRedirect: isEmbedded,
       },
     });
 
@@ -125,8 +130,26 @@ function AuthPage() {
       toast.error("SSO indisponível", {
         description: error.message ?? "Não foi possível iniciar o login Microsoft.",
       });
+      return;
+    }
+
+    if (isEmbedded && data?.url) {
+      const opened = window.open(data.url, "_blank");
+      if (!opened) {
+        try {
+          window.top!.location.href = data.url;
+        } catch {
+          toast.error("Pop-up bloqueado", {
+            description:
+              "Abra o Hub em uma aba separada para concluir o login Microsoft.",
+          });
+        }
+      }
+      setLoading(false);
+      setAuthMessage("Conclua o login na aba da Microsoft e volte para o Hub.");
     }
   };
+
 
   const handleEmailCheck = (e: React.FormEvent) => {
     e.preventDefault();
