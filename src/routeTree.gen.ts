@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -42,6 +43,11 @@ import { Route as ApiPublicHooksDispatchScheduledNewslettersRouteImport } from '
 import { Route as AuthenticatedAdminEmailsSchedulesRouteImport } from './routes/_authenticated/admin/emails_.schedules'
 import { Route as AuthenticatedAdminEmailsLogRouteImport } from './routes/_authenticated/admin/emails_.log'
 
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -222,6 +228,7 @@ const AuthenticatedAdminEmailsLogRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/beneficios': typeof AuthenticatedBeneficiosRoute
   '/demais-ramos': typeof AuthenticatedDemaisRamosRoute
@@ -255,6 +262,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/beneficios': typeof AuthenticatedBeneficiosRoute
   '/demais-ramos': typeof AuthenticatedDemaisRamosRoute
@@ -290,6 +298,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/_authenticated/beneficios': typeof AuthenticatedBeneficiosRoute
   '/_authenticated/demais-ramos': typeof AuthenticatedDemaisRamosRoute
@@ -325,6 +334,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/reset-password'
     | '/admin'
     | '/beneficios'
     | '/demais-ramos'
@@ -358,6 +368,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/reset-password'
     | '/admin'
     | '/beneficios'
     | '/demais-ramos'
@@ -392,6 +403,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/reset-password'
     | '/_authenticated/admin'
     | '/_authenticated/beneficios'
     | '/_authenticated/demais-ramos'
@@ -427,6 +439,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
+  ResetPasswordRoute: typeof ResetPasswordRoute
   ApiPublicHooksDispatchScheduledNewslettersRoute: typeof ApiPublicHooksDispatchScheduledNewslettersRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -435,6 +448,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -750,6 +770,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
+  ResetPasswordRoute: ResetPasswordRoute,
   ApiPublicHooksDispatchScheduledNewslettersRoute:
     ApiPublicHooksDispatchScheduledNewslettersRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
