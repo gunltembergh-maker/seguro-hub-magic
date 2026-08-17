@@ -33,6 +33,9 @@ export const sendReceitaDiaria = createServerFn({ method: 'POST' })
       .maybeSingle()
     const destUserId = (destProfile as { user_id: string } | null)?.user_id ?? null
 
+    const { fetchTimesReceita } = await import('@/lib/emails/escopo-times')
+    const escopoTimes = await fetchTimesReceita(context.supabase, destUserId)
+
     const [ytdRes, mtdRes, vencidoRes] = await Promise.all([
       context.supabase.rpc('rpc_lavoro_receita_kpis' as never, {
         p_ano: ano, p_mes: mes, p_periodo: 'YTD', p_user_id: destUserId,
@@ -60,7 +63,7 @@ export const sendReceitaDiaria = createServerFn({ method: 'POST' })
     const { sendTemplateEmail } = await import('@/lib/email-templates/send-email')
     try {
       const result = await sendTemplateEmail('receita-diaria', data.to, {
-        templateData: { ano, mes, quandoBR, ytd, mtd, comissaoVencidaMes },
+        templateData: { ano, mes, quandoBR, ytd, mtd, comissaoVencidaMes, escopoTimes },
         idempotencyKey: `receita-diaria-${ano}-${mes}-${hoje.getDate()}-${data.to}-${Date.now()}`,
       })
 
