@@ -63,11 +63,14 @@ const TIME_LABEL: Record<string, string> = {
   DEMAIS_RAMOS: "Demais Ramos",
 };
 
-function TimesReceitaBadge({ times }: { times?: string[] | null }) {
+function TimesReceitaBadge({ times, roles }: { times?: string[] | null; roles?: string[] | null }) {
+  if ((roles ?? []).includes("ADMIN")) return <Badge variant="outline">Admin (tudo)</Badge>;
+  if ((times ?? []).includes("TODOS")) return <Badge variant="secondary">Vê tudo</Badge>;
   const list = (times ?? []).filter((t) => t in TIME_LABEL);
-  if (list.length === 0) return <Badge variant="outline">Todos</Badge>;
+  if (list.length === 0) return <Badge variant="outline">Sem receita</Badge>;
   return <Badge variant="secondary">{list.map((t) => TIME_LABEL[t]).join(" + ")}</Badge>;
 }
+
 
 function TipoBadge({ u }: { u: AdminUserV2 }) {
   return u.tipo_usuario === "externo"
