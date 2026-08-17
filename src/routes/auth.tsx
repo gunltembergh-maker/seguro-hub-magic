@@ -74,23 +74,33 @@ function AuthPage() {
           if (error) {
             toast.error("Falha ao concluir SSO", { description: error.message });
           } else {
-            // Se este contexto é um popup aberto pela tela principal,
-            // devolvemos o controle e fechamos a janela auxiliar.
-            if (window.opener && window.opener !== window) {
+            // Se este contexto é a janela auxiliar do SSO, devolvemos o
+            // controle para a tela do Lovable e fechamos a janela.
+            const isPopup =
+              searchParams.get("sso") === "popup" ||
+              (!!window.opener && window.opener !== window);
+            if (isPopup) {
               try {
-                window.opener.postMessage(
+                localStorage.setItem("lavoro-sso-complete", String(Date.now()));
+              } catch {
+                /* ignore */
+              }
+              try {
+                window.opener?.postMessage(
                   { type: "lavoro-sso-complete" },
                   window.location.origin,
                 );
               } catch {
                 /* ignore */
               }
+              cleanUrl();
               window.close();
               return;
             }
             goToHub();
             return;
           }
+
         } else if (hasImplicit) {
           cleanUrl();
         }
