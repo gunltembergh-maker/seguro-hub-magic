@@ -41,6 +41,7 @@ export interface ResumoExecutivoProps {
     saldoVencido: number
     aReceberFuturo: number
   } | null
+  escopoTimes?: string[]
 }
 
 const emptyYtd = { emitido: 0, caixaEsperado: 0, caixaRecebido: 0, aReceberFuturo: 0, pctCaixa: 0 }
@@ -66,6 +67,7 @@ const ResumoExecutivoEmail = ({
   ytd = emptyYtd,
   canais = null,
   mesDetalhe = null,
+  escopoTimes,
 }: ResumoExecutivoProps) => {
   const mesLongo = MESES_PT_LONGO[mes - 1]
   return (

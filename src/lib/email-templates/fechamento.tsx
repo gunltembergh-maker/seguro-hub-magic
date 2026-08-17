@@ -38,6 +38,7 @@ export interface FechamentoProps {
     meta: number
     atingimento: number
   }
+  escopoTimes?: string[]
 }
 
 const emptyMes = { emitido: 0, caixa: 0, meta: 0, atingimento: 0 }
@@ -47,6 +48,7 @@ const FechamentoEmail = ({
   mes,
   quandoBR,
   mes_metricas = emptyMes,
+  escopoTimes,
 }: FechamentoProps) => {
   const mesLongo = MESES_PT_LONGO[mes - 1]
   return (
