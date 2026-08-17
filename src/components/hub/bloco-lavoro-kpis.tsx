@@ -200,7 +200,11 @@ export function BlocoLavoroKpis({ canSee }: { canSee: boolean }) {
             Competência ({mesLabel})
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Compact label={`RECEITA COMPETÊNCIA (${mesLabel.toUpperCase()})`} value={loadingM ? null : BRL(mtd?.receita_competencia)} />
+            <Compact
+              label={`RECEITA COMPETÊNCIA (${mesLabel.toUpperCase()})`}
+              value={loadingM ? null : BRL(mtd?.receita_competencia)}
+              breakdown={escopo.filtrar(breakdownCompetencia(mtd))}
+            />
             <Compact label={`META (${mesLabel.toUpperCase()})`} value={loadingM ? null : BRL(mtd?.meta_periodo)} />
             <Compact
               label="ATINGIMENTO (COMPETÊNCIA)"
