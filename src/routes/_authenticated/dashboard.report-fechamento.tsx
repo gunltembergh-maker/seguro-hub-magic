@@ -19,6 +19,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { SendNewsletterButton } from "@/components/admin/SendNewsletterButton";
 import { useEscopoReceita } from "@/hooks/use-escopo-receita";
+import { SEM_ACESSO_RECEITA_MSG } from "@/lib/receita-escopo";
+
 
 export const Route = createFileRoute("/_authenticated/dashboard/report-fechamento")({
   component: ReportFechamento,
@@ -152,7 +154,9 @@ function useRpc<T>(name: string, args: Record<string, unknown>, enabled = true) 
 
 // ──────────────────────────────────────────────────────────
 function ReportFechamento() {
+  const escopoPagina = useEscopoReceita();
   const saved = loadFiltro();
+
   const [ano, setAno] = useState<number>(saved?.ano ?? new Date().getFullYear());
   const [gran, setGran] = useState<Gran>((saved?.gran as Gran) ?? "ANUAL");
   const [periodo, setPeriodo] = useState<number>(saved?.periodo ?? 1);
@@ -206,8 +210,22 @@ function ReportFechamento() {
   const ultimaTs = ultima.data ? new Date(ultima.data) : null;
   const staleAlerta = ultimaTs && (Date.now() - ultimaTs.getTime()) > 24 * 3600_000;
 
+  if (escopoPagina.semAcesso) {
+    return (
+      <div className="min-h-screen p-6" style={{ background: "#14405C" }}>
+        <div className="rounded-lg border border-white/20 bg-white/10 p-8 text-center text-white">
+          <p className="text-sm">{SEM_ACESSO_RECEITA_MSG}</p>
+          <p className="mt-1 text-xs text-white/70">
+            Solicite ao administrador a liberação do(s) seu(s) time(s) de receita.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen p-6 space-y-4" style={{ background: "#14405C" }}>
+
       {/* Header + filtro */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>

@@ -4,6 +4,8 @@ import { ArrowRight, TrendingUp, TrendingDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEscopoReceita } from "@/hooks/use-escopo-receita";
+import { SEM_ACESSO_RECEITA_MSG } from "@/lib/receita-escopo";
+
 
 const L = {
   navy: "#14405C",
@@ -80,6 +82,18 @@ export function BlocoLavoroKpis({ canSee }: { canSee: boolean }) {
   const mtdQ = useKpis(ano, mes, "MTD");
 
   if (!canSee) return null;
+
+  if (escopo.semAcesso) {
+    return (
+      <section className="rounded-lg overflow-hidden" style={{ background: L.bgCard, border: `1px solid ${L.border}` }}>
+        <header className="flex items-center gap-2.5 px-5 py-3" style={{ background: L.navy, color: "#FFFFFF" }}>
+          <h2 className="font-display" style={{ fontSize: 17, fontWeight: 500 }}>Receita Lavoro Seguros</h2>
+        </header>
+        <div className="p-5 text-sm" style={{ color: L.textMuted }}>{SEM_ACESSO_RECEITA_MSG}</div>
+      </section>
+    );
+  }
+
 
   const ytd = ytdQ.data;
   const mtd = mtdQ.data;
