@@ -116,9 +116,17 @@ export async function dispatchNewsletterCore(opts: {
   let enviados = 0
   let falhas = 0
   const detalhes: any[] = []
+  let pulados = 0
   for (const { email: to, user_id: uid } of destinatarios) {
     try {
+      const escopoDest = await fetchEscopoReceita(supabase, uid ?? null)
+      if (escopoDest.semAcesso) {
+        pulados++
+        detalhes.push({ to, ok: false, reason: 'sem_acesso_receita' })
+        continue
+      }
       const cacheKey = uid ?? '__all__'
+
       let templateData = cache.get(cacheKey)
       if (!templateData) {
         templateData = await buildTemplateData(uid ?? null)
