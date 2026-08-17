@@ -11,6 +11,7 @@ const Input = z.object({
   gestor: z.string().nullable().optional(),
   empresa: z.string().nullable().optional(),
   tipo_usuario: z.enum(["interno", "externo"]).default("interno"),
+  times_receita: z.array(z.enum(["GARANTIA", "BENEFICIOS", "DEMAIS_RAMOS"])).default([]),
 });
 
 export const adminPrecadastrarUsuarioFull = createServerFn({ method: "POST" })
@@ -56,6 +57,7 @@ export const adminPrecadastrarUsuarioFull = createServerFn({ method: "POST" })
           gestor: data.gestor ?? null,
           empresa: data.empresa ?? null,
           tipo_usuario: data.tipo_usuario,
+          times_receita: data.times_receita ?? [],
           blocked: false,
           active: true,
           primeiro_acesso: true,
