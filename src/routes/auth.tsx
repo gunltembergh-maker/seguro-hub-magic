@@ -177,7 +177,7 @@ function AuthPage() {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "azure",
       options: {
-        redirectTo: `${window.location.origin}/auth`,
+        redirectTo: `${window.location.origin}/auth${isEmbedded ? "?sso=popup" : ""}`,
         scopes: "email openid profile",
         skipBrowserRedirect: isEmbedded,
         // Força a Microsoft a exibir o seletor de contas em vez de reaproveitar
