@@ -1626,6 +1626,9 @@ export type Database = {
               caixa_beneficios: number
               caixa_demais: number
               caixa_garantia: number
+              competencia_beneficios: number
+              competencia_demais: number
+              competencia_garantia: number
               defasagem: number
               meta_periodo: number
               previsto_beneficios: number
@@ -1649,6 +1652,9 @@ export type Database = {
               caixa_beneficios: number
               caixa_demais: number
               caixa_garantia: number
+              competencia_beneficios: number
+              competencia_demais: number
+              competencia_garantia: number
               defasagem: number
               meta_periodo: number
               previsto_beneficios: number
