@@ -25,14 +25,22 @@ export const sendReceitaDiaria = createServerFn({ method: 'POST' })
     const ano = hoje.getFullYear()
     const mes = hoje.getMonth() + 1
 
+    // Time(s) de receita do destinatário — filtra os dados do e-mail
+    const { data: destProfile } = await context.supabase
+      .from('profiles')
+      .select('user_id')
+      .eq('email', data.to.trim().toLowerCase())
+      .maybeSingle()
+    const destUserId = (destProfile as { user_id: string } | null)?.user_id ?? null
+
     const [ytdRes, mtdRes, vencidoRes] = await Promise.all([
       context.supabase.rpc('rpc_lavoro_receita_kpis' as never, {
-        p_ano: ano, p_mes: mes, p_periodo: 'YTD',
+        p_ano: ano, p_mes: mes, p_periodo: 'YTD', p_user_id: destUserId,
       } as never),
       context.supabase.rpc('rpc_lavoro_receita_kpis' as never, {
-        p_ano: ano, p_mes: mes, p_periodo: 'MTD',
+        p_ano: ano, p_mes: mes, p_periodo: 'MTD', p_user_id: destUserId,
       } as never),
-      context.supabase.rpc('rpc_receita_executivo_mensal' as never, { p_ano: ano } as never),
+      context.supabase.rpc('rpc_receita_executivo_mensal' as never, { p_ano: ano, p_user_id: destUserId } as never),
     ])
 
     if (ytdRes.error) throw new Error(`YTD: ${ytdRes.error.message}`)

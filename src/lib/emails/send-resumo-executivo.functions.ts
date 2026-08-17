@@ -34,10 +34,17 @@ export const sendResumoExecutivo = createServerFn({ method: 'POST' })
     const mes = hoje.getMonth() + 1
     const semanaAno = semanaDoAno(hoje)
 
+    const { data: destProfile } = await context.supabase
+      .from('profiles')
+      .select('user_id')
+      .eq('email', data.to.trim().toLowerCase())
+      .maybeSingle()
+    const destUserId = (destProfile as { user_id: string } | null)?.user_id ?? null
+
     const [mensalRes, compRes, canaisRes] = await Promise.all([
-      context.supabase.rpc('rpc_receita_executivo_mensal' as never, { p_ano: ano } as never),
+      context.supabase.rpc('rpc_receita_executivo_mensal' as never, { p_ano: ano, p_user_id: destUserId } as never),
       context.supabase.rpc('rpc_receita_executivo_complementares' as never, { p_ano: ano } as never),
-      context.supabase.rpc('rpc_receita_executivo_canais' as never, { p_ano: ano, p_mes: mes } as never),
+      context.supabase.rpc('rpc_receita_executivo_canais' as never, { p_ano: ano, p_mes: mes, p_user_id: destUserId } as never),
     ])
     if (mensalRes.error) throw new Error(`Mensal: ${mensalRes.error.message}`)
     if (compRes.error) throw new Error(`Complementares: ${compRes.error.message}`)
