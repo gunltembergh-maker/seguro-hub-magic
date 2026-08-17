@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { Loader2, Lock } from "lucide-react";
 import { toast } from "sonner";
@@ -35,6 +36,8 @@ function MicrosoftLogo({ className }: { className?: string }) {
 
 function AuthPage() {
   const navigate = useNavigate();
+  const claimSsoHandoff = useServerFn(ssoHandoffClaim);
+  const storeSsoHandoff = useServerFn(ssoHandoffStore);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
   const [authMessage, setAuthMessage] = useState<string | null>(null);
@@ -94,7 +97,7 @@ function AuthPage() {
                 try {
                   const { data: sess } = await supabase.auth.getSession();
                   if (sess.session) {
-                    await ssoHandoffStore({
+                    await storeSsoHandoff({
                       data: {
                         code: handoffCode,
                         payload: JSON.stringify({
@@ -198,7 +201,7 @@ function AuthPage() {
       window.removeEventListener("storage", onStorage);
     };
 
-  }, [navigate]);
+  }, [navigate, storeSsoHandoff]);
 
   const handleMicrosoftLogin = async () => {
     setLoading(true);
@@ -279,7 +282,7 @@ function AuthPage() {
             return;
           }
           try {
-            const res = await ssoHandoffClaim({ data: { code: handoffCode } });
+            const res = await claimSsoHandoff({ data: { code: handoffCode } });
             if (res?.payload) {
               window.clearInterval(timer);
               const tokens = JSON.parse(res.payload) as {
