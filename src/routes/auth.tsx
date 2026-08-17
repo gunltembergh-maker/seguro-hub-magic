@@ -57,6 +57,14 @@ function AuthPage() {
 
     const searchParams = new URLSearchParams(window.location.search);
     const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const handoffFromWindowName = window.name.startsWith("lavoro-sso:")
+      ? window.name.slice("lavoro-sso:".length)
+      : null;
+    const callbackHandoffCode = searchParams.get("hs") || handoffFromWindowName;
+    const isPopupCallback =
+      !!callbackHandoffCode ||
+      searchParams.get("sso") === "popup" ||
+      (!!window.opener && window.opener !== window);
     const oauthError =
       searchParams.get("error_description") ||
       hashParams.get("error_description") ||
@@ -81,15 +89,8 @@ function AuthPage() {
           } else {
             // Se este contexto é a janela auxiliar do SSO, devolvemos o
             // controle para a tela do Lovable e fechamos a janela.
-            const handoffFromWindowName = window.name.startsWith("lavoro-sso:")
-              ? window.name.slice("lavoro-sso:".length)
-              : null;
-            const handoffCode = searchParams.get("hs") || handoffFromWindowName;
-            const isPopup =
-              !!handoffCode ||
-              searchParams.get("sso") === "popup" ||
-              (!!window.opener && window.opener !== window);
-            if (isPopup) {
+            const handoffCode = callbackHandoffCode;
+            if (isPopupCallback) {
               // O preview do editor roda em iframe e o navegador particiona o
               // storage: a sessão obtida aqui não é visível lá. Entregamos os
               // tokens via servidor, com código de uso único.
@@ -188,7 +189,14 @@ function AuthPage() {
     }, 1500);
 
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
-      if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session) {
+      // No popup, SIGNED_IN dispara durante exchangeCodeForSession. Não navegue
+      // antes de entregar a sessão ao preview, senão a janela vai para /inicio
+      // e a tela principal permanece presa em /auth.
+      if (
+        !isPopupCallback &&
+        (event === "SIGNED_IN" || event === "INITIAL_SESSION") &&
+        session
+      ) {
         goToHub();
       }
     });
