@@ -448,7 +448,7 @@ function AuthPage() {
                 <div className="h-px flex-1 bg-border" />
               </div>
 
-              <form onSubmit={handleEmailCheck} className="space-y-3">
+              <form onSubmit={handleEmailSubmit} className="space-y-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="email" className="text-xs">
                     E-mail Corporativo
@@ -458,22 +458,52 @@ function AuthPage() {
                     type="email"
                     autoComplete="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (!isCorporateEmail(e.target.value)) setShowPassword(false);
+                    }}
                     placeholder={`nome@${ALLOWED_DOMAIN}`}
                   />
                 </div>
-                <p className="text-[11px] leading-relaxed text-muted-foreground">
-                  O login por e-mail e senha é restrito a pessoas autorizadas.
-                  Informe seu e-mail para verificar se possui acesso liberado.
-                </p>
+
+                {showPassword && (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="password" className="text-xs">
+                      Senha
+                    </Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      autoComplete="current-password"
+                      autoFocus
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                    />
+                  </div>
+                )}
+
                 <Button
                   type="submit"
                   variant="outline"
                   size="sm"
+                  disabled={pwLoading}
                   className="w-full text-[#14405C]"
                 >
-                  Verificar acesso por senha
+                  {pwLoading && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+                  {showPassword ? "Entrar" : "Continuar com senha"}
                 </Button>
+
+                {showPassword && (
+                  <button
+                    type="button"
+                    onClick={handleForgotPassword}
+                    disabled={pwLoading}
+                    className="w-full text-center text-[11px] text-[#14405C] hover:underline"
+                  >
+                    Esqueci minha senha / definir senha
+                  </button>
+                )}
               </form>
 
               <div className="mt-6 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
