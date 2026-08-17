@@ -60,6 +60,12 @@ const breakdownCaixa = (k: KpiRow | null | undefined) => [
   { label: "Demais Ramos", value: BRL(k?.caixa_demais) },
 ];
 
+const breakdownCompetencia = (k: KpiRow | null | undefined) => [
+  { label: "Garantia", value: BRL(k?.competencia_garantia) },
+  { label: "Benefícios", value: BRL(k?.competencia_beneficios) },
+  { label: "Demais Ramos", value: BRL(k?.competencia_demais) },
+];
+
 function useKpis(ano: number, mes: number, periodo: "MTD" | "YTD") {
   return useQuery({
     queryKey: ["hub-lavoro-kpis", ano, mes, periodo],
