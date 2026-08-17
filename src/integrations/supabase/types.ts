@@ -816,6 +816,27 @@ export type Database = {
         }
         Relationships: []
       }
+      sso_handoff: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string
+          payload: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at?: string
+          payload: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string
+          payload?: string
+        }
+        Relationships: []
+      }
       user_activity_log: {
         Row: {
           acao: string
