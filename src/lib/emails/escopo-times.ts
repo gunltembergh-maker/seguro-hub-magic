@@ -12,7 +12,9 @@ export interface EscopoReceitaDest {
  * ADMIN ou 'TODOS' => sem restrição; vazio/NULL => sem acesso.
  */
 export async function fetchEscopoReceita(client: any, userId: string | null): Promise<EscopoReceitaDest> {
-  if (!userId) return { semAcesso: false, times: [] }
+  // Semântica de segurança: destinatário desconhecido (sem profile / sem user_id)
+  // NÃO recebe dados de receita.
+  if (!userId) return { semAcesso: true, times: [] }
   try {
     const [{ data: prof }, { data: roles }] = await Promise.all([
       client.from('profiles').select('times_receita').eq('user_id', userId).maybeSingle(),
@@ -20,10 +22,11 @@ export async function fetchEscopoReceita(client: any, userId: string | null): Pr
     ])
     const isAdmin = ((roles ?? []) as Array<{ role: string }>).some((r) => r.role === 'ADMIN')
     if (isAdmin) return { semAcesso: false, times: [] }
+    if (!prof) return { semAcesso: true, times: [] }
     const raw = (prof as { times_receita?: string[] } | null)?.times_receita
     return { semAcesso: semAcessoReceita(raw), times: normalizeTimes(raw) }
   } catch {
-    return { semAcesso: false, times: [] }
+    return { semAcesso: true, times: [] }
   }
 }
 
