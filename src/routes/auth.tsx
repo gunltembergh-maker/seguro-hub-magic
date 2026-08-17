@@ -76,10 +76,33 @@ function AuthPage() {
           } else {
             // Se este contexto é a janela auxiliar do SSO, devolvemos o
             // controle para a tela do Lovable e fechamos a janela.
+            const handoffCode = searchParams.get("hs");
             const isPopup =
+              !!handoffCode ||
               searchParams.get("sso") === "popup" ||
               (!!window.opener && window.opener !== window);
             if (isPopup) {
+              // O preview do editor roda em iframe e o navegador particiona o
+              // storage: a sessão obtida aqui não é visível lá. Entregamos os
+              // tokens via servidor, com código de uso único.
+              if (handoffCode) {
+                try {
+                  const { data: sess } = await supabase.auth.getSession();
+                  if (sess.session) {
+                    await ssoHandoffStore({
+                      data: {
+                        code: handoffCode,
+                        payload: JSON.stringify({
+                          access_token: sess.session.access_token,
+                          refresh_token: sess.session.refresh_token,
+                        }),
+                      },
+                    });
+                  }
+                } catch {
+                  /* ignore */
+                }
+              }
               try {
                 localStorage.setItem("lavoro-sso-complete", String(Date.now()));
               } catch {
@@ -94,9 +117,14 @@ function AuthPage() {
                 /* ignore */
               }
               cleanUrl();
+              setAuthMessage("Login concluído. Voltando ao Hub...");
               window.close();
+              window.setTimeout(() => {
+                if (!window.closed) goToHub();
+              }, 1200);
               return;
             }
+
             goToHub();
             return;
           }
