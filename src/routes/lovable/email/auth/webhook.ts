@@ -75,14 +75,25 @@ function verifySignature(rawBody: string, headers: Headers, secret: string): boo
 
 function buildConfirmationUrl(payload: SupabaseAuthHookPayload): string {
   const { site_url, token_hash, email_action_type, redirect_to } = payload.email_data
-  const base = site_url?.replace(/\/$/, '') ?? ''
+  // O endpoint de verificação vive na API do Supabase, não no site.
+  // Alguns payloads já trazem site_url com "/auth/v1" no final — normalizamos
+  // para não gerar links duplicados (.../auth/v1/auth/v1/verify).
+  const rawBase =
+    process.env['SUPABASE_URL'] ||
+    process.env['VITE_SUPABASE_URL'] ||
+    site_url ||
+    ''
+  const base = rawBase.replace(/\/+$/, '').replace(/\/auth\/v1$/, '')
   const params = new URLSearchParams({
     token: token_hash,
     type: email_action_type,
     redirect_to: redirect_to || SITE_URL,
   })
+  const apikey = process.env['SUPABASE_PUBLISHABLE_KEY'] || process.env['VITE_SUPABASE_PUBLISHABLE_KEY']
+  if (apikey) params.set('apikey', apikey)
   return `${base}/auth/v1/verify?${params.toString()}`
 }
+
 
 async function renderEmail(payload: SupabaseAuthHookPayload): Promise<{
   subject: string
