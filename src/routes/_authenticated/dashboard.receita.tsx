@@ -141,6 +141,7 @@ function VarCard({ title, value, loading }: { title: string; value: number | nul
 
 // ─── Página ──────────────────────────────────────────────────────────────
 function DashboardReceitaLavoro() {
+  const escopo = useEscopoReceita();
   const hoje = new Date();
   const [ano, setAno] = useState<number>(hoje.getFullYear());
   const [periodo, setPeriodo] = useState<Periodo>("YTD");
