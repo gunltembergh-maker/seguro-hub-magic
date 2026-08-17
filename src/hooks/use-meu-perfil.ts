@@ -14,6 +14,7 @@ export interface MeuPerfil {
   perfil_nome: string | null;
   permissoes: Record<string, boolean>;
   roles: AppRole[];
+  times_receita: string[];
 }
 
 export function useMeuPerfil() {
