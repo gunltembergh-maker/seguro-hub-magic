@@ -312,7 +312,7 @@ function AdminUsuariosPage() {
                           <TableCell className="text-muted-foreground">{u.email}</TableCell>
                           <TableCell><TipoBadge u={u} /></TableCell>
                           <TableCell>{u.perfil_nome ?? <span className="italic text-muted-foreground">sem perfil</span>}</TableCell>
-                          <TableCell><TimesReceitaBadge times={u.times_receita} /></TableCell>
+                          <TableCell><TimesReceitaBadge times={u.times_receita} roles={(u.roles ?? []) as string[]} /></TableCell>
                           <TableCell><StatusBadge u={u} /></TableCell>
                           <TableCell className="text-center tabular-nums">{u.total_sessoes}</TableCell>
                           <TableCell className="text-muted-foreground">{formatUltimoAcesso(u.ultimo_acesso)}</TableCell>
