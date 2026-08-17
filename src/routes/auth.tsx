@@ -14,10 +14,17 @@ import logoBranca from "@/assets/logo-branca.png.asset.json";
 import fundoPredio from "@/assets/fundo-login-predio.png.asset.json";
 
 const ALLOWED_DOMAIN = "lavoroseguros.com.br";
-// Usuários com login por senha liberado (backdoor)
-const ALLOWED_PASSWORD_EMAILS = new Set([
-  "alessandro.oliveira@lavoroseguros.com.br",
-]);
+// Domínios corporativos autorizados a entrar com e-mail e senha
+export const ALLOWED_PASSWORD_DOMAINS = [
+  "lavoroseguros.com.br",
+  "zin.com.br",
+  "taicons.com.br",
+];
+
+export function isCorporateEmail(value: string) {
+  const clean = value.trim().toLowerCase();
+  return ALLOWED_PASSWORD_DOMAINS.some((d) => clean.endsWith(`@${d}`));
+}
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
