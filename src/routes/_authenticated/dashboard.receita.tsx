@@ -15,6 +15,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { SendNewsletterButton } from "@/components/admin/SendNewsletterButton";
+import { useEscopoReceita } from "@/hooks/use-escopo-receita";
 
 export const Route = createFileRoute("/_authenticated/dashboard/receita")({
   component: DashboardReceitaLavoro,
@@ -444,17 +445,23 @@ function DashboardReceitaLavoro() {
           </div>
         </div>
 
+        {escopo.restrito && (
+          <p className="mb-3 rounded-md border border-white/20 bg-white/10 px-3 py-2 text-xs text-white/90">
+            {escopo.frase}
+          </p>
+        )}
+
         {/* 2 cards grandes */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
           <BigStatCard
-            title={`A receber em ${periodoLabel}`}
+            title={`A receber em ${periodoLabel}${escopo.sufixo}`}
             subtitle="Previsto Caixa (parcelas emitidas por data de pagamento)"
             value={BRL(kpis?.previsto_caixa)} accent="#8AAFC9" loading={kpisQ.isLoading}
-            breakdown={[
+            breakdown={escopo.filtrar([
               { label: "Garantia", value: BRL(kpis?.previsto_garantia) },
               { label: "Benefícios", value: BRL(kpis?.previsto_beneficios) },
               { label: "Demais Ramos", value: BRL(kpis?.previsto_demais) },
-            ]}
+            ])}
           />
           <BigStatCard
             title={`Receita Caixa em ${periodoLabel}`}
