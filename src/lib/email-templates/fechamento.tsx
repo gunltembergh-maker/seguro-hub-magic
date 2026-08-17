@@ -15,6 +15,7 @@ import {
   Text,
 } from '@react-email/components'
 import type { TemplateEntry } from './registry'
+import { EscopoNote } from './_escopo'
 import {
   BRL,
   FOOTER_ASSINATURA,
@@ -61,6 +62,8 @@ const FechamentoEmail = ({
               {mesLongo}/{ano}
             </Heading>
           </Section>
+
+          <EscopoNote times={escopoTimes} />
 
           <Section style={block}>
             <Text style={sectionTitle}>Fechamento de {mesLongo}/{ano}</Text>

@@ -15,6 +15,7 @@ import {
   Text,
 } from '@react-email/components'
 import type { TemplateEntry } from './registry'
+import { EscopoNote } from './_escopo'
 import { BRL, FOOTER_ASSINATURA, LAVORO_COLORS as L, LOGO_BRANCA_URL, MESES_PT_LONGO, PCT, SITE_URL, nowBR, periodoRefLongo } from './_shared'
 
 export interface ResumoExecutivoProps {
@@ -85,6 +86,8 @@ const ResumoExecutivoEmail = ({
           </Section>
 
           {/* KPIs YTD */}
+          <EscopoNote times={escopoTimes} />
+
           <Section style={block}>
             <Text style={sectionTitle}>{`Acumulado YTD ${ano}`}</Text>
             <Row>

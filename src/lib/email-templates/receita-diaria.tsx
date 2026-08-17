@@ -15,6 +15,7 @@ import {
   Text,
 } from '@react-email/components'
 import type { TemplateEntry } from './registry'
+import { EscopoNote } from './_escopo'
 import {
   BRL,
   FOOTER_ASSINATURA,
@@ -47,6 +48,7 @@ export interface ReceitaLavoroProps {
     caixa_demais?: number
   }
   comissaoVencidaMes?: number
+  escopoTimes?: string[]
 }
 
 const empty = {
@@ -71,6 +73,7 @@ const ReceitaLavoroEmail = ({
   quandoBR,
   mtd = empty,
   comissaoVencidaMes = 0,
+  escopoTimes,
 }: ReceitaLavoroProps) => {
   const mesLongo = MESES_PT_LONGO[mes - 1]
   const mesUp = mesLongo.toUpperCase()
@@ -89,6 +92,8 @@ const ReceitaLavoroEmail = ({
               {mesLongo}/{ano}
             </Heading>
           </Section>
+
+          <EscopoNote times={escopoTimes} />
 
           <Section style={block}>
             <Text style={sectionTitle}>Resultados de {mesLongo}/{ano}</Text>
