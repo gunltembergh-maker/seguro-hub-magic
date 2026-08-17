@@ -1103,6 +1103,7 @@ export type Database = {
         Args: { p_canal: string; p_user_id: string }
         Returns: boolean
       }
+      lavoro_times_usuario: { Args: { _user_id: string }; Returns: string[] }
       normalize_categoria_financeira: {
         Args: { categoria: string }
         Returns: string
@@ -1697,6 +1698,7 @@ export type Database = {
           permissoes: Json
           primeiro_acesso: boolean
           roles: Database["public"]["Enums"]["app_role"][]
+          times_receita: string[]
           user_id: string
         }[]
       }

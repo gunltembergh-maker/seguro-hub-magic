@@ -15,6 +15,7 @@ import {
   Text,
 } from '@react-email/components'
 import type { TemplateEntry } from './registry'
+import { EscopoNote } from './_escopo'
 import { BRL, FOOTER_ASSINATURA, LAVORO_COLORS as L, LOGO_BRANCA_URL, MESES_PT_LONGO, PCT, SITE_URL, nowBR, periodoRefLongo } from './_shared'
 
 export interface ResumoExecutivoProps {
@@ -40,6 +41,7 @@ export interface ResumoExecutivoProps {
     saldoVencido: number
     aReceberFuturo: number
   } | null
+  escopoTimes?: string[]
 }
 
 const emptyYtd = { emitido: 0, caixaEsperado: 0, caixaRecebido: 0, aReceberFuturo: 0, pctCaixa: 0 }
@@ -52,10 +54,11 @@ const quebra = (
 ) => {
   const linhas = canais ?? []
   if (!linhas.length) return undefined
-  const valores = CANAIS_ORDEM.map((c) => Number(linhas.find((l) => l.canal === c)?.[campo] ?? 0))
+  const presentes = CANAIS_ORDEM.filter((c) => linhas.some((l) => l.canal === c))
+  const valores = presentes.map((c) => Number(linhas.find((l) => l.canal === c)?.[campo] ?? 0))
   const soma = valores.reduce((a, b) => a + b, 0)
   const fator = soma > 0 ? Number(total || 0) / soma : 0
-  return CANAIS_ORDEM.map((c, i) => ({ label: c, value: BRL(valores[i] * fator) }))
+  return presentes.map((c, i) => ({ label: c, value: BRL(valores[i] * fator) }))
 }
 
 const ResumoExecutivoEmail = ({
@@ -65,6 +68,7 @@ const ResumoExecutivoEmail = ({
   ytd = emptyYtd,
   canais = null,
   mesDetalhe = null,
+  escopoTimes,
 }: ResumoExecutivoProps) => {
   const mesLongo = MESES_PT_LONGO[mes - 1]
   return (
@@ -85,6 +89,8 @@ const ResumoExecutivoEmail = ({
           </Section>
 
           {/* KPIs YTD */}
+          <EscopoNote times={escopoTimes} />
+
           <Section style={block}>
             <Text style={sectionTitle}>{`Acumulado YTD ${ano}`}</Text>
             <Row>

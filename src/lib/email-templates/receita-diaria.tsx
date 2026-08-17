@@ -15,6 +15,8 @@ import {
   Text,
 } from '@react-email/components'
 import type { TemplateEntry } from './registry'
+import { EscopoNote } from './_escopo'
+import { filtrarBreakdown } from '@/lib/receita-escopo'
 import {
   BRL,
   FOOTER_ASSINATURA,
@@ -47,6 +49,7 @@ export interface ReceitaLavoroProps {
     caixa_demais?: number
   }
   comissaoVencidaMes?: number
+  escopoTimes?: string[]
 }
 
 const empty = {
@@ -71,6 +74,7 @@ const ReceitaLavoroEmail = ({
   quandoBR,
   mtd = empty,
   comissaoVencidaMes = 0,
+  escopoTimes,
 }: ReceitaLavoroProps) => {
   const mesLongo = MESES_PT_LONGO[mes - 1]
   const mesUp = mesLongo.toUpperCase()
@@ -90,6 +94,8 @@ const ReceitaLavoroEmail = ({
             </Heading>
           </Section>
 
+          <EscopoNote times={escopoTimes} />
+
           <Section style={block}>
             <Text style={sectionTitle}>Resultados de {mesLongo}/{ano}</Text>
             <Row>
@@ -99,11 +105,11 @@ const ReceitaLavoroEmail = ({
                   hint="Previsto caixa"
                   value={BRL(mtd?.previsto_caixa)}
                   accent={L.amber}
-                  breakdown={[
+                  breakdown={filtrarBreakdown([
                     { label: 'Garantia', value: BRL(mtd?.previsto_garantia) },
                     { label: 'Benefícios', value: BRL(mtd?.previsto_beneficios) },
                     { label: 'Demais Ramos', value: BRL(mtd?.previsto_demais) },
-                  ]}
+                  ], escopoTimes)}
                 />
               </Column>
               <Column style={colHalf}>
