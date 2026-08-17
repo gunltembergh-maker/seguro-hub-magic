@@ -43,6 +43,9 @@ interface KpiRow {
   caixa_garantia: number;
   caixa_beneficios: number;
   caixa_demais: number;
+  competencia_garantia: number;
+  competencia_beneficios: number;
+  competencia_demais: number;
 }
 
 const breakdownPrevisto = (k: KpiRow | null | undefined) => [
@@ -55,6 +58,12 @@ const breakdownCaixa = (k: KpiRow | null | undefined) => [
   { label: "Garantia", value: BRL(k?.caixa_garantia) },
   { label: "Benefícios", value: BRL(k?.caixa_beneficios) },
   { label: "Demais Ramos", value: BRL(k?.caixa_demais) },
+];
+
+const breakdownCompetencia = (k: KpiRow | null | undefined) => [
+  { label: "Garantia", value: BRL(k?.competencia_garantia) },
+  { label: "Benefícios", value: BRL(k?.competencia_beneficios) },
+  { label: "Demais Ramos", value: BRL(k?.competencia_demais) },
 ];
 
 function useKpis(ano: number, mes: number, periodo: "MTD" | "YTD") {
@@ -191,7 +200,11 @@ export function BlocoLavoroKpis({ canSee }: { canSee: boolean }) {
             Competência ({mesLabel})
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Compact label={`RECEITA COMPETÊNCIA (${mesLabel.toUpperCase()})`} value={loadingM ? null : BRL(mtd?.receita_competencia)} />
+            <Compact
+              label={`RECEITA COMPETÊNCIA (${mesLabel.toUpperCase()})`}
+              value={loadingM ? null : BRL(mtd?.receita_competencia)}
+              breakdown={escopo.filtrar(breakdownCompetencia(mtd))}
+            />
             <Compact label={`META (${mesLabel.toUpperCase()})`} value={loadingM ? null : BRL(mtd?.meta_periodo)} />
             <Compact
               label="ATINGIMENTO (COMPETÊNCIA)"
@@ -259,9 +272,10 @@ function Kpi({
 }
 
 function Compact({
-  label, value, badge, valueColor, icon,
+  label, value, badge, valueColor, icon, breakdown,
 }: {
   label: string; value: string | null; badge?: React.ReactNode; valueColor?: string; icon?: React.ReactNode;
+  breakdown?: Array<{ label: string; value: string }>;
 }) {
   return (
     <div className="rounded-md p-3" style={{ background: "#F8FAFC", border: `1px solid ${L.border}` }}>
@@ -279,6 +293,20 @@ function Compact({
           <p className="font-display font-numeric" style={{ fontSize: 18, fontWeight: 600, color: valueColor || L.navyDark, letterSpacing: "-0.2px" }}>
             {value}
           </p>
+        </div>
+      )}
+      {breakdown && breakdown.length > 0 && (
+        <div className="mt-2 space-y-0.5 pt-1.5" style={{ borderTop: `1px solid ${L.border}` }}>
+          {breakdown.map((b) => (
+            <div key={b.label} className="flex items-center justify-between gap-2">
+              <span style={{ color: L.textMuted, fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 700 }}>{b.label}</span>
+              {value == null ? (
+                <Skeleton className="h-3 w-14" />
+              ) : (
+                <span className="font-numeric" style={{ fontSize: 11.5, fontWeight: 600, color: L.navyDark }}>{b.value}</span>
+              )}
+            </div>
+          ))}
         </div>
       )}
     </div>

@@ -47,6 +47,9 @@ export interface ReceitaLavoroProps {
     caixa_garantia?: number
     caixa_beneficios?: number
     caixa_demais?: number
+    competencia_garantia?: number
+    competencia_beneficios?: number
+    competencia_demais?: number
   }
   comissaoVencidaMes?: number
   escopoTimes?: string[]
@@ -66,6 +69,9 @@ const empty = {
   caixa_garantia: 0,
   caixa_beneficios: 0,
   caixa_demais: 0,
+  competencia_garantia: 0,
+  competencia_beneficios: 0,
+  competencia_demais: 0,
 }
 
 const ReceitaLavoroEmail = ({
@@ -128,7 +134,15 @@ const ReceitaLavoroEmail = ({
             </Row>
             <Row>
               <Column style={colHalf}>
-                <Compact label="Receita Competência" value={BRL(mtd?.receita_competencia)} />
+                <Compact
+                  label="Receita Competência"
+                  value={BRL(mtd?.receita_competencia)}
+                  breakdown={filtrarBreakdown([
+                    { label: 'Garantia', value: BRL(mtd?.competencia_garantia) },
+                    { label: 'Benefícios', value: BRL(mtd?.competencia_beneficios) },
+                    { label: 'Demais Ramos', value: BRL(mtd?.competencia_demais) },
+                  ], escopoTimes)}
+                />
               </Column>
               <Column style={colHalf}>
                 <Compact label={`Meta (${mesLongo})`} value={BRL(mtd?.meta_periodo)} />
@@ -203,11 +217,26 @@ function Kpi({ label, hint, value, accent, breakdown }: {
   )
 }
 
-function Compact({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
+function Compact({ label, value, valueColor, breakdown }: {
+  label: string; value: string; valueColor?: string
+  breakdown?: Array<{ label: string; value: string }>
+}) {
   return (
     <div style={compactCard}>
       <Text style={compactLabel}>{label}</Text>
       <Text style={{ ...compactValue, color: valueColor || L.textDark }}>{value}</Text>
+      {breakdown && breakdown.length > 0 && (
+        <table style={breakdownTable} cellPadding={0} cellSpacing={0}>
+          <tbody>
+            {breakdown.map((b) => (
+              <tr key={b.label}>
+                <td style={breakdownLabel}>{b.label}</td>
+                <td style={breakdownValue}>{b.value}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   )
 }
@@ -238,6 +267,9 @@ export const template = {
       caixa_garantia: 240_000,
       caixa_beneficios: 200_000,
       caixa_demais: 40_000,
+      competencia_garantia: 300_000,
+      competencia_beneficios: 260_000,
+      competencia_demais: 60_000,
     },
     comissaoVencidaMes: 82_500,
   },
