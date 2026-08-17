@@ -16,6 +16,7 @@ import {
 } from '@react-email/components'
 import type { TemplateEntry } from './registry'
 import { EscopoNote } from './_escopo'
+import { filtrarBreakdown } from '@/lib/receita-escopo'
 import {
   BRL,
   FOOTER_ASSINATURA,
@@ -104,11 +105,11 @@ const ReceitaLavoroEmail = ({
                   hint="Previsto caixa"
                   value={BRL(mtd?.previsto_caixa)}
                   accent={L.amber}
-                  breakdown={[
+                  breakdown={filtrarBreakdown([
                     { label: 'Garantia', value: BRL(mtd?.previsto_garantia) },
                     { label: 'Benefícios', value: BRL(mtd?.previsto_beneficios) },
                     { label: 'Demais Ramos', value: BRL(mtd?.previsto_demais) },
-                  ]}
+                  ], escopoTimes)}
                 />
               </Column>
               <Column style={colHalf}>

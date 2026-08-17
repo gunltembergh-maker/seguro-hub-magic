@@ -54,10 +54,11 @@ const quebra = (
 ) => {
   const linhas = canais ?? []
   if (!linhas.length) return undefined
-  const valores = CANAIS_ORDEM.map((c) => Number(linhas.find((l) => l.canal === c)?.[campo] ?? 0))
+  const presentes = CANAIS_ORDEM.filter((c) => linhas.some((l) => l.canal === c))
+  const valores = presentes.map((c) => Number(linhas.find((l) => l.canal === c)?.[campo] ?? 0))
   const soma = valores.reduce((a, b) => a + b, 0)
   const fator = soma > 0 ? Number(total || 0) / soma : 0
-  return CANAIS_ORDEM.map((c, i) => ({ label: c, value: BRL(valores[i] * fator) }))
+  return presentes.map((c, i) => ({ label: c, value: BRL(valores[i] * fator) }))
 }
 
 const ResumoExecutivoEmail = ({
