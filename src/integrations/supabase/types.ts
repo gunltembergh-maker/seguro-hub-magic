@@ -480,6 +480,7 @@ export type Database = {
           id: string
           perfil_id: string | null
           primeiro_acesso: boolean
+          times_receita: string[]
           tipo_usuario: string
           ultimo_acesso: string | null
           updated_at: string
@@ -498,6 +499,7 @@ export type Database = {
           id?: string
           perfil_id?: string | null
           primeiro_acesso?: boolean
+          times_receita?: string[]
           tipo_usuario?: string
           ultimo_acesso?: string | null
           updated_at?: string
@@ -516,6 +518,7 @@ export type Database = {
           id?: string
           perfil_id?: string | null
           primeiro_acesso?: boolean
+          times_receita?: string[]
           tipo_usuario?: string
           ultimo_acesso?: string | null
           updated_at?: string
@@ -1086,7 +1089,20 @@ export type Database = {
       is_dia_util: { Args: { _data: string }; Returns: boolean }
       is_dominio_lavoro: { Args: { _email: string }; Returns: boolean }
       is_email_permitido: { Args: { _email: string }; Returns: boolean }
+      lavoro_canais_permitidos: {
+        Args: { _user_id: string }
+        Returns: string[]
+      }
       lavoro_canal: { Args: { p_tipo_de_ramo: string }; Returns: string }
+      lavoro_canal_visivel: {
+        Args: { p_tipo_de_ramo: string }
+        Returns: boolean
+      }
+      lavoro_pode_ver_canal: { Args: { p_canal: string }; Returns: boolean }
+      lavoro_pode_ver_canal_para: {
+        Args: { p_canal: string; p_user_id: string }
+        Returns: boolean
+      }
       normalize_categoria_financeira: {
         Args: { categoria: string }
         Returns: string
@@ -1211,6 +1227,7 @@ export type Database = {
           perfil_nome: string
           primeiro_acesso: boolean
           roles: Database["public"]["Enums"]["app_role"][]
+          times_receita: string[]
           tipo_usuario: string
           total_sessoes: number
           ultimo_acesso: string
@@ -1329,6 +1346,7 @@ export type Database = {
           _full_name: string
           _gestor?: string
           _perfil_id: string
+          _times_receita?: string[]
           _user_id: string
         }
         Returns: undefined
@@ -1577,24 +1595,48 @@ export type Database = {
           receita_competencia: number
         }[]
       }
-      rpc_lavoro_receita_kpis: {
-        Args: { p_ano: number; p_mes: number; p_periodo?: string }
-        Returns: {
-          atingimento: number
-          atingimento_caixa: number
-          caixa_beneficios: number
-          caixa_demais: number
-          caixa_garantia: number
-          defasagem: number
-          meta_periodo: number
-          previsto_beneficios: number
-          previsto_caixa: number
-          previsto_demais: number
-          previsto_garantia: number
-          receita_caixa: number
-          receita_competencia: number
-        }[]
-      }
+      rpc_lavoro_receita_kpis:
+        | {
+            Args: { p_ano: number; p_mes: number; p_periodo?: string }
+            Returns: {
+              atingimento: number
+              atingimento_caixa: number
+              caixa_beneficios: number
+              caixa_demais: number
+              caixa_garantia: number
+              defasagem: number
+              meta_periodo: number
+              previsto_beneficios: number
+              previsto_caixa: number
+              previsto_demais: number
+              previsto_garantia: number
+              receita_caixa: number
+              receita_competencia: number
+            }[]
+          }
+        | {
+            Args: {
+              p_ano: number
+              p_mes: number
+              p_periodo: string
+              p_user_id: string
+            }
+            Returns: {
+              atingimento: number
+              atingimento_caixa: number
+              caixa_beneficios: number
+              caixa_demais: number
+              caixa_garantia: number
+              defasagem: number
+              meta_periodo: number
+              previsto_beneficios: number
+              previsto_caixa: number
+              previsto_demais: number
+              previsto_garantia: number
+              receita_caixa: number
+              receita_competencia: number
+            }[]
+          }
       rpc_lavoro_receita_por_canal: {
         Args: { p_ano: number; p_mes: number; p_periodo?: string }
         Returns: {
@@ -1679,15 +1721,25 @@ export type Database = {
           mes: number
         }[]
       }
-      rpc_receita_executivo_canais: {
-        Args: { p_ano: number; p_mes?: number }
-        Returns: {
-          a_receber_futuro: number
-          caixa: number
-          caixa_corrente: number
-          canal: string
-        }[]
-      }
+      rpc_receita_executivo_canais:
+        | {
+            Args: { p_ano: number; p_mes?: number }
+            Returns: {
+              a_receber_futuro: number
+              caixa: number
+              caixa_corrente: number
+              canal: string
+            }[]
+          }
+        | {
+            Args: { p_ano: number; p_mes: number; p_user_id: string }
+            Returns: {
+              a_receber_futuro: number
+              caixa: number
+              caixa_corrente: number
+              canal: string
+            }[]
+          }
       rpc_receita_executivo_complementares: {
         Args: { p_ano: number }
         Returns: {
@@ -1696,17 +1748,29 @@ export type Database = {
           vencidos_anteriores_2026: number
         }[]
       }
-      rpc_receita_executivo_mensal: {
-        Args: { p_ano: number }
-        Returns: {
-          a_receber_futuro: number
-          caixa: number
-          caixa_corrente: number
-          emitido: number
-          mes: number
-          saldo_vencido: number
-        }[]
-      }
+      rpc_receita_executivo_mensal:
+        | {
+            Args: { p_ano: number }
+            Returns: {
+              a_receber_futuro: number
+              caixa: number
+              caixa_corrente: number
+              emitido: number
+              mes: number
+              saldo_vencido: number
+            }[]
+          }
+        | {
+            Args: { p_ano: number; p_user_id: string }
+            Returns: {
+              a_receber_futuro: number
+              caixa: number
+              caixa_corrente: number
+              emitido: number
+              mes: number
+              saldo_vencido: number
+            }[]
+          }
       rpc_receita_kpis: {
         Args: { _ano: number; _mes: number; _periodo?: string }
         Returns: {

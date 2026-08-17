@@ -98,7 +98,7 @@ async function handle(request: Request): Promise<Response> {
     }
 
     const userIds = (destRows ?? []).map((r: any) => r.user_id as string)
-    let destinatarios: Array<{ email: string }> = []
+    let destinatarios: Array<{ email: string; user_id?: string | null }> = []
     if (userIds.length > 0) {
       const { data: profs } = await supabaseAdmin
         .from('profiles' as never)
@@ -106,7 +106,7 @@ async function handle(request: Request): Promise<Response> {
         .in('user_id' as never, userIds as never)
       const profByUser = new Map<string, any>()
       for (const p of ((profs ?? []) as any[])) profByUser.set(p.user_id, p)
-      const emails: string[] = []
+      const pares: Array<{ email: string; user_id: string }> = []
       for (const uid of userIds) {
         const p = profByUser.get(uid)
         if (p && (p.active === false || p.blocked)) continue
@@ -120,9 +120,14 @@ async function handle(request: Request): Promise<Response> {
             console.warn('[dispatch] auth.getUserById falhou', uid, e)
           }
         }
-        if (email) emails.push(email)
+        if (email) pares.push({ email: email.toLowerCase(), user_id: uid })
       }
-      destinatarios = Array.from(new Set(emails.map((e) => e.toLowerCase()))).map((email) => ({ email }))
+      const vistos = new Set<string>()
+      destinatarios = pares.filter((p) => {
+        if (vistos.has(p.email)) return false
+        vistos.add(p.email)
+        return true
+      })
     }
 
     await supabaseAdmin

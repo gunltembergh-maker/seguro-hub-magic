@@ -89,6 +89,7 @@ export interface AdminUserV2 {
   total_sessoes: number;
   tipo_usuario: "interno" | "externo";
   roles: AppRole[];
+  times_receita: string[];
 }
 
 export interface ConviteExterno {
@@ -116,6 +117,7 @@ export function useAdminUsersV2() {
         ...r,
         total_sessoes: Number(r.total_sessoes ?? 0),
         roles: (r.roles ?? []) as AppRole[],
+        times_receita: (r.times_receita ?? []) as string[],
       }));
     },
   });

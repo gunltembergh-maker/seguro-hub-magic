@@ -57,6 +57,18 @@ function StatusBadge({ u }: { u: AdminUserV2 }) {
   return <Badge className="border border-emerald-500/30 bg-emerald-500/10 text-emerald-700">✅ Ativo</Badge>;
 }
 
+const TIME_LABEL: Record<string, string> = {
+  GARANTIA: "Garantia",
+  BENEFICIOS: "Benefícios",
+  DEMAIS_RAMOS: "Demais Ramos",
+};
+
+function TimesReceitaBadge({ times }: { times?: string[] | null }) {
+  const list = (times ?? []).filter((t) => t in TIME_LABEL);
+  if (list.length === 0) return <Badge variant="outline">Todos</Badge>;
+  return <Badge variant="secondary">{list.map((t) => TIME_LABEL[t]).join(" + ")}</Badge>;
+}
+
 function TipoBadge({ u }: { u: AdminUserV2 }) {
   return u.tipo_usuario === "externo"
     ? <Badge variant="outline" className="border-purple-500/30 bg-purple-500/10 text-purple-700">Externo</Badge>
@@ -100,6 +112,7 @@ function AdminUsuariosPage() {
       perfil_id: u.perfil_id,
       blocked: u.blocked,
       active: u.active,
+      times_receita: u.times_receita ?? [],
     });
     setFormOpen(true);
   };
@@ -282,6 +295,7 @@ function AdminUsuariosPage() {
                         <TableHead>E-mail</TableHead>
                         <TableHead>Tipo</TableHead>
                         <TableHead>Perfil</TableHead>
+                        <TableHead>Time(s) Receita</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Sessões</TableHead>
                         <TableHead>Último acesso</TableHead>
@@ -295,6 +309,7 @@ function AdminUsuariosPage() {
                           <TableCell className="text-muted-foreground">{u.email}</TableCell>
                           <TableCell><TipoBadge u={u} /></TableCell>
                           <TableCell>{u.perfil_nome ?? <span className="italic text-muted-foreground">sem perfil</span>}</TableCell>
+                          <TableCell><TimesReceitaBadge times={u.times_receita} /></TableCell>
                           <TableCell><StatusBadge u={u} /></TableCell>
                           <TableCell className="text-center tabular-nums">{u.total_sessoes}</TableCell>
                           <TableCell className="text-muted-foreground">{formatUltimoAcesso(u.ultimo_acesso)}</TableCell>
@@ -331,7 +346,7 @@ function AdminUsuariosPage() {
                         </TableRow>
                       ))}
                       {!filtered.length && (
-                        <TableRow><TableCell colSpan={8} className="py-12 text-center text-sm text-muted-foreground">Nenhum usuário encontrado.</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={9} className="py-12 text-center text-sm text-muted-foreground">Nenhum usuário encontrado.</TableCell></TableRow>
                       )}
                     </TableBody>
                   </Table>
