@@ -60,10 +60,11 @@ export async function dispatchNewsletterCore(opts: {
     hour: '2-digit', minute: '2-digit',
   })
 
-  const { fetchTimesReceita } = await import('@/lib/emails/escopo-times')
+  const { fetchEscopoReceita } = await import('@/lib/emails/escopo-times')
 
   async function buildTemplateData(userId: string | null): Promise<Record<string, any>> {
-    const escopoTimes = await fetchTimesReceita(supabase, userId)
+    const escopoTimes = (await fetchEscopoReceita(supabase, userId)).times
+
     const [ytdRes, mtdRes, vencidoRes, canaisRes] = await Promise.all([
       supabase.rpc('rpc_lavoro_receita_kpis' as never, { p_ano: ano, p_mes: mes, p_periodo: 'YTD', p_user_id: userId } as never),
       supabase.rpc('rpc_lavoro_receita_kpis' as never, { p_ano: ano, p_mes: mes, p_periodo: 'MTD', p_user_id: userId } as never),
