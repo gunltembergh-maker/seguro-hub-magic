@@ -78,7 +78,10 @@ function AuthPage() {
           } else {
             // Se este contexto é a janela auxiliar do SSO, devolvemos o
             // controle para a tela do Lovable e fechamos a janela.
-            const handoffCode = searchParams.get("hs");
+            const handoffFromWindowName = window.name.startsWith("lavoro-sso:")
+              ? window.name.slice("lavoro-sso:".length)
+              : null;
+            const handoffCode = searchParams.get("hs") || handoffFromWindowName;
             const isPopup =
               !!handoffCode ||
               searchParams.get("sso") === "popup" ||
@@ -120,6 +123,7 @@ function AuthPage() {
               }
               cleanUrl();
               setAuthMessage("Login concluído. Voltando ao Hub...");
+              window.name = "";
               window.close();
               window.setTimeout(() => {
                 if (!window.closed) goToHub();
@@ -207,6 +211,19 @@ function AuthPage() {
       ? `${crypto.randomUUID()}${crypto.randomUUID()}`.replace(/-/g, "")
       : null;
 
+    // Abra a janela ainda dentro do clique do usuário para o navegador não
+    // bloqueá-la. O código em window.name sobrevive ao percurso Microsoft →
+    // Supabase → Hub, mesmo quando o provedor remove parâmetros da URL ou
+    // isola window.opener.
+    const authWindow =
+      isEmbedded && handoffCode
+        ? window.open(
+            "about:blank",
+            `lavoro-sso:${handoffCode}`,
+            "width=560,height=720,menubar=no,toolbar=no,location=no,status=no",
+          )
+        : null;
+
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "azure",
       options: {
@@ -225,6 +242,7 @@ function AuthPage() {
 
 
     if (error) {
+      authWindow?.close();
       setLoading(false);
       setAuthMessage(null);
       toast.error("SSO indisponível", {
@@ -237,14 +255,12 @@ function AuthPage() {
       // Popup dimensionado: a Microsoft recusa iframes, mas permite janelas
       // de topo. O popup fecha sozinho ao concluir e devolve o controle
       // para a tela principal (preview ao lado do chat).
-      const opened = window.open(
-        data.url,
-        "lavoro-sso",
-        "width=560,height=720,menubar=no,toolbar=no,location=no,status=no",
-      );
-      if (!opened) {
+      if (authWindow) {
+        authWindow.location.replace(data.url);
+        authWindow.focus();
+      } else {
         try {
-          window.top!.location.href = data.url;
+          if (window.top) window.top.location.href = data.url;
         } catch {
           toast.error("Pop-up bloqueado", {
             description:
@@ -273,7 +289,8 @@ function AuthPage() {
               const { error: setErr } = await supabase.auth.setSession(tokens);
               if (!setErr) {
                 setAuthMessage("Login concluído. Entrando no Hub...");
-                navigate({ to: "/inicio", replace: true });
+                authWindow?.close();
+                window.location.replace("/inicio");
               }
             }
           } catch {
