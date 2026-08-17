@@ -1086,6 +1086,7 @@ export type Database = {
       is_dia_util: { Args: { _data: string }; Returns: boolean }
       is_dominio_lavoro: { Args: { _email: string }; Returns: boolean }
       is_email_permitido: { Args: { _email: string }; Returns: boolean }
+      lavoro_canal: { Args: { p_tipo_de_ramo: string }; Returns: string }
       normalize_categoria_financeira: {
         Args: { categoria: string }
         Returns: string
@@ -1581,9 +1582,15 @@ export type Database = {
         Returns: {
           atingimento: number
           atingimento_caixa: number
+          caixa_beneficios: number
+          caixa_demais: number
+          caixa_garantia: number
           defasagem: number
           meta_periodo: number
+          previsto_beneficios: number
           previsto_caixa: number
+          previsto_demais: number
+          previsto_garantia: number
           receita_caixa: number
           receita_competencia: number
         }[]
