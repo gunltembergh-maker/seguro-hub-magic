@@ -47,6 +47,9 @@ function AuthPage() {
   const storeSsoHandoff = useServerFn(ssoHandoffStore);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [pwLoading, setPwLoading] = useState(false);
   const [authMessage, setAuthMessage] = useState<string | null>(null);
 
   useEffect(() => {
