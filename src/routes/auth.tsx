@@ -199,8 +199,10 @@ function AuthPage() {
                 Acessar o Hub
               </h2>
               <p className="mt-1 text-center text-xs text-muted-foreground">
-                Acesso exclusivo para colaboradores Lavoro Seguros via SSO Microsoft (@{ALLOWED_DOMAIN})
+                Acesso exclusivo para colaboradores autorizados via SSO Microsoft
+                (@{ALLOWED_DOMAIN}, @zin.com.br, @taicons.com.br)
               </p>
+
 
               <button
                 onClick={handleMicrosoftLogin}
