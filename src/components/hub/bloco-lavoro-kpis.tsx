@@ -43,6 +43,9 @@ interface KpiRow {
   caixa_garantia: number;
   caixa_beneficios: number;
   caixa_demais: number;
+  competencia_garantia: number;
+  competencia_beneficios: number;
+  competencia_demais: number;
 }
 
 const breakdownPrevisto = (k: KpiRow | null | undefined) => [
