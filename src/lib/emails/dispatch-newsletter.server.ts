@@ -94,7 +94,7 @@ export async function dispatchNewsletterCore(opts: {
           aReceberFuturo: Number(linhaMes.a_receber_futuro ?? 0),
         }
       : null
-    templateData = { ano, mes, quandoBR, ytd: { emitido, caixaEsperado, caixaRecebido, aReceberFuturo, pctCaixa }, mesDetalhe }
+    templateData = { ano, mes, quandoBR, ytd: { emitido, caixaEsperado, caixaRecebido, aReceberFuturo, pctCaixa }, canais, mesDetalhe }
   } else {
     templateData = { ano, mes, quandoBR, ytd: ytdKpis, mtd, comissaoVencidaMes }
   }
