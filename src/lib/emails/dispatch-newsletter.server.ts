@@ -60,7 +60,10 @@ export async function dispatchNewsletterCore(opts: {
     hour: '2-digit', minute: '2-digit',
   })
 
+  const { fetchTimesReceita } = await import('@/lib/emails/escopo-times')
+
   async function buildTemplateData(userId: string | null): Promise<Record<string, any>> {
+    const escopoTimes = await fetchTimesReceita(supabase, userId)
     const [ytdRes, mtdRes, vencidoRes, canaisRes] = await Promise.all([
       supabase.rpc('rpc_lavoro_receita_kpis' as never, { p_ano: ano, p_mes: mes, p_periodo: 'YTD', p_user_id: userId } as never),
       supabase.rpc('rpc_lavoro_receita_kpis' as never, { p_ano: ano, p_mes: mes, p_periodo: 'MTD', p_user_id: userId } as never),
@@ -95,9 +98,9 @@ export async function dispatchNewsletterCore(opts: {
             aReceberFuturo: Number(linhaMes.a_receber_futuro ?? 0),
           }
         : null
-      return { ano, mes, quandoBR, ytd: { emitido, caixaEsperado, caixaRecebido, aReceberFuturo, pctCaixa }, canais, mesDetalhe }
+      return { ano, mes, quandoBR, escopoTimes, ytd: { emitido, caixaEsperado, caixaRecebido, aReceberFuturo, pctCaixa }, canais, mesDetalhe }
     }
-    return { ano, mes, quandoBR, ytd: ytdKpis, mtd, comissaoVencidaMes }
+    return { ano, mes, quandoBR, escopoTimes, ytd: ytdKpis, mtd, comissaoVencidaMes }
   }
 
   const cache = new Map<string, Record<string, any>>()
