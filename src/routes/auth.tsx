@@ -324,17 +324,60 @@ function AuthPage() {
   };
 
 
-  const handleEmailCheck = (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const clean = email.trim().toLowerCase();
     if (!clean) return;
-    if (ALLOWED_PASSWORD_EMAILS.has(clean)) {
-      navigate({ to: "/auth/senha" });
+    if (!isCorporateEmail(clean)) {
+      toast.error("E-mail não autorizado", {
+        description: `Use um e-mail corporativo (${ALLOWED_PASSWORD_DOMAINS.map((d) => `@${d}`).join(", ")}).`,
+      });
       return;
     }
-    toast.info("Login por senha desativado", {
-      description: `Este e-mail deve acessar via Microsoft SSO. O login por senha está restrito.`,
-    });
+    if (!showPassword) {
+      setShowPassword(true);
+      return;
+    }
+    if (!password) return;
+    setPwLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: clean,
+        password,
+      });
+      if (error) throw error;
+      navigate({ to: "/inicio", replace: true });
+    } catch (err) {
+      toast.error("Falha no login", {
+        description: err instanceof Error ? err.message : "Erro desconhecido",
+      });
+    } finally {
+      setPwLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    const clean = email.trim().toLowerCase();
+    if (!isCorporateEmail(clean)) {
+      toast.error("Informe seu e-mail corporativo primeiro");
+      return;
+    }
+    setPwLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(clean, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success("Enviamos um link para definir sua senha", {
+        description: "Confira sua caixa de entrada corporativa.",
+      });
+    } catch (err) {
+      toast.error("Não foi possível enviar o link", {
+        description: err instanceof Error ? err.message : "Tente novamente.",
+      });
+    } finally {
+      setPwLoading(false);
+    }
   };
 
   return (
