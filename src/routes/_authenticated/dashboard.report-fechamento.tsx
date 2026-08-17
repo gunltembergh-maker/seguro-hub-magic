@@ -86,7 +86,10 @@ function Delta({ atual, anterior }: { atual: number; anterior: number }) {
   );
 }
 
-function KpiCard({ title, value, delta, loading }: { title: string; value: string; delta?: React.ReactNode; loading?: boolean }) {
+function KpiCard({ title, value, delta, loading, breakdown }: {
+  title: string; value: string; delta?: React.ReactNode; loading?: boolean;
+  breakdown?: Array<{ label: string; value: string }>;
+}) {
   return (
     <div className="rounded-lg border bg-white p-4 shadow-sm">
       <p className="text-xs uppercase tracking-wider text-muted-foreground">{title}</p>
@@ -94,6 +97,18 @@ function KpiCard({ title, value, delta, loading }: { title: string; value: strin
         <div className="mt-1 flex items-baseline justify-between gap-2">
           <p className="text-xl font-bold" style={{ color: NAVY }}>{value}</p>
           {delta}
+        </div>
+      )}
+      {breakdown && (
+        <div className="mt-3 grid grid-cols-3 gap-2 border-t pt-2">
+          {breakdown.map((b) => (
+            <div key={b.label}>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{b.label}</p>
+              {loading ? <Skeleton className="mt-1 h-4 w-16" /> : (
+                <p className="text-sm font-semibold" style={{ color: NAVY }}>{b.value}</p>
+              )}
+            </div>
+          ))}
         </div>
       )}
     </div>
