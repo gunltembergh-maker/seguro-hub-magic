@@ -109,6 +109,19 @@ function AuthPage() {
       }
     })();
 
+    // Quando o login é concluído num popup auxiliar, ele avisa a tela principal,
+    // que então carrega a sessão (compartilhada via localStorage mesma origem)
+    // e segue para o Hub — sem deixar o usuário em uma aba nova.
+    const onMessage = (e: MessageEvent) => {
+      if (e.origin !== window.location.origin) return;
+      if (e.data?.type === "lavoro-sso-complete") {
+        supabase.auth.getSession().then(({ data }) => {
+          if (data.session) goToHub();
+        });
+      }
+    };
+    window.addEventListener("message", onMessage);
+
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session) {
         goToHub();
@@ -118,6 +131,7 @@ function AuthPage() {
     return () => {
       mounted = false;
       sub.subscription.unsubscribe();
+      window.removeEventListener("message", onMessage);
     };
   }, [navigate]);
 
