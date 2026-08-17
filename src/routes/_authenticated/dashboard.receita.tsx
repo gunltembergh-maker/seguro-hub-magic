@@ -450,11 +450,21 @@ function DashboardReceitaLavoro() {
             title={`A receber em ${periodoLabel}`}
             subtitle="Previsto Caixa (parcelas emitidas por data de pagamento)"
             value={BRL(kpis?.previsto_caixa)} accent="#8AAFC9" loading={kpisQ.isLoading}
+            breakdown={[
+              { label: "Garantia", value: BRL(kpis?.previsto_garantia) },
+              { label: "Benefícios", value: BRL(kpis?.previsto_beneficios) },
+              { label: "Demais Ramos", value: BRL(kpis?.previsto_demais) },
+            ]}
           />
           <BigStatCard
             title={`Receita Caixa em ${periodoLabel}`}
             subtitle="Receita Caixa (efetivamente recebido)"
             value={BRL(kpis?.receita_caixa)} accent="#14405C" loading={kpisQ.isLoading}
+            breakdown={[
+              { label: "Garantia", value: BRL(kpis?.caixa_garantia) },
+              { label: "Benefícios", value: BRL(kpis?.caixa_beneficios) },
+              { label: "Demais Ramos", value: BRL(kpis?.caixa_demais) },
+            ]}
           />
         </div>
 
