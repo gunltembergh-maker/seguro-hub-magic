@@ -396,7 +396,15 @@ function AbaSumario({ data, loading, comparar }: { data: any; loading: boolean; 
         <h3 className="mb-2 text-sm font-semibold" style={{ color: NAVY }}>Pipeline A Receber</h3>
         {data?.pipeline ? (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <KpiCard title="Total a Receber" value={BRL(data.pipeline.total)} />
+            <KpiCard
+              title="Total a Receber"
+              value={BRL(data.pipeline.total)}
+              breakdown={[
+                { label: "Garantia", value: BRL(data.pipeline.garantia) },
+                { label: "Benefícios", value: BRL(data.pipeline.beneficios) },
+                { label: "Demais Ramos", value: BRL(data.pipeline.demais) },
+              ]}
+            />
             <KpiCard title="Apólices no Pipeline" value={NUM(data.pipeline.apolices)} />
           </div>
         ) : <Skeleton className="h-16 w-full" />}
@@ -755,7 +763,15 @@ function AbaAReceber({ data, loading }: { data: any; loading: boolean }) {
       </p>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        <KpiCard title="Total a Receber" value={BRL(data.total?.valor)} />
+        <KpiCard
+          title="Total a Receber"
+          value={BRL(data.total?.valor)}
+          breakdown={[
+            { label: "Garantia", value: BRL(data.total?.garantia) },
+            { label: "Benefícios", value: BRL(data.total?.beneficios) },
+            { label: "Demais Ramos", value: BRL(data.total?.demais) },
+          ]}
+        />
         <KpiCard title="Apólices" value={NUM(data.total?.apolices)} />
         <KpiCard title="Parcelas" value={NUM(data.total?.parcelas)} />
       </div>
