@@ -165,6 +165,8 @@ function DashboardReceitaLavoro() {
       return (data?.[0] ?? null) as {
         receita_competencia: number; receita_caixa: number; meta_periodo: number;
         atingimento: number; defasagem: number; previsto_caixa: number; atingimento_caixa: number;
+        previsto_garantia: number; previsto_beneficios: number; previsto_demais: number;
+        caixa_garantia: number; caixa_beneficios: number; caixa_demais: number;
       } | null;
     },
   });
