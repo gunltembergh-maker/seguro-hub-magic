@@ -34,7 +34,25 @@ interface KpiRow {
   defasagem: number;
   previsto_caixa: number;
   atingimento_caixa: number;
+  previsto_garantia: number;
+  previsto_beneficios: number;
+  previsto_demais: number;
+  caixa_garantia: number;
+  caixa_beneficios: number;
+  caixa_demais: number;
 }
+
+const breakdownPrevisto = (k: KpiRow | null | undefined) => [
+  { label: "Garantia", value: BRL(k?.previsto_garantia) },
+  { label: "Benefícios", value: BRL(k?.previsto_beneficios) },
+  { label: "Demais Ramos", value: BRL(k?.previsto_demais) },
+];
+
+const breakdownCaixa = (k: KpiRow | null | undefined) => [
+  { label: "Garantia", value: BRL(k?.caixa_garantia) },
+  { label: "Benefícios", value: BRL(k?.caixa_beneficios) },
+  { label: "Demais Ramos", value: BRL(k?.caixa_demais) },
+];
 
 function useKpis(ano: number, mes: number, periodo: "MTD" | "YTD") {
   return useQuery({
@@ -104,6 +122,8 @@ export function BlocoLavoroKpis({ canSee }: { canSee: boolean }) {
               value={loadingY ? null : BRL(ytd?.previsto_caixa)}
               accent={L.amber}
               hintColor={L.amber}
+              loading={loadingY}
+              breakdown={breakdownPrevisto(ytd)}
             />
             <Kpi
               label={`RECEITA CAIXA EM YTD ${ano}`}
@@ -111,6 +131,8 @@ export function BlocoLavoroKpis({ canSee }: { canSee: boolean }) {
               value={loadingY ? null : BRL(ytd?.receita_caixa)}
               accent={L.green}
               hintColor={L.green}
+              loading={loadingY}
+              breakdown={breakdownCaixa(ytd)}
             />
           </div>
         </div>
@@ -127,6 +149,8 @@ export function BlocoLavoroKpis({ canSee }: { canSee: boolean }) {
               value={loadingM ? null : BRL(mtd?.previsto_caixa)}
               accent={L.amber}
               hintColor={L.amber}
+              loading={loadingM}
+              breakdown={breakdownPrevisto(mtd)}
             />
             <Kpi
               label={`RECEITA CAIXA EM ${mesLabel.toUpperCase()}`}
@@ -134,6 +158,8 @@ export function BlocoLavoroKpis({ canSee }: { canSee: boolean }) {
               value={loadingM ? null : BRL(mtd?.receita_caixa)}
               accent={L.green}
               hintColor={L.green}
+              loading={loadingM}
+              breakdown={breakdownCaixa(mtd)}
             />
           </div>
         </div>
@@ -177,9 +203,10 @@ export function BlocoLavoroKpis({ canSee }: { canSee: boolean }) {
 }
 
 function Kpi({
-  label, hint, value, accent, hintColor,
+  label, hint, value, accent, hintColor, breakdown, loading,
 }: {
   label: string; hint: string; value: string | null; accent: string; hintColor: string;
+  breakdown?: Array<{ label: string; value: string }>; loading?: boolean;
 }) {
   return (
     <div className="rounded-md p-4" style={{ background: "#F8FAFC", borderLeft: `4px solid ${accent}` }}>
@@ -191,6 +218,20 @@ function Kpi({
         <p className="font-display font-numeric mt-1" style={{ fontSize: 26, fontWeight: 600, color: L.navyDark, letterSpacing: "-0.3px" }}>
           {value}
         </p>
+      )}
+      {breakdown && (
+        <div className="mt-3 grid grid-cols-3 gap-2 pt-2" style={{ borderTop: `1px solid ${L.border}` }}>
+          {breakdown.map((b) => (
+            <div key={b.label}>
+              <p style={{ color: L.textMuted, fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 700 }}>{b.label}</p>
+              {loading ? (
+                <Skeleton className="h-4 w-16 mt-1" />
+              ) : (
+                <p className="font-numeric" style={{ fontSize: 13, fontWeight: 600, color: L.navyDark }}>{b.value}</p>
+              )}
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

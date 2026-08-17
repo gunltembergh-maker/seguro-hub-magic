@@ -34,12 +34,14 @@ export const sendResumoExecutivo = createServerFn({ method: 'POST' })
     const mes = hoje.getMonth() + 1
     const semanaAno = semanaDoAno(hoje)
 
-    const [mensalRes, compRes] = await Promise.all([
+    const [mensalRes, compRes, canaisRes] = await Promise.all([
       context.supabase.rpc('rpc_receita_executivo_mensal' as never, { p_ano: ano } as never),
       context.supabase.rpc('rpc_receita_executivo_complementares' as never, { p_ano: ano } as never),
+      context.supabase.rpc('rpc_receita_executivo_canais' as never, { p_ano: ano, p_mes: mes } as never),
     ])
     if (mensalRes.error) throw new Error(`Mensal: ${mensalRes.error.message}`)
     if (compRes.error) throw new Error(`Complementares: ${compRes.error.message}`)
+    const canais = (((canaisRes.data as unknown) as any[]) ?? []) as Array<{ canal: string; caixa_corrente: number; a_receber_futuro: number }>
 
     const linhas = (mensalRes.data as any[]) ?? []
     const soma = (k: string) => linhas.reduce((acc, r) => acc + Number(r[k] ?? 0), 0)
