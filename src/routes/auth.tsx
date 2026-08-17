@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { Loader2, Lock } from "lucide-react";
 import { toast } from "sonner";
@@ -35,6 +36,8 @@ function MicrosoftLogo({ className }: { className?: string }) {
 
 function AuthPage() {
   const navigate = useNavigate();
+  const claimSsoHandoff = useServerFn(ssoHandoffClaim);
+  const storeSsoHandoff = useServerFn(ssoHandoffStore);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
   const [authMessage, setAuthMessage] = useState<string | null>(null);
@@ -54,6 +57,14 @@ function AuthPage() {
 
     const searchParams = new URLSearchParams(window.location.search);
     const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const handoffFromWindowName = window.name.startsWith("lavoro-sso:")
+      ? window.name.slice("lavoro-sso:".length)
+      : null;
+    const callbackHandoffCode = searchParams.get("hs") || handoffFromWindowName;
+    const isPopupCallback =
+      !!callbackHandoffCode ||
+      searchParams.get("sso") === "popup" ||
+      (!!window.opener && window.opener !== window);
     const oauthError =
       searchParams.get("error_description") ||
       hashParams.get("error_description") ||
@@ -78,12 +89,8 @@ function AuthPage() {
           } else {
             // Se este contexto é a janela auxiliar do SSO, devolvemos o
             // controle para a tela do Lovable e fechamos a janela.
-            const handoffCode = searchParams.get("hs");
-            const isPopup =
-              !!handoffCode ||
-              searchParams.get("sso") === "popup" ||
-              (!!window.opener && window.opener !== window);
-            if (isPopup) {
+            const handoffCode = callbackHandoffCode;
+            if (isPopupCallback) {
               // O preview do editor roda em iframe e o navegador particiona o
               // storage: a sessão obtida aqui não é visível lá. Entregamos os
               // tokens via servidor, com código de uso único.
@@ -91,7 +98,7 @@ function AuthPage() {
                 try {
                   const { data: sess } = await supabase.auth.getSession();
                   if (sess.session) {
-                    await ssoHandoffStore({
+                    await storeSsoHandoff({
                       data: {
                         code: handoffCode,
                         payload: JSON.stringify({
@@ -120,6 +127,7 @@ function AuthPage() {
               }
               cleanUrl();
               setAuthMessage("Login concluído. Voltando ao Hub...");
+              window.name = "";
               window.close();
               window.setTimeout(() => {
                 if (!window.closed) goToHub();
@@ -181,7 +189,14 @@ function AuthPage() {
     }, 1500);
 
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
-      if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session) {
+      // No popup, SIGNED_IN dispara durante exchangeCodeForSession. Não navegue
+      // antes de entregar a sessão ao preview, senão a janela vai para /inicio
+      // e a tela principal permanece presa em /auth.
+      if (
+        !isPopupCallback &&
+        (event === "SIGNED_IN" || event === "INITIAL_SESSION") &&
+        session
+      ) {
         goToHub();
       }
     });
@@ -194,7 +209,7 @@ function AuthPage() {
       window.removeEventListener("storage", onStorage);
     };
 
-  }, [navigate]);
+  }, [navigate, storeSsoHandoff]);
 
   const handleMicrosoftLogin = async () => {
     setLoading(true);
@@ -206,6 +221,19 @@ function AuthPage() {
     const handoffCode = isEmbedded
       ? `${crypto.randomUUID()}${crypto.randomUUID()}`.replace(/-/g, "")
       : null;
+
+    // Abra a janela ainda dentro do clique do usuário para o navegador não
+    // bloqueá-la. O código em window.name sobrevive ao percurso Microsoft →
+    // Supabase → Hub, mesmo quando o provedor remove parâmetros da URL ou
+    // isola window.opener.
+    const authWindow =
+      isEmbedded && handoffCode
+        ? window.open(
+            "about:blank",
+            `lavoro-sso:${handoffCode}`,
+            "width=560,height=720,menubar=no,toolbar=no,location=no,status=no",
+          )
+        : null;
 
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "azure",
@@ -225,6 +253,7 @@ function AuthPage() {
 
 
     if (error) {
+      authWindow?.close();
       setLoading(false);
       setAuthMessage(null);
       toast.error("SSO indisponível", {
@@ -237,14 +266,12 @@ function AuthPage() {
       // Popup dimensionado: a Microsoft recusa iframes, mas permite janelas
       // de topo. O popup fecha sozinho ao concluir e devolve o controle
       // para a tela principal (preview ao lado do chat).
-      const opened = window.open(
-        data.url,
-        "lavoro-sso",
-        "width=560,height=720,menubar=no,toolbar=no,location=no,status=no",
-      );
-      if (!opened) {
+      if (authWindow) {
+        authWindow.location.replace(data.url);
+        authWindow.focus();
+      } else {
         try {
-          window.top!.location.href = data.url;
+          if (window.top) window.top.location.href = data.url;
         } catch {
           toast.error("Pop-up bloqueado", {
             description:
@@ -263,7 +290,7 @@ function AuthPage() {
             return;
           }
           try {
-            const res = await ssoHandoffClaim({ data: { code: handoffCode } });
+            const res = await claimSsoHandoff({ data: { code: handoffCode } });
             if (res?.payload) {
               window.clearInterval(timer);
               const tokens = JSON.parse(res.payload) as {
@@ -273,7 +300,8 @@ function AuthPage() {
               const { error: setErr } = await supabase.auth.setSession(tokens);
               if (!setErr) {
                 setAuthMessage("Login concluído. Entrando no Hub...");
-                navigate({ to: "/inicio", replace: true });
+                authWindow?.close();
+                window.location.replace("/inicio");
               }
             }
           } catch {
