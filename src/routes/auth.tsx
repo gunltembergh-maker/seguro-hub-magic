@@ -121,8 +121,14 @@ function AuthPage() {
         redirectTo: `${window.location.origin}/auth`,
         scopes: "email openid profile",
         skipBrowserRedirect: isEmbedded,
+        // Força a Microsoft a exibir o seletor de contas em vez de reaproveitar
+        // a sessão já autenticada (ex.: conta Lavoro) ao entrar por outro domínio.
+        queryParams: {
+          prompt: "select_account",
+        },
       },
     });
+
 
     if (error) {
       setLoading(false);
