@@ -6,6 +6,20 @@ export const TIME_LABEL: Record<TimeReceita, string> = {
   DEMAIS_RAMOS: "Demais Ramos",
 };
 
+/** Mensagem exibida a quem não tem nenhum canal de receita liberado. */
+export const SEM_ACESSO_RECEITA_MSG = "Você não tem acesso aos dados de receita.";
+
+/** 'TODOS' no array = acesso completo. */
+export function temTodos(times?: string[] | null): boolean {
+  return (times ?? []).includes("TODOS");
+}
+
+/** Vazio/NULL (e sem 'TODOS') = não vê receita nenhuma. */
+export function semAcessoReceita(times?: string[] | null): boolean {
+  if (temTodos(times)) return false;
+  return normalizeTimes(times).length === 0;
+}
+
 /** Remove valores inválidos e "TODOS" (que significa sem restrição). */
 export function normalizeTimes(times?: string[] | null): TimeReceita[] {
   const out = (times ?? []).filter(
@@ -18,6 +32,7 @@ export function normalizeTimes(times?: string[] | null): TimeReceita[] {
 export function isRestrito(times?: string[] | null): boolean {
   return normalizeTimes(times).length > 0;
 }
+
 
 /** "Garantia e Demais Ramos" */
 export function escopoLabel(times?: string[] | null): string {
