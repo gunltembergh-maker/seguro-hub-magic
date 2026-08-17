@@ -16,6 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { SendNewsletterButton } from "@/components/admin/SendNewsletterButton";
 import { useEscopoReceita } from "@/hooks/use-escopo-receita";
+import { SEM_ACESSO_RECEITA_MSG } from "@/lib/receita-escopo";
+
 
 export const Route = createFileRoute("/_authenticated/dashboard/receita")({
   component: DashboardReceitaLavoro,
@@ -376,7 +378,21 @@ function DashboardReceitaLavoro() {
 
   const CORES_LINHAS = ["#14405C", "#4B6D88", "#00BAF2", "#8AAFC9"];
 
+  if (escopo.semAcesso) {
+    return (
+      <div className="min-h-screen p-6" style={{ background: "#14405C" }}>
+        <div className="rounded-lg border border-white/20 bg-white/10 p-8 text-center text-white">
+          <p className="text-sm">{SEM_ACESSO_RECEITA_MSG}</p>
+          <p className="mt-1 text-xs text-white/70">
+            Solicite ao administrador a liberação do(s) seu(s) time(s) de receita.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
+
     <div className="min-h-screen p-6" style={{ background: "#14405C" }}>
       <style>{`
         .lavoro-receita { font-family: 'Source Sans 3', system-ui, sans-serif; color: #14405C; }
