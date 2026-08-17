@@ -295,6 +295,20 @@ function Compact({
           </p>
         </div>
       )}
+      {breakdown && breakdown.length > 0 && (
+        <div className="mt-2 space-y-0.5 pt-1.5" style={{ borderTop: `1px solid ${L.border}` }}>
+          {breakdown.map((b) => (
+            <div key={b.label} className="flex items-center justify-between gap-2">
+              <span style={{ color: L.textMuted, fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 700 }}>{b.label}</span>
+              {value == null ? (
+                <Skeleton className="h-3 w-14" />
+              ) : (
+                <span className="font-numeric" style={{ fontSize: 11.5, fontWeight: 600, color: L.navyDark }}>{b.value}</span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
