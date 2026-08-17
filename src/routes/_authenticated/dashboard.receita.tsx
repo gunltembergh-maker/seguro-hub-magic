@@ -80,9 +80,10 @@ function PbiCard({
 }
 
 function BigStatCard({
-  title, subtitle, value, accent, loading,
+  title, subtitle, value, accent, loading, breakdown,
 }: {
   title: string; subtitle?: string; value: string; accent: string; loading?: boolean;
+  breakdown?: Array<{ label: string; value: string }>;
 }) {
   return (
     <div className="rounded-lg shadow-sm p-5 border"
@@ -93,6 +94,20 @@ function BigStatCard({
         <div className="h-10 mt-2 w-40 bg-gray-100 rounded animate-pulse" />
       ) : (
         <p className="text-3xl font-bold mt-2" style={{ color: "#14405C" }}>{value}</p>
+      )}
+      {breakdown && (
+        <div className="mt-3 grid grid-cols-3 gap-2 border-t border-gray-100 pt-2">
+          {breakdown.map((b) => (
+            <div key={b.label}>
+              <p className="text-[10px] uppercase tracking-wider" style={{ color: "#9CA3AF" }}>{b.label}</p>
+              {loading ? (
+                <div className="h-4 mt-1 w-16 bg-gray-100 rounded animate-pulse" />
+              ) : (
+                <p className="text-sm font-semibold" style={{ color: "#14405C" }}>{b.value}</p>
+              )}
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
