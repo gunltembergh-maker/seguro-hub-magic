@@ -4,6 +4,8 @@ import { Loader2, Lock } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
+import { ssoHandoffClaim, ssoHandoffStore } from "@/lib/sso-handoff.functions";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
