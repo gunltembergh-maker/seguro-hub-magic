@@ -1098,6 +1098,11 @@ export type Database = {
         Args: { p_tipo_de_ramo: string }
         Returns: boolean
       }
+      lavoro_pode_ver_canal: { Args: { p_canal: string }; Returns: boolean }
+      lavoro_pode_ver_canal_para: {
+        Args: { p_canal: string; p_user_id: string }
+        Returns: boolean
+      }
       normalize_categoria_financeira: {
         Args: { categoria: string }
         Returns: string
