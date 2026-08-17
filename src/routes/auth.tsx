@@ -74,6 +74,20 @@ function AuthPage() {
           if (error) {
             toast.error("Falha ao concluir SSO", { description: error.message });
           } else {
+            // Se este contexto é um popup aberto pela tela principal,
+            // devolvemos o controle e fechamos a janela auxiliar.
+            if (window.opener && window.opener !== window) {
+              try {
+                window.opener.postMessage(
+                  { type: "lavoro-sso-complete" },
+                  window.location.origin,
+                );
+              } catch {
+                /* ignore */
+              }
+              window.close();
+              return;
+            }
             goToHub();
             return;
           }
@@ -95,6 +109,19 @@ function AuthPage() {
       }
     })();
 
+    // Quando o login é concluído num popup auxiliar, ele avisa a tela principal,
+    // que então carrega a sessão (compartilhada via localStorage mesma origem)
+    // e segue para o Hub — sem deixar o usuário em uma aba nova.
+    const onMessage = (e: MessageEvent) => {
+      if (e.origin !== window.location.origin) return;
+      if (e.data?.type === "lavoro-sso-complete") {
+        supabase.auth.getSession().then(({ data }) => {
+          if (data.session) goToHub();
+        });
+      }
+    };
+    window.addEventListener("message", onMessage);
+
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session) {
         goToHub();
@@ -104,6 +131,7 @@ function AuthPage() {
     return () => {
       mounted = false;
       sub.subscription.unsubscribe();
+      window.removeEventListener("message", onMessage);
     };
   }, [navigate]);
 
@@ -140,7 +168,14 @@ function AuthPage() {
     }
 
     if (isEmbedded && data?.url) {
-      const opened = window.open(data.url, "_blank");
+      // Popup dimensionado: a Microsoft recusa iframes, mas permite janelas
+      // de topo. O popup fecha sozinho ao concluir e devolve o controle
+      // para a tela principal (preview ao lado do chat).
+      const opened = window.open(
+        data.url,
+        "lavoro-sso",
+        "width=560,height=720,menubar=no,toolbar=no,location=no,status=no",
+      );
       if (!opened) {
         try {
           window.top!.location.href = data.url;
@@ -152,7 +187,7 @@ function AuthPage() {
         }
       }
       setLoading(false);
-      setAuthMessage("Conclua o login na aba da Microsoft e volte para o Hub.");
+      setAuthMessage("Conclua o login na janela da Microsoft e volte ao Hub.");
     }
   };
 
