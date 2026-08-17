@@ -14,10 +14,17 @@ import logoBranca from "@/assets/logo-branca.png.asset.json";
 import fundoPredio from "@/assets/fundo-login-predio.png.asset.json";
 
 const ALLOWED_DOMAIN = "lavoroseguros.com.br";
-// Usuários com login por senha liberado (backdoor)
-const ALLOWED_PASSWORD_EMAILS = new Set([
-  "alessandro.oliveira@lavoroseguros.com.br",
-]);
+// Domínios corporativos autorizados a entrar com e-mail e senha
+export const ALLOWED_PASSWORD_DOMAINS = [
+  "lavoroseguros.com.br",
+  "zin.com.br",
+  "taicons.com.br",
+];
+
+export function isCorporateEmail(value: string) {
+  const clean = value.trim().toLowerCase();
+  return ALLOWED_PASSWORD_DOMAINS.some((d) => clean.endsWith(`@${d}`));
+}
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
@@ -40,6 +47,9 @@ function AuthPage() {
   const storeSsoHandoff = useServerFn(ssoHandoffStore);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [pwLoading, setPwLoading] = useState(false);
   const [authMessage, setAuthMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -317,17 +327,60 @@ function AuthPage() {
   };
 
 
-  const handleEmailCheck = (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const clean = email.trim().toLowerCase();
     if (!clean) return;
-    if (ALLOWED_PASSWORD_EMAILS.has(clean)) {
-      navigate({ to: "/auth/senha" });
+    if (!isCorporateEmail(clean)) {
+      toast.error("E-mail não autorizado", {
+        description: `Use um e-mail corporativo (${ALLOWED_PASSWORD_DOMAINS.map((d) => `@${d}`).join(", ")}).`,
+      });
       return;
     }
-    toast.info("Login por senha desativado", {
-      description: `Este e-mail deve acessar via Microsoft SSO. O login por senha está restrito.`,
-    });
+    if (!showPassword) {
+      setShowPassword(true);
+      return;
+    }
+    if (!password) return;
+    setPwLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: clean,
+        password,
+      });
+      if (error) throw error;
+      navigate({ to: "/inicio", replace: true });
+    } catch (err) {
+      toast.error("Falha no login", {
+        description: err instanceof Error ? err.message : "Erro desconhecido",
+      });
+    } finally {
+      setPwLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    const clean = email.trim().toLowerCase();
+    if (!isCorporateEmail(clean)) {
+      toast.error("Informe seu e-mail corporativo primeiro");
+      return;
+    }
+    setPwLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(clean, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success("Enviamos um link para definir sua senha", {
+        description: "Confira sua caixa de entrada corporativa.",
+      });
+    } catch (err) {
+      toast.error("Não foi possível enviar o link", {
+        description: err instanceof Error ? err.message : "Tente novamente.",
+      });
+    } finally {
+      setPwLoading(false);
+    }
   };
 
   return (
@@ -395,7 +448,7 @@ function AuthPage() {
                 <div className="h-px flex-1 bg-border" />
               </div>
 
-              <form onSubmit={handleEmailCheck} className="space-y-3">
+              <form onSubmit={handleEmailSubmit} className="space-y-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="email" className="text-xs">
                     E-mail Corporativo
@@ -405,22 +458,52 @@ function AuthPage() {
                     type="email"
                     autoComplete="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (!isCorporateEmail(e.target.value)) setShowPassword(false);
+                    }}
                     placeholder={`nome@${ALLOWED_DOMAIN}`}
                   />
                 </div>
-                <p className="text-[11px] leading-relaxed text-muted-foreground">
-                  O login por e-mail e senha é restrito a pessoas autorizadas.
-                  Informe seu e-mail para verificar se possui acesso liberado.
-                </p>
+
+                {showPassword && (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="password" className="text-xs">
+                      Senha
+                    </Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      autoComplete="current-password"
+                      autoFocus
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                    />
+                  </div>
+                )}
+
                 <Button
                   type="submit"
                   variant="outline"
                   size="sm"
+                  disabled={pwLoading}
                   className="w-full text-[#14405C]"
                 >
-                  Verificar acesso por senha
+                  {pwLoading && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+                  {showPassword ? "Entrar" : "Continuar com senha"}
                 </Button>
+
+                {showPassword && (
+                  <button
+                    type="button"
+                    onClick={handleForgotPassword}
+                    disabled={pwLoading}
+                    className="w-full text-center text-[11px] text-[#14405C] hover:underline"
+                  >
+                    Esqueci minha senha / definir senha
+                  </button>
+                )}
               </form>
 
               <div className="mt-6 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">

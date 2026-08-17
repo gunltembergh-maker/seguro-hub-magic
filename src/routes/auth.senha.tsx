@@ -11,10 +11,7 @@ import logoBranca from "@/assets/logo-branca.png.asset.json";
 import fundo1 from "@/assets/fundo-1.png.asset.json";
 import { LoadingSplash } from "@/components/loading-splash";
 
-// Backdoor route restrita — login por senha somente para usuários autorizados
-const ALLOWED_PASSWORD_EMAILS = new Set([
-  "alessandro.oliveira@lavoroseguros.com.br",
-]);
+import { isCorporateEmail } from "./auth";
 
 export const Route = createFileRoute("/auth/senha")({
   ssr: false,
@@ -38,9 +35,9 @@ function AuthSenhaPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const clean = email.trim().toLowerCase();
-    if (!ALLOWED_PASSWORD_EMAILS.has(clean)) {
+    if (!isCorporateEmail(clean)) {
       toast.error("Acesso não autorizado", {
-        description: "Este e-mail não tem permissão para login por senha. Use o SSO Microsoft.",
+        description: "Use um e-mail corporativo autorizado ou entre com o SSO Microsoft.",
       });
       return;
     }
