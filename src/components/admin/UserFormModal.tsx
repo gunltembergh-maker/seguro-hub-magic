@@ -19,11 +19,13 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 
 const TIMES_RECEITA = [
+  { value: "TODOS", label: "Ver tudo" },
   { value: "GARANTIA", label: "Garantia" },
   { value: "BENEFICIOS", label: "Benefícios" },
   { value: "DEMAIS_RAMOS", label: "Demais Ramos" },
 ] as const;
 type TimeReceita = (typeof TIMES_RECEITA)[number]["value"];
+
 
 const LAVORO_DOMAIN = "lavoroseguros.com.br";
 
