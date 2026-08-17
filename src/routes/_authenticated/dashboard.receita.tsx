@@ -171,6 +171,7 @@ function DashboardReceitaLavoro() {
         atingimento: number; defasagem: number; previsto_caixa: number; atingimento_caixa: number;
         previsto_garantia: number; previsto_beneficios: number; previsto_demais: number;
         caixa_garantia: number; caixa_beneficios: number; caixa_demais: number;
+        competencia_garantia: number; competencia_beneficios: number; competencia_demais: number;
       } | null;
     },
   });
@@ -658,7 +659,16 @@ function DashboardReceitaLavoro() {
           </CollapsibleTrigger>
           <CollapsibleContent className="mt-3 space-y-3">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <MetricCard title={`Receita Competência (${periodoLabel})`} value={BRL(kpis?.receita_competencia)} loading={kpisQ.isLoading} />
+              <MetricCard
+                title={`Receita Competência (${periodoLabel})`}
+                value={BRL(kpis?.receita_competencia)}
+                loading={kpisQ.isLoading}
+                breakdown={escopo.filtrar([
+                  { label: "Garantia", value: BRL(kpis?.competencia_garantia) },
+                  { label: "Benefícios", value: BRL(kpis?.competencia_beneficios) },
+                  { label: "Demais Ramos", value: BRL(kpis?.competencia_demais) },
+                ])}
+              />
               <MetricCard title={`Meta (${periodoLabel})`} value={BRL(kpis?.meta_periodo)} loading={kpisQ.isLoading} />
               <MetricCard title="Atingimento (Competência)" value={PCT(atingimento)} loading={kpisQ.isLoading}
                 headerRight={
