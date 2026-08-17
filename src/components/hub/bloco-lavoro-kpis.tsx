@@ -272,9 +272,10 @@ function Kpi({
 }
 
 function Compact({
-  label, value, badge, valueColor, icon,
+  label, value, badge, valueColor, icon, breakdown,
 }: {
   label: string; value: string | null; badge?: React.ReactNode; valueColor?: string; icon?: React.ReactNode;
+  breakdown?: Array<{ label: string; value: string }>;
 }) {
   return (
     <div className="rounded-md p-3" style={{ background: "#F8FAFC", border: `1px solid ${L.border}` }}>
