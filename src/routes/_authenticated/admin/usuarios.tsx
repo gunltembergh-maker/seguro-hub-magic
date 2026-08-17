@@ -63,11 +63,14 @@ const TIME_LABEL: Record<string, string> = {
   DEMAIS_RAMOS: "Demais Ramos",
 };
 
-function TimesReceitaBadge({ times }: { times?: string[] | null }) {
+function TimesReceitaBadge({ times, roles }: { times?: string[] | null; roles?: string[] | null }) {
+  if ((roles ?? []).includes("ADMIN")) return <Badge variant="outline">Admin (tudo)</Badge>;
+  if ((times ?? []).includes("TODOS")) return <Badge variant="secondary">Vê tudo</Badge>;
   const list = (times ?? []).filter((t) => t in TIME_LABEL);
-  if (list.length === 0) return <Badge variant="outline">Todos</Badge>;
+  if (list.length === 0) return <Badge variant="outline">Sem receita</Badge>;
   return <Badge variant="secondary">{list.map((t) => TIME_LABEL[t]).join(" + ")}</Badge>;
 }
+
 
 function TipoBadge({ u }: { u: AdminUserV2 }) {
   return u.tipo_usuario === "externo"
@@ -309,7 +312,7 @@ function AdminUsuariosPage() {
                           <TableCell className="text-muted-foreground">{u.email}</TableCell>
                           <TableCell><TipoBadge u={u} /></TableCell>
                           <TableCell>{u.perfil_nome ?? <span className="italic text-muted-foreground">sem perfil</span>}</TableCell>
-                          <TableCell><TimesReceitaBadge times={u.times_receita} /></TableCell>
+                          <TableCell><TimesReceitaBadge times={u.times_receita} roles={(u.roles ?? []) as string[]} /></TableCell>
                           <TableCell><StatusBadge u={u} /></TableCell>
                           <TableCell className="text-center tabular-nums">{u.total_sessoes}</TableCell>
                           <TableCell className="text-muted-foreground">{formatUltimoAcesso(u.ultimo_acesso)}</TableCell>

@@ -33,8 +33,12 @@ export const sendReceitaDiaria = createServerFn({ method: 'POST' })
       .maybeSingle()
     const destUserId = (destProfile as { user_id: string } | null)?.user_id ?? null
 
-    const { fetchTimesReceita } = await import('@/lib/emails/escopo-times')
-    const escopoTimes = await fetchTimesReceita(context.supabase, destUserId)
+    const { fetchEscopoReceita } = await import('@/lib/emails/escopo-times')
+    const escopo = await fetchEscopoReceita(context.supabase, destUserId)
+    if (escopo.semAcesso) {
+      throw new Error('Destinatário não tem acesso aos dados de receita.')
+    }
+    const escopoTimes = escopo.times
 
     const [ytdRes, mtdRes, vencidoRes] = await Promise.all([
       context.supabase.rpc('rpc_lavoro_receita_kpis' as never, {

@@ -19,11 +19,13 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 
 const TIMES_RECEITA = [
+  { value: "TODOS", label: "Ver tudo" },
   { value: "GARANTIA", label: "Garantia" },
   { value: "BENEFICIOS", label: "Benefícios" },
   { value: "DEMAIS_RAMOS", label: "Demais Ramos" },
 ] as const;
 type TimeReceita = (typeof TIMES_RECEITA)[number]["value"];
+
 
 const LAVORO_DOMAIN = "lavoroseguros.com.br";
 
@@ -267,7 +269,7 @@ export function UserFormModal({ open, onOpenChange, initial, onSaved }: Props) {
 
           <div className="space-y-2">
             <Label>Time(s) de Receita</Label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {TIMES_RECEITA.map((opt) => {
                 const checked = timesReceita.includes(opt.value);
                 return (
@@ -278,9 +280,11 @@ export function UserFormModal({ open, onOpenChange, initial, onSaved }: Props) {
                     <Checkbox
                       checked={checked}
                       onCheckedChange={(v) =>
-                        setTimesReceita((prev) =>
-                          v === true ? [...prev, opt.value] : prev.filter((t) => t !== opt.value),
-                        )
+                        setTimesReceita((prev) => {
+                          if (v !== true) return prev.filter((t) => t !== opt.value);
+                          if (opt.value === "TODOS") return ["TODOS"];
+                          return [...prev.filter((t) => t !== "TODOS"), opt.value];
+                        })
                       }
                     />
                     {opt.label}
@@ -289,8 +293,10 @@ export function UserFormModal({ open, onOpenChange, initial, onSaved }: Props) {
               })}
             </div>
             <p className="text-xs text-muted-foreground">
-              Nenhum marcado = vê todos os canais de receita. Administradores sempre veem tudo.
+              Sem seleção = usuário não vê dados de receita. "Ver tudo" = acesso completo.
+              Administradores sempre veem tudo.
             </p>
+
           </div>
 
           {isEdit && (

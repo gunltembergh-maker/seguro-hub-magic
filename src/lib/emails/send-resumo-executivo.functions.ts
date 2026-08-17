@@ -41,8 +41,12 @@ export const sendResumoExecutivo = createServerFn({ method: 'POST' })
       .maybeSingle()
     const destUserId = (destProfile as { user_id: string } | null)?.user_id ?? null
 
-    const { fetchTimesReceita } = await import('@/lib/emails/escopo-times')
-    const escopoTimes = await fetchTimesReceita(context.supabase, destUserId)
+    const { fetchEscopoReceita } = await import('@/lib/emails/escopo-times')
+    const escopo = await fetchEscopoReceita(context.supabase, destUserId)
+    if (escopo.semAcesso) {
+      throw new Error('Destinatário não tem acesso aos dados de receita.')
+    }
+    const escopoTimes = escopo.times
 
     const [mensalRes, compRes, canaisRes] = await Promise.all([
       context.supabase.rpc('rpc_receita_executivo_mensal' as never, { p_ano: ano, p_user_id: destUserId } as never),
