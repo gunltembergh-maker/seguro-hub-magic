@@ -74,6 +74,20 @@ function AuthPage() {
           if (error) {
             toast.error("Falha ao concluir SSO", { description: error.message });
           } else {
+            // Se este contexto é um popup aberto pela tela principal,
+            // devolvemos o controle e fechamos a janela auxiliar.
+            if (window.opener && window.opener !== window) {
+              try {
+                window.opener.postMessage(
+                  { type: "lavoro-sso-complete" },
+                  window.location.origin,
+                );
+              } catch {
+                /* ignore */
+              }
+              window.close();
+              return;
+            }
             goToHub();
             return;
           }
