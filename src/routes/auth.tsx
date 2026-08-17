@@ -203,11 +203,16 @@ function AuthPage() {
     // A Microsoft recusa ser carregada em iframe (preview do editor).
     // Nesse caso abrimos o consentimento em uma aba de topo.
     const isEmbedded = typeof window !== "undefined" && window.self !== window.top;
+    const handoffCode = isEmbedded
+      ? `${crypto.randomUUID()}${crypto.randomUUID()}`.replace(/-/g, "")
+      : null;
 
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "azure",
       options: {
-        redirectTo: `${window.location.origin}/auth${isEmbedded ? "?sso=popup" : ""}`,
+        redirectTo: `${window.location.origin}/auth${
+          handoffCode ? `?sso=popup&hs=${handoffCode}` : ""
+        }`,
         scopes: "email openid profile",
         skipBrowserRedirect: isEmbedded,
         // Força a Microsoft a exibir o seletor de contas em vez de reaproveitar
@@ -247,7 +252,38 @@ function AuthPage() {
           });
         }
       }
+
+      // O preview roda em iframe com storage particionado: buscamos a sessão
+      // criada na janela auxiliar através do código de uso único.
+      if (handoffCode) {
+        const deadline = Date.now() + 5 * 60_000;
+        const timer = window.setInterval(async () => {
+          if (Date.now() > deadline) {
+            window.clearInterval(timer);
+            return;
+          }
+          try {
+            const res = await ssoHandoffClaim({ data: { code: handoffCode } });
+            if (res?.payload) {
+              window.clearInterval(timer);
+              const tokens = JSON.parse(res.payload) as {
+                access_token: string;
+                refresh_token: string;
+              };
+              const { error: setErr } = await supabase.auth.setSession(tokens);
+              if (!setErr) {
+                setAuthMessage("Login concluído. Entrando no Hub...");
+                navigate({ to: "/inicio", replace: true });
+              }
+            }
+          } catch {
+            /* segue tentando */
+          }
+        }, 2000);
+      }
+
       setLoading(false);
+
       setAuthMessage("Conclua o login na janela da Microsoft e volte ao Hub.");
     }
   };
