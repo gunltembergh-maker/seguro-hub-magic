@@ -80,9 +80,10 @@ function PbiCard({
 }
 
 function BigStatCard({
-  title, subtitle, value, accent, loading,
+  title, subtitle, value, accent, loading, breakdown,
 }: {
   title: string; subtitle?: string; value: string; accent: string; loading?: boolean;
+  breakdown?: Array<{ label: string; value: string }>;
 }) {
   return (
     <div className="rounded-lg shadow-sm p-5 border"
@@ -93,6 +94,20 @@ function BigStatCard({
         <div className="h-10 mt-2 w-40 bg-gray-100 rounded animate-pulse" />
       ) : (
         <p className="text-3xl font-bold mt-2" style={{ color: "#14405C" }}>{value}</p>
+      )}
+      {breakdown && (
+        <div className="mt-3 grid grid-cols-3 gap-2 border-t border-gray-100 pt-2">
+          {breakdown.map((b) => (
+            <div key={b.label}>
+              <p className="text-[10px] uppercase tracking-wider" style={{ color: "#9CA3AF" }}>{b.label}</p>
+              {loading ? (
+                <div className="h-4 mt-1 w-16 bg-gray-100 rounded animate-pulse" />
+              ) : (
+                <p className="text-sm font-semibold" style={{ color: "#14405C" }}>{b.value}</p>
+              )}
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
@@ -150,6 +165,8 @@ function DashboardReceitaLavoro() {
       return (data?.[0] ?? null) as {
         receita_competencia: number; receita_caixa: number; meta_periodo: number;
         atingimento: number; defasagem: number; previsto_caixa: number; atingimento_caixa: number;
+        previsto_garantia: number; previsto_beneficios: number; previsto_demais: number;
+        caixa_garantia: number; caixa_beneficios: number; caixa_demais: number;
       } | null;
     },
   });
@@ -433,11 +450,21 @@ function DashboardReceitaLavoro() {
             title={`A receber em ${periodoLabel}`}
             subtitle="Previsto Caixa (parcelas emitidas por data de pagamento)"
             value={BRL(kpis?.previsto_caixa)} accent="#8AAFC9" loading={kpisQ.isLoading}
+            breakdown={[
+              { label: "Garantia", value: BRL(kpis?.previsto_garantia) },
+              { label: "Benefícios", value: BRL(kpis?.previsto_beneficios) },
+              { label: "Demais Ramos", value: BRL(kpis?.previsto_demais) },
+            ]}
           />
           <BigStatCard
             title={`Receita Caixa em ${periodoLabel}`}
             subtitle="Receita Caixa (efetivamente recebido)"
             value={BRL(kpis?.receita_caixa)} accent="#14405C" loading={kpisQ.isLoading}
+            breakdown={[
+              { label: "Garantia", value: BRL(kpis?.caixa_garantia) },
+              { label: "Benefícios", value: BRL(kpis?.caixa_beneficios) },
+              { label: "Demais Ramos", value: BRL(kpis?.caixa_demais) },
+            ]}
           />
         </div>
 

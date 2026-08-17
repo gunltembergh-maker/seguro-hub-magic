@@ -86,7 +86,10 @@ function Delta({ atual, anterior }: { atual: number; anterior: number }) {
   );
 }
 
-function KpiCard({ title, value, delta, loading }: { title: string; value: string; delta?: React.ReactNode; loading?: boolean }) {
+function KpiCard({ title, value, delta, loading, breakdown }: {
+  title: string; value: string; delta?: React.ReactNode; loading?: boolean;
+  breakdown?: Array<{ label: string; value: string }>;
+}) {
   return (
     <div className="rounded-lg border bg-white p-4 shadow-sm">
       <p className="text-xs uppercase tracking-wider text-muted-foreground">{title}</p>
@@ -94,6 +97,18 @@ function KpiCard({ title, value, delta, loading }: { title: string; value: strin
         <div className="mt-1 flex items-baseline justify-between gap-2">
           <p className="text-xl font-bold" style={{ color: NAVY }}>{value}</p>
           {delta}
+        </div>
+      )}
+      {breakdown && (
+        <div className="mt-3 grid grid-cols-3 gap-2 border-t pt-2">
+          {breakdown.map((b) => (
+            <div key={b.label}>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{b.label}</p>
+              {loading ? <Skeleton className="mt-1 h-4 w-16" /> : (
+                <p className="text-sm font-semibold" style={{ color: NAVY }}>{b.value}</p>
+              )}
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -381,7 +396,15 @@ function AbaSumario({ data, loading, comparar }: { data: any; loading: boolean; 
         <h3 className="mb-2 text-sm font-semibold" style={{ color: NAVY }}>Pipeline A Receber</h3>
         {data?.pipeline ? (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <KpiCard title="Total a Receber" value={BRL(data.pipeline.total)} />
+            <KpiCard
+              title="Total a Receber"
+              value={BRL(data.pipeline.total)}
+              breakdown={[
+                { label: "Garantia", value: BRL(data.pipeline.garantia) },
+                { label: "Benefícios", value: BRL(data.pipeline.beneficios) },
+                { label: "Demais Ramos", value: BRL(data.pipeline.demais) },
+              ]}
+            />
             <KpiCard title="Apólices no Pipeline" value={NUM(data.pipeline.apolices)} />
           </div>
         ) : <Skeleton className="h-16 w-full" />}
@@ -740,7 +763,15 @@ function AbaAReceber({ data, loading }: { data: any; loading: boolean }) {
       </p>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        <KpiCard title="Total a Receber" value={BRL(data.total?.valor)} />
+        <KpiCard
+          title="Total a Receber"
+          value={BRL(data.total?.valor)}
+          breakdown={[
+            { label: "Garantia", value: BRL(data.total?.garantia) },
+            { label: "Benefícios", value: BRL(data.total?.beneficios) },
+            { label: "Demais Ramos", value: BRL(data.total?.demais) },
+          ]}
+        />
         <KpiCard title="Apólices" value={NUM(data.total?.apolices)} />
         <KpiCard title="Parcelas" value={NUM(data.total?.parcelas)} />
       </div>
