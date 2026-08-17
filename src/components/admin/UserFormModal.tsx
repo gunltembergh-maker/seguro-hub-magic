@@ -16,6 +16,14 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
+
+const TIMES_RECEITA = [
+  { value: "GARANTIA", label: "Garantia" },
+  { value: "BENEFICIOS", label: "Benefícios" },
+  { value: "DEMAIS_RAMOS", label: "Demais Ramos" },
+] as const;
+type TimeReceita = (typeof TIMES_RECEITA)[number]["value"];
 
 const LAVORO_DOMAIN = "lavoroseguros.com.br";
 
@@ -51,6 +59,7 @@ export interface UserFormInitial {
   gestor?: string | null;
   empresa?: string | null;
   tipo_usuario?: string | null;
+  times_receita?: string[] | null;
   blocked?: boolean;
   active?: boolean;
 }
@@ -77,6 +86,7 @@ export function UserFormModal({ open, onOpenChange, initial, onSaved }: Props) {
   const [tipoUsuario, setTipoUsuario] = useState<"interno" | "externo">("interno");
   const [blocked, setBlocked] = useState(false);
   const [active, setActive] = useState(true);
+  const [timesReceita, setTimesReceita] = useState<TimeReceita[]>([]);
   const [cpfError, setCpfError] = useState<string | null>(null);
   const [cpfValid, setCpfValid] = useState<boolean | null>(null);
 
@@ -100,6 +110,9 @@ export function UserFormModal({ open, onOpenChange, initial, onSaved }: Props) {
       setGestor(initial?.gestor || "");
       setEmpresa(initial?.empresa || "Lavoro Seguros");
       setTipoUsuario((initial?.tipo_usuario as "interno" | "externo") || "interno");
+      setTimesReceita(((initial?.times_receita ?? []) as TimeReceita[]).filter((t) =>
+        TIMES_RECEITA.some((o) => o.value === t),
+      ));
       setBlocked(!!initial?.blocked);
       setActive(initial?.active ?? true);
       setCpfError(null);
@@ -138,6 +151,7 @@ export function UserFormModal({ open, onOpenChange, initial, onSaved }: Props) {
           _area: area || null,
           _gestor: gestor || null,
           _empresa: empresa || null,
+          _times_receita: timesReceita,
         } as never);
         if (error) throw error;
       } else {
@@ -151,6 +165,7 @@ export function UserFormModal({ open, onOpenChange, initial, onSaved }: Props) {
             gestor: gestor || null,
             empresa: empresa || null,
             tipo_usuario: tipoUsuario,
+            times_receita: timesReceita,
           },
         });
       }
@@ -248,6 +263,34 @@ export function UserFormModal({ open, onOpenChange, initial, onSaved }: Props) {
                 </Select>
               </div>
             )}
+          </div>
+
+          <div className="space-y-2">
+            <Label>Time(s) de Receita</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {TIMES_RECEITA.map((opt) => {
+                const checked = timesReceita.includes(opt.value);
+                return (
+                  <label
+                    key={opt.value}
+                    className="flex items-center gap-2 rounded-lg border p-2 text-sm cursor-pointer"
+                  >
+                    <Checkbox
+                      checked={checked}
+                      onCheckedChange={(v) =>
+                        setTimesReceita((prev) =>
+                          v === true ? [...prev, opt.value] : prev.filter((t) => t !== opt.value),
+                        )
+                      }
+                    />
+                    {opt.label}
+                  </label>
+                );
+              })}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Nenhum marcado = vê todos os canais de receita. Administradores sempre veem tudo.
+            </p>
           </div>
 
           {isEdit && (
