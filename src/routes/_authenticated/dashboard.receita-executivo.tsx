@@ -53,9 +53,21 @@ type ComplementaresRow = {
   posicao_total_vencida: number;
 };
 
+type CanalRow = {
+  canal: string;
+  caixa: number;
+  caixa_corrente: number;
+  a_receber_futuro: number;
+};
+
+const CANAIS_ORDEM = ["Garantia", "Benefícios", "Demais Ramos"] as const;
+
 function KpiCard({
-  title, value, accent, subtitle, loading,
-}: { title: string; value: string; accent: string; subtitle?: string; loading?: boolean }) {
+  title, value, accent, subtitle, loading, breakdown,
+}: {
+  title: string; value: string; accent: string; subtitle?: string; loading?: boolean;
+  breakdown?: Array<{ label: string; value: string }>;
+}) {
   return (
     <div
       className="rounded-lg p-4 shadow-sm border bg-white"
@@ -68,6 +80,20 @@ function KpiCard({
         <p className="text-2xl font-bold mt-1 tabular-nums" style={{ color: NAVY }}>{value}</p>
       )}
       {subtitle && <p className="text-[11px] mt-1" style={{ color: "#6B7280" }}>{subtitle}</p>}
+      {breakdown && (
+        <div className="mt-3 grid grid-cols-3 gap-2 border-t pt-2">
+          {breakdown.map((b) => (
+            <div key={b.label}>
+              <p className="text-[10px] uppercase tracking-wider" style={{ color: "#9CA3AF" }}>{b.label}</p>
+              {loading ? (
+                <div className="h-4 mt-1 w-14 bg-gray-100 rounded animate-pulse" />
+              ) : (
+                <p className="text-sm font-semibold tabular-nums" style={{ color: NAVY }}>{b.value}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -101,6 +127,29 @@ function DashboardReceitaExecutivo() {
       return (Array.isArray(data) ? data[0] : data) as ComplementaresRow | null;
     },
   });
+
+  const canaisQ = useQuery({
+    queryKey: ["receita-executivo-canais", ano, mesLimiteYtd],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_receita_executivo_canais" as any, {
+        p_ano: ano, p_mes: mesLimiteYtd,
+      });
+      if (error) throw error;
+      return (data || []) as CanalRow[];
+    },
+  });
+
+  // Quebra por canal — rateada para bater exatamente com o total exibido
+  const breakdownCanais = (campo: keyof Omit<CanalRow, "canal">, total: number) => {
+    const linhas = canaisQ.data ?? [];
+    const valores = CANAIS_ORDEM.map((c) =>
+      Number(linhas.find((l) => l.canal === c)?.[campo] ?? 0),
+    );
+    const soma = valores.reduce((a, b) => a + b, 0);
+    const fator = soma > 0 ? Number(total || 0) / soma : 0;
+    return CANAIS_ORDEM.map((c, i) => ({ label: c, value: BRL(valores[i] * fator) }));
+  };
+
 
   const ultAtualQ = useQuery({
     queryKey: ["lavoro-ultima-atualizacao"],
@@ -197,6 +246,7 @@ function DashboardReceitaExecutivo() {
             accent={VERDE}
             subtitle={`${PCT(pctCaixa)} do Caixa Esperado`}
             loading={mensalQ.isLoading}
+            breakdown={breakdownCanais("caixa_corrente", totYtd.caixa_corrente)}
           />
           <KpiCard
             title="A Receber Futuro"
@@ -204,6 +254,7 @@ function DashboardReceitaExecutivo() {
             accent={LARANJA}
             subtitle={`Posição em ${MESES_COMPLETOS[mesLimiteYtd - 1]}/${ano}`}
             loading={mensalQ.isLoading}
+            breakdown={breakdownCanais("a_receber_futuro", aReceberPosicaoAtual)}
           />
         </div>
 

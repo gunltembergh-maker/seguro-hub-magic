@@ -28,6 +28,11 @@ export interface ResumoExecutivoProps {
     aReceberFuturo: number
     pctCaixa: number
   }
+  canais?: Array<{
+    canal: string
+    caixa_corrente: number
+    a_receber_futuro: number
+  }> | null
   mesDetalhe?: {
     emitido: number
     caixa: number
@@ -38,12 +43,27 @@ export interface ResumoExecutivoProps {
 }
 
 const emptyYtd = { emitido: 0, caixaEsperado: 0, caixaRecebido: 0, aReceberFuturo: 0, pctCaixa: 0 }
+const CANAIS_ORDEM = ['Garantia', 'Benefícios', 'Demais Ramos']
+
+const quebra = (
+  canais: ResumoExecutivoProps['canais'],
+  campo: 'caixa_corrente' | 'a_receber_futuro',
+  total: number,
+) => {
+  const linhas = canais ?? []
+  if (!linhas.length) return undefined
+  const valores = CANAIS_ORDEM.map((c) => Number(linhas.find((l) => l.canal === c)?.[campo] ?? 0))
+  const soma = valores.reduce((a, b) => a + b, 0)
+  const fator = soma > 0 ? Number(total || 0) / soma : 0
+  return CANAIS_ORDEM.map((c, i) => ({ label: c, value: BRL(valores[i] * fator) }))
+}
 
 const ResumoExecutivoEmail = ({
   ano,
   mes,
   quandoBR,
   ytd = emptyYtd,
+  canais = null,
   mesDetalhe = null,
 }: ResumoExecutivoProps) => {
   const mesLongo = MESES_PT_LONGO[mes - 1]
@@ -82,10 +102,16 @@ const ResumoExecutivoEmail = ({
                   value={BRL(ytd?.caixaRecebido)}
                   accent={L.green}
                   hint={`${PCT(ytd?.pctCaixa)} do esperado`}
+                  breakdown={quebra(canais, 'caixa_corrente', Number(ytd?.caixaRecebido ?? 0))}
                 />
               </Column>
               <Column style={colHalf}>
-                <Kpi label={`A RECEBER FUTURO YTD ${ano}`} value={BRL(ytd?.aReceberFuturo)} accent={L.blue} />
+                <Kpi
+                  label={`A RECEBER FUTURO YTD ${ano}`}
+                  value={BRL(ytd?.aReceberFuturo)}
+                  accent={L.blue}
+                  breakdown={quebra(canais, 'a_receber_futuro', Number(ytd?.aReceberFuturo ?? 0))}
+                />
               </Column>
             </Row>
           </Section>
@@ -139,15 +165,34 @@ const ResumoExecutivoEmail = ({
   )
 }
 
-function Kpi({ label, value, hint, accent }: { label: string; value: string; hint?: string; accent: string }) {
+function Kpi({ label, value, hint, accent, breakdown }: {
+  label: string; value: string; hint?: string; accent: string
+  breakdown?: Array<{ label: string; value: string }>
+}) {
   return (
     <div style={{ ...kpiCard, borderLeft: `4px solid ${accent}` }}>
       <Text style={kpiLabel}>{label}</Text>
       <Text style={kpiValue}>{value}</Text>
       {hint && <Text style={{ ...kpiHint, color: accent }}>{hint}</Text>}
+      {breakdown && (
+        <table style={breakdownTable} cellPadding={0} cellSpacing={0}>
+          <tbody>
+            {breakdown.map((b) => (
+              <tr key={b.label}>
+                <td style={breakdownLabel}>{b.label}</td>
+                <td style={breakdownValue}>{b.value}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   )
 }
+
+const breakdownTable = { width: '100%', marginTop: '8px', borderTop: '1px solid #E2E8F0', paddingTop: '6px' }
+const breakdownLabel = { fontVariantNumeric: 'tabular-nums' as const, color: '#64748B', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.04em', padding: '2px 0' }
+const breakdownValue = { fontVariantNumeric: 'tabular-nums' as const, color: '#0F2A3D', fontSize: '12px', fontWeight: 600, textAlign: 'right' as const, padding: '2px 0' }
 
 export const template = {
   component: ResumoExecutivoEmail,

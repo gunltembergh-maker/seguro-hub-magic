@@ -1679,6 +1679,15 @@ export type Database = {
           mes: number
         }[]
       }
+      rpc_receita_executivo_canais: {
+        Args: { p_ano: number; p_mes?: number }
+        Returns: {
+          a_receber_futuro: number
+          caixa: number
+          caixa_corrente: number
+          canal: string
+        }[]
+      }
       rpc_receita_executivo_complementares: {
         Args: { p_ano: number }
         Returns: {

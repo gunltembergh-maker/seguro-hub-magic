@@ -53,11 +53,15 @@ export async function dispatchNewsletterCore(opts: {
   }
 
   // Coleta dados do template
-  const [ytdRes, mtdRes, vencidoRes] = await Promise.all([
+  const [ytdRes, mtdRes, vencidoRes, canaisRes] = await Promise.all([
     supabase.rpc('rpc_lavoro_receita_kpis' as never, { p_ano: ano, p_mes: mes, p_periodo: 'YTD' } as never),
     supabase.rpc('rpc_lavoro_receita_kpis' as never, { p_ano: ano, p_mes: mes, p_periodo: 'MTD' } as never),
     supabase.rpc('rpc_receita_executivo_mensal' as never, { p_ano: ano } as never),
+    supabase.rpc('rpc_receita_executivo_canais' as never, { p_ano: ano, p_mes: mes } as never),
   ])
+  const canais = (((canaisRes.data as unknown) as any[]) ?? []) as Array<{
+    canal: string; caixa_corrente: number; a_receber_futuro: number
+  }>
 
   const ytdKpis = ((ytdRes.data as unknown) as any[])?.[0] ?? null
   const mtd = ((mtdRes.data as unknown) as any[])?.[0] ?? null
@@ -90,7 +94,7 @@ export async function dispatchNewsletterCore(opts: {
           aReceberFuturo: Number(linhaMes.a_receber_futuro ?? 0),
         }
       : null
-    templateData = { ano, mes, quandoBR, ytd: { emitido, caixaEsperado, caixaRecebido, aReceberFuturo, pctCaixa }, mesDetalhe }
+    templateData = { ano, mes, quandoBR, ytd: { emitido, caixaEsperado, caixaRecebido, aReceberFuturo, pctCaixa }, canais, mesDetalhe }
   } else {
     templateData = { ano, mes, quandoBR, ytd: ytdKpis, mtd, comissaoVencidaMes }
   }

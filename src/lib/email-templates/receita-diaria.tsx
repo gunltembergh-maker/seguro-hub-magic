@@ -39,6 +39,12 @@ export interface ReceitaLavoroProps {
     defasagem: number
     previsto_caixa: number
     atingimento_caixa: number
+    previsto_garantia?: number
+    previsto_beneficios?: number
+    previsto_demais?: number
+    caixa_garantia?: number
+    caixa_beneficios?: number
+    caixa_demais?: number
   }
   comissaoVencidaMes?: number
 }
@@ -51,6 +57,12 @@ const empty = {
   defasagem: 0,
   previsto_caixa: 0,
   atingimento_caixa: 0,
+  previsto_garantia: 0,
+  previsto_beneficios: 0,
+  previsto_demais: 0,
+  caixa_garantia: 0,
+  caixa_beneficios: 0,
+  caixa_demais: 0,
 }
 
 const ReceitaLavoroEmail = ({
@@ -82,10 +94,30 @@ const ReceitaLavoroEmail = ({
             <Text style={sectionTitle}>Resultados de {mesLongo}/{ano}</Text>
             <Row>
               <Column style={colHalf}>
-                <Kpi label={`A RECEBER EM ${mesUp}`} hint="Previsto caixa" value={BRL(mtd?.previsto_caixa)} accent={L.amber} />
+                <Kpi
+                  label={`A RECEBER EM ${mesUp}`}
+                  hint="Previsto caixa"
+                  value={BRL(mtd?.previsto_caixa)}
+                  accent={L.amber}
+                  breakdown={[
+                    { label: 'Garantia', value: BRL(mtd?.previsto_garantia) },
+                    { label: 'Benefícios', value: BRL(mtd?.previsto_beneficios) },
+                    { label: 'Demais Ramos', value: BRL(mtd?.previsto_demais) },
+                  ]}
+                />
               </Column>
               <Column style={colHalf}>
-                <Kpi label={`RECEITA CAIXA EM ${mesUp}`} hint="Recebido efetivamente" value={BRL(mtd?.receita_caixa)} accent={L.green} />
+                <Kpi
+                  label={`RECEITA CAIXA EM ${mesUp}`}
+                  hint="Recebido efetivamente"
+                  value={BRL(mtd?.receita_caixa)}
+                  accent={L.green}
+                  breakdown={[
+                    { label: 'Garantia', value: BRL(mtd?.caixa_garantia) },
+                    { label: 'Benefícios', value: BRL(mtd?.caixa_beneficios) },
+                    { label: 'Demais Ramos', value: BRL(mtd?.caixa_demais) },
+                  ]}
+                />
               </Column>
             </Row>
             <Row>
@@ -140,12 +172,27 @@ const ReceitaLavoroEmail = ({
   )
 }
 
-function Kpi({ label, hint, value, accent }: { label: string; hint: string; value: string; accent: string }) {
+function Kpi({ label, hint, value, accent, breakdown }: {
+  label: string; hint: string; value: string; accent: string
+  breakdown?: Array<{ label: string; value: string }>
+}) {
   return (
     <div style={{ ...kpiCard, borderLeft: `4px solid ${accent}` }}>
       <Text style={kpiLabel}>{label}</Text>
       <Text style={{ ...kpiHint, color: accent }}>{hint}</Text>
       <Text style={kpiValue}>{value}</Text>
+      {breakdown && (
+        <table style={breakdownTable} cellPadding={0} cellSpacing={0}>
+          <tbody>
+            {breakdown.map((b) => (
+              <tr key={b.label}>
+                <td style={breakdownLabel}>{b.label}</td>
+                <td style={breakdownValue}>{b.value}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   )
 }
@@ -179,10 +226,20 @@ export const template = {
       defasagem: 140_000,
       previsto_caixa: 690_000,
       atingimento_caixa: 0.7,
+      previsto_garantia: 350_000,
+      previsto_beneficios: 280_000,
+      previsto_demais: 60_000,
+      caixa_garantia: 240_000,
+      caixa_beneficios: 200_000,
+      caixa_demais: 40_000,
     },
     comissaoVencidaMes: 82_500,
   },
 } satisfies TemplateEntry
+
+const breakdownTable = { width: '100%', marginTop: '8px', borderTop: `1px solid ${L.border}`, paddingTop: '6px' }
+const breakdownLabel = { fontVariantNumeric: 'tabular-nums' as const, color: L.textMuted, fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.04em', padding: '2px 0' }
+const breakdownValue = { fontVariantNumeric: 'tabular-nums' as const, color: L.navyDark, fontSize: '12px', fontWeight: 600, textAlign: 'right' as const, padding: '2px 0' }
 
 // ─── Styles ────────────────────────────────────────────────────────────
 const tabular = { fontVariantNumeric: 'tabular-nums' as const }
