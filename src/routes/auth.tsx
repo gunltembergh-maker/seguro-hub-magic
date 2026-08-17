@@ -132,6 +132,24 @@ function AuthPage() {
     };
     window.addEventListener("message", onMessage);
 
+    // Fallback: alguns navegadores bloqueiam window.opener no popup do SSO.
+    // O popup grava um sinal no localStorage e a tela do Lovable reage.
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "lavoro-sso-complete") {
+        supabase.auth.getSession().then(({ data }) => {
+          if (data.session) goToHub();
+        });
+      }
+    };
+    window.addEventListener("storage", onStorage);
+
+    // Último fallback: sondagem da sessão enquanto a tela de login está aberta.
+    const poll = window.setInterval(() => {
+      supabase.auth.getSession().then(({ data }) => {
+        if (data.session) goToHub();
+      });
+    }, 1500);
+
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session) {
         goToHub();
@@ -141,8 +159,11 @@ function AuthPage() {
     return () => {
       mounted = false;
       sub.subscription.unsubscribe();
+      window.clearInterval(poll);
       window.removeEventListener("message", onMessage);
+      window.removeEventListener("storage", onStorage);
     };
+
   }, [navigate]);
 
   const handleMicrosoftLogin = async () => {
