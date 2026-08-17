@@ -18,6 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { SendNewsletterButton } from "@/components/admin/SendNewsletterButton";
+import { useEscopoReceita } from "@/hooks/use-escopo-receita";
 
 export const Route = createFileRoute("/_authenticated/dashboard/report-fechamento")({
   component: ReportFechamento,
@@ -321,6 +322,7 @@ function ReportFechamento() {
 // ── Abas ───────────────────────────────────────────────────────────────
 
 function AbaSumario({ data, loading, comparar }: { data: any; loading: boolean; comparar: boolean }) {
+  const escopo = useEscopoReceita();
   const a = data?.atual ?? {};
   const ant = data?.anterior ?? {};
   return (
@@ -397,13 +399,13 @@ function AbaSumario({ data, loading, comparar }: { data: any; loading: boolean; 
         {data?.pipeline ? (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <KpiCard
-              title="Total a Receber"
+              title={`Total a Receber${escopo.sufixo}`}
               value={BRL(data.pipeline.total)}
-              breakdown={[
+              breakdown={escopo.filtrar([
                 { label: "Garantia", value: BRL(data.pipeline.garantia) },
                 { label: "Benefícios", value: BRL(data.pipeline.beneficios) },
                 { label: "Demais Ramos", value: BRL(data.pipeline.demais) },
-              ]}
+              ])}
             />
             <KpiCard title="Apólices no Pipeline" value={NUM(data.pipeline.apolices)} />
           </div>
@@ -742,6 +744,7 @@ function AbaVencidos({ data, loading }: { data: any; loading: boolean }) {
 }
 
 function AbaAReceber({ data, loading }: { data: any; loading: boolean }) {
+  const escopo = useEscopoReceita();
   if (loading) return <Skeleton className="h-64 w-full" />;
   if (!data) return null;
 
@@ -764,13 +767,13 @@ function AbaAReceber({ data, loading }: { data: any; loading: boolean }) {
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
         <KpiCard
-          title="Total a Receber"
+          title={`Total a Receber${escopo.sufixo}`}
           value={BRL(data.total?.valor)}
-          breakdown={[
+          breakdown={escopo.filtrar([
             { label: "Garantia", value: BRL(data.total?.garantia) },
             { label: "Benefícios", value: BRL(data.total?.beneficios) },
             { label: "Demais Ramos", value: BRL(data.total?.demais) },
-          ]}
+          ])}
         />
         <KpiCard title="Apólices" value={NUM(data.total?.apolices)} />
         <KpiCard title="Parcelas" value={NUM(data.total?.parcelas)} />

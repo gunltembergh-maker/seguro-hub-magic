@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight, TrendingUp, TrendingDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useEscopoReceita } from "@/hooks/use-escopo-receita";
 
 const L = {
   navy: "#14405C",
@@ -69,6 +70,7 @@ function useKpis(ano: number, mes: number, periodo: "MTD" | "YTD") {
 }
 
 export function BlocoLavoroKpis({ canSee }: { canSee: boolean }) {
+  const escopo = useEscopoReceita();
   const hoje = new Date();
   const ano = hoje.getFullYear();
   const mes = hoje.getMonth() + 1;
@@ -110,6 +112,11 @@ export function BlocoLavoroKpis({ canSee }: { canSee: boolean }) {
       </header>
 
       <div className="p-5 space-y-5">
+        {escopo.restrito && (
+          <p className="rounded-md px-3 py-2 text-[11px]" style={{ background: "#F1F6FA", color: L.textMuted, border: `1px solid ${L.border}` }}>
+            {escopo.frase}
+          </p>
+        )}
         {/* YTD */}
         <div>
           <p className="text-[10px] uppercase tracking-wider font-semibold mb-2" style={{ color: L.textMuted }}>
@@ -117,13 +124,13 @@ export function BlocoLavoroKpis({ canSee }: { canSee: boolean }) {
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Kpi
-              label={`A RECEBER EM YTD ${ano}`}
+              label={`A RECEBER EM YTD ${ano}${escopo.sufixo.toUpperCase()}`}
               hint="Previsto Caixa (parcelas emitidas por data de pagamento)"
               value={loadingY ? null : BRL(ytd?.previsto_caixa)}
               accent={L.amber}
               hintColor={L.amber}
               loading={loadingY}
-              breakdown={breakdownPrevisto(ytd)}
+              breakdown={escopo.filtrar(breakdownPrevisto(ytd))}
             />
             <Kpi
               label={`RECEITA CAIXA EM YTD ${ano}`}
@@ -144,13 +151,13 @@ export function BlocoLavoroKpis({ canSee }: { canSee: boolean }) {
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Kpi
-              label={`A RECEBER EM ${mesLabel.toUpperCase()}`}
+              label={`A RECEBER EM ${mesLabel.toUpperCase()}${escopo.sufixo.toUpperCase()}`}
               hint="Previsto Caixa (parcelas emitidas por data de pagamento)"
               value={loadingM ? null : BRL(mtd?.previsto_caixa)}
               accent={L.amber}
               hintColor={L.amber}
               loading={loadingM}
-              breakdown={breakdownPrevisto(mtd)}
+              breakdown={escopo.filtrar(breakdownPrevisto(mtd))}
             />
             <Kpi
               label={`RECEITA CAIXA EM ${mesLabel.toUpperCase()}`}
