@@ -168,7 +168,14 @@ function AuthPage() {
     }
 
     if (isEmbedded && data?.url) {
-      const opened = window.open(data.url, "_blank");
+      // Popup dimensionado: a Microsoft recusa iframes, mas permite janelas
+      // de topo. O popup fecha sozinho ao concluir e devolve o controle
+      // para a tela principal (preview ao lado do chat).
+      const opened = window.open(
+        data.url,
+        "lavoro-sso",
+        "width=560,height=720,menubar=no,toolbar=no,location=no,status=no",
+      );
       if (!opened) {
         try {
           window.top!.location.href = data.url;
@@ -180,7 +187,7 @@ function AuthPage() {
         }
       }
       setLoading(false);
-      setAuthMessage("Conclua o login na aba da Microsoft e volte para o Hub.");
+      setAuthMessage("Conclua o login na janela da Microsoft e volte ao Hub.");
     }
   };
 
