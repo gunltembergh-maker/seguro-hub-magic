@@ -107,6 +107,7 @@ export function ViewAsProvider({ children }: { children: ReactNode }) {
           perfil_nome: viewAsProfile!.perfil_nome,
           permissoes: viewAsProfile!.permissoes,
           roles: viewAsProfile!.roles,
+          times_receita: [],
         }
       : (realPerfil ?? null);
 
