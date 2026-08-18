@@ -1119,6 +1119,11 @@ export type Database = {
         Args: { p_tipo_de_ramo: string }
         Returns: boolean
       }
+      lavoro_normaliza_ramo: { Args: { p_ramo: string }; Returns: string }
+      lavoro_normaliza_seguradora: {
+        Args: { p_seguradora: string }
+        Returns: string
+      }
       lavoro_pode_ver_canal: { Args: { p_canal: string }; Returns: boolean }
       lavoro_pode_ver_canal_para: {
         Args: { p_canal: string; p_user_id: string }
