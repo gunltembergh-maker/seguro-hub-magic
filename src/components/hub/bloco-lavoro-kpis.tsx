@@ -162,7 +162,7 @@ export function BlocoLavoroKpis({ canSee }: { canSee: boolean }) {
               accent={L.green}
               hintColor={L.green}
               loading={loadingY}
-              breakdown={breakdownCaixa(ytd)}
+              breakdown={escopo.filtrar(breakdownCaixa(ytd))}
             />
           </div>
         </div>
@@ -189,7 +189,7 @@ export function BlocoLavoroKpis({ canSee }: { canSee: boolean }) {
               accent={L.green}
               hintColor={L.green}
               loading={loadingM}
-              breakdown={breakdownCaixa(mtd)}
+              breakdown={escopo.filtrar(breakdownCaixa(mtd))}
             />
           </div>
         </div>

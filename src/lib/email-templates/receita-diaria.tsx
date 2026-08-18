@@ -124,11 +124,11 @@ const ReceitaLavoroEmail = ({
                   hint="Recebido efetivamente"
                   value={BRL(mtd?.receita_caixa)}
                   accent={L.green}
-                  breakdown={[
+                  breakdown={filtrarBreakdown([
                     { label: 'Garantia', value: BRL(mtd?.caixa_garantia) },
                     { label: 'Benefícios', value: BRL(mtd?.caixa_beneficios) },
                     { label: 'Demais Ramos', value: BRL(mtd?.caixa_demais) },
-                  ]}
+                  ], escopoTimes)}
                 />
               </Column>
             </Row>
