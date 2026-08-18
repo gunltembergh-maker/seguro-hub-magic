@@ -62,18 +62,28 @@ export async function dispatchNewsletterCore(opts: {
 
   const { fetchEscopoReceita } = await import('@/lib/emails/escopo-times')
 
+  const { canaisVisiveis } = await import('@/lib/receita-escopo')
+
   async function buildTemplateData(userId: string | null): Promise<Record<string, any>> {
     const escopoTimes = (await fetchEscopoReceita(supabase, userId)).times
+    const permitidos = canaisVisiveis(escopoTimes)
+    const filtraCanais = <T extends { canal: string }>(rows: T[]) =>
+      permitidos.length === 0 ? rows : rows.filter((r) => permitidos.includes(r.canal))
 
-    const [ytdRes, mtdRes, vencidoRes, canaisRes] = await Promise.all([
+    const [ytdRes, mtdRes, vencidoRes, canaisRes, canaisMesRes] = await Promise.all([
       supabase.rpc('rpc_lavoro_receita_kpis' as never, { p_ano: ano, p_mes: mes, p_periodo: 'YTD', p_user_id: userId } as never),
       supabase.rpc('rpc_lavoro_receita_kpis' as never, { p_ano: ano, p_mes: mes, p_periodo: 'MTD', p_user_id: userId } as never),
       supabase.rpc('rpc_receita_executivo_mensal' as never, { p_ano: ano, p_user_id: userId } as never),
       supabase.rpc('rpc_receita_executivo_canais' as never, { p_ano: ano, p_mes: mes, p_user_id: userId } as never),
+      supabase.rpc('rpc_receita_executivo_canais_mes' as never, { p_ano: ano, p_mes: mes, p_user_id: userId } as never),
     ])
-    const canais = (((canaisRes.data as unknown) as any[]) ?? []) as Array<{
+    const canais = filtraCanais((((canaisRes.data as unknown) as any[]) ?? []) as Array<{
       canal: string; caixa_corrente: number; a_receber_futuro: number
-    }>
+      emitido: number; caixa_esperado: number; saldo_vencido: number
+    }>)
+    const mesDetalheCanais = filtraCanais((((canaisMesRes.data as unknown) as any[]) ?? []) as Array<{
+      canal: string; emitido: number; caixa_esperado: number; caixa_recebido: number; saldo_vencido: number
+    }>)
     const ytdKpis = ((ytdRes.data as unknown) as any[])?.[0] ?? null
     const mtd = ((mtdRes.data as unknown) as any[])?.[0] ?? null
     const linhasMensais = (((vencidoRes.data as unknown) as any[]) ?? []) as Array<{
@@ -99,10 +109,11 @@ export async function dispatchNewsletterCore(opts: {
             aReceberFuturo: Number(linhaMes.a_receber_futuro ?? 0),
           }
         : null
-      return { ano, mes, quandoBR, escopoTimes, ytd: { emitido, caixaEsperado, caixaRecebido, aReceberFuturo, pctCaixa }, canais, mesDetalhe }
+      return { ano, mes, quandoBR, escopoTimes, ytd: { emitido, caixaEsperado, caixaRecebido, aReceberFuturo, pctCaixa }, canais, mesDetalhe, mesDetalheCanais }
     }
     return { ano, mes, quandoBR, escopoTimes, ytd: ytdKpis, mtd, comissaoVencidaMes }
   }
+
 
   const cache = new Map<string, Record<string, any>>()
 
