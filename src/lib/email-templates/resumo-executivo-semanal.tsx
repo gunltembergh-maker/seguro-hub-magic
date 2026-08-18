@@ -80,9 +80,22 @@ const ResumoExecutivoEmail = ({
   ytd = emptyYtd,
   canais = null,
   mesDetalhe = null,
+  mesDetalheCanais = null,
   escopoTimes,
 }: ResumoExecutivoProps) => {
   const mesLongo = MESES_PT_LONGO[mes - 1]
+  const linhasMes = (mesDetalheCanais ?? [])
+    .slice()
+    .sort((a, b) => CANAIS_ORDEM.indexOf(a.canal) - CANAIS_ORDEM.indexOf(b.canal))
+  const totalMes = linhasMes.reduce(
+    (acc, r) => ({
+      emitido: acc.emitido + Number(r.emitido || 0),
+      caixa_esperado: acc.caixa_esperado + Number(r.caixa_esperado || 0),
+      caixa_recebido: acc.caixa_recebido + Number(r.caixa_recebido || 0),
+      saldo_vencido: acc.saldo_vencido + Number(r.saldo_vencido || 0),
+    }),
+    { emitido: 0, caixa_esperado: 0, caixa_recebido: 0, saldo_vencido: 0 },
+  )
   return (
     <Html lang="pt-BR" dir="ltr">
       <Head />
@@ -107,10 +120,20 @@ const ResumoExecutivoEmail = ({
             <Text style={sectionTitle}>{`Acumulado YTD ${ano}`}</Text>
             <Row>
               <Column style={colHalf}>
-                <Kpi label={`EMITIDO YTD ${ano}`} value={BRL(ytd?.emitido)} accent={L.blueLight} />
+                <Kpi
+                  label={`EMITIDO YTD ${ano}`}
+                  value={BRL(ytd?.emitido)}
+                  accent={L.blueLight}
+                  breakdown={quebra(canais, 'emitido')}
+                />
               </Column>
               <Column style={colHalf}>
-                <Kpi label={`CAIXA ESPERADO YTD ${ano}`} value={BRL(ytd?.caixaEsperado)} accent={L.navy} />
+                <Kpi
+                  label={`CAIXA ESPERADO YTD ${ano}`}
+                  value={BRL(ytd?.caixaEsperado)}
+                  accent={L.navy}
+                  breakdown={quebra(canais, 'caixa_esperado')}
+                />
               </Column>
             </Row>
             <Row>
@@ -120,7 +143,7 @@ const ResumoExecutivoEmail = ({
                   value={BRL(ytd?.caixaRecebido)}
                   accent={L.green}
                   hint={`${PCT(ytd?.pctCaixa)} do esperado`}
-                  breakdown={quebra(canais, 'caixa_corrente', Number(ytd?.caixaRecebido ?? 0))}
+                  breakdown={quebra(canais, 'caixa_corrente')}
                 />
               </Column>
               <Column style={colHalf}>
@@ -128,38 +151,48 @@ const ResumoExecutivoEmail = ({
                   label={`A RECEBER FUTURO YTD ${ano}`}
                   value={BRL(ytd?.aReceberFuturo)}
                   accent={L.blue}
-                  breakdown={quebra(canais, 'a_receber_futuro', Number(ytd?.aReceberFuturo ?? 0))}
+                  breakdown={quebra(canais, 'a_receber_futuro')}
                 />
               </Column>
             </Row>
           </Section>
 
-          {/* Detalhamento do mês atual */}
-          {mesDetalhe && (
+          {/* Detalhamento do mês atual — por canal */}
+          {linhasMes.length > 0 && (
             <Section style={detalheBlock}>
               <Text style={sectionTitle}>{`Detalhamento — ${mesLongo}/${ano}`}</Text>
               <table style={detTable} cellPadding={0} cellSpacing={0}>
                 <thead>
                   <tr>
+                    <th style={thCanal}>Canal</th>
                     <th style={thStyle}>Emitido</th>
-                    <th style={thStyle}>Caixa</th>
-                    <th style={thStyle}>Caixa Corrente</th>
+                    <th style={thStyle}>Caixa (Previsto)</th>
+                    <th style={thStyle}>Caixa Recebido</th>
                     <th style={thStyle}>Saldo Vencido</th>
-                    <th style={thStyle}>A Receber Futuro</th>
                   </tr>
                 </thead>
                 <tbody>
+                  {linhasMes.map((r) => (
+                    <tr key={r.canal}>
+                      <td style={tdCanal}>{r.canal}</td>
+                      <td style={tdStyle}>{BRL(Number(r.emitido || 0))}</td>
+                      <td style={tdStyle}>{BRL(Number(r.caixa_esperado || 0))}</td>
+                      <td style={{ ...tdStyle, color: L.green, fontWeight: 600 }}>{BRL(Number(r.caixa_recebido || 0))}</td>
+                      <td style={{ ...tdStyle, color: L.amber, fontWeight: 600 }}>{BRL(Number(r.saldo_vencido || 0))}</td>
+                    </tr>
+                  ))}
                   <tr>
-                    <td style={tdStyle}>{BRL(mesDetalhe.emitido)}</td>
-                    <td style={tdStyle}>{BRL(mesDetalhe.caixa)}</td>
-                    <td style={{ ...tdStyle, color: L.green, fontWeight: 600 }}>{BRL(mesDetalhe.caixaCorrente)}</td>
-                    <td style={{ ...tdStyle, color: L.amber, fontWeight: 600 }}>{BRL(mesDetalhe.saldoVencido)}</td>
-                    <td style={tdStyle}>{BRL(mesDetalhe.aReceberFuturo)}</td>
+                    <td style={{ ...tdCanal, ...totalCell }}>Total</td>
+                    <td style={{ ...tdStyle, ...totalCell }}>{BRL(totalMes.emitido)}</td>
+                    <td style={{ ...tdStyle, ...totalCell }}>{BRL(totalMes.caixa_esperado)}</td>
+                    <td style={{ ...tdStyle, ...totalCell, color: L.green }}>{BRL(totalMes.caixa_recebido)}</td>
+                    <td style={{ ...tdStyle, ...totalCell, color: L.amber }}>{BRL(totalMes.saldo_vencido)}</td>
                   </tr>
                 </tbody>
               </table>
             </Section>
           )}
+
 
           {/* CTA Hub */}
           <Section style={ctaWrap}>
