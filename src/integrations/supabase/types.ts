@@ -1762,7 +1762,10 @@ export type Database = {
               a_receber_futuro: number
               caixa: number
               caixa_corrente: number
+              caixa_esperado: number
               canal: string
+              emitido: number
+              saldo_vencido: number
             }[]
           }
         | {
@@ -1771,7 +1774,31 @@ export type Database = {
               a_receber_futuro: number
               caixa: number
               caixa_corrente: number
+              caixa_esperado: number
               canal: string
+              emitido: number
+              saldo_vencido: number
+            }[]
+          }
+      rpc_receita_executivo_canais_mes:
+        | {
+            Args: { p_ano: number; p_mes: number }
+            Returns: {
+              caixa_esperado: number
+              caixa_recebido: number
+              canal: string
+              emitido: number
+              saldo_vencido: number
+            }[]
+          }
+        | {
+            Args: { p_ano: number; p_mes: number; p_user_id: string }
+            Returns: {
+              caixa_esperado: number
+              caixa_recebido: number
+              canal: string
+              emitido: number
+              saldo_vencido: number
             }[]
           }
       rpc_receita_executivo_complementares: {
