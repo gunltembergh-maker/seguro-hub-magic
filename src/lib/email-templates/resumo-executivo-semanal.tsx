@@ -33,6 +33,9 @@ export interface ResumoExecutivoProps {
     canal: string
     caixa_corrente: number
     a_receber_futuro: number
+    emitido?: number
+    caixa_esperado?: number
+    saldo_vencido?: number
   }> | null
   mesDetalhe?: {
     emitido: number
@@ -41,25 +44,34 @@ export interface ResumoExecutivoProps {
     saldoVencido: number
     aReceberFuturo: number
   } | null
+  mesDetalheCanais?: Array<{
+    canal: string
+    emitido: number
+    caixa_esperado: number
+    caixa_recebido: number
+    saldo_vencido: number
+  }> | null
   escopoTimes?: string[]
 }
 
 const emptyYtd = { emitido: 0, caixaEsperado: 0, caixaRecebido: 0, aReceberFuturo: 0, pctCaixa: 0 }
 const CANAIS_ORDEM = ['Garantia', 'Benefícios', 'Demais Ramos']
 
+/** Valores REAIS por canal — sem reescala/ajuste para fechar com o total. */
 const quebra = (
   canais: ResumoExecutivoProps['canais'],
-  campo: 'caixa_corrente' | 'a_receber_futuro',
-  total: number,
+  campo: 'caixa_corrente' | 'a_receber_futuro' | 'emitido' | 'caixa_esperado',
 ) => {
   const linhas = canais ?? []
   if (!linhas.length) return undefined
   const presentes = CANAIS_ORDEM.filter((c) => linhas.some((l) => l.canal === c))
-  const valores = presentes.map((c) => Number(linhas.find((l) => l.canal === c)?.[campo] ?? 0))
-  const soma = valores.reduce((a, b) => a + b, 0)
-  const fator = soma > 0 ? Number(total || 0) / soma : 0
-  return presentes.map((c, i) => ({ label: c, value: BRL(valores[i] * fator) }))
+  if (!presentes.length) return undefined
+  return presentes.map((c) => ({
+    label: c,
+    value: BRL(Number(linhas.find((l) => l.canal === c)?.[campo] ?? 0)),
+  }))
 }
+
 
 const ResumoExecutivoEmail = ({
   ano,
