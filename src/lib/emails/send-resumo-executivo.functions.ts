@@ -48,25 +48,47 @@ export const sendResumoExecutivo = createServerFn({ method: 'POST' })
     }
     const escopoTimes = escopo.times
 
-    const [mensalRes, compRes, canaisRes] = await Promise.all([
+    const [mensalRes, compRes, canaisRes, canaisMesRes] = await Promise.all([
       context.supabase.rpc('rpc_receita_executivo_mensal' as never, { p_ano: ano, p_user_id: destUserId } as never),
       context.supabase.rpc('rpc_receita_executivo_complementares' as never, { p_ano: ano } as never),
       context.supabase.rpc('rpc_receita_executivo_canais' as never, { p_ano: ano, p_mes: mes, p_user_id: destUserId } as never),
+      context.supabase.rpc('rpc_receita_executivo_canais_mes' as never, { p_ano: ano, p_mes: mes, p_user_id: destUserId } as never),
     ])
     if (mensalRes.error) throw new Error(`Mensal: ${mensalRes.error.message}`)
     if (compRes.error) throw new Error(`Complementares: ${compRes.error.message}`)
-    const canais = (((canaisRes.data as unknown) as any[]) ?? []) as Array<{ canal: string; caixa_corrente: number; a_receber_futuro: number }>
+    const { canaisVisiveis } = await import('@/lib/receita-escopo')
+    const permitidos = canaisVisiveis(escopoTimes)
+    const filtraCanais = <T extends { canal: string }>(rows: T[]) =>
+      permitidos.length === 0 ? rows : rows.filter((r) => permitidos.includes(r.canal))
+    const canais = filtraCanais((((canaisRes.data as unknown) as any[]) ?? []) as Array<{
+      canal: string; caixa_corrente: number; a_receber_futuro: number
+      emitido: number; caixa_esperado: number; saldo_vencido: number
+    }>)
+    const mesDetalheCanais = filtraCanais((((canaisMesRes.data as unknown) as any[]) ?? []) as Array<{
+      canal: string; emitido: number; caixa_esperado: number; caixa_recebido: number; saldo_vencido: number
+    }>)
 
-    const linhas = (mensalRes.data as any[]) ?? []
+    const linhas = ((mensalRes.data as any[]) ?? []).filter((r) => Number(r.mes) <= mes)
     const soma = (k: string) => linhas.reduce((acc, r) => acc + Number(r[k] ?? 0), 0)
+    const linhaMes = linhas.find((r) => Number(r.mes) === mes)
     const ytd = {
       emitido: soma('emitido'),
-      caixa: soma('caixa'),
-      caixaCorrente: soma('caixa_corrente'),
-      aReceberFuturo: soma('a_receber_futuro'),
+      caixaEsperado: soma('caixa'),
+      caixaRecebido: soma('caixa_corrente'),
+      aReceberFuturo: Number(linhaMes?.a_receber_futuro ?? 0),
       pctCaixa: 0,
     }
-    ytd.pctCaixa = ytd.emitido > 0 ? ytd.caixa / ytd.emitido : 0
+    ytd.pctCaixa = ytd.caixaEsperado > 0 ? ytd.caixaRecebido / ytd.caixaEsperado : 0
+    const mesDetalhe = linhaMes
+      ? {
+          emitido: Number(linhaMes.emitido || 0),
+          caixa: Number(linhaMes.caixa || 0),
+          caixaCorrente: Number(linhaMes.caixa_corrente || 0),
+          saldoVencido: Number(linhaMes.saldo_vencido || 0),
+          aReceberFuturo: Number(linhaMes.a_receber_futuro ?? 0),
+        }
+      : null
+
 
     const comp = ((compRes.data as any[]) ?? [])[0] ?? {}
     const posicaoTotalVencida = Number(comp.posicao_total_vencida ?? 0)
@@ -81,7 +103,7 @@ export const sendResumoExecutivo = createServerFn({ method: 'POST' })
     const { sendTemplateEmail } = await import('@/lib/email-templates/send-email')
     try {
       const result = await sendTemplateEmail('resumo-executivo-semanal', data.to, {
-        templateData: { ano, mes, semanaAno, quandoBR, ytd, canais, posicaoTotalVencida, vencidosAnteriores, escopoTimes },
+        templateData: { ano, mes, semanaAno, quandoBR, ytd, canais, mesDetalhe, mesDetalheCanais, posicaoTotalVencida, vencidosAnteriores, escopoTimes },
         idempotencyKey: `executivo-semanal-${ano}-w${semanaAno}-${data.to}-${Date.now()}`,
       })
 

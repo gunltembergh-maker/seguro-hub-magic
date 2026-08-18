@@ -33,6 +33,9 @@ export interface ResumoExecutivoProps {
     canal: string
     caixa_corrente: number
     a_receber_futuro: number
+    emitido?: number
+    caixa_esperado?: number
+    saldo_vencido?: number
   }> | null
   mesDetalhe?: {
     emitido: number
@@ -41,25 +44,34 @@ export interface ResumoExecutivoProps {
     saldoVencido: number
     aReceberFuturo: number
   } | null
+  mesDetalheCanais?: Array<{
+    canal: string
+    emitido: number
+    caixa_esperado: number
+    caixa_recebido: number
+    saldo_vencido: number
+  }> | null
   escopoTimes?: string[]
 }
 
 const emptyYtd = { emitido: 0, caixaEsperado: 0, caixaRecebido: 0, aReceberFuturo: 0, pctCaixa: 0 }
 const CANAIS_ORDEM = ['Garantia', 'Benefícios', 'Demais Ramos']
 
+/** Valores REAIS por canal — sem reescala/ajuste para fechar com o total. */
 const quebra = (
   canais: ResumoExecutivoProps['canais'],
-  campo: 'caixa_corrente' | 'a_receber_futuro',
-  total: number,
+  campo: 'caixa_corrente' | 'a_receber_futuro' | 'emitido' | 'caixa_esperado',
 ) => {
   const linhas = canais ?? []
   if (!linhas.length) return undefined
   const presentes = CANAIS_ORDEM.filter((c) => linhas.some((l) => l.canal === c))
-  const valores = presentes.map((c) => Number(linhas.find((l) => l.canal === c)?.[campo] ?? 0))
-  const soma = valores.reduce((a, b) => a + b, 0)
-  const fator = soma > 0 ? Number(total || 0) / soma : 0
-  return presentes.map((c, i) => ({ label: c, value: BRL(valores[i] * fator) }))
+  if (!presentes.length) return undefined
+  return presentes.map((c) => ({
+    label: c,
+    value: BRL(Number(linhas.find((l) => l.canal === c)?.[campo] ?? 0)),
+  }))
 }
+
 
 const ResumoExecutivoEmail = ({
   ano,
@@ -68,9 +80,22 @@ const ResumoExecutivoEmail = ({
   ytd = emptyYtd,
   canais = null,
   mesDetalhe = null,
+  mesDetalheCanais = null,
   escopoTimes,
 }: ResumoExecutivoProps) => {
   const mesLongo = MESES_PT_LONGO[mes - 1]
+  const linhasMes = (mesDetalheCanais ?? [])
+    .slice()
+    .sort((a, b) => CANAIS_ORDEM.indexOf(a.canal) - CANAIS_ORDEM.indexOf(b.canal))
+  const totalMes = linhasMes.reduce(
+    (acc, r) => ({
+      emitido: acc.emitido + Number(r.emitido || 0),
+      caixa_esperado: acc.caixa_esperado + Number(r.caixa_esperado || 0),
+      caixa_recebido: acc.caixa_recebido + Number(r.caixa_recebido || 0),
+      saldo_vencido: acc.saldo_vencido + Number(r.saldo_vencido || 0),
+    }),
+    { emitido: 0, caixa_esperado: 0, caixa_recebido: 0, saldo_vencido: 0 },
+  )
   return (
     <Html lang="pt-BR" dir="ltr">
       <Head />
@@ -95,10 +120,20 @@ const ResumoExecutivoEmail = ({
             <Text style={sectionTitle}>{`Acumulado YTD ${ano}`}</Text>
             <Row>
               <Column style={colHalf}>
-                <Kpi label={`EMITIDO YTD ${ano}`} value={BRL(ytd?.emitido)} accent={L.blueLight} />
+                <Kpi
+                  label={`EMITIDO YTD ${ano}`}
+                  value={BRL(ytd?.emitido)}
+                  accent={L.blueLight}
+                  breakdown={quebra(canais, 'emitido')}
+                />
               </Column>
               <Column style={colHalf}>
-                <Kpi label={`CAIXA ESPERADO YTD ${ano}`} value={BRL(ytd?.caixaEsperado)} accent={L.navy} />
+                <Kpi
+                  label={`CAIXA ESPERADO YTD ${ano}`}
+                  value={BRL(ytd?.caixaEsperado)}
+                  accent={L.navy}
+                  breakdown={quebra(canais, 'caixa_esperado')}
+                />
               </Column>
             </Row>
             <Row>
@@ -108,7 +143,7 @@ const ResumoExecutivoEmail = ({
                   value={BRL(ytd?.caixaRecebido)}
                   accent={L.green}
                   hint={`${PCT(ytd?.pctCaixa)} do esperado`}
-                  breakdown={quebra(canais, 'caixa_corrente', Number(ytd?.caixaRecebido ?? 0))}
+                  breakdown={quebra(canais, 'caixa_corrente')}
                 />
               </Column>
               <Column style={colHalf}>
@@ -116,38 +151,48 @@ const ResumoExecutivoEmail = ({
                   label={`A RECEBER FUTURO YTD ${ano}`}
                   value={BRL(ytd?.aReceberFuturo)}
                   accent={L.blue}
-                  breakdown={quebra(canais, 'a_receber_futuro', Number(ytd?.aReceberFuturo ?? 0))}
+                  breakdown={quebra(canais, 'a_receber_futuro')}
                 />
               </Column>
             </Row>
           </Section>
 
-          {/* Detalhamento do mês atual */}
-          {mesDetalhe && (
+          {/* Detalhamento do mês atual — por canal */}
+          {linhasMes.length > 0 && (
             <Section style={detalheBlock}>
               <Text style={sectionTitle}>{`Detalhamento — ${mesLongo}/${ano}`}</Text>
               <table style={detTable} cellPadding={0} cellSpacing={0}>
                 <thead>
                   <tr>
+                    <th style={thCanal}>Canal</th>
                     <th style={thStyle}>Emitido</th>
-                    <th style={thStyle}>Caixa</th>
-                    <th style={thStyle}>Caixa Corrente</th>
+                    <th style={thStyle}>Caixa (Previsto)</th>
+                    <th style={thStyle}>Caixa Recebido</th>
                     <th style={thStyle}>Saldo Vencido</th>
-                    <th style={thStyle}>A Receber Futuro</th>
                   </tr>
                 </thead>
                 <tbody>
+                  {linhasMes.map((r) => (
+                    <tr key={r.canal}>
+                      <td style={tdCanal}>{r.canal}</td>
+                      <td style={tdStyle}>{BRL(Number(r.emitido || 0))}</td>
+                      <td style={tdStyle}>{BRL(Number(r.caixa_esperado || 0))}</td>
+                      <td style={{ ...tdStyle, color: L.green, fontWeight: 600 }}>{BRL(Number(r.caixa_recebido || 0))}</td>
+                      <td style={{ ...tdStyle, color: L.amber, fontWeight: 600 }}>{BRL(Number(r.saldo_vencido || 0))}</td>
+                    </tr>
+                  ))}
                   <tr>
-                    <td style={tdStyle}>{BRL(mesDetalhe.emitido)}</td>
-                    <td style={tdStyle}>{BRL(mesDetalhe.caixa)}</td>
-                    <td style={{ ...tdStyle, color: L.green, fontWeight: 600 }}>{BRL(mesDetalhe.caixaCorrente)}</td>
-                    <td style={{ ...tdStyle, color: L.amber, fontWeight: 600 }}>{BRL(mesDetalhe.saldoVencido)}</td>
-                    <td style={tdStyle}>{BRL(mesDetalhe.aReceberFuturo)}</td>
+                    <td style={{ ...tdCanal, ...totalCell }}>Total</td>
+                    <td style={{ ...tdStyle, ...totalCell }}>{BRL(totalMes.emitido)}</td>
+                    <td style={{ ...tdStyle, ...totalCell }}>{BRL(totalMes.caixa_esperado)}</td>
+                    <td style={{ ...tdStyle, ...totalCell, color: L.green }}>{BRL(totalMes.caixa_recebido)}</td>
+                    <td style={{ ...tdStyle, ...totalCell, color: L.amber }}>{BRL(totalMes.saldo_vencido)}</td>
                   </tr>
                 </tbody>
               </table>
             </Section>
           )}
+
 
           {/* CTA Hub */}
           <Section style={ctaWrap}>
@@ -219,6 +264,11 @@ export const template = {
       aReceberFuturo: 3_680_000,
       pctCaixa: 0.863,
     },
+    canais: [
+      { canal: 'Garantia', emitido: 7_100_000, caixa_esperado: 5_900_000, caixa_corrente: 5_100_000, a_receber_futuro: 2_100_000, saldo_vencido: 90_000 },
+      { canal: 'Benefícios', emitido: 4_200_000, caixa_esperado: 3_500_000, caixa_corrente: 3_050_000, a_receber_futuro: 1_200_000, saldo_vencido: 30_000 },
+      { canal: 'Demais Ramos', emitido: 1_100_000, caixa_esperado: 700_000, caixa_corrente: 570_000, a_receber_futuro: 380_000, saldo_vencido: 10_000 },
+    ],
     mesDetalhe: {
       emitido: 1_820_000,
       caixa: 1_540_000,
@@ -226,7 +276,13 @@ export const template = {
       saldoVencido: 130_000,
       aReceberFuturo: 3_680_000,
     },
+    mesDetalheCanais: [
+      { canal: 'Garantia', emitido: 980_000, caixa_esperado: 840_000, caixa_recebido: 770_000, saldo_vencido: 70_000 },
+      { canal: 'Benefícios', emitido: 640_000, caixa_esperado: 560_000, caixa_recebido: 520_000, saldo_vencido: 40_000 },
+      { canal: 'Demais Ramos', emitido: 200_000, caixa_esperado: 140_000, caixa_recebido: 120_000, saldo_vencido: 20_000 },
+    ],
   },
+
 } satisfies TemplateEntry
 
 // ─── Styles ────────────────────────────────────────────────────────────
@@ -247,8 +303,11 @@ const kpiValue = { ...tabular, fontSize: '22px', fontWeight: 700, color: L.navyD
 const kpiHint = { fontSize: '11px', margin: '2px 0 0', fontWeight: 600 }
 const detalheBlock = { background: L.card, padding: '18px 20px', borderLeft: `1px solid ${L.border}`, borderRight: `1px solid ${L.border}`, borderTop: `1px solid ${L.border}` }
 const detTable = { width: '100%', borderCollapse: 'collapse' as const, ...tabular }
-const thStyle = { textAlign: 'center' as const, fontSize: '10px', fontWeight: 700, color: L.textMuted, textTransform: 'uppercase' as const, letterSpacing: '0.04em', padding: '8px 6px', borderBottom: `1px solid ${L.border}` }
-const tdStyle = { textAlign: 'center' as const, fontSize: '13px', color: L.navyDark, padding: '10px 6px', fontWeight: 500 }
+const thStyle = { textAlign: 'right' as const, fontSize: '10px', fontWeight: 700, color: L.textMuted, textTransform: 'uppercase' as const, letterSpacing: '0.04em', padding: '8px 6px', borderBottom: `1px solid ${L.border}` }
+const thCanal = { ...thStyle, textAlign: 'left' as const }
+const tdStyle = { textAlign: 'right' as const, fontSize: '13px', color: L.navyDark, padding: '10px 6px', fontWeight: 500, ...tabular }
+const tdCanal = { ...tdStyle, textAlign: 'left' as const, fontVariantNumeric: 'normal' as const }
+const totalCell = { borderTop: `1px solid ${L.border}`, fontWeight: 700, background: '#F1F5F9' }
 const ctaWrap = { background: L.card, padding: '22px', textAlign: 'center' as const, borderRadius: '0 0 10px 10px', border: `1px solid ${L.border}`, borderTop: 'none' }
 const ctaHint = { color: L.textMuted, fontSize: '12px', margin: '0 0 12px' }
 const cta = { background: L.navy, color: '#FFFFFF', padding: '12px 26px', borderRadius: '6px', fontSize: '14px', fontWeight: 700, textDecoration: 'none', display: 'inline-block' }
