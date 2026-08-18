@@ -264,6 +264,11 @@ export const template = {
       aReceberFuturo: 3_680_000,
       pctCaixa: 0.863,
     },
+    canais: [
+      { canal: 'Garantia', emitido: 7_100_000, caixa_esperado: 5_900_000, caixa_corrente: 5_100_000, a_receber_futuro: 2_100_000, saldo_vencido: 90_000 },
+      { canal: 'Benefícios', emitido: 4_200_000, caixa_esperado: 3_500_000, caixa_corrente: 3_050_000, a_receber_futuro: 1_200_000, saldo_vencido: 30_000 },
+      { canal: 'Demais Ramos', emitido: 1_100_000, caixa_esperado: 700_000, caixa_corrente: 570_000, a_receber_futuro: 380_000, saldo_vencido: 10_000 },
+    ],
     mesDetalhe: {
       emitido: 1_820_000,
       caixa: 1_540_000,
@@ -271,7 +276,13 @@ export const template = {
       saldoVencido: 130_000,
       aReceberFuturo: 3_680_000,
     },
+    mesDetalheCanais: [
+      { canal: 'Garantia', emitido: 980_000, caixa_esperado: 840_000, caixa_recebido: 770_000, saldo_vencido: 70_000 },
+      { canal: 'Benefícios', emitido: 640_000, caixa_esperado: 560_000, caixa_recebido: 520_000, saldo_vencido: 40_000 },
+      { canal: 'Demais Ramos', emitido: 200_000, caixa_esperado: 140_000, caixa_recebido: 120_000, saldo_vencido: 20_000 },
+    ],
   },
+
 } satisfies TemplateEntry
 
 // ─── Styles ────────────────────────────────────────────────────────────
