@@ -485,11 +485,11 @@ function DashboardReceitaLavoro() {
             title={`Receita Caixa em ${periodoLabel}`}
             subtitle="Receita Caixa (efetivamente recebido)"
             value={BRL(kpis?.receita_caixa)} accent="#14405C" loading={kpisQ.isLoading}
-            breakdown={[
+            breakdown={escopo.filtrar([
               { label: "Garantia", value: BRL(kpis?.caixa_garantia) },
               { label: "Benefícios", value: BRL(kpis?.caixa_beneficios) },
               { label: "Demais Ramos", value: BRL(kpis?.caixa_demais) },
-            ]}
+            ])}
           />
         </div>
 
