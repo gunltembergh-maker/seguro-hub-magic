@@ -1230,19 +1230,36 @@ async function analisarDocumentosFinanceiros(arquivos) {
   }
 }
 
-async function consultarLimitesSeguradoras(cnpj, seguradoras) {
-  const resp = await fetch(DEEPSEEK_WORKER_URL.replace(/\/+$/, '') + '/v1/limits/query', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ cnpj, seguradoras }),
-  });
+async function consultarLimitesSeguradoras(cnpj, seguradoras, onProgress, forceRefresh = false) {
+  const url = DEEPSEEK_WORKER_URL.replace(/\/+$/, '') + '/v1/limits/query';
+  const deadline = Date.now() + 6 * 60 * 1000;
+  for (;;) {
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cnpj, seguradoras, forceRefresh }),
+    });
 
-  if (!resp.ok) {
-    const text = await resp.text();
-    throw new Error(`Consulta de limites falhou (${resp.status}): ${text}`);
+    if (resp.status === 202) {
+      const pending = await resp.json();
+      if (typeof onProgress === 'function') onProgress(pending.progress || {});
+      // `forceRefresh` so e necessario na primeira chamada: a Junto pode
+      // responder 202 e precisa que os polls seguintes retomem o job criado.
+      forceRefresh = false;
+      if (Date.now() >= deadline) {
+        throw new Error('A consulta de mercado continua em andamento. Aguarde alguns instantes e tente novamente.');
+      }
+      await sleep(Math.max(1000, Number(pending.retryAfterMs) || 2500));
+      continue;
+    }
+
+    if (!resp.ok) {
+      const text = await resp.text();
+      throw new Error(`Consulta de limites falhou (${resp.status}): ${text}`);
+    }
+
+    return resp.json();
   }
-
-  return resp.json();
 }
 
 // ── T&C — histórico de análises por tomador (D1, ver SPEC.md secao 13) ──────
