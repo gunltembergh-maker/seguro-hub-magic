@@ -70,13 +70,11 @@ export async function rodarMotor(corpo: CorpoMotor = {}): Promise<{ status: numb
     const ctrPorEmpresa = agrupar(ctrs ?? [], "empresa_id");
     const restrPorEmpresa = agrupar(restrs ?? [], "empresa_id");
 
-    // ---- limpa a saída anterior ----------------------------------
-    if (corpo.cnpj) {
-      await sb.from("ab_evento").delete().in("empresa_id", ids);
-      await sb.from("ab_lead").delete().in("empresa_id", ids);
-    } else {
-      await sb.from("ab_evento").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-      await sb.from("ab_lead").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    // ---- limpa a saída anterior (sempre escopada ao lote) --------
+    for (let i = 0; i < ids.length; i += LOTE) {
+      const fatia = ids.slice(i, i + LOTE);
+      await sb.from("ab_evento").delete().in("empresa_id", fatia);
+      await sb.from("ab_lead").delete().in("empresa_id", fatia);
     }
 
     const eventosParaGravar: Record<string, unknown>[] = [];

@@ -144,7 +144,7 @@ export async function logIngest(
 export async function fetchJson<T = unknown>(
   url: string,
   init: RequestInit = {},
-  timeoutMs = 30_000,
+  timeoutMs = 10_000,
 ): Promise<T> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
