@@ -2077,6 +2077,7 @@ export type Database = {
         Returns: boolean
       }
       retry_lavoro_sync_if_needed: { Args: never; Returns: undefined }
+      rpc_ab_atualizar_derivados: { Args: { p_linhas: Json }; Returns: number }
       rpc_ab_mover_lead: {
         Args: {
           p_lead_id: string
