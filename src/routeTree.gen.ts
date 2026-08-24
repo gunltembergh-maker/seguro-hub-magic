@@ -40,6 +40,7 @@ import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/l
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicHooksDispatchScheduledNewslettersRouteImport } from './routes/api/public/hooks/dispatch-scheduled-newsletters'
+import { Route as ApiPublicHooksAbMotorRunRouteImport } from './routes/api/public/hooks/ab-motor-run'
 import { Route as AuthenticatedAdminEmailsSchedulesRouteImport } from './routes/_authenticated/admin/emails_.schedules'
 import { Route as AuthenticatedAdminEmailsLogRouteImport } from './routes/_authenticated/admin/emails_.log'
 
@@ -212,6 +213,12 @@ const ApiPublicHooksDispatchScheduledNewslettersRoute =
     path: '/api/public/hooks/dispatch-scheduled-newsletters',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksAbMotorRunRoute =
+  ApiPublicHooksAbMotorRunRouteImport.update({
+    id: '/api/public/hooks/ab-motor-run',
+    path: '/api/public/hooks/ab-motor-run',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAdminEmailsSchedulesRoute =
   AuthenticatedAdminEmailsSchedulesRouteImport.update({
     id: '/emails_/schedules',
@@ -254,6 +261,7 @@ export interface FileRoutesByFullPath {
   '/garantia/analise-limite': typeof AuthenticatedGarantiaAnaliseLimiteRoute
   '/admin/emails/log': typeof AuthenticatedAdminEmailsLogRoute
   '/admin/emails/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
+  '/api/public/hooks/ab-motor-run': typeof ApiPublicHooksAbMotorRunRoute
   '/api/public/hooks/dispatch-scheduled-newsletters': typeof ApiPublicHooksDispatchScheduledNewslettersRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -288,6 +296,7 @@ export interface FileRoutesByTo {
   '/garantia/analise-limite': typeof AuthenticatedGarantiaAnaliseLimiteRoute
   '/admin/emails/log': typeof AuthenticatedAdminEmailsLogRoute
   '/admin/emails/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
+  '/api/public/hooks/ab-motor-run': typeof ApiPublicHooksAbMotorRunRoute
   '/api/public/hooks/dispatch-scheduled-newsletters': typeof ApiPublicHooksDispatchScheduledNewslettersRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -324,6 +333,7 @@ export interface FileRoutesById {
   '/_authenticated/garantia_/analise-limite': typeof AuthenticatedGarantiaAnaliseLimiteRoute
   '/_authenticated/admin/emails_/log': typeof AuthenticatedAdminEmailsLogRoute
   '/_authenticated/admin/emails_/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
+  '/api/public/hooks/ab-motor-run': typeof ApiPublicHooksAbMotorRunRoute
   '/api/public/hooks/dispatch-scheduled-newsletters': typeof ApiPublicHooksDispatchScheduledNewslettersRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -360,6 +370,7 @@ export interface FileRouteTypes {
     | '/garantia/analise-limite'
     | '/admin/emails/log'
     | '/admin/emails/schedules'
+    | '/api/public/hooks/ab-motor-run'
     | '/api/public/hooks/dispatch-scheduled-newsletters'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -394,6 +405,7 @@ export interface FileRouteTypes {
     | '/garantia/analise-limite'
     | '/admin/emails/log'
     | '/admin/emails/schedules'
+    | '/api/public/hooks/ab-motor-run'
     | '/api/public/hooks/dispatch-scheduled-newsletters'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -429,6 +441,7 @@ export interface FileRouteTypes {
     | '/_authenticated/garantia_/analise-limite'
     | '/_authenticated/admin/emails_/log'
     | '/_authenticated/admin/emails_/schedules'
+    | '/api/public/hooks/ab-motor-run'
     | '/api/public/hooks/dispatch-scheduled-newsletters'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -440,6 +453,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiPublicHooksAbMotorRunRoute: typeof ApiPublicHooksAbMotorRunRoute
   ApiPublicHooksDispatchScheduledNewslettersRoute: typeof ApiPublicHooksDispatchScheduledNewslettersRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -665,6 +679,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksDispatchScheduledNewslettersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/ab-motor-run': {
+      id: '/api/public/hooks/ab-motor-run'
+      path: '/api/public/hooks/ab-motor-run'
+      fullPath: '/api/public/hooks/ab-motor-run'
+      preLoaderRoute: typeof ApiPublicHooksAbMotorRunRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin/emails_/schedules': {
       id: '/_authenticated/admin/emails_/schedules'
       path: '/emails/schedules'
@@ -771,6 +792,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiPublicHooksAbMotorRunRoute: ApiPublicHooksAbMotorRunRoute,
   ApiPublicHooksDispatchScheduledNewslettersRoute:
     ApiPublicHooksDispatchScheduledNewslettersRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,

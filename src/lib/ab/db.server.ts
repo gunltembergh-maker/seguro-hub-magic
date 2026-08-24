@@ -1,9 +1,11 @@
-// Utilitários compartilhados pelas Edge Functions.
+// Utilitários compartilhados pelo motor (portados de supabase/functions/_shared/db.ts).
 //
-// Toda escrita no banco passa por aqui, com service_role — assim as
-// policies de RLS do front continuam valendo só para leitura.
+// Toda escrita no banco passa por aqui, com service_role (lavoroAdmin) — assim
+// as policies de RLS do front continuam valendo só para leitura.
+// Server-only: o sufixo `.server.ts` mantém isso fora do bundle do navegador.
 
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { lavoroAdmin } from "@/integrations/supabase/lavoro-admin.server";
 import { soDigitos } from "./format.ts";
 import { PARAMETROS_PADRAO, type Parametros } from "./pricing.ts";
 import { carregarDicionario, type Sinal } from "./nlp.ts";
@@ -25,17 +27,15 @@ export function preflight(req: Request): Response | null {
   return req.method === "OPTIONS" ? new Response("ok", { headers: CORS }) : null;
 }
 
-/** Cliente com service_role. Ignora RLS — use só dentro de Edge Function. */
+/** Cliente com service_role. Ignora RLS — use só no servidor. */
 export function admin(): SupabaseClient {
-  const url = Deno.env.get("SUPABASE_URL")!;
-  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  return createClient(url, key, { auth: { persistSession: false } });
+  return lavoroAdmin as unknown as SupabaseClient;
 }
 
 /** Cliente no contexto do usuário que chamou — respeita RLS. */
 export function comoUsuario(req: Request): SupabaseClient {
-  const url = Deno.env.get("SUPABASE_URL")!;
-  const anon = Deno.env.get("SUPABASE_ANON_KEY")!;
+  const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL!;
+  const anon = process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY!;
   return createClient(url, anon, {
     global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
     auth: { persistSession: false },
@@ -82,7 +82,7 @@ export async function exigirPerfil(
 export async function carregarParametros(sb: SupabaseClient): Promise<Parametros> {
   const { data } = await sb.from("ab_parametro").select("chave, valor");
   const p = { ...PARAMETROS_PADRAO } as Record<string, number>;
-  for (const row of data ?? []) p[row.chave] = Number(row.valor);
+  for (const row of (data ?? []) as { chave: string; valor: number }[]) p[row.chave] = Number(row.valor);
   return p as unknown as Parametros;
 }
 
@@ -94,7 +94,7 @@ export async function carregarSinais(sb: SupabaseClient): Promise<number> {
     .eq("ativo", true);
   if (data?.length) {
     carregarDicionario(
-      data.map((s) => ({ ...s, peso: Number(s.peso) })) as Sinal[],
+      (data as Record<string, unknown>[]).map((s) => ({ ...s, peso: Number(s.peso) })) as unknown as Sinal[],
     );
     return data.length;
   }
@@ -123,7 +123,7 @@ export async function upsertEmpresa(
     .select("id")
     .single();
   if (error) throw new Error(`upsertEmpresa(${doc}): ${error.message}`);
-  return data.id as string;
+  return (data as { id: string }).id;
 }
 
 export async function logIngest(
