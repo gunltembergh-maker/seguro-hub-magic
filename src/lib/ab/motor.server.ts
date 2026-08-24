@@ -35,7 +35,7 @@ export async function rodarMotor(corpo: CorpoMotor = {}): Promise<{ status: numb
   const params = await carregarParametros(sb);
   const nSinais = await carregarSinais(sb);
 
-  const stats = { empresas: 0, eventos: 0, leads: 0, bloqueados: 0, erros: [] as string[] };
+  const stats = { empresas: 0, eventos: 0, leads: 0, bloqueados: 0, sinais_atualizados: 0, erros: [] as string[] };
 
   try {
     // ---- empresas a processar -------------------------------------
