@@ -74,7 +74,7 @@ const ramosAll: CollapsibleItem[] = [
     icon: ShieldCheck,
     tooltip: "Garantia",
     perm: "menu_ramo_garantia",
-    children: [{ title: "Análise de Limite", url: "/garantia/analise-limite", icon: FileSearch }],
+    children: [{ title: "Operacional", url: "/garantia/analise-limite", icon: FileSearch }],
   },
   { title: "Benefícios", url: "/beneficios", icon: HeartPulse, tooltip: "Benefícios", perm: "menu_ramo_beneficios" },
   { title: "Demais Ramos", url: "/demais-ramos", icon: Boxes, tooltip: "Demais Ramos", perm: "menu_ramo_demais" },
