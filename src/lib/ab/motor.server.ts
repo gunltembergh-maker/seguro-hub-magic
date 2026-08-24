@@ -18,7 +18,7 @@ import {
   bloqueios, catalogo, cnaePrioritario, GATILHOS,
   type Contexto, type EventoDetectado,
 } from "./gatilhos.ts";
-import { analisarProcesso } from "./nlp.ts";
+import { analisar, analisarProcesso } from "./nlp.ts";
 import {
   agregar, precificar, prioridade, probSubscricao, urgencia, type Modalidade,
 } from "./pricing.ts";
@@ -80,6 +80,7 @@ export async function rodarMotor(corpo: CorpoMotor = {}): Promise<{ status: numb
     const eventosParaGravar: Record<string, unknown>[] = [];
     const leadsParaGravar: Record<string, unknown>[] = [];
     const processosParaAtualizar: Record<string, unknown>[] = [];
+    const sinaisParaAtualizar: Record<string, unknown>[] = [];
 
     for (const emp of empresas) {
       stats.empresas++;
@@ -87,7 +88,8 @@ export async function rodarMotor(corpo: CorpoMotor = {}): Promise<{ status: numb
       const processos = (procPorEmpresa[emp.id] ?? []).map((p: Record<string, unknown>) => ({
         ...p,
         movimentacoes: (movPorProc[p.id as string] ?? []).map((m: Record<string, unknown>) => ({
-          tipo: m.tipo, texto: m.texto, codigo_tpu: m.codigo_tpu, data: m.data,
+          id: m.id, tipo: m.tipo, texto: m.texto, codigo_tpu: m.codigo_tpu, data: m.data,
+          sinaisGravados: (m.sinais ?? []) as string[],
         })),
       })) as any[];
 
@@ -100,6 +102,15 @@ export async function rodarMotor(corpo: CorpoMotor = {}): Promise<{ status: numb
         processosParaAtualizar.push({
           id: p.id, fase: a.fase, garantia_prestada: a.garantiaPrestada,
         });
+        for (const m of movsOrd) {
+          const mid = (m as { id?: string }).id;
+          if (!mid) continue;
+          const sinais = analisar(m.texto, m.codigo_tpu, m.tipo).sinais;
+          const gravados = (m as { sinaisGravados?: string[] }).sinaisGravados ?? [];
+          const mudou = sinais.length !== gravados.length ||
+            sinais.some((x, i) => x !== gravados[i]);
+          if (mudou) sinaisParaAtualizar.push({ id: mid, sinais });
+        }
       }
 
       const ctx: Contexto = {
@@ -208,6 +219,8 @@ export async function rodarMotor(corpo: CorpoMotor = {}): Promise<{ status: numb
 
     // ---- grava em lote -------------------------------------------
     await atualizarDerivados(sb, processosParaAtualizar);
+    await atualizarSinais(sb, sinaisParaAtualizar);
+    stats.sinais_atualizados = sinaisParaAtualizar.length;
     await inserirEmLote(sb, "ab_evento", eventosParaGravar);
     await inserirEmLote(sb, "ab_lead", leadsParaGravar);
 
@@ -273,6 +286,18 @@ async function atualizarDerivados(
       p_linhas: rows.slice(i, i + LOTE),
     });
     if (error) throw new Error(`rpc_ab_atualizar_derivados: ${error.message}`);
+  }
+}
+
+/** UPDATE em lote de ab_movimentacao.sinais, via rpc_ab_atualizar_sinais. */
+async function atualizarSinais(
+  sb: ReturnType<typeof admin>, rows: Record<string, unknown>[],
+) {
+  for (let i = 0; i < rows.length; i += LOTE) {
+    const { error } = await sb.rpc("rpc_ab_atualizar_sinais", {
+      p_linhas: rows.slice(i, i + LOTE),
+    });
+    if (error) throw new Error(`rpc_ab_atualizar_sinais: ${error.message}`);
   }
 }
 
