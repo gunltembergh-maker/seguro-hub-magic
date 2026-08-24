@@ -207,7 +207,7 @@ export async function rodarMotor(corpo: CorpoMotor = {}): Promise<{ status: numb
     }
 
     // ---- grava em lote -------------------------------------------
-    await gravarEmLote(sb, "ab_processo", processosParaAtualizar, "id");
+    await atualizarDerivados(sb, processosParaAtualizar);
     await inserirEmLote(sb, "ab_evento", eventosParaGravar);
     await inserirEmLote(sb, "ab_lead", leadsParaGravar);
 
@@ -264,12 +264,15 @@ async function inserirEmLote(sb: SB, tabela: string, rows: Record<string, unknow
   }
 }
 
-async function gravarEmLote(
-  sb: SB, tabela: string, rows: Record<string, unknown>[], onConflict: string,
+/** UPDATE em lote de fase/garantia_prestada, via rpc_ab_atualizar_derivados. */
+async function atualizarDerivados(
+  sb: ReturnType<typeof admin>, rows: Record<string, unknown>[],
 ) {
   for (let i = 0; i < rows.length; i += LOTE) {
-    const { error } = await sb.from(tabela).upsert(rows.slice(i, i + LOTE), { onConflict });
-    if (error) throw new Error(`upsert ${tabela}: ${error.message}`);
+    const { error } = await sb.rpc("rpc_ab_atualizar_derivados", {
+      p_linhas: rows.slice(i, i + LOTE),
+    });
+    if (error) throw new Error(`rpc_ab_atualizar_derivados: ${error.message}`);
   }
 }
 
