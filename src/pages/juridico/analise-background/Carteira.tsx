@@ -109,7 +109,7 @@ export default function Carteira() {
                 <TableHead className="text-right">Dívida ativa</TableHead>
                 <TableHead className="text-right">Contratos públicos</TableHead>
                 <TableHead>Restritivos</TableHead>
-                <TableHead className="text-right">Comissão potencial</TableHead>
+                <TableHead className="text-right">IS potencial</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -164,7 +164,7 @@ export default function Carteira() {
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Dinheiro valor={r.comissao_potencial} forte />
+                    <Dinheiro valor={r.is_potencial} forte />
                     {r.n_leads > 0 && (
                       <div className="text-xs text-muted-foreground">{r.n_leads} lead(s)</div>
                     )}
