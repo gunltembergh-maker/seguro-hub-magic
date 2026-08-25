@@ -20,5 +20,9 @@ export const Route = createFileRoute("/_authenticated/juridico_/analise-backgrou
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: AnaliseBackground,
+  component: BackgroundJuridicoPage,
 });
+
+function BackgroundJuridicoPage() {
+  return <AnaliseBackground foco="risco" />;
+}

@@ -35,6 +35,7 @@ import { Route as ApiAbCotaRouteImport } from './routes/api/ab/cota'
 import { Route as ApiAbBgcheckRouteImport } from './routes/api/ab/bgcheck'
 import { Route as AuthenticatedJuridicoAnaliseBackgroundRouteImport } from './routes/_authenticated/juridico_.analise-background'
 import { Route as AuthenticatedGarantiaAnaliseLimiteRouteImport } from './routes/_authenticated/garantia_.analise-limite'
+import { Route as AuthenticatedGarantiaAnaliseBackgroundRouteImport } from './routes/_authenticated/garantia_.analise-background'
 import { Route as AuthenticatedDashboardReportFechamentoRouteImport } from './routes/_authenticated/dashboard.report-fechamento'
 import { Route as AuthenticatedDashboardReceitaExecutivoRouteImport } from './routes/_authenticated/dashboard.receita-executivo'
 import { Route as AuthenticatedDashboardReceitaCaixaRouteImport } from './routes/_authenticated/dashboard.receita-caixa'
@@ -192,6 +193,12 @@ const AuthenticatedGarantiaAnaliseLimiteRoute =
   AuthenticatedGarantiaAnaliseLimiteRouteImport.update({
     id: '/garantia_/analise-limite',
     path: '/garantia/analise-limite',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedGarantiaAnaliseBackgroundRoute =
+  AuthenticatedGarantiaAnaliseBackgroundRouteImport.update({
+    id: '/garantia_/analise-background',
+    path: '/garantia/analise-background',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedDashboardReportFechamentoRoute =
@@ -362,6 +369,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/receita-caixa': typeof AuthenticatedDashboardReceitaCaixaRoute
   '/dashboard/receita-executivo': typeof AuthenticatedDashboardReceitaExecutivoRoute
   '/dashboard/report-fechamento': typeof AuthenticatedDashboardReportFechamentoRoute
+  '/garantia/analise-background': typeof AuthenticatedGarantiaAnaliseBackgroundRoute
   '/garantia/analise-limite': typeof AuthenticatedGarantiaAnaliseLimiteRoute
   '/juridico/analise-background': typeof AuthenticatedJuridicoAnaliseBackgroundRoute
   '/api/ab/bgcheck': typeof ApiAbBgcheckRoute
@@ -413,6 +421,7 @@ export interface FileRoutesByTo {
   '/dashboard/receita-caixa': typeof AuthenticatedDashboardReceitaCaixaRoute
   '/dashboard/receita-executivo': typeof AuthenticatedDashboardReceitaExecutivoRoute
   '/dashboard/report-fechamento': typeof AuthenticatedDashboardReportFechamentoRoute
+  '/garantia/analise-background': typeof AuthenticatedGarantiaAnaliseBackgroundRoute
   '/garantia/analise-limite': typeof AuthenticatedGarantiaAnaliseLimiteRoute
   '/juridico/analise-background': typeof AuthenticatedJuridicoAnaliseBackgroundRoute
   '/api/ab/bgcheck': typeof ApiAbBgcheckRoute
@@ -466,6 +475,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/receita-caixa': typeof AuthenticatedDashboardReceitaCaixaRoute
   '/_authenticated/dashboard/receita-executivo': typeof AuthenticatedDashboardReceitaExecutivoRoute
   '/_authenticated/dashboard/report-fechamento': typeof AuthenticatedDashboardReportFechamentoRoute
+  '/_authenticated/garantia_/analise-background': typeof AuthenticatedGarantiaAnaliseBackgroundRoute
   '/_authenticated/garantia_/analise-limite': typeof AuthenticatedGarantiaAnaliseLimiteRoute
   '/_authenticated/juridico_/analise-background': typeof AuthenticatedJuridicoAnaliseBackgroundRoute
   '/api/ab/bgcheck': typeof ApiAbBgcheckRoute
@@ -519,6 +529,7 @@ export interface FileRouteTypes {
     | '/dashboard/receita-caixa'
     | '/dashboard/receita-executivo'
     | '/dashboard/report-fechamento'
+    | '/garantia/analise-background'
     | '/garantia/analise-limite'
     | '/juridico/analise-background'
     | '/api/ab/bgcheck'
@@ -570,6 +581,7 @@ export interface FileRouteTypes {
     | '/dashboard/receita-caixa'
     | '/dashboard/receita-executivo'
     | '/dashboard/report-fechamento'
+    | '/garantia/analise-background'
     | '/garantia/analise-limite'
     | '/juridico/analise-background'
     | '/api/ab/bgcheck'
@@ -622,6 +634,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/receita-caixa'
     | '/_authenticated/dashboard/receita-executivo'
     | '/_authenticated/dashboard/report-fechamento'
+    | '/_authenticated/garantia_/analise-background'
     | '/_authenticated/garantia_/analise-limite'
     | '/_authenticated/juridico_/analise-background'
     | '/api/ab/bgcheck'
@@ -856,6 +869,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGarantiaAnaliseLimiteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/garantia_/analise-background': {
+      id: '/_authenticated/garantia_/analise-background'
+      path: '/garantia/analise-background'
+      fullPath: '/garantia/analise-background'
+      preLoaderRoute: typeof AuthenticatedGarantiaAnaliseBackgroundRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard/report-fechamento': {
       id: '/_authenticated/dashboard/report-fechamento'
       path: '/dashboard/report-fechamento'
@@ -1072,6 +1092,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardReceitaCaixaRoute: typeof AuthenticatedDashboardReceitaCaixaRoute
   AuthenticatedDashboardReceitaExecutivoRoute: typeof AuthenticatedDashboardReceitaExecutivoRoute
   AuthenticatedDashboardReportFechamentoRoute: typeof AuthenticatedDashboardReportFechamentoRoute
+  AuthenticatedGarantiaAnaliseBackgroundRoute: typeof AuthenticatedGarantiaAnaliseBackgroundRoute
   AuthenticatedGarantiaAnaliseLimiteRoute: typeof AuthenticatedGarantiaAnaliseLimiteRoute
   AuthenticatedJuridicoAnaliseBackgroundRoute: typeof AuthenticatedJuridicoAnaliseBackgroundRoute
 }
@@ -1095,6 +1116,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedDashboardReceitaExecutivoRoute,
   AuthenticatedDashboardReportFechamentoRoute:
     AuthenticatedDashboardReportFechamentoRoute,
+  AuthenticatedGarantiaAnaliseBackgroundRoute:
+    AuthenticatedGarantiaAnaliseBackgroundRoute,
   AuthenticatedGarantiaAnaliseLimiteRoute:
     AuthenticatedGarantiaAnaliseLimiteRoute,
   AuthenticatedJuridicoAnaliseBackgroundRoute:
