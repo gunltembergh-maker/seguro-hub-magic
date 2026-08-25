@@ -78,6 +78,53 @@ export async function exigirPerfil(
   return { userId: user.user.id };
 }
 
+export interface ContextoUsuario {
+  userId: string;
+  /** profiles.area — é a noção de time do Hub, e a chave da cota de custo. */
+  area: string | null;
+  roles: string[];
+  permissoes: Record<string, boolean>;
+  /** Espelha hasPermission() do front: ADMIN passa em tudo. */
+  pode: (...chaves: string[]) => boolean;
+}
+
+/**
+ * Contexto completo do usuário que chamou: identidade, área e permissões.
+ *
+ * Existe além do exigirPerfil() porque algumas rotas precisam decidir com
+ * mais de uma chave (ex.: `ab_solicitar` E a chave da finalidade) e
+ * precisam da área para debitar a cota. Devolver o contexto e deixar a
+ * rota decidir é mais honesto que multiplicar variações de exigirPerfil.
+ */
+export async function contextoUsuario(
+  req: Request,
+): Promise<ContextoUsuario | Response> {
+  const sb = comoUsuario(req);
+  const { data: user } = await sb.auth.getUser();
+  if (!user?.user) return json({ erro: "nao_autenticado" }, 401);
+
+  const { data, error } = await sb.rpc("rpc_meu_perfil");
+  if (error) return json({ erro: "falha_perfil", detalhe: error.message }, 500);
+
+  const row = (Array.isArray(data) ? data[0] : data) as
+    { roles?: string[]; permissoes?: Record<string, boolean> } | null;
+  const roles = row?.roles ?? [];
+  const permissoes = row?.permissoes ?? {};
+
+  // rpc_meu_perfil() não devolve profiles.area, e não vamos alterar uma
+  // função existente do Hub — daí o helper ab_minha_area().
+  const { data: area } = await sb.rpc("ab_minha_area");
+
+  return {
+    userId: user.user.id,
+    area: (area as string | null) ?? null,
+    roles,
+    permissoes,
+    pode: (...chaves: string[]) =>
+      roles.includes("ADMIN") || chaves.some((c) => permissoes[c] === true),
+  };
+}
+
 /**
  * Autenticação por segredo compartilhado, para rotas chamadas por máquina
  * (pg_cron e webhook do bureau). Aceita header ou query string, porque nem
