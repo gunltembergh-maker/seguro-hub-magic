@@ -66,7 +66,7 @@ const areasAll: AreaItem[] = [
   { title: "Facilities", url: "/facilities", icon: Wrench, perm: "menu_area_facilities" },
 ];
 
-type ChildItem = { title: string; url: string; icon: LucideIcon; perm?: string };
+type ChildItem = { title: string; url: string; icon: LucideIcon; perms?: string[] };
 
 type CollapsibleItem = {
   title: string;
