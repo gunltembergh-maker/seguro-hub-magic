@@ -41,7 +41,15 @@ import CotasCustos from "./analise-background/CotasCustos";
 
 type Area = "originacao" | "risco" | "admin";
 
-export default function AnaliseBackground() {
+export interface PropsAnaliseBackground {
+  /**
+   * Onde a página abre. Não restringe nada — só escolhe a primeira aba.
+   * Quem tem permissão continua vendo todos os grupos, venha por onde vier.
+   */
+  foco?: Area;
+}
+
+export default function AnaliseBackground({ foco }: PropsAnaliseBackground = {}) {
   const { isLoading, pode, temAlgum, isAdmin } = usePermissoesAb();
   const [aba, setAba] = useState<string | null>(null);
   const [leadId, setLeadId] = useState<string | null>(null);
@@ -143,7 +151,12 @@ export default function AnaliseBackground() {
     render: () => <CotasCustos podeGerir={podeCota || isAdmin} />,
   });
 
-  const atual = abas.find((a) => a.id === aba) ?? abas[0];
+  // Sem escolha do usuário, abre na primeira aba do grupo em foco; se o
+  // perfil não tem acesso a esse grupo, cai na primeira que ele tem.
+  const atual =
+    abas.find((a) => a.id === aba) ??
+    (foco ? abas.find((a) => a.area === foco) : undefined) ??
+    abas[0];
 
   const grupos: { area: Area; titulo: string; nota: string }[] = [
     {
@@ -162,6 +175,11 @@ export default function AnaliseBackground() {
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">Análise Background</h1>
         <p className="text-sm text-muted-foreground max-w-3xl">
+          {foco === "risco"
+            ? "Você entrou pelo Jurídico, então a página abre na consulta processual. "
+            : foco === "originacao"
+              ? "Você entrou pela Garantia, então a página abre na fila de oportunidades. "
+              : ""}
           Um só acervo, dois usos. Para o time de <strong>Garantia</strong>, é um motor de
           originação: lê fonte pública oficial, classifica o que aparece no andamento
           processual e devolve fila com valor, prazo e argumento. Para o{" "}

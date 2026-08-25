@@ -314,64 +314,103 @@ export type Database = {
       }
       ab_empresa: {
         Row: {
+          bairro: string | null
+          cadastro_atualizado_em: string | null
+          cadastro_fonte: string | null
           capital_social: number | null
+          cep: string | null
           cnae: string | null
           cnae_descricao: string | null
+          cnaes_secundarios: string[] | null
           cnpj: string
           cnpj_raiz: string
+          complemento: string | null
           created_at: string
           data_abertura: string | null
+          email: string | null
           id: string
+          logradouro: string | null
+          matriz_filial: string | null
           monitorado: boolean
           municipio: string | null
+          natureza_juridica: string | null
           nome_fantasia: string | null
+          numero: string | null
           porte: string | null
           raw: Json | null
           razao_social: string
           relacao: string
           situacao_cadastral: string | null
+          telefone: string | null
+          telefone_2: string | null
           transparencia_checado_em: string | null
           uf: string | null
           updated_at: string
         }
         Insert: {
+          bairro?: string | null
+          cadastro_atualizado_em?: string | null
+          cadastro_fonte?: string | null
           capital_social?: number | null
+          cep?: string | null
           cnae?: string | null
           cnae_descricao?: string | null
+          cnaes_secundarios?: string[] | null
           cnpj: string
           cnpj_raiz: string
+          complemento?: string | null
           created_at?: string
           data_abertura?: string | null
+          email?: string | null
           id?: string
+          logradouro?: string | null
+          matriz_filial?: string | null
           monitorado?: boolean
           municipio?: string | null
+          natureza_juridica?: string | null
           nome_fantasia?: string | null
+          numero?: string | null
           porte?: string | null
           raw?: Json | null
           razao_social: string
           relacao?: string
           situacao_cadastral?: string | null
+          telefone?: string | null
+          telefone_2?: string | null
           transparencia_checado_em?: string | null
           uf?: string | null
           updated_at?: string
         }
         Update: {
+          bairro?: string | null
+          cadastro_atualizado_em?: string | null
+          cadastro_fonte?: string | null
           capital_social?: number | null
+          cep?: string | null
           cnae?: string | null
           cnae_descricao?: string | null
+          cnaes_secundarios?: string[] | null
           cnpj?: string
           cnpj_raiz?: string
+          complemento?: string | null
           created_at?: string
           data_abertura?: string | null
+          email?: string | null
           id?: string
+          logradouro?: string | null
+          matriz_filial?: string | null
           monitorado?: boolean
           municipio?: string | null
+          natureza_juridica?: string | null
           nome_fantasia?: string | null
+          numero?: string | null
           porte?: string | null
           raw?: Json | null
           razao_social?: string
           relacao?: string
           situacao_cadastral?: string | null
+          telefone?: string | null
+          telefone_2?: string | null
           transparencia_checado_em?: string | null
           uf?: string | null
           updated_at?: string
@@ -1051,27 +1090,39 @@ export type Database = {
           desde: string | null
           documento_mascarado: string | null
           empresa_id: string
+          faixa_etaria: string | null
+          fonte: string | null
           id: string
           nome: string
           qualificacao: string | null
+          representante_nome: string | null
+          representante_qualif: string | null
           tipo: string | null
         }
         Insert: {
           desde?: string | null
           documento_mascarado?: string | null
           empresa_id: string
+          faixa_etaria?: string | null
+          fonte?: string | null
           id?: string
           nome: string
           qualificacao?: string | null
+          representante_nome?: string | null
+          representante_qualif?: string | null
           tipo?: string | null
         }
         Update: {
           desde?: string | null
           documento_mascarado?: string | null
           empresa_id?: string
+          faixa_etaria?: string | null
+          fonte?: string | null
           id?: string
           nome?: string
           qualificacao?: string | null
+          representante_nome?: string | null
+          representante_qualif?: string | null
           tipo?: string | null
         }
         Relationships: [
