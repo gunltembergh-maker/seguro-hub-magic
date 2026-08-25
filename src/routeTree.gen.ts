@@ -26,6 +26,7 @@ import { Route as AuthenticatedDemaisRamosRouteImport } from './routes/_authenti
 import { Route as AuthenticatedBeneficiosRouteImport } from './routes/_authenticated/beneficios'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as ApiTcLavoroLimitsQueryRouteImport } from './routes/api/tc-lavoro/limits-query'
+import { Route as ApiTcLavoroAnalysisJobsRouteImport } from './routes/api/tc-lavoro/analysis-jobs'
 import { Route as ApiAbSolicitarRouteImport } from './routes/api/ab/solicitar'
 import { Route as ApiAbExecutarRouteImport } from './routes/api/ab/executar'
 import { Route as ApiAbCotaRouteImport } from './routes/api/ab/cota'
@@ -138,6 +139,11 @@ const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
 const ApiTcLavoroLimitsQueryRoute = ApiTcLavoroLimitsQueryRouteImport.update({
   id: '/api/tc-lavoro/limits-query',
   path: '/api/tc-lavoro/limits-query',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTcLavoroAnalysisJobsRoute = ApiTcLavoroAnalysisJobsRouteImport.update({
+  id: '/api/tc-lavoro/analysis-jobs',
+  path: '/api/tc-lavoro/analysis-jobs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAbSolicitarRoute = ApiAbSolicitarRouteImport.update({
@@ -329,6 +335,7 @@ export interface FileRoutesByFullPath {
   '/api/ab/cota': typeof ApiAbCotaRoute
   '/api/ab/executar': typeof ApiAbExecutarRoute
   '/api/ab/solicitar': typeof ApiAbSolicitarRoute
+  '/api/tc-lavoro/analysis-jobs': typeof ApiTcLavoroAnalysisJobsRoute
   '/api/tc-lavoro/limits-query': typeof ApiTcLavoroLimitsQueryRoute
   '/admin/emails/log': typeof AuthenticatedAdminEmailsLogRoute
   '/admin/emails/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
@@ -374,6 +381,7 @@ export interface FileRoutesByTo {
   '/api/ab/cota': typeof ApiAbCotaRoute
   '/api/ab/executar': typeof ApiAbExecutarRoute
   '/api/ab/solicitar': typeof ApiAbSolicitarRoute
+  '/api/tc-lavoro/analysis-jobs': typeof ApiTcLavoroAnalysisJobsRoute
   '/api/tc-lavoro/limits-query': typeof ApiTcLavoroLimitsQueryRoute
   '/admin/emails/log': typeof AuthenticatedAdminEmailsLogRoute
   '/admin/emails/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
@@ -421,6 +429,7 @@ export interface FileRoutesById {
   '/api/ab/cota': typeof ApiAbCotaRoute
   '/api/ab/executar': typeof ApiAbExecutarRoute
   '/api/ab/solicitar': typeof ApiAbSolicitarRoute
+  '/api/tc-lavoro/analysis-jobs': typeof ApiTcLavoroAnalysisJobsRoute
   '/api/tc-lavoro/limits-query': typeof ApiTcLavoroLimitsQueryRoute
   '/_authenticated/admin/emails_/log': typeof AuthenticatedAdminEmailsLogRoute
   '/_authenticated/admin/emails_/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
@@ -468,6 +477,7 @@ export interface FileRouteTypes {
     | '/api/ab/cota'
     | '/api/ab/executar'
     | '/api/ab/solicitar'
+    | '/api/tc-lavoro/analysis-jobs'
     | '/api/tc-lavoro/limits-query'
     | '/admin/emails/log'
     | '/admin/emails/schedules'
@@ -513,6 +523,7 @@ export interface FileRouteTypes {
     | '/api/ab/cota'
     | '/api/ab/executar'
     | '/api/ab/solicitar'
+    | '/api/tc-lavoro/analysis-jobs'
     | '/api/tc-lavoro/limits-query'
     | '/admin/emails/log'
     | '/admin/emails/schedules'
@@ -559,6 +570,7 @@ export interface FileRouteTypes {
     | '/api/ab/cota'
     | '/api/ab/executar'
     | '/api/ab/solicitar'
+    | '/api/tc-lavoro/analysis-jobs'
     | '/api/tc-lavoro/limits-query'
     | '/_authenticated/admin/emails_/log'
     | '/_authenticated/admin/emails_/schedules'
@@ -582,6 +594,7 @@ export interface RootRouteChildren {
   ApiAbCotaRoute: typeof ApiAbCotaRoute
   ApiAbExecutarRoute: typeof ApiAbExecutarRoute
   ApiAbSolicitarRoute: typeof ApiAbSolicitarRoute
+  ApiTcLavoroAnalysisJobsRoute: typeof ApiTcLavoroAnalysisJobsRoute
   ApiTcLavoroLimitsQueryRoute: typeof ApiTcLavoroLimitsQueryRoute
   ApiPublicHooksAbBureauWebhookRoute: typeof ApiPublicHooksAbBureauWebhookRoute
   ApiPublicHooksAbIngestPgfnRoute: typeof ApiPublicHooksAbIngestPgfnRoute
@@ -713,6 +726,13 @@ declare module '@tanstack/react-router' {
       path: '/api/tc-lavoro/limits-query'
       fullPath: '/api/tc-lavoro/limits-query'
       preLoaderRoute: typeof ApiTcLavoroLimitsQueryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/tc-lavoro/analysis-jobs': {
+      id: '/api/tc-lavoro/analysis-jobs'
+      path: '/api/tc-lavoro/analysis-jobs'
+      fullPath: '/api/tc-lavoro/analysis-jobs'
+      preLoaderRoute: typeof ApiTcLavoroAnalysisJobsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/ab/solicitar': {
@@ -1003,6 +1023,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAbCotaRoute: ApiAbCotaRoute,
   ApiAbExecutarRoute: ApiAbExecutarRoute,
   ApiAbSolicitarRoute: ApiAbSolicitarRoute,
+  ApiTcLavoroAnalysisJobsRoute: ApiTcLavoroAnalysisJobsRoute,
   ApiTcLavoroLimitsQueryRoute: ApiTcLavoroLimitsQueryRoute,
   ApiPublicHooksAbBureauWebhookRoute: ApiPublicHooksAbBureauWebhookRoute,
   ApiPublicHooksAbIngestPgfnRoute: ApiPublicHooksAbIngestPgfnRoute,
