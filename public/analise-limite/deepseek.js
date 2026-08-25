@@ -1,5 +1,6 @@
 const DEEPSEEK_WORKER_URL = 'https://lucky-hat-b241.kyuri887.workers.dev/';
-const DEEPSEEK_JOBS_URL = DEEPSEEK_WORKER_URL.replace(/\/+$/, '') + '/v1/analysis-jobs';
+// Analysis-jobs passam pelo proxy server-side do Hub (Cloudflare Access fica no servidor).
+const DEEPSEEK_JOBS_URL = '/api/tc-lavoro/analysis-jobs';
 let _lavoroAuthToken = '';
 
 window.addEventListener('message', event => {
@@ -899,9 +900,14 @@ function mapArquivosParaJob(arquivosExtraidos) {
 }
 
 async function postJson(url, body) {
+  const headers = { 'Content-Type': 'application/json' };
+  // Rotas do Hub (same-origin) exigem o access_token da sessão Microsoft SSO.
+  if (typeof url === 'string' && url.startsWith('/api/')) {
+    headers['Authorization'] = `Bearer ${_lavoroAuthToken}`;
+  }
   const resp = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(body),
   });
 

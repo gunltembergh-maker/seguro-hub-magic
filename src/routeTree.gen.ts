@@ -55,6 +55,7 @@ import { Route as ApiPublicHooksAbIngestPgfnRouteImport } from './routes/api/pub
 import { Route as ApiPublicHooksAbBureauWebhookRouteImport } from './routes/api/public/hooks/ab-bureau-webhook'
 import { Route as AuthenticatedAdminEmailsSchedulesRouteImport } from './routes/_authenticated/admin/emails_.schedules'
 import { Route as AuthenticatedAdminEmailsLogRouteImport } from './routes/_authenticated/admin/emails_.log'
+import { Route as ApiTcLavoroAnalysisJobsJobIdRunRouteImport } from './routes/api/tc-lavoro/analysis-jobs.$jobId.run'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -309,6 +310,12 @@ const AuthenticatedAdminEmailsLogRoute =
     path: '/emails/log',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const ApiTcLavoroAnalysisJobsJobIdRunRoute =
+  ApiTcLavoroAnalysisJobsJobIdRunRouteImport.update({
+    id: '/run',
+    path: '/run',
+    getParentRoute: () => ApiTcLavoroAnalysisJobsJobIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -352,10 +359,11 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/ab-ingest-transparencia': typeof ApiPublicHooksAbIngestTransparenciaRoute
   '/api/public/hooks/ab-motor-run': typeof ApiPublicHooksAbMotorRunRoute
   '/api/public/hooks/dispatch-scheduled-newsletters': typeof ApiPublicHooksDispatchScheduledNewslettersRoute
-  '/api/tc-lavoro/analysis-jobs/$jobId': typeof ApiTcLavoroAnalysisJobsJobIdRoute
+  '/api/tc-lavoro/analysis-jobs/$jobId': typeof ApiTcLavoroAnalysisJobsJobIdRouteWithChildren
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/api/tc-lavoro/analysis-jobs/$jobId/run': typeof ApiTcLavoroAnalysisJobsJobIdRunRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -399,10 +407,11 @@ export interface FileRoutesByTo {
   '/api/public/hooks/ab-ingest-transparencia': typeof ApiPublicHooksAbIngestTransparenciaRoute
   '/api/public/hooks/ab-motor-run': typeof ApiPublicHooksAbMotorRunRoute
   '/api/public/hooks/dispatch-scheduled-newsletters': typeof ApiPublicHooksDispatchScheduledNewslettersRoute
-  '/api/tc-lavoro/analysis-jobs/$jobId': typeof ApiTcLavoroAnalysisJobsJobIdRoute
+  '/api/tc-lavoro/analysis-jobs/$jobId': typeof ApiTcLavoroAnalysisJobsJobIdRouteWithChildren
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/api/tc-lavoro/analysis-jobs/$jobId/run': typeof ApiTcLavoroAnalysisJobsJobIdRunRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -448,10 +457,11 @@ export interface FileRoutesById {
   '/api/public/hooks/ab-ingest-transparencia': typeof ApiPublicHooksAbIngestTransparenciaRoute
   '/api/public/hooks/ab-motor-run': typeof ApiPublicHooksAbMotorRunRoute
   '/api/public/hooks/dispatch-scheduled-newsletters': typeof ApiPublicHooksDispatchScheduledNewslettersRoute
-  '/api/tc-lavoro/analysis-jobs/$jobId': typeof ApiTcLavoroAnalysisJobsJobIdRoute
+  '/api/tc-lavoro/analysis-jobs/$jobId': typeof ApiTcLavoroAnalysisJobsJobIdRouteWithChildren
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/api/tc-lavoro/analysis-jobs/$jobId/run': typeof ApiTcLavoroAnalysisJobsJobIdRunRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -501,6 +511,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
+    | '/api/tc-lavoro/analysis-jobs/$jobId/run'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -548,6 +559,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
+    | '/api/tc-lavoro/analysis-jobs/$jobId/run'
   id:
     | '__root__'
     | '/'
@@ -596,6 +608,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
+    | '/api/tc-lavoro/analysis-jobs/$jobId/run'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -944,6 +957,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminEmailsLogRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/api/tc-lavoro/analysis-jobs/$jobId/run': {
+      id: '/api/tc-lavoro/analysis-jobs/$jobId/run'
+      path: '/run'
+      fullPath: '/api/tc-lavoro/analysis-jobs/$jobId/run'
+      preLoaderRoute: typeof ApiTcLavoroAnalysisJobsJobIdRunRouteImport
+      parentRoute: typeof ApiTcLavoroAnalysisJobsJobIdRoute
+    }
   }
 }
 
@@ -1034,13 +1054,28 @@ const AuthRouteChildren: AuthRouteChildren = {
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
+interface ApiTcLavoroAnalysisJobsJobIdRouteChildren {
+  ApiTcLavoroAnalysisJobsJobIdRunRoute: typeof ApiTcLavoroAnalysisJobsJobIdRunRoute
+}
+
+const ApiTcLavoroAnalysisJobsJobIdRouteChildren: ApiTcLavoroAnalysisJobsJobIdRouteChildren =
+  {
+    ApiTcLavoroAnalysisJobsJobIdRunRoute: ApiTcLavoroAnalysisJobsJobIdRunRoute,
+  }
+
+const ApiTcLavoroAnalysisJobsJobIdRouteWithChildren =
+  ApiTcLavoroAnalysisJobsJobIdRoute._addFileChildren(
+    ApiTcLavoroAnalysisJobsJobIdRouteChildren,
+  )
+
 interface ApiTcLavoroAnalysisJobsRouteChildren {
-  ApiTcLavoroAnalysisJobsJobIdRoute: typeof ApiTcLavoroAnalysisJobsJobIdRoute
+  ApiTcLavoroAnalysisJobsJobIdRoute: typeof ApiTcLavoroAnalysisJobsJobIdRouteWithChildren
 }
 
 const ApiTcLavoroAnalysisJobsRouteChildren: ApiTcLavoroAnalysisJobsRouteChildren =
   {
-    ApiTcLavoroAnalysisJobsJobIdRoute: ApiTcLavoroAnalysisJobsJobIdRoute,
+    ApiTcLavoroAnalysisJobsJobIdRoute:
+      ApiTcLavoroAnalysisJobsJobIdRouteWithChildren,
   }
 
 const ApiTcLavoroAnalysisJobsRouteWithChildren =
