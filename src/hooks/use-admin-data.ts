@@ -75,6 +75,19 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
     ],
   },
   {
+    title: "Análise Background",
+    items: [
+      { key: "ab_garantia", label: "Garantia", desc: "Entrada do time Garantia (originação)" },
+      { key: "ab_juridico", label: "Jurídico", desc: "Entrada do time Jurídico (risco)" },
+      { key: "ab_fila_oportunidades", label: "↳ Fila de Oportunidades", desc: "Aba de fila de leads", child: true },
+      { key: "ab_carteira", label: "↳ Carteira 360", desc: "Aba de carteira", child: true },
+      { key: "ab_consulta_processual", label: "↳ Consulta Processual", desc: "Aba de consulta processual", child: true },
+      { key: "ab_background_check", label: "↳ Background Check", desc: "Aba de background check", child: true },
+      { key: "ab_solicitar_pesquisa", label: "↳ Solicitar Pesquisa", desc: "Aba de solicitação de pesquisa", child: true },
+      { key: "ab_fontes_gatilhos", label: "↳ Fontes & Gatilhos", desc: "Aba de fontes e gatilhos", child: true },
+    ],
+  },
+  {
     title: "Administração",
     items: [
       { key: "menu_admin_usuarios", label: "Usuários", desc: "Gestão de usuários do Hub" },

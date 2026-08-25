@@ -10,6 +10,7 @@ import {
   Wrench,
   ShieldCheck,
   FileSearch,
+  SearchCheck,
   HeartPulse,
   Boxes,
   Users,
@@ -24,7 +25,7 @@ import {
 } from "lucide-react";
 
 import logoBranca from "@/assets/logo-branca.png.asset.json";
-import { hasPermission, hasRole } from "@/hooks/use-meu-perfil";
+import { hasPermission, hasRole, type MeuPerfil } from "@/hooks/use-meu-perfil";
 import { useMeuPerfilEfetivo } from "@/contexts/view-as-context";
 
 import { cn } from "@/lib/utils";
@@ -48,22 +49,38 @@ const primary = [
   { title: "Início", url: "/inicio", icon: Home },
 ];
 
-const areasAll = [
+const areasAll: AreaItem[] = [
   { title: "Financeiro", url: "/financeiro", icon: Landmark, perm: "menu_area_financeiro" },
-  { title: "Jurídico", url: "/juridico", icon: Scale, perm: "menu_area_juridico" },
+  {
+    title: "Jurídico",
+    url: "/juridico",
+    icon: Scale,
+    perm: "menu_area_juridico",
+    children: [
+      { title: "Background Check", url: "/juridico/analise-background", icon: SearchCheck, perm: "ab_juridico" },
+    ],
+  },
   { title: "Operacional", url: "/operacional", icon: Cog, perm: "menu_area_operacional" },
   { title: "Middle", url: "/middle", icon: Layers, perm: "menu_area_middle" },
   { title: "Facilities", url: "/facilities", icon: Wrench, perm: "menu_area_facilities" },
 ];
 
-type ChildItem = { title: string; url: string; icon: LucideIcon };
+type ChildItem = { title: string; url: string; icon: LucideIcon; perm?: string };
 
 type CollapsibleItem = {
   title: string;
   url?: string;
   icon: LucideIcon;
-  tooltip: string;
+  tooltip?: string;
   perm?: string;
+  children?: ChildItem[];
+};
+
+type AreaItem = {
+  title: string;
+  url: string;
+  icon: LucideIcon;
+  perm: string;
   children?: ChildItem[];
 };
 
@@ -74,7 +91,10 @@ const ramosAll: CollapsibleItem[] = [
     icon: ShieldCheck,
     tooltip: "Garantia",
     perm: "menu_ramo_garantia",
-    children: [{ title: "Operacional", url: "/garantia/analise-limite", icon: FileSearch }],
+    children: [
+      { title: "Operacional", url: "/garantia/analise-limite", icon: FileSearch },
+      { title: "Análise de Processos", url: "/garantia/analise-background", icon: FileSearch, perm: "ab_garantia" },
+    ],
   },
   { title: "Benefícios", url: "/beneficios", icon: HeartPulse, tooltip: "Benefícios", perm: "menu_ramo_beneficios" },
   { title: "Demais Ramos", url: "/demais-ramos", icon: Boxes, tooltip: "Demais Ramos", perm: "menu_ramo_demais" },
@@ -170,6 +190,23 @@ function CollapsibleNavItem({
   );
 }
 
+/**
+ * Filtra os filhos de um item conforme as permissões do perfil.
+ * children vazio TEM de ser undefined, nunca [] — CollapsibleNavItem
+ * renderiza o submenu quando `item.children` é truthy, e [] é truthy.
+ * O compilador NÃO protege essa linha (spread de genérico é frouxo).
+ */
+function semFilhosProibidos<T extends { children?: ChildItem[] }>(
+  item: T,
+  meuPerfil: MeuPerfil | null | undefined,
+  isAdmin: boolean,
+): T {
+  if (!item.children || item.children.length === 0) return item;
+  const filhos = item.children.filter((c) => isAdmin || !c.perm || hasPermission(meuPerfil, c.perm));
+  // children vazio TEM de ser undefined, nunca []
+  return { ...item, children: filhos?.length ? filhos : undefined };
+}
+
 export function AppSidebar() {
   const { state, setOpen, setOpenMobile, isMobile } = useSidebar();
   const collapsed = state === "collapsed";
@@ -185,8 +222,12 @@ export function AppSidebar() {
   const meuPerfil = useMeuPerfilEfetivo();
   const isAdmin = hasRole(meuPerfil, "ADMIN");
 
-  const areas = areasAll.filter((i) => isAdmin || hasPermission(meuPerfil, i.perm));
-  const ramos = ramosAll.filter((i) => isAdmin || (i.perm ? hasPermission(meuPerfil, i.perm) : true));
+  const areas = areasAll
+    .filter((i) => isAdmin || hasPermission(meuPerfil, i.perm))
+    .map((i) => semFilhosProibidos(i, meuPerfil, isAdmin));
+  const ramos = ramosAll
+    .filter((i) => isAdmin || (i.perm ? hasPermission(meuPerfil, i.perm) : true))
+    .map((i) => semFilhosProibidos(i, meuPerfil, isAdmin));
 
   const dashboardItems = [
     { title: "Receita", url: "/dashboard/receita",
@@ -286,16 +327,32 @@ export function AppSidebar() {
             <SidebarGroupLabel>Áreas</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {areas.map((i) => (
-                  <SidebarMenuItem key={i.url}>
-                    <SidebarMenuButton asChild isActive={isActive(i.url)} tooltip={i.title}>
-                      <Link to={i.url}>
-                        <i.icon />
-                        <span>{i.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {areas.map((i) => {
+                  if (i.children && i.children.length > 0) {
+                    const hasActiveChild = !!i.children.some((c) => isActive(c.url));
+                    return (
+                      <CollapsibleNavItem
+                        key={i.url}
+                        item={i}
+                        isActiveParent={isActive(i.url)}
+                        hasActiveChild={hasActiveChild}
+                        isActiveChild={isActive}
+                        collapsed={collapsed}
+                        onChildNavigate={collapseOnNavigate}
+                      />
+                    );
+                  }
+                  return (
+                    <SidebarMenuItem key={i.url}>
+                      <SidebarMenuButton asChild isActive={isActive(i.url)} tooltip={i.title}>
+                        <Link to={i.url}>
+                          <i.icon />
+                          <span>{i.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
