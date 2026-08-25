@@ -159,6 +159,49 @@ const SINAIS_RESOLVIDO = new Set(["GARANTIA_ACEITA", "PENHORA_LEVANTADA", "EXTIN
 
 const VALOR_RX = /r\$\s*(\d{1,3}(?:\.\d{3})*(?:,\d{2})?|\d+(?:,\d{2})?)/g;
 
+// ---------------------------------------------------------------------
+// PRAZO DECLARADO NO TEXTO
+//
+// Por que isto existe: até aqui todo deadline do módulo era um padrão —
+// 8 dias para recurso, 15 para substituir penhora. Padrão serve para
+// ordenar a fila, mas NÃO serve para o comercial dizer ao cliente "o
+// senhor tem até dia 20". Uma data inventada apresentada como firme queima
+// a credibilidade da Lavoro numa ligação, e ninguém teria como saber que
+// era palpite.
+//
+// Então quando o andamento declara o prazo, é ele que vale, e o evento
+// registra que a data veio do TEXTO. Quando não declara, o padrão entra
+// marcado como padrão. A tela mostra a diferença.
+//
+// O texto chega normalizado (sem acento, minúsculo), por isso os padrões
+// não têm acento.
+// ---------------------------------------------------------------------
+const PRAZO_POR_EXTENSO: Record<string, number> = {
+  cinco: 5, oito: 8, dez: 10, quinze: 15, vinte: 20, trinta: 30, sessenta: 60,
+};
+
+const PRAZO_RX: RegExp[] = [
+  // "no prazo de 15 dias", "prazo legal de 15 (quinze) dias"
+  /prazo\s+(?:legal\s+|improrrogavel\s+|comum\s+)?de\s+(\d{1,3})\s*(?:\([a-z\s]+\)\s*)?dias/,
+  // "no prazo de quinze dias"
+  /prazo\s+(?:legal\s+|improrrogavel\s+|comum\s+)?de\s+(cinco|oito|dez|quinze|vinte|trinta|sessenta)\s+dias/,
+  // "15 dias para apresentar garantia", "5 (cinco) dias uteis para indicar bens"
+  /(\d{1,3})\s*(?:\([a-z\s]+\)\s*)?dias\s+(?:uteis\s+)?para\s+(?:apresentar|indicar|oferecer|garantir|efetuar|pagar|comprovar|substituir|nomear)/,
+];
+
+function extrairPrazoDias(base: string): number | null {
+  for (const rx of PRAZO_RX) {
+    const m = rx.exec(base);
+    if (!m) continue;
+    const bruto = m[1];
+    const n = /^\d+$/.test(bruto) ? Number(bruto) : PRAZO_POR_EXTENSO[bruto];
+    // Acima de 180 dias quase certamente não é prazo processual — é
+    // parcelamento, prescrição ou vigência de contrato.
+    if (Number.isFinite(n) && n >= 1 && n <= 180) return n;
+  }
+  return null;
+}
+
 export interface Analise {
   sinais: string[];
   confianca: number;
@@ -168,6 +211,13 @@ export interface Analise {
   garantiaPrestada: boolean;
   bloqueio: boolean;
   exigeGarantia: boolean;
+  /** Prazo em dias declarado no texto do andamento, quando declarado. */
+  prazoDias: number | null;
+  /**
+   * Data do andamento de onde o prazo foi lido — a contagem parte dela, não
+   * de hoje. Só é preenchida por `analisarProcesso`, que conhece as datas.
+   */
+  prazoBase: string | null;
 }
 
 /** Remove acento e normaliza espaços — o dicionário trabalha sem acento. */
@@ -216,6 +266,8 @@ function vazia(): Analise {
     garantiaPrestada: false,
     bloqueio: false,
     exigeGarantia: false,
+    prazoDias: null,
+    prazoBase: null,
   };
 }
 
@@ -245,6 +297,7 @@ export function analisar(
     .map((m) => parseBRL(m[1]))
     .filter((v) => v >= 1000);
   a.valorMaximo = a.valores.length ? Math.max(...a.valores) : 0;
+  a.prazoDias = extrairPrazoDias(base);
 
   const s = new Set(a.sinais);
   a.bloqueio = [...SINAIS_CONSTRICAO].some((x) => s.has(x));
@@ -289,6 +342,25 @@ export function analisarProcesso(movs: MovEntrada[]): Analise {
   const s = new Set(consolidado.sinais);
   consolidado.bloqueio = [...SINAIS_CONSTRICAO].some((x) => s.has(x));
   consolidado.exigeGarantia = s.has("EXIGE_GARANTIA");
+
+  // Prazo: vale o do andamento MAIS RECENTE que declara prazo E fala do
+  // assunto. Prazo declarado numa intimação de dois anos atrás não é o prazo
+  // de hoje, e prazo declarado num andamento sem relação (juntada, vista,
+  // conclusão) não é prazo de garantia.
+  const SINAIS_COM_PRAZO = new Set([
+    "DEPOSITO_RECURSAL", "SENTENCA_CONDENATORIA",
+    "EXECUCAO_INICIADA", "EXECUCAO_FISCAL",
+  ]);
+  for (const m of movs) {
+    const a = analisar(m.texto, m.codigo_tpu, m.tipo);
+    if (a.prazoDias === null) continue;
+    const relevante =
+      a.bloqueio || a.exigeGarantia || a.sinais.some((s) => SINAIS_COM_PRAZO.has(s));
+    if (!relevante) continue;
+    consolidado.prazoDias = a.prazoDias;
+    consolidado.prazoBase = m.data ?? null;
+    break;
+  }
 
   // a movimentação mais recente que fala do assunto é quem decide
   for (const m of movs) {

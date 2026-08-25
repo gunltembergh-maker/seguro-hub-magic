@@ -5,10 +5,26 @@
 // auditar e calibrar. Os números vêm da tabela ab_parametro — mudar taxa
 // ou comissão é UPDATE no banco, não deploy.
 //
-//   IS       = valor_base × fator × (1 + acréscimo)
-//   prêmio   = IS × taxa
-//   economia = valor imobilizado × Selic − prêmio
-//   prio     = prêmio × urgência × p(subscrição) × (1 − bloqueio)
+//   IS   = valor_base × fator × (1 + acréscimo)      ← fato + regra legal
+//   prio = IS × urgência × p(subscrição) × confiança  ← ordenação
+//
+// ---------------------------------------------------------------------
+// POR QUE NÃO HÁ COMISSÃO AQUI (decisão do Alessandro, 25/08/2026)
+//
+// Comissão varia por seguradora e por empresa; taxa de prêmio varia por
+// seguradora, prazo, limite de crédito e apetite. Um número calculado a
+// partir de um percentual fixo chega à tela com cara de cálculo e é
+// palpite — e o comercial cotaria cliente com base nele.
+//
+// Então prêmio e comissão saíram do caminho automático e viraram
+// SIMULAÇÃO de campo aberto: o comercial digita a taxa (ou o prêmio que a
+// seguradora cotou) e a tela devolve o resto. É a função `simular()` no
+// fim deste arquivo, e ela não grava nada.
+//
+// A fila continua na mesma ordem: `taxa_ref` era um valor único aplicado
+// a todos os leads, então prêmio era sempre IS × 0,015. Multiplicar tudo
+// pela mesma constante não muda ordenação nenhuma — ranquear por IS dá
+// exatamente a mesma fila, sem número fictício no meio.
 // =====================================================================
 
 export interface Parametros {
@@ -16,7 +32,6 @@ export interface Parametros {
   taxa_min: number;
   taxa_ref: number;
   taxa_max: number;
-  comissao: number;
   acrescimo_execucao: number;
   ticket_minimo: number;
   /** Prazo presumido para apresentar garantia contratual, em dias. */
@@ -24,25 +39,21 @@ export interface Parametros {
 }
 
 /**
- * Padrões de partida. TRÊS destes são estimativa, não dado da Lavoro, e
- * estão marcados para não serem confundidos com fato:
+ * Padrões de partida. Dois destes são estimativa, não dado da Lavoro:
  *
- *   taxa_ref  — não existe taxa única: varia por seguradora, prazo, limite
- *               de crédito e apetite. 1,5% é ordem de grandeza.
- *   comissao  — referência do mercado geral de seguros. Não encontrei fonte
- *               pública para o ramo garantia. É o parâmetro mais frágil.
+ *   taxa_min / taxa_ref / taxa_max — não existe taxa única. A faixa de
+ *               0,5% a 3% entra na tela como REFERÊNCIA ao lado do campo
+ *               de simulação, nunca como "o prêmio é este".
  *   prazo_garantia_dias — a lei não fixa prazo; ele vem do edital. E é ele
- *               que move a urgência, que ordena a fila.
+ *               que move a urgência da modalidade PERFORMANCE.
  *
- * Calibrar é UPDATE em ab_parametro. Enquanto não for calibrado, o número
- * serve para RANQUEAR a fila — não para falar com o cliente.
+ * Calibrar é UPDATE em ab_parametro.
  */
 export const PARAMETROS_PADRAO: Parametros = {
   selic_aa: 0.15,
   taxa_min: 0.005,
   taxa_ref: 0.015,
   taxa_max: 0.03,
-  comissao: 0.175,
   acrescimo_execucao: 0.3,
   ticket_minimo: 50_000,
   prazo_garantia_dias: 10,
@@ -73,12 +84,12 @@ export const FATOR_IS: Record<Modalidade, number> = {
 
 export interface Preco {
   valorBase: number;
+  /** O que o cliente precisa apresentar. Fato + regra legal, não estimativa. */
   importanciaSegurada: number;
+  /** Faixa de referência de mercado. Serve de dica ao lado do campo, não de cotação. */
   premioMin: number;
   premioRef: number;
   premioMax: number;
-  comissao: number;
-  economiaCliente: number;
 }
 
 export function precificar(
@@ -101,8 +112,47 @@ export function precificar(
     premioMin: is * p.taxa_min,
     premioRef,
     premioMax: is * p.taxa_max,
-    comissao: premioRef * p.comissao,
-    economiaCliente: Math.max(0, base * fator * p.selic_aa - premioRef),
+  };
+}
+
+// ---------------------------------------------------------------------
+// SIMULAÇÃO — o que o comercial faz na tela, com os números dele.
+//
+// Pura de propósito: nada aqui é gravado, e por isso pode ser recalculada
+// a cada tecla. Aceita os dois caminhos que o comercial usa de verdade:
+// digitar a taxa e ver o prêmio, ou digitar o prêmio que a seguradora
+// cotou e ver a comissão.
+// ---------------------------------------------------------------------
+export interface Simulacao {
+  premio: number;
+  comissao: number;
+  /** Custo de deixar o dinheiro parado no juízo, menos o prêmio. */
+  economiaCliente: number;
+}
+
+export function simular(args: {
+  importanciaSegurada: number;
+  /** Valor que ficaria imobilizado. Em regra é a IS sem os 30% legais. */
+  valorImobilizado?: number;
+  /** Fração, não percentual: 0,015 e não 1,5. Ignorada se `premio` vier. */
+  taxaPremio?: number;
+  /** Prêmio cotado pela seguradora, em reais. Ganha da taxa quando vem. */
+  premio?: number;
+  /** Fração. Sem isto, a comissão volta zero — não há padrão a inventar. */
+  taxaComissao?: number;
+  selicAa?: number;
+}): Simulacao {
+  const is = Math.max(0, args.importanciaSegurada || 0);
+  const premio = args.premio !== undefined && args.premio !== null
+    ? Math.max(0, args.premio)
+    : is * Math.max(0, args.taxaPremio ?? 0);
+  const comissao = premio * Math.max(0, args.taxaComissao ?? 0);
+  const imobilizado = args.valorImobilizado ?? is;
+  const selic = args.selicAa ?? PARAMETROS_PADRAO.selic_aa;
+  return {
+    premio,
+    comissao,
+    economiaCliente: Math.max(0, imobilizado * selic - premio),
   };
 }
 
@@ -165,7 +215,7 @@ export function probSubscricao(args: {
  * sempre informa a confiança.
  */
 export function prioridade(
-  premioRef: number,
+  importanciaSegurada: number,
   urg: number,
   pSub: number,
   bloqueado: boolean,
@@ -173,7 +223,7 @@ export function prioridade(
 ): number {
   if (bloqueado) return 0;
   const c = Math.min(1, Math.max(0, confianca));
-  return Math.round(premioRef * urg * pSub * c * 100) / 100;
+  return Math.round(importanciaSegurada * urg * pSub * c * 100) / 100;
 }
 
 /**

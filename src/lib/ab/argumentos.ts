@@ -119,13 +119,13 @@ export function montarArgumento(args: {
   return [
     `### Argumento comercial — gatilho ${gatilho}`,
     "",
-    `**Importância segurada estimada:** ${brl(preco.importanciaSegurada)}`,
-    `**Prêmio anual estimado:** ${brl(preco.premioMin)} a ${brl(preco.premioMax)} ` +
-      `(cenário-base ${brl(preco.premioRef)}, taxa de ${pct(params.taxa_ref, 2)} a.a.)`,
-    `**Comissão estimada para a Lavoro:** ${brl(preco.comissao)}`,
-    `**Economia de caixa para o cliente:** ${brl(preco.economiaCliente)} por ano — ` +
-      `custo de oportunidade de ${pct(params.selic_aa, 1)} a.a. sobre o valor imobilizado, ` +
-      `menos o prêmio.`,
+    `**Importância segurada necessária:** ${brl(preco.importanciaSegurada)}`,
+    `**Faixa de prêmio de mercado:** ${brl(preco.premioMin)} a ${brl(preco.premioMax)} ` +
+      `ao ano (taxa de ${pct(params.taxa_min, 2)} a ${pct(params.taxa_max, 2)}). ` +
+      `Referência de ordem de grandeza — a taxa real varia por seguradora, prazo, ` +
+      `limite de crédito e apetite, e a cotação é que manda.`,
+    `**Comissão:** simular na tela com o percentual acordado com a seguradora. ` +
+      `Não há percentual único que sirva para todas.`,
     "",
     "**Base legal:**",
     fund,

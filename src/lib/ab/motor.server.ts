@@ -141,10 +141,20 @@ export async function rodarMotor(corpo: CorpoMotor = {}): Promise<{ status: numb
       );
 
       for (const ev of filtrados) {
+        // A IS é calculada AQUI, por evento, e não só no lead consolidado.
+        // É o que permite a linha "este processo vence tal dia e precisa de
+        // tanto de garantia" — antes disto a tela só sabia somar por
+        // empresa e modalidade.
+        const precoEv = precificar(ev.valorBase, ev.modalidade, {
+          fatorIs: ev.fatorIs ?? null, grandeVulto: !!ev.grandeVulto, params,
+        });
         eventosParaGravar.push({
           empresa_id: emp.id, gatilho: ev.gatilho, modalidade: ev.modalidade,
+          processo_id: ev.processoId ?? null,
           referencia: ev.referencia.slice(0, 80), descricao: ev.descricao,
-          valor_base: ev.valorBase, deadline: ev.deadline,
+          valor_base: ev.valorBase,
+          importancia_segurada: precoEv.importanciaSegurada,
+          deadline: ev.deadline, deadline_fonte: ev.deadlineFonte ?? null,
           confianca: ev.confianca,
           // `verificar` chega como campo irmão de `evidencia` no gatilho, e
           // ab_evento não tem coluna para ele — sem dobrar aqui dentro, a
@@ -209,9 +219,11 @@ export async function rodarMotor(corpo: CorpoMotor = {}): Promise<{ status: numb
           valor_base: valorBase,
           importancia_segurada: preco.importanciaSegurada,
           premio_estimado: preco.premioRef,
-          comissao_estimada: preco.comissao,
-          economia_cliente: preco.economiaCliente,
-          prioridade: prioridade(preco.premioRef, urg, pSub, bloq.length > 0, confiancaLead),
+          // Ranqueia pela IS, não pelo prêmio: `taxa_ref` é um valor único
+          // aplicado a todos, então a ordem é idêntica — e sai um número
+          // fictício do meio do cálculo. Comissão não é mais calculada aqui;
+          // é simulação de campo aberto na tela.
+          prioridade: prioridade(preco.importanciaSegurada, urg, pSub, bloq.length > 0, confiancaLead),
           urgencia: urg,
           prob_subscricao: pSub,
           confianca: confiancaLead,
