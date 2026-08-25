@@ -145,7 +145,14 @@ export async function rodarMotor(corpo: CorpoMotor = {}): Promise<{ status: numb
           empresa_id: emp.id, gatilho: ev.gatilho, modalidade: ev.modalidade,
           referencia: ev.referencia.slice(0, 80), descricao: ev.descricao,
           valor_base: ev.valorBase, deadline: ev.deadline,
-          confianca: ev.confianca, evidencia: ev.evidencia,
+          confianca: ev.confianca,
+          // `verificar` chega como campo irmão de `evidencia` no gatilho, e
+          // ab_evento não tem coluna para ele — sem dobrar aqui dentro, a
+          // lista de qualificação simplesmente não era gravada, e a tela
+          // lia `evidencia.verificar` de um objeto que nunca a teve.
+          evidencia: ev.verificar?.length
+            ? { ...(ev.evidencia ?? {}), verificar: ev.verificar }
+            : ev.evidencia,
         });
         stats.eventos++;
       }
@@ -188,6 +195,10 @@ export async function rodarMotor(corpo: CorpoMotor = {}): Promise<{ status: numb
           cnaePrioritario: cnaePrioritario(emp.cnae),
         });
         const meta = GATILHOS.find((g) => g.codigo === melhor.gatilho);
+        // MAX e não média: se UM evento é fato comprovado, o lead é forte,
+        // mesmo acompanhado de sinais fracos. Média puniria o lead por
+        // trazer evidência adicional, o que é o incentivo errado.
+        const confiancaLead = evs.reduce((m, ev) => Math.max(m, Number(ev.confianca)), 0);
 
         leadsParaGravar.push({
           empresa_id: emp.id,
@@ -200,9 +211,10 @@ export async function rodarMotor(corpo: CorpoMotor = {}): Promise<{ status: numb
           premio_estimado: preco.premioRef,
           comissao_estimada: preco.comissao,
           economia_cliente: preco.economiaCliente,
-          prioridade: prioridade(preco.premioRef, urg, pSub, bloq.length > 0),
+          prioridade: prioridade(preco.premioRef, urg, pSub, bloq.length > 0, confiancaLead),
           urgencia: urg,
           prob_subscricao: pSub,
+          confianca: confiancaLead,
           deadline,
           bloqueios: bloq.length ? bloq : null,
           argumento: montarArgumento({

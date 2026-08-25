@@ -449,8 +449,10 @@ export type Database = {
           detalhe: string | null
           falhas_na_pagina: number
           fonte: string
+          indisponivel_ate: string | null
           janela_fim: string | null
           janela_inicio: string | null
+          leitura_ok_em: string | null
           paginas_no_ciclo: number
           paginas_puladas: number[]
           rate_limited_ate: string | null
@@ -464,8 +466,10 @@ export type Database = {
           detalhe?: string | null
           falhas_na_pagina?: number
           fonte: string
+          indisponivel_ate?: string | null
           janela_fim?: string | null
           janela_inicio?: string | null
+          leitura_ok_em?: string | null
           paginas_no_ciclo?: number
           paginas_puladas?: number[]
           rate_limited_ate?: string | null
@@ -479,8 +483,10 @@ export type Database = {
           detalhe?: string | null
           falhas_na_pagina?: number
           fonte?: string
+          indisponivel_ate?: string | null
           janela_fim?: string | null
           janela_inicio?: string | null
+          leitura_ok_em?: string | null
           paginas_no_ciclo?: number
           paginas_puladas?: number[]
           rate_limited_ate?: string | null
