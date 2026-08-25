@@ -151,7 +151,12 @@ export default function AnaliseBackground({ foco }: PropsAnaliseBackground = {})
     render: () => <CotasCustos podeGerir={podeCota || isAdmin} />,
   });
 
-  const atual = abas.find((a) => a.id === aba) ?? abas[0];
+  // Sem escolha do usuário, abre na primeira aba do grupo em foco; se o
+  // perfil não tem acesso a esse grupo, cai na primeira que ele tem.
+  const atual =
+    abas.find((a) => a.id === aba) ??
+    (foco ? abas.find((a) => a.area === foco) : undefined) ??
+    abas[0];
 
   const grupos: { area: Area; titulo: string; nota: string }[] = [
     {
