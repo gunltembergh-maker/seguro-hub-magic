@@ -16,9 +16,16 @@ const corpoSchema = z.object({
   horizonte: z.number().int().min(1).max(180).optional(),
   maxPaginas: z.number().int().min(1).max(200).optional(),
   tamanhoPagina: z.number().int().min(10).max(500).optional(),
+  // Omita `pagina` para continuar de onde a última execução parou
+  // (ab_ingest_estado). Informe só para forçar um ponto específico.
   pagina: z.number().int().min(1).max(100_000).optional(),
+  reiniciar: z.boolean().optional(),
   valorMinimo: z.number().min(0).optional(),
+  /** UFs dos editais — filtro da própria API. */
   ufs: z.array(z.string().length(2)).max(27).optional(),
+  /** UFs do ÓRGÃO contratante. Raramente é o que se quer: ver o comentário
+   *  em ingest-pncp.server.ts. */
+  ufsOrgao: z.array(z.string().length(2)).max(27).optional(),
   // teto de 55 s: a borda derruba a resposta perto de 60 s
   orcamentoMs: z.number().int().min(5_000).max(55_000).optional(),
   soContratos: z.boolean().optional(),
