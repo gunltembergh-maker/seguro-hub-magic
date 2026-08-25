@@ -595,6 +595,7 @@ export type Database = {
           argumento: string | null
           bloqueios: string[] | null
           comissao_estimada: number
+          confianca: number
           created_at: string
           deadline: string | null
           economia_cliente: number
@@ -618,6 +619,7 @@ export type Database = {
           argumento?: string | null
           bloqueios?: string[] | null
           comissao_estimada?: number
+          confianca?: number
           created_at?: string
           deadline?: string | null
           economia_cliente?: number
@@ -641,6 +643,7 @@ export type Database = {
           argumento?: string | null
           bloqueios?: string[] | null
           comissao_estimada?: number
+          confianca?: number
           created_at?: string
           deadline?: string | null
           economia_cliente?: number
@@ -2210,6 +2213,7 @@ export type Database = {
           cnae_descricao: string | null
           cnpj: string | null
           comissao_estimada: number | null
+          confianca: number | null
           created_at: string | null
           deadline: string | null
           dias_para_prazo: number | null
@@ -2226,6 +2230,7 @@ export type Database = {
           prioridade: number | null
           prob_subscricao: number | null
           produto: string | null
+          qualificacao: string | null
           razao_social: string | null
           relacao: string | null
           responsavel: string | null
@@ -2570,6 +2575,7 @@ export type Database = {
           argumento: string | null
           bloqueios: string[] | null
           comissao_estimada: number
+          confianca: number
           created_at: string
           deadline: string | null
           economia_cliente: number
