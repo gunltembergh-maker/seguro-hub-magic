@@ -44,6 +44,22 @@ export function criarPrazo(orcamentoMs: number): Prazo {
 }
 
 /**
+ * HTTP 429. Separado do abort de propósito: página menor não resolve
+ * limite de taxa — só esperar resolve. Insistir renova a punição.
+ */
+export function ehRateLimit(err: unknown): boolean {
+  const e = err as (Error & { status?: number }) | null;
+  if (e?.status === 429) return true;
+  return /\b429\b/.test(e?.message ?? "") || /too many requests/i.test(e?.message ?? "");
+}
+
+/** Segundos a esperar, lidos do Retry-After quando o servidor manda. */
+export function esperaSugerida(err: unknown, padraoSeg = 180): number {
+  const e = err as (Error & { retryAfterSeg?: number }) | null;
+  return e?.retryAfterSeg && e.retryAfterSeg > 0 ? e.retryAfterSeg : padraoSeg;
+}
+
+/**
  * Distingue "a fonte é lenta" de "a fonte recusou". A diferença decide se
  * vale repetir: abort/timeout, sim; HTTP 400, não.
  */
@@ -108,7 +124,23 @@ export async function buscarPagina<T>(
       if (r.status === 204) return { env: null, ms: Date.now() - t0, tamanhoUsado: tamanhoAtual };
       if (!r.ok) {
         const corpo = await r.text().catch(() => "");
-        throw new Error(`HTTP ${r.status}${corpo ? ` — ${corpo.slice(0, 200)}` : ""}`);
+        const erro = Object.assign(
+          new Error(`HTTP ${r.status}${corpo ? ` — ${corpo.slice(0, 200)}` : ""}`),
+          { status: r.status },
+        ) as Error & { status: number; retryAfterSeg?: number };
+        if (r.status === 429) {
+          // Retry-After vem em segundos ou como data HTTP; aceitamos os dois
+          const ra = r.headers.get("retry-after") ?? "";
+          const seg = Number(ra);
+          if (Number.isFinite(seg) && seg > 0) erro.retryAfterSeg = Math.ceil(seg);
+          else if (ra) {
+            const quando = Date.parse(ra);
+            if (!Number.isNaN(quando)) {
+              erro.retryAfterSeg = Math.max(1, Math.ceil((quando - Date.now()) / 1000));
+            }
+          }
+        }
+        throw erro;
       }
       const txt = await r.text();
       return {
@@ -117,10 +149,17 @@ export async function buscarPagina<T>(
         tamanhoUsado: tamanhoAtual,
       };
     } catch (err) {
-      const ultima = tentativa === 1 || tamanhoAtual <= TAMANHO_MINIMO || !ehAbort(err);
+      const ultima = tentativa === 1 || tamanhoAtual <= TAMANHO_MINIMO
+        || ehRateLimit(err) || !ehAbort(err);
       if (ultima) {
-        throw new Error(
-          `${(err as Error).message} (tamanhoPagina=${tamanhoAtual}, limite=${limite}ms)`,
+        // Reembrulhar para acrescentar o contexto, PRESERVANDO status e
+        // retryAfterSeg: sem isso o back-off do 429 se perderia justamente
+        // no caminho em que ele é usado.
+        const orig = err as Error & { status?: number; retryAfterSeg?: number };
+        throw Object.assign(
+          new Error(`${orig.message} (tamanhoPagina=${tamanhoAtual}, limite=${limite}ms)`),
+          orig.status !== undefined ? { status: orig.status } : {},
+          orig.retryAfterSeg !== undefined ? { retryAfterSeg: orig.retryAfterSeg } : {},
         );
       }
       tamanhoAtual = Math.max(TAMANHO_MINIMO, Math.floor(tamanhoAtual / 2));

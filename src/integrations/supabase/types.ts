@@ -442,6 +442,48 @@ export type Database = {
           },
         ]
       }
+      ab_ingest_estado: {
+        Row: {
+          ciclos: number
+          cursor_pagina: number
+          detalhe: string | null
+          fonte: string
+          janela_fim: string | null
+          janela_inicio: string | null
+          paginas_no_ciclo: number
+          rate_limited_ate: string | null
+          total_paginas: number | null
+          ultima_execucao: string | null
+          updated_at: string
+        }
+        Insert: {
+          ciclos?: number
+          cursor_pagina?: number
+          detalhe?: string | null
+          fonte: string
+          janela_fim?: string | null
+          janela_inicio?: string | null
+          paginas_no_ciclo?: number
+          rate_limited_ate?: string | null
+          total_paginas?: number | null
+          ultima_execucao?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ciclos?: number
+          cursor_pagina?: number
+          detalhe?: string | null
+          fonte?: string
+          janela_fim?: string | null
+          janela_inicio?: string | null
+          paginas_no_ciclo?: number
+          rate_limited_ate?: string | null
+          total_paginas?: number | null
+          ultima_execucao?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ab_ingest_log: {
         Row: {
           created_at: string

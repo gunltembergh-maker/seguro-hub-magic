@@ -36,6 +36,28 @@
 //   * `ufs` filtra os editais na própria API (o parâmetro `uf` existe) e
 //     os contratos no cliente (esse endpoint não tem filtro de UF).
 //
+// ---------------------------------------------------------------------
+// DUAS CORREÇÕES depois do primeiro run real (900 recebidos, 900 descartados)
+//
+//  1. CURSOR PERSISTIDO. A janela de 2 dias tem ~113 páginas e uma chamada
+//     lê ~9. Sem lembrar onde parou, o cron horário releria as páginas 1 a 9
+//     para sempre e nunca chegaria na 10 — e o log diria "ok" todo dia.
+//     Agora o ponto de parada vive em ab_ingest_estado.
+//
+//  2. O FILTRO DE UF ESTAVA NA ENTIDADE ERRADA. `unidadeOrgao.ufSigla` é a
+//     UF do ÓRGÃO CONTRATANTE, não do fornecedor. Quem precisa da garantia
+//     é o fornecedor. Um contrato de órgão do RS adjudicado a uma
+//     construtora de São Paulo é lead de São Paulo — e o filtro por UF do
+//     órgão descartava exatamente esses. Medido na amostra: 24% dos
+//     contratos têm órgão em SP, ~4% passam de R$ 1 mi, e a interseção dos
+//     dois deu ZERO em 45 linhas. Era o filtro, não o valor.
+//
+//     O payload de contrato do PNCP não traz a UF do fornecedor, então não
+//     há como filtrar por ela na ingestão. A decisão: NÃO filtrar UF em
+//     contratos (o recorte regional é feito depois, na fila, por
+//     ab_empresa.uf) e manter `ufsOrgao` como opção explícita, desligada
+//     por padrão. Filtro que descarta o alvo é pior que filtro nenhum.
+//
 // Parâmetros conferidos no OpenAPI do PNCP (v3/api-docs):
 //   /v1/contratos             → dataInicial*, dataFinal*, pagina*, tamanhoPagina
 //   /v1/contratacoes/proposta → dataFinal*, pagina*, uf, codigoModalidadeContratacao,
@@ -50,7 +72,9 @@ import {
 import { soDigitos, toNum } from "./format.ts";
 import { extrairExigenciaGarantia } from "./edital.ts";
 import { FATOR_IS } from "./pricing.ts";
-import { buscarPagina, criarPrazo, itens, latencia } from "./orcamento.ts";
+import {
+  buscarPagina, criarPrazo, ehRateLimit, esperaSugerida, itens, latencia,
+} from "./orcamento.ts";
 
 const BASE = process.env.PNCP_BASE ?? "https://pncp.gov.br/api/consulta";
 const OBRA_RX = /obra|engenharia|constru|pavimenta|saneament|rodovi/i;
@@ -64,8 +88,16 @@ export interface CorpoPncp {
   pagina?: number;
   /** Piso de valor do contrato. Se omitido, sai de ab_parametro. */
   valorMinimo?: number;
-  /** UFs de interesse. Vazio = nacional. */
+  /**
+   * UFs do ÓRGÃO contratante. Desligado por padrão, e de propósito: a UF
+   * do órgão não é a UF do fornecedor, e é o fornecedor que precisa da
+   * garantia. Use só quando o alvo for realmente o órgão.
+   */
+  ufsOrgao?: string[];
+  /** UFs dos editais — aqui o filtro é da própria API e vale a pena. */
   ufs?: string[];
+  /** Ignora o cursor salvo e recomeça da página 1. */
+  reiniciar?: boolean;
   /** Prazo total da rotina, em ms. */
   orcamentoMs?: number;
   /** Pular a fase de editais (útil para carga de contratos em várias chamadas). */
@@ -83,8 +115,48 @@ export async function ingestPncp(
   const horizonte = cfg.horizonte ?? 30;
   const maxPaginas = Math.min(cfg.maxPaginas ?? 20, 200);
   const tamanhoPagina = Math.min(cfg.tamanhoPagina ?? 100, 500);
-  const paginaInicial = Math.max(cfg.pagina ?? 1, 1);
-  const ufs = (cfg.ufs ?? []).map((u) => u.trim().toUpperCase()).filter((u) => u.length === 2);
+  const norm = (l?: string[]) =>
+    (l ?? []).map((u) => u.trim().toUpperCase()).filter((u) => u.length === 2);
+  const ufs = norm(cfg.ufs);              // editais (filtro da API)
+  const ufsOrgao = norm(cfg.ufsOrgao);    // contratos (opt-in explícito)
+
+  // ---- cursor: onde a última execução parou -----------------------
+  const fim0 = new Date();
+  const ini0 = new Date();
+  ini0.setDate(ini0.getDate() - dias);
+  const janelaIni = ini0.toISOString().slice(0, 10);
+  const janelaFim = fim0.toISOString().slice(0, 10);
+
+  const { data: estadoRaw } = await sb
+    .from("ab_ingest_estado").select("*").eq("fonte", "pncp_contratos").maybeSingle();
+  const estado = estadoRaw as {
+    cursor_pagina: number; janela_inicio: string | null; janela_fim: string | null;
+    total_paginas: number | null; ciclos: number; paginas_no_ciclo: number;
+    rate_limited_ate: string | null;
+  } | null;
+
+  // Back-off do 429: enquanto a punição vale, não vale nem tentar.
+  if (estado?.rate_limited_ate && new Date(estado.rate_limited_ate) > new Date()) {
+    const seg = Math.ceil(
+      (new Date(estado.rate_limited_ate).getTime() - Date.now()) / 1000,
+    );
+    return {
+      status: 200,
+      body: {
+        ok: true, parcial: true, rate_limited: true,
+        detalhe: `PNCP em back-off por limite de taxa. Faltam ~${seg}s.`,
+        proxima_janela: estado.rate_limited_ate,
+      },
+    };
+  }
+
+  const janelaMudou =
+    estado?.janela_inicio !== janelaIni || estado?.janela_fim !== janelaFim;
+  const paginaInicial = cfg.pagina
+    ? Math.max(cfg.pagina, 1)
+    : cfg.reiniciar || !estado || janelaMudou
+      ? 1
+      : Math.max(estado.cursor_pagina, 1);
 
   // Um contrato só é lead se 5% dele (art. 98) alcançar o ticket mínimo.
   const params = await carregarParametros(sb);
@@ -94,7 +166,9 @@ export async function ingestPncp(
   const resumo = {
     contratos: 0,
     contratos_recebidos: 0,
-    contratos_descartados: 0,
+    // Descarte agregado não diz nada acionável. "900 descartados" custou uma
+    // investigação; "900 fora das UFs" teria custado cinco segundos.
+    descartados: { sem_cnpj: 0, abaixo_do_valor: 0, fora_das_ufs: 0 },
     editais: 0,
     editais_recebidos: 0,
     paginas_lidas: 0,
@@ -104,13 +178,11 @@ export async function ingestPncp(
   };
   const avisos: string[] = [];
   let parcial = false;
+  let rateLimitSeg = 0;
 
   // -------- 1. contratos assinados (T9 / T10) ----------------------
   try {
-    const fim = new Date();
-    const ini = new Date();
-    ini.setDate(ini.getDate() - dias);
-    const janela = `dataInicial=${aaaammdd(ini)}&dataFinal=${aaaammdd(fim)}`;
+    const janela = `dataInicial=${aaaammdd(ini0)}&dataFinal=${aaaammdd(fim0)}`;
 
     const brutos: Record<string, unknown>[] = [];
     let pagina = paginaInicial;
@@ -122,11 +194,26 @@ export async function ingestPncp(
         avisos.push(`prazo: paginação de contratos interrompida na página ${pagina}`);
         break;
       }
-      const { env, ms, tamanhoUsado } = await buscarPagina<Record<string, unknown>>(
-        (t) => `${BASE}/v1/contratos?${janela}&pagina=${pagina}&tamanhoPagina=${t}`,
-        tamanhoPagina,
-        prazo,
-      );
+      let resposta;
+      try {
+        resposta = await buscarPagina<Record<string, unknown>>(
+          (t) => `${BASE}/v1/contratos?${janela}&pagina=${pagina}&tamanhoPagina=${t}`,
+          tamanhoPagina,
+          prazo,
+        );
+      } catch (err) {
+        if (ehRateLimit(err)) {
+          // Limite de taxa não se resolve insistindo. Para, guarda até
+          // quando, e grava o que já leu.
+          rateLimitSeg = esperaSugerida(err);
+          parcial = true;
+          avisos.push(`PNCP limitou a taxa (429) na página ${pagina} — ` +
+            `back-off de ${rateLimitSeg}s`);
+          break;
+        }
+        throw err;
+      }
+      const { env, ms, tamanhoUsado } = resposta;
       resumo.ms_por_pagina.push(ms);
       resumo.paginas_lidas++;
       if (tamanhoUsado !== tamanhoPagina) {
@@ -151,17 +238,27 @@ export async function ingestPncp(
 
     // ---- filtros antes de escrever ------------------------------
     const elegiveis = brutos.filter((it) => {
-      if (soDigitos(it.niFornecedor).length !== 14) return false;
-      if (toNum(it.valorGlobal ?? it.valorInicial) < valorMinimo) return false;
-      if (ufs.length) {
+      // Fornecedor pessoa física (CPF) não contrata seguro garantia de
+      // execução; ~4% da amostra. Não é erro, é fora do escopo.
+      if (soDigitos(it.niFornecedor).length !== 14) {
+        resumo.descartados.sem_cnpj++;
+        return false;
+      }
+      if (toNum(it.valorGlobal ?? it.valorInicial) < valorMinimo) {
+        resumo.descartados.abaixo_do_valor++;
+        return false;
+      }
+      if (ufsOrgao.length) {
         const uf = String(
           (it.unidadeOrgao as Record<string, unknown> | undefined)?.ufSigla ?? "",
         ).toUpperCase();
-        if (uf && !ufs.includes(uf)) return false;
+        if (uf && !ufsOrgao.includes(uf)) {
+          resumo.descartados.fora_das_ufs++;
+          return false;
+        }
       }
       return true;
     });
-    resumo.contratos_descartados = brutos.length - elegiveis.length;
 
     if (elegiveis.length) {
       const mapa = await upsertEmpresasEmLote(
@@ -285,6 +382,31 @@ export async function ingestPncp(
     }
   }
 
+  // -------- grava o cursor ----------------------------------------
+  // Sem isto, a próxima execução recomeça da página 1 e o cron nunca
+  // alcança a 113. Escreve mesmo em caso de erro parcial: o que foi lido
+  // foi lido, e reler é desperdício de rate limit.
+  const totalPag = resumo.total_paginas || 0;
+  const terminou = totalPag > 0 && !resumo.proxima_pagina;
+  await sb.from("ab_ingest_estado").upsert({
+    fonte: "pncp_contratos",
+    cursor_pagina: terminou ? 1 : (resumo.proxima_pagina ?? paginaInicial),
+    janela_inicio: janelaIni,
+    janela_fim: janelaFim,
+    total_paginas: totalPag || null,
+    ciclos: (estado?.ciclos ?? 0) + (terminou ? 1 : 0),
+    paginas_no_ciclo: terminou
+      ? 0
+      : (janelaMudou ? 0 : (estado?.paginas_no_ciclo ?? 0)) + resumo.paginas_lidas,
+    ultima_execucao: new Date().toISOString(),
+    rate_limited_ate: rateLimitSeg
+      ? new Date(Date.now() + rateLimitSeg * 1000).toISOString()
+      : null,
+    detalhe: terminou
+      ? `varredura completa da janela ${janelaIni}..${janelaFim}`
+      : `parou na página ${resumo.proxima_pagina ?? paginaInicial} de ${totalPag || "?"}`,
+  }, { onConflict: "fonte" });
+
   // -------- log e resposta ----------------------------------------
   const ms = Date.now() - t0;
   const { media, pico } = latencia(resumo.ms_por_pagina);
@@ -296,11 +418,13 @@ export async function ingestPncp(
     gravados: resumo.contratos + resumo.editais,
     detalhe:
       `contratos ${resumo.contratos}/${resumo.contratos_recebidos} ` +
-      `(${resumo.contratos_descartados} abaixo de ${valorMinimo} ou fora das UFs), ` +
+      `(descartados: ${resumo.descartados.sem_cnpj} sem CNPJ, ` +
+      `${resumo.descartados.abaixo_do_valor} abaixo de ${valorMinimo}, ` +
+      `${resumo.descartados.fora_das_ufs} fora das UFs do órgão), ` +
       `editais ${resumo.editais}/${resumo.editais_recebidos}, ` +
-      `páginas ${resumo.paginas_lidas}/${resumo.total_paginas || "?"}, ` +
-      `fetch média ${media}ms pico ${pico}ms` +
-      (resumo.proxima_pagina ? `, retomar em ${resumo.proxima_pagina}` : "") +
+      `páginas ${paginaInicial}–${paginaInicial + resumo.paginas_lidas - 1} ` +
+      `de ${resumo.total_paginas || "?"}, fetch média ${media}ms pico ${pico}ms` +
+      (resumo.proxima_pagina ? `, retomar em ${resumo.proxima_pagina}` : ", janela completa") +
       (avisos.length ? ` · ${avisos.slice(0, 4).join("; ")}` : ""),
     duracao_ms: ms,
   });
@@ -314,8 +438,12 @@ export async function ingestPncp(
     body: {
       ok: status === 200,
       parcial,
+      rate_limited: rateLimitSeg > 0,
       valor_minimo: valorMinimo,
-      ufs: ufs.length ? ufs : "nacional",
+      pagina_inicial: paginaInicial,
+      janela: `${janelaIni}..${janelaFim}`,
+      ufs_orgao: ufsOrgao.length ? ufsOrgao : "sem filtro (a UF do órgão não é a do fornecedor)",
+      ufs_editais: ufs.length ? ufs : "nacional",
       resumo: { ...resumo, fetch_media_ms: media, fetch_pico_ms: pico },
       avisos,
       duracao_ms: ms,
