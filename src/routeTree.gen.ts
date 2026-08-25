@@ -26,6 +26,7 @@ import { Route as AuthenticatedDemaisRamosRouteImport } from './routes/_authenti
 import { Route as AuthenticatedBeneficiosRouteImport } from './routes/_authenticated/beneficios'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as ApiTcLavoroLimitsQueryRouteImport } from './routes/api/tc-lavoro/limits-query'
+import { Route as ApiTcLavoroAnalysisJobsRouteImport } from './routes/api/tc-lavoro/analysis-jobs'
 import { Route as ApiAbSolicitarRouteImport } from './routes/api/ab/solicitar'
 import { Route as ApiAbExecutarRouteImport } from './routes/api/ab/executar'
 import { Route as ApiAbCotaRouteImport } from './routes/api/ab/cota'
@@ -45,6 +46,7 @@ import { Route as AuthenticatedAdminComunicadosRouteImport } from './routes/_aut
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as ApiTcLavoroAnalysisJobsJobIdRouteImport } from './routes/api/tc-lavoro/analysis-jobs.$jobId'
 import { Route as ApiPublicHooksDispatchScheduledNewslettersRouteImport } from './routes/api/public/hooks/dispatch-scheduled-newsletters'
 import { Route as ApiPublicHooksAbMotorRunRouteImport } from './routes/api/public/hooks/ab-motor-run'
 import { Route as ApiPublicHooksAbIngestTransparenciaRouteImport } from './routes/api/public/hooks/ab-ingest-transparencia'
@@ -53,6 +55,7 @@ import { Route as ApiPublicHooksAbIngestPgfnRouteImport } from './routes/api/pub
 import { Route as ApiPublicHooksAbBureauWebhookRouteImport } from './routes/api/public/hooks/ab-bureau-webhook'
 import { Route as AuthenticatedAdminEmailsSchedulesRouteImport } from './routes/_authenticated/admin/emails_.schedules'
 import { Route as AuthenticatedAdminEmailsLogRouteImport } from './routes/_authenticated/admin/emails_.log'
+import { Route as ApiTcLavoroAnalysisJobsJobIdRunRouteImport } from './routes/api/tc-lavoro/analysis-jobs.$jobId.run'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -138,6 +141,11 @@ const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
 const ApiTcLavoroLimitsQueryRoute = ApiTcLavoroLimitsQueryRouteImport.update({
   id: '/api/tc-lavoro/limits-query',
   path: '/api/tc-lavoro/limits-query',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTcLavoroAnalysisJobsRoute = ApiTcLavoroAnalysisJobsRouteImport.update({
+  id: '/api/tc-lavoro/analysis-jobs',
+  path: '/api/tc-lavoro/analysis-jobs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAbSolicitarRoute = ApiAbSolicitarRouteImport.update({
@@ -248,6 +256,12 @@ const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   path: '/lovable/email/auth/preview',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTcLavoroAnalysisJobsJobIdRoute =
+  ApiTcLavoroAnalysisJobsJobIdRouteImport.update({
+    id: '/$jobId',
+    path: '/$jobId',
+    getParentRoute: () => ApiTcLavoroAnalysisJobsRoute,
+  } as any)
 const ApiPublicHooksDispatchScheduledNewslettersRoute =
   ApiPublicHooksDispatchScheduledNewslettersRouteImport.update({
     id: '/api/public/hooks/dispatch-scheduled-newsletters',
@@ -296,6 +310,12 @@ const AuthenticatedAdminEmailsLogRoute =
     path: '/emails/log',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const ApiTcLavoroAnalysisJobsJobIdRunRoute =
+  ApiTcLavoroAnalysisJobsJobIdRunRouteImport.update({
+    id: '/run',
+    path: '/run',
+    getParentRoute: () => ApiTcLavoroAnalysisJobsJobIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -329,6 +349,7 @@ export interface FileRoutesByFullPath {
   '/api/ab/cota': typeof ApiAbCotaRoute
   '/api/ab/executar': typeof ApiAbExecutarRoute
   '/api/ab/solicitar': typeof ApiAbSolicitarRoute
+  '/api/tc-lavoro/analysis-jobs': typeof ApiTcLavoroAnalysisJobsRouteWithChildren
   '/api/tc-lavoro/limits-query': typeof ApiTcLavoroLimitsQueryRoute
   '/admin/emails/log': typeof AuthenticatedAdminEmailsLogRoute
   '/admin/emails/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
@@ -338,9 +359,11 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/ab-ingest-transparencia': typeof ApiPublicHooksAbIngestTransparenciaRoute
   '/api/public/hooks/ab-motor-run': typeof ApiPublicHooksAbMotorRunRoute
   '/api/public/hooks/dispatch-scheduled-newsletters': typeof ApiPublicHooksDispatchScheduledNewslettersRoute
+  '/api/tc-lavoro/analysis-jobs/$jobId': typeof ApiTcLavoroAnalysisJobsJobIdRouteWithChildren
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/api/tc-lavoro/analysis-jobs/$jobId/run': typeof ApiTcLavoroAnalysisJobsJobIdRunRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -374,6 +397,7 @@ export interface FileRoutesByTo {
   '/api/ab/cota': typeof ApiAbCotaRoute
   '/api/ab/executar': typeof ApiAbExecutarRoute
   '/api/ab/solicitar': typeof ApiAbSolicitarRoute
+  '/api/tc-lavoro/analysis-jobs': typeof ApiTcLavoroAnalysisJobsRouteWithChildren
   '/api/tc-lavoro/limits-query': typeof ApiTcLavoroLimitsQueryRoute
   '/admin/emails/log': typeof AuthenticatedAdminEmailsLogRoute
   '/admin/emails/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
@@ -383,9 +407,11 @@ export interface FileRoutesByTo {
   '/api/public/hooks/ab-ingest-transparencia': typeof ApiPublicHooksAbIngestTransparenciaRoute
   '/api/public/hooks/ab-motor-run': typeof ApiPublicHooksAbMotorRunRoute
   '/api/public/hooks/dispatch-scheduled-newsletters': typeof ApiPublicHooksDispatchScheduledNewslettersRoute
+  '/api/tc-lavoro/analysis-jobs/$jobId': typeof ApiTcLavoroAnalysisJobsJobIdRouteWithChildren
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/api/tc-lavoro/analysis-jobs/$jobId/run': typeof ApiTcLavoroAnalysisJobsJobIdRunRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -421,6 +447,7 @@ export interface FileRoutesById {
   '/api/ab/cota': typeof ApiAbCotaRoute
   '/api/ab/executar': typeof ApiAbExecutarRoute
   '/api/ab/solicitar': typeof ApiAbSolicitarRoute
+  '/api/tc-lavoro/analysis-jobs': typeof ApiTcLavoroAnalysisJobsRouteWithChildren
   '/api/tc-lavoro/limits-query': typeof ApiTcLavoroLimitsQueryRoute
   '/_authenticated/admin/emails_/log': typeof AuthenticatedAdminEmailsLogRoute
   '/_authenticated/admin/emails_/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
@@ -430,9 +457,11 @@ export interface FileRoutesById {
   '/api/public/hooks/ab-ingest-transparencia': typeof ApiPublicHooksAbIngestTransparenciaRoute
   '/api/public/hooks/ab-motor-run': typeof ApiPublicHooksAbMotorRunRoute
   '/api/public/hooks/dispatch-scheduled-newsletters': typeof ApiPublicHooksDispatchScheduledNewslettersRoute
+  '/api/tc-lavoro/analysis-jobs/$jobId': typeof ApiTcLavoroAnalysisJobsJobIdRouteWithChildren
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/api/tc-lavoro/analysis-jobs/$jobId/run': typeof ApiTcLavoroAnalysisJobsJobIdRunRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -468,6 +497,7 @@ export interface FileRouteTypes {
     | '/api/ab/cota'
     | '/api/ab/executar'
     | '/api/ab/solicitar'
+    | '/api/tc-lavoro/analysis-jobs'
     | '/api/tc-lavoro/limits-query'
     | '/admin/emails/log'
     | '/admin/emails/schedules'
@@ -477,9 +507,11 @@ export interface FileRouteTypes {
     | '/api/public/hooks/ab-ingest-transparencia'
     | '/api/public/hooks/ab-motor-run'
     | '/api/public/hooks/dispatch-scheduled-newsletters'
+    | '/api/tc-lavoro/analysis-jobs/$jobId'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
+    | '/api/tc-lavoro/analysis-jobs/$jobId/run'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -513,6 +545,7 @@ export interface FileRouteTypes {
     | '/api/ab/cota'
     | '/api/ab/executar'
     | '/api/ab/solicitar'
+    | '/api/tc-lavoro/analysis-jobs'
     | '/api/tc-lavoro/limits-query'
     | '/admin/emails/log'
     | '/admin/emails/schedules'
@@ -522,9 +555,11 @@ export interface FileRouteTypes {
     | '/api/public/hooks/ab-ingest-transparencia'
     | '/api/public/hooks/ab-motor-run'
     | '/api/public/hooks/dispatch-scheduled-newsletters'
+    | '/api/tc-lavoro/analysis-jobs/$jobId'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
+    | '/api/tc-lavoro/analysis-jobs/$jobId/run'
   id:
     | '__root__'
     | '/'
@@ -559,6 +594,7 @@ export interface FileRouteTypes {
     | '/api/ab/cota'
     | '/api/ab/executar'
     | '/api/ab/solicitar'
+    | '/api/tc-lavoro/analysis-jobs'
     | '/api/tc-lavoro/limits-query'
     | '/_authenticated/admin/emails_/log'
     | '/_authenticated/admin/emails_/schedules'
@@ -568,9 +604,11 @@ export interface FileRouteTypes {
     | '/api/public/hooks/ab-ingest-transparencia'
     | '/api/public/hooks/ab-motor-run'
     | '/api/public/hooks/dispatch-scheduled-newsletters'
+    | '/api/tc-lavoro/analysis-jobs/$jobId'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
+    | '/api/tc-lavoro/analysis-jobs/$jobId/run'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -582,6 +620,7 @@ export interface RootRouteChildren {
   ApiAbCotaRoute: typeof ApiAbCotaRoute
   ApiAbExecutarRoute: typeof ApiAbExecutarRoute
   ApiAbSolicitarRoute: typeof ApiAbSolicitarRoute
+  ApiTcLavoroAnalysisJobsRoute: typeof ApiTcLavoroAnalysisJobsRouteWithChildren
   ApiTcLavoroLimitsQueryRoute: typeof ApiTcLavoroLimitsQueryRoute
   ApiPublicHooksAbBureauWebhookRoute: typeof ApiPublicHooksAbBureauWebhookRoute
   ApiPublicHooksAbIngestPgfnRoute: typeof ApiPublicHooksAbIngestPgfnRoute
@@ -713,6 +752,13 @@ declare module '@tanstack/react-router' {
       path: '/api/tc-lavoro/limits-query'
       fullPath: '/api/tc-lavoro/limits-query'
       preLoaderRoute: typeof ApiTcLavoroLimitsQueryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/tc-lavoro/analysis-jobs': {
+      id: '/api/tc-lavoro/analysis-jobs'
+      path: '/api/tc-lavoro/analysis-jobs'
+      fullPath: '/api/tc-lavoro/analysis-jobs'
+      preLoaderRoute: typeof ApiTcLavoroAnalysisJobsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/ab/solicitar': {
@@ -848,6 +894,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/tc-lavoro/analysis-jobs/$jobId': {
+      id: '/api/tc-lavoro/analysis-jobs/$jobId'
+      path: '/$jobId'
+      fullPath: '/api/tc-lavoro/analysis-jobs/$jobId'
+      preLoaderRoute: typeof ApiTcLavoroAnalysisJobsJobIdRouteImport
+      parentRoute: typeof ApiTcLavoroAnalysisJobsRoute
+    }
     '/api/public/hooks/dispatch-scheduled-newsletters': {
       id: '/api/public/hooks/dispatch-scheduled-newsletters'
       path: '/api/public/hooks/dispatch-scheduled-newsletters'
@@ -903,6 +956,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/emails/log'
       preLoaderRoute: typeof AuthenticatedAdminEmailsLogRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/api/tc-lavoro/analysis-jobs/$jobId/run': {
+      id: '/api/tc-lavoro/analysis-jobs/$jobId/run'
+      path: '/run'
+      fullPath: '/api/tc-lavoro/analysis-jobs/$jobId/run'
+      preLoaderRoute: typeof ApiTcLavoroAnalysisJobsJobIdRunRouteImport
+      parentRoute: typeof ApiTcLavoroAnalysisJobsJobIdRoute
     }
   }
 }
@@ -994,6 +1054,35 @@ const AuthRouteChildren: AuthRouteChildren = {
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
+interface ApiTcLavoroAnalysisJobsJobIdRouteChildren {
+  ApiTcLavoroAnalysisJobsJobIdRunRoute: typeof ApiTcLavoroAnalysisJobsJobIdRunRoute
+}
+
+const ApiTcLavoroAnalysisJobsJobIdRouteChildren: ApiTcLavoroAnalysisJobsJobIdRouteChildren =
+  {
+    ApiTcLavoroAnalysisJobsJobIdRunRoute: ApiTcLavoroAnalysisJobsJobIdRunRoute,
+  }
+
+const ApiTcLavoroAnalysisJobsJobIdRouteWithChildren =
+  ApiTcLavoroAnalysisJobsJobIdRoute._addFileChildren(
+    ApiTcLavoroAnalysisJobsJobIdRouteChildren,
+  )
+
+interface ApiTcLavoroAnalysisJobsRouteChildren {
+  ApiTcLavoroAnalysisJobsJobIdRoute: typeof ApiTcLavoroAnalysisJobsJobIdRouteWithChildren
+}
+
+const ApiTcLavoroAnalysisJobsRouteChildren: ApiTcLavoroAnalysisJobsRouteChildren =
+  {
+    ApiTcLavoroAnalysisJobsJobIdRoute:
+      ApiTcLavoroAnalysisJobsJobIdRouteWithChildren,
+  }
+
+const ApiTcLavoroAnalysisJobsRouteWithChildren =
+  ApiTcLavoroAnalysisJobsRoute._addFileChildren(
+    ApiTcLavoroAnalysisJobsRouteChildren,
+  )
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
@@ -1003,6 +1092,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAbCotaRoute: ApiAbCotaRoute,
   ApiAbExecutarRoute: ApiAbExecutarRoute,
   ApiAbSolicitarRoute: ApiAbSolicitarRoute,
+  ApiTcLavoroAnalysisJobsRoute: ApiTcLavoroAnalysisJobsRouteWithChildren,
   ApiTcLavoroLimitsQueryRoute: ApiTcLavoroLimitsQueryRoute,
   ApiPublicHooksAbBureauWebhookRoute: ApiPublicHooksAbBureauWebhookRoute,
   ApiPublicHooksAbIngestPgfnRoute: ApiPublicHooksAbIngestPgfnRoute,
