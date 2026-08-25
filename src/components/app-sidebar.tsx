@@ -94,7 +94,8 @@ const ramosAll: CollapsibleItem[] = [
     perm: "menu_ramo_garantia",
     children: [
       { title: "Operacional", url: "/garantia/analise-limite", icon: FileSearch },
-      { title: "Análise de Processos", url: "/garantia/analise-background", icon: FileSearch, perm: "ab_garantia" },
+      { title: "Análise de Processos", url: "/garantia/analise-background", icon: SearchCheck,
+        perms: ["ab_garantia"] },
     ],
   },
   { title: "Benefícios", url: "/beneficios", icon: HeartPulse, tooltip: "Benefícios", perm: "menu_ramo_beneficios" },
