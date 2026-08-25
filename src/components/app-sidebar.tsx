@@ -137,7 +137,7 @@ function CollapsibleNavItem({
       <SidebarMenuButton
         asChild={!!item.url}
         isActive={isActiveParent}
-        tooltip={item.tooltip}
+        tooltip={item.tooltip ?? item.title}
         onClick={item.url ? undefined : toggle}
       >
         {item.url ? (
