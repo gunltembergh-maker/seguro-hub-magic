@@ -103,7 +103,17 @@ export interface EventoDetectado {
    * ativa, edital, contrato).
    */
   processoId?: string | null;
-  /** `texto` = prazo lido do andamento. `padrao` = estimativa. */
+  /**
+   * De onde a data veio, e é a diferença entre poder dizê-la ao cliente ou
+   * não.
+   *
+   * `texto`  — lida da FONTE: prazo declarado no andamento (T1–T5, T13) ou
+   *            data de encerramento publicada no edital (T8).
+   * `padrao` — estimativa da parametrização (o prazo recursal presumido, o
+   *            `prazo_garantia_dias`). A tela mostra "estimado", e o
+   *            comercial confirma antes de afirmar.
+   * `null`   — não há data.
+   */
   deadlineFonte?: "texto" | "padrao" | null;
   /**
    * O que ainda precisa ser confirmado para isto ser um lead de verdade.
@@ -461,6 +471,10 @@ export const GATILHOS: MetaGatilho[] = [
               `(Lei 14.133/2021, art. 58). Encerramento: ${e.data_encerramento ?? "—"}.`,
             valorBase: e.valor_estimado ?? 0,
             deadline: e.data_encerramento,
+            // Data publicada no edital, não estimativa nossa — mesma
+            // categoria do prazo lido do andamento: pode ser dita ao
+            // cliente.
+            deadlineFonte: "texto",
             confianca: 0.8,
             fatorIs: pct,
             evidencia: { trecho: e.trecho_garantia, objeto: e.objeto },
@@ -494,6 +508,9 @@ export const GATILHOS: MetaGatilho[] = [
           // O prazo para prestar a garantia vem do edital, não da lei. Este é
           // um padrão calibrável em ab_parametro.
           deadline: maisDias(c.data_assinatura, ctx.params.prazo_garantia_dias),
+          // `prazo_garantia_dias` é parametrização, e a própria descrição do
+          // parâmetro diz "NÃO é da lei -- vem do edital". Estimativa.
+          deadlineFonte: "padrao",
           // 0,55 e não 0,85: o PNCP confirma que o contrato existe, não que a
           // garantia foi exigida. Art. 96, caput — "A critério da
           // Administração, a garantia de execução contratual PODERÁ ser
