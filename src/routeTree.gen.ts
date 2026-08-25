@@ -25,6 +25,7 @@ import { Route as AuthenticatedFacilitiesRouteImport } from './routes/_authentic
 import { Route as AuthenticatedDemaisRamosRouteImport } from './routes/_authenticated/demais-ramos'
 import { Route as AuthenticatedBeneficiosRouteImport } from './routes/_authenticated/beneficios'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
+import { Route as ApiTcLavoroLimitsQueryRouteImport } from './routes/api/tc-lavoro/limits-query'
 import { Route as ApiAbSolicitarRouteImport } from './routes/api/ab/solicitar'
 import { Route as ApiAbExecutarRouteImport } from './routes/api/ab/executar'
 import { Route as ApiAbCotaRouteImport } from './routes/api/ab/cota'
@@ -133,6 +134,11 @@ const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ApiTcLavoroLimitsQueryRoute = ApiTcLavoroLimitsQueryRouteImport.update({
+  id: '/api/tc-lavoro/limits-query',
+  path: '/api/tc-lavoro/limits-query',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAbSolicitarRoute = ApiAbSolicitarRouteImport.update({
   id: '/api/ab/solicitar',
@@ -323,6 +329,7 @@ export interface FileRoutesByFullPath {
   '/api/ab/cota': typeof ApiAbCotaRoute
   '/api/ab/executar': typeof ApiAbExecutarRoute
   '/api/ab/solicitar': typeof ApiAbSolicitarRoute
+  '/api/tc-lavoro/limits-query': typeof ApiTcLavoroLimitsQueryRoute
   '/admin/emails/log': typeof AuthenticatedAdminEmailsLogRoute
   '/admin/emails/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
   '/api/public/hooks/ab-bureau-webhook': typeof ApiPublicHooksAbBureauWebhookRoute
@@ -367,6 +374,7 @@ export interface FileRoutesByTo {
   '/api/ab/cota': typeof ApiAbCotaRoute
   '/api/ab/executar': typeof ApiAbExecutarRoute
   '/api/ab/solicitar': typeof ApiAbSolicitarRoute
+  '/api/tc-lavoro/limits-query': typeof ApiTcLavoroLimitsQueryRoute
   '/admin/emails/log': typeof AuthenticatedAdminEmailsLogRoute
   '/admin/emails/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
   '/api/public/hooks/ab-bureau-webhook': typeof ApiPublicHooksAbBureauWebhookRoute
@@ -413,6 +421,7 @@ export interface FileRoutesById {
   '/api/ab/cota': typeof ApiAbCotaRoute
   '/api/ab/executar': typeof ApiAbExecutarRoute
   '/api/ab/solicitar': typeof ApiAbSolicitarRoute
+  '/api/tc-lavoro/limits-query': typeof ApiTcLavoroLimitsQueryRoute
   '/_authenticated/admin/emails_/log': typeof AuthenticatedAdminEmailsLogRoute
   '/_authenticated/admin/emails_/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
   '/api/public/hooks/ab-bureau-webhook': typeof ApiPublicHooksAbBureauWebhookRoute
@@ -459,6 +468,7 @@ export interface FileRouteTypes {
     | '/api/ab/cota'
     | '/api/ab/executar'
     | '/api/ab/solicitar'
+    | '/api/tc-lavoro/limits-query'
     | '/admin/emails/log'
     | '/admin/emails/schedules'
     | '/api/public/hooks/ab-bureau-webhook'
@@ -503,6 +513,7 @@ export interface FileRouteTypes {
     | '/api/ab/cota'
     | '/api/ab/executar'
     | '/api/ab/solicitar'
+    | '/api/tc-lavoro/limits-query'
     | '/admin/emails/log'
     | '/admin/emails/schedules'
     | '/api/public/hooks/ab-bureau-webhook'
@@ -548,6 +559,7 @@ export interface FileRouteTypes {
     | '/api/ab/cota'
     | '/api/ab/executar'
     | '/api/ab/solicitar'
+    | '/api/tc-lavoro/limits-query'
     | '/_authenticated/admin/emails_/log'
     | '/_authenticated/admin/emails_/schedules'
     | '/api/public/hooks/ab-bureau-webhook'
@@ -570,6 +582,7 @@ export interface RootRouteChildren {
   ApiAbCotaRoute: typeof ApiAbCotaRoute
   ApiAbExecutarRoute: typeof ApiAbExecutarRoute
   ApiAbSolicitarRoute: typeof ApiAbSolicitarRoute
+  ApiTcLavoroLimitsQueryRoute: typeof ApiTcLavoroLimitsQueryRoute
   ApiPublicHooksAbBureauWebhookRoute: typeof ApiPublicHooksAbBureauWebhookRoute
   ApiPublicHooksAbIngestPgfnRoute: typeof ApiPublicHooksAbIngestPgfnRoute
   ApiPublicHooksAbIngestPncpRoute: typeof ApiPublicHooksAbIngestPncpRoute
@@ -694,6 +707,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/tc-lavoro/limits-query': {
+      id: '/api/tc-lavoro/limits-query'
+      path: '/api/tc-lavoro/limits-query'
+      fullPath: '/api/tc-lavoro/limits-query'
+      preLoaderRoute: typeof ApiTcLavoroLimitsQueryRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/ab/solicitar': {
       id: '/api/ab/solicitar'
@@ -983,6 +1003,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAbCotaRoute: ApiAbCotaRoute,
   ApiAbExecutarRoute: ApiAbExecutarRoute,
   ApiAbSolicitarRoute: ApiAbSolicitarRoute,
+  ApiTcLavoroLimitsQueryRoute: ApiTcLavoroLimitsQueryRoute,
   ApiPublicHooksAbBureauWebhookRoute: ApiPublicHooksAbBureauWebhookRoute,
   ApiPublicHooksAbIngestPgfnRoute: ApiPublicHooksAbIngestPgfnRoute,
   ApiPublicHooksAbIngestPncpRoute: ApiPublicHooksAbIngestPncpRoute,
