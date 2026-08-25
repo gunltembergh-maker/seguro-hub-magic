@@ -73,8 +73,12 @@ import { soDigitos, toNum } from "./format.ts";
 import { extrairExigenciaGarantia } from "./edital.ts";
 import { FATOR_IS } from "./pricing.ts";
 import {
-  buscarPagina, criarPrazo, ehRateLimit, esperaSugerida, itens, latencia,
+  buscarPagina, classificarFalha, criarPrazo, ehRateLimit, esperaSugerida,
+  itens, latencia,
 } from "./orcamento.ts";
+
+/** Quanto tempo esperar quando a fonte inteira parece fora do ar. */
+const BACKOFF_INDISPONIVEL_SEG = 1_800;
 
 // Depois de tantas falhas consecutivas na MESMA página, ela é abandonada e
 // registrada em paginas_puladas. Perder ~100 contratos de uma página é
@@ -140,6 +144,7 @@ export async function ingestPncp(
     total_paginas: number | null; ciclos: number; paginas_no_ciclo: number;
     rate_limited_ate: string | null; falhas_na_pagina: number;
     paginas_puladas: number[] | null;
+    leitura_ok_em: string | null; indisponivel_ate: string | null;
   } | null;
 
   // Back-off do 429: enquanto a punição vale, não vale nem tentar.
@@ -153,6 +158,22 @@ export async function ingestPncp(
         ok: true, parcial: true, rate_limited: true,
         detalhe: `PNCP em back-off por limite de taxa. Faltam ~${seg}s.`,
         proxima_janela: estado.rate_limited_ate,
+      },
+    };
+  }
+
+  if (estado?.indisponivel_ate && new Date(estado.indisponivel_ate) > new Date()) {
+    const seg = Math.ceil(
+      (new Date(estado.indisponivel_ate).getTime() - Date.now()) / 1000,
+    );
+    return {
+      status: 200,
+      body: {
+        ok: true, parcial: true, fonte_indisponivel: true,
+        detalhe: `PNCP sem responder na última tentativa. Aguardando ~${seg}s ` +
+          `antes de tentar de novo. O cursor não foi movido.`,
+        cursor_pagina: estado.cursor_pagina,
+        proxima_janela: estado.indisponivel_ate,
       },
     };
   }
@@ -190,6 +211,8 @@ export async function ingestPncp(
   let rateLimitSeg = 0;
   let falhasNaPagina = 0;
   let pularPagina: number | null = null;
+  let fonteIndisponivel = false;
+  let leituraOkAgora: string | null = null;
 
   // -------- 1. contratos assinados (T9 / T10) ----------------------
   try {
@@ -227,7 +250,22 @@ export async function ingestPncp(
         // ou abandoná-la para a varredura poder seguir.
         parcial = true;
         falhasNaPagina = (pagina === paginaInicial ? falhasHerdadas : 0) + 1;
-        if (falhasNaPagina >= TETO_FALHAS_POR_PAGINA) {
+        const veredito = classificarFalha({
+          falhas: falhasNaPagina,
+          teto: TETO_FALHAS_POR_PAGINA,
+          leituraOkEm: leituraOkAgora ?? estado?.leitura_ok_em,
+        });
+
+        if (veredito === "fonte_indisponivel") {
+          // Nada foi lido desta fonte há horas: o problema não é a página.
+          // Esperar é seguro; andar o cursor não é reversível.
+          fonteIndisponivel = true;
+          avisos.push(
+            `fonte sem leitura bem-sucedida recente — tratando como ` +
+            `indisponibilidade do PNCP, não como página ruim. O cursor fica na ` +
+            `${pagina}. Último erro: ${(err as Error).message.slice(0, 120)}`,
+          );
+        } else if (veredito === "pular_pagina") {
           pularPagina = pagina;
           avisos.push(
             `página ${pagina} abandonada após ${falhasNaPagina} tentativas ` +
@@ -261,6 +299,7 @@ export async function ingestPncp(
       }
       brutos.push(...lista);
       falhasNaPagina = 0;   // página lida: o contador desta página zera
+      leituraOkAgora = new Date().toISOString();  // a fonte está viva
       pagina++;
       if (!totalPaginas || pagina > totalPaginas) break;
     }
@@ -428,10 +467,19 @@ export async function ingestPncp(
   const puladas = new Set<number>(estado?.paginas_puladas ?? []);
   if (pularPagina) puladas.add(pularPagina);
 
-  const cursorNovo = pularPagina
-    ? pularPagina + 1
-    : (resumo.proxima_pagina ?? paginaInicial);
-  const terminou = totalPag > 0 && cursorNovo > totalPag;
+  // Fonte fora do ar não move o cursor: é a diferença entre "esta página é
+  // ruim" e "a fonte caiu", e é o que impede a rotina de varrer a janela
+  // inteira sem ler nada.
+  const cursorNovo = fonteIndisponivel
+    ? paginaInicial
+    : pularPagina
+      ? pularPagina + 1
+      : (resumo.proxima_pagina ?? paginaInicial);
+  const terminou = !fonteIndisponivel && totalPag > 0 && cursorNovo > totalPag;
+  // Ciclo que não leu nenhuma página não "termina" nem limpa a lista de
+  // puladas — senão a evidência do que ficou faltando desaparece.
+  const cicloProdutivo = resumo.paginas_lidas > 0
+    || (!janelaMudou && (estado?.paginas_no_ciclo ?? 0) > 0);
 
   await sb.from("ab_ingest_estado").upsert({
     fonte: "pncp_contratos",
@@ -444,18 +492,28 @@ export async function ingestPncp(
       ? 0
       : (janelaMudou ? 0 : (estado?.paginas_no_ciclo ?? 0)) + resumo.paginas_lidas,
     falhas_na_pagina: pularPagina ? 0 : falhasNaPagina,
-    // O ciclo novo recomeça sem dívida: as páginas puladas voltam a ser
-    // tentadas do zero em vez de carregar a marca para sempre.
-    paginas_puladas: terminou ? [] : [...puladas].sort((a, b) => a - b),
+    // O ciclo novo recomeça sem dívida — mas só se o ciclo que fechou
+    // realmente leu algo. Limpar a lista num ciclo estéril apagaria a
+    // evidência do que ficou faltando.
+    paginas_puladas: terminou && cicloProdutivo
+      ? []
+      : [...puladas].sort((a, b) => a - b),
     ultima_execucao: new Date().toISOString(),
+    leitura_ok_em: leituraOkAgora ?? estado?.leitura_ok_em ?? null,
+    indisponivel_ate: fonteIndisponivel
+      ? new Date(Date.now() + BACKOFF_INDISPONIVEL_SEG * 1000).toISOString()
+      : null,
     rate_limited_ate: rateLimitSeg
       ? new Date(Date.now() + rateLimitSeg * 1000).toISOString()
       : null,
-    detalhe: terminou
-      ? `varredura completa da janela ${janelaIni}..${janelaFim}` +
-        (puladas.size ? ` (${puladas.size} página(s) pulada(s), serão retentadas)` : "")
-      : `próxima página ${cursorNovo} de ${totalPag || "?"}` +
-        (falhasNaPagina ? ` · ${falhasNaPagina} falha(s) nela` : ""),
+    detalhe: fonteIndisponivel
+      ? `PNCP indisponível — cursor mantido na página ${paginaInicial}, ` +
+        `nova tentativa em ${BACKOFF_INDISPONIVEL_SEG / 60} min`
+      : terminou
+        ? `varredura completa da janela ${janelaIni}..${janelaFim}` +
+          (puladas.size ? ` (${puladas.size} página(s) pulada(s), serão retentadas)` : "")
+        : `próxima página ${cursorNovo} de ${totalPag || "?"}` +
+          (falhasNaPagina ? ` · ${falhasNaPagina} falha(s) nela` : ""),
   }, { onConflict: "fonte" });
 
   // -------- log e resposta ----------------------------------------
@@ -489,13 +547,15 @@ export async function ingestPncp(
   // cron tratar como incidente uma rotina que está justamente se
   // recuperando. 500 fica para o que não tem plano B.
   const nadaEntrou = resumo.contratos === 0 && resumo.editais === 0;
-  const status = nadaEntrou && avisos.length && !pularPagina && !rateLimitSeg ? 500 : 200;
+  const status = nadaEntrou && avisos.length
+    && !pularPagina && !rateLimitSeg && !fonteIndisponivel ? 500 : 200;
   return {
     status,
     body: {
       ok: status === 200,
       parcial,
       rate_limited: rateLimitSeg > 0,
+      fonte_indisponivel: fonteIndisponivel,
       proxima_pagina_salva: terminou ? 1 : cursorNovo,
       paginas_puladas: [...puladas].sort((a, b) => a - b),
       falhas_na_pagina: pularPagina ? 0 : falhasNaPagina,

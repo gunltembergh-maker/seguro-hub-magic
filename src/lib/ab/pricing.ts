@@ -149,14 +149,31 @@ export function probSubscricao(args: {
   return Math.max(0.03, Math.min(0.97, p));
 }
 
+/**
+ * Ordem de atendimento da fila.
+ *
+ *   prioridade = prêmio × urgência × p(subscrição) × confiança
+ *
+ * A confiança entrou aqui depois de um erro meu: ela existia por evento,
+ * mas não chegava à prioridade. O efeito era o avesso do certo para uma
+ * fila de vendas — uma HIPÓTESE com prêmio maior ficava na frente de um
+ * FATO com prêmio menor. Penhora encontrada no texto do andamento é fato
+ * (0,95); contrato público assinado é hipótese (0,55), porque a garantia
+ * contratual é facultativa (Lei 14.133/2021, art. 96).
+ *
+ * O padrão 1 mantém compatibilidade com chamadas antigas, mas o motor
+ * sempre informa a confiança.
+ */
 export function prioridade(
   premioRef: number,
   urg: number,
   pSub: number,
   bloqueado: boolean,
+  confianca = 1,
 ): number {
   if (bloqueado) return 0;
-  return Math.round(premioRef * urg * pSub * 100) / 100;
+  const c = Math.min(1, Math.max(0, confianca));
+  return Math.round(premioRef * urg * pSub * c * 100) / 100;
 }
 
 /**

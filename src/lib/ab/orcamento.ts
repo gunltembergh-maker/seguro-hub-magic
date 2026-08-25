@@ -199,6 +199,43 @@ export async function buscarPagina<T>(
   throw new Error("buscarPagina: inalcançável");
 }
 
+/**
+ * O que fazer quando uma página falha.
+ *
+ * A distinção que importa: "esta página é ruim" só é um diagnóstico
+ * possível se ALGUMA página tiver sido lida recentemente. Sem leitura
+ * recente, falha em página é sintoma de fonte fora do ar — e aí avançar o
+ * cursor é destruir a varredura em silêncio.
+ *
+ * Foi o que a operação mostrou: o PNCP degradou inteiro no meio da tarde e
+ * o teto de tentativas passou a trabalhar contra nós, marcando página após
+ * página como abandonada numa janela que nunca foi lida. Em algumas horas a
+ * rotina teria "concluído" o ciclo sem ler nada, com o log arrumado.
+ */
+export type VereditoFalha = "tentar_de_novo" | "pular_pagina" | "fonte_indisponivel";
+
+export function classificarFalha(args: {
+  /** Falhas consecutivas nesta página, incluindo a atual. */
+  falhas: number;
+  teto: number;
+  /** Última leitura bem-sucedida desta fonte. */
+  leituraOkEm?: string | Date | null;
+  janelaHoras?: number;
+  agora?: Date;
+}): VereditoFalha {
+  const agora = args.agora ?? new Date();
+  const janela = (args.janelaHoras ?? 6) * 3_600_000;
+  const ok = args.leituraOkEm
+    ? new Date(args.leituraOkEm).getTime()
+    : null;
+  const fonteViva = ok !== null && agora.getTime() - ok <= janela;
+
+  // Sem leitura recente, não há como culpar a página. Esperar é seguro;
+  // andar o cursor não é reversível.
+  if (!fonteViva) return "fonte_indisponivel";
+  return args.falhas >= args.teto ? "pular_pagina" : "tentar_de_novo";
+}
+
 /** Resumo de latência para o ab_ingest_log — é o que permite calibrar. */
 export function latencia(amostras: number[]): { media: number; pico: number } {
   if (!amostras.length) return { media: 0, pico: 0 };
