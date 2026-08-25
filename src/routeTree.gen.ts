@@ -29,6 +29,7 @@ import { Route as ApiAbSolicitarRouteImport } from './routes/api/ab/solicitar'
 import { Route as ApiAbExecutarRouteImport } from './routes/api/ab/executar'
 import { Route as ApiAbCotaRouteImport } from './routes/api/ab/cota'
 import { Route as ApiAbBgcheckRouteImport } from './routes/api/ab/bgcheck'
+import { Route as AuthenticatedJuridicoAnaliseBackgroundRouteImport } from './routes/_authenticated/juridico_.analise-background'
 import { Route as AuthenticatedGarantiaAnaliseLimiteRouteImport } from './routes/_authenticated/garantia_.analise-limite'
 import { Route as AuthenticatedDashboardReportFechamentoRouteImport } from './routes/_authenticated/dashboard.report-fechamento'
 import { Route as AuthenticatedDashboardReceitaExecutivoRouteImport } from './routes/_authenticated/dashboard.receita-executivo'
@@ -153,6 +154,12 @@ const ApiAbBgcheckRoute = ApiAbBgcheckRouteImport.update({
   path: '/api/ab/bgcheck',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedJuridicoAnaliseBackgroundRoute =
+  AuthenticatedJuridicoAnaliseBackgroundRouteImport.update({
+    id: '/juridico_/analise-background',
+    path: '/juridico/analise-background',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedGarantiaAnaliseLimiteRoute =
   AuthenticatedGarantiaAnaliseLimiteRouteImport.update({
     id: '/garantia_/analise-limite',
@@ -311,6 +318,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/receita-executivo': typeof AuthenticatedDashboardReceitaExecutivoRoute
   '/dashboard/report-fechamento': typeof AuthenticatedDashboardReportFechamentoRoute
   '/garantia/analise-limite': typeof AuthenticatedGarantiaAnaliseLimiteRoute
+  '/juridico/analise-background': typeof AuthenticatedJuridicoAnaliseBackgroundRoute
   '/api/ab/bgcheck': typeof ApiAbBgcheckRoute
   '/api/ab/cota': typeof ApiAbCotaRoute
   '/api/ab/executar': typeof ApiAbExecutarRoute
@@ -354,6 +362,7 @@ export interface FileRoutesByTo {
   '/dashboard/receita-executivo': typeof AuthenticatedDashboardReceitaExecutivoRoute
   '/dashboard/report-fechamento': typeof AuthenticatedDashboardReportFechamentoRoute
   '/garantia/analise-limite': typeof AuthenticatedGarantiaAnaliseLimiteRoute
+  '/juridico/analise-background': typeof AuthenticatedJuridicoAnaliseBackgroundRoute
   '/api/ab/bgcheck': typeof ApiAbBgcheckRoute
   '/api/ab/cota': typeof ApiAbCotaRoute
   '/api/ab/executar': typeof ApiAbExecutarRoute
@@ -399,6 +408,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/receita-executivo': typeof AuthenticatedDashboardReceitaExecutivoRoute
   '/_authenticated/dashboard/report-fechamento': typeof AuthenticatedDashboardReportFechamentoRoute
   '/_authenticated/garantia_/analise-limite': typeof AuthenticatedGarantiaAnaliseLimiteRoute
+  '/_authenticated/juridico_/analise-background': typeof AuthenticatedJuridicoAnaliseBackgroundRoute
   '/api/ab/bgcheck': typeof ApiAbBgcheckRoute
   '/api/ab/cota': typeof ApiAbCotaRoute
   '/api/ab/executar': typeof ApiAbExecutarRoute
@@ -444,6 +454,7 @@ export interface FileRouteTypes {
     | '/dashboard/receita-executivo'
     | '/dashboard/report-fechamento'
     | '/garantia/analise-limite'
+    | '/juridico/analise-background'
     | '/api/ab/bgcheck'
     | '/api/ab/cota'
     | '/api/ab/executar'
@@ -487,6 +498,7 @@ export interface FileRouteTypes {
     | '/dashboard/receita-executivo'
     | '/dashboard/report-fechamento'
     | '/garantia/analise-limite'
+    | '/juridico/analise-background'
     | '/api/ab/bgcheck'
     | '/api/ab/cota'
     | '/api/ab/executar'
@@ -531,6 +543,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/receita-executivo'
     | '/_authenticated/dashboard/report-fechamento'
     | '/_authenticated/garantia_/analise-limite'
+    | '/_authenticated/juridico_/analise-background'
     | '/api/ab/bgcheck'
     | '/api/ab/cota'
     | '/api/ab/executar'
@@ -709,6 +722,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/ab/bgcheck'
       preLoaderRoute: typeof ApiAbBgcheckRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/juridico_/analise-background': {
+      id: '/_authenticated/juridico_/analise-background'
+      path: '/juridico/analise-background'
+      fullPath: '/juridico/analise-background'
+      preLoaderRoute: typeof AuthenticatedJuridicoAnaliseBackgroundRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/garantia_/analise-limite': {
       id: '/_authenticated/garantia_/analise-limite'
@@ -913,6 +933,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardReceitaExecutivoRoute: typeof AuthenticatedDashboardReceitaExecutivoRoute
   AuthenticatedDashboardReportFechamentoRoute: typeof AuthenticatedDashboardReportFechamentoRoute
   AuthenticatedGarantiaAnaliseLimiteRoute: typeof AuthenticatedGarantiaAnaliseLimiteRoute
+  AuthenticatedJuridicoAnaliseBackgroundRoute: typeof AuthenticatedJuridicoAnaliseBackgroundRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -936,6 +957,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedDashboardReportFechamentoRoute,
   AuthenticatedGarantiaAnaliseLimiteRoute:
     AuthenticatedGarantiaAnaliseLimiteRoute,
+  AuthenticatedJuridicoAnaliseBackgroundRoute:
+    AuthenticatedJuridicoAnaliseBackgroundRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
