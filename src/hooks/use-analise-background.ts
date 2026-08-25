@@ -14,12 +14,14 @@ import { hasPermission, useMeuPerfil } from "@/hooks/use-meu-perfil";
 import type {
   ChaveAbTodas, Consentimento, Cota, ContratoPublico, Dossie, Empresa, Escopo,
   Evento, Finalidade, IngestLog, InscricaoDivida, LinhaCarteira, LinhaFila,
-  LinhaProcesso, Modalidade, Parametro, Processo, ProvedorDados, ResultadoBgCheck,
+  LinhaProcesso, Modalidade, Oportunidade, Parametro, Processo, ProvedorDados,
+  ResultadoBgCheck,
   Restritivo, SinalDicionario, Socio, Solicitacao, StatusLead,
 } from "@/lib/ab-types";
 
 const K = {
   fila: (f: unknown) => ["hub", "fila", f] as const,
+  oportunidades: (f: unknown) => ["hub", "oportunidades", f] as const,
   carteira: (f: unknown) => ["hub", "carteira", f] as const,
   lead: (id: string) => ["hub", "lead", id] as const,
   empresa: (id: string) => ["hub", "empresa", id] as const,
@@ -151,6 +153,92 @@ export function useCarteira(filtro: { busca?: string; relacao?: string }) {
       const { data, error } = await q.order("is_potencial", { ascending: false }).limit(500);
       if (error) throw error;
       return (data ?? []) as LinhaCarteira[];
+    },
+  });
+}
+
+// ---------------------------------------------------------------------
+// A LINHA POR PROCESSO
+//
+// Duas coisas que não são detalhe:
+//
+// 1. O piso (`isMinima`) filtra a EXIBIÇÃO. O hook devolve `abaixoDoPiso`
+//    com quantas linhas ficaram de fora, e a tela é obrigada a mostrar esse
+//    número. Um filtro que esconde sem contar é indistinguível de um dado
+//    que desapareceu — e valor de execução cresce: o processo que hoje está
+//    abaixo do piso pode passar dele depois de uma sentença.
+//
+// 2. A contagem do piso é feita no cliente, sobre o que veio. Se o corte
+//    fosse no `.gte()` do Postgres, o servidor devolveria só as linhas
+//    acima e não haveria como saber quantas faltaram sem uma segunda
+//    consulta.
+// ---------------------------------------------------------------------
+export interface FiltroOportunidade {
+  /** CNPJ ou razão social. Dígitos bastam para o CNPJ. */
+  busca?: string;
+  modalidade?: string;
+  /** Piso em reais sobre a IS necessária. 0 ou undefined = desligado. */
+  isMinima?: number;
+  /** Só o que vence nos próximos N dias (inclui vencido). */
+  venceEmDias?: number;
+  /** Só processos em que a empresa é ré/executada — quem precisa garantir. */
+  somentePassivo?: boolean;
+  /** Esconde processo em que a garantia já foi prestada. */
+  ocultarGarantidos?: boolean;
+  ocultarBloqueados?: boolean;
+  ordenarPor?: "importancia_segurada" | "deadline" | "valor_base";
+}
+
+export interface ResultadoOportunidades {
+  linhas: Oportunidade[];
+  /** Quantas linhas o piso escondeu. A tela TEM de exibir isto. */
+  abaixoDoPiso: number;
+  /** Soma da IS das linhas exibidas. */
+  isTotal: number;
+}
+
+export function useOportunidades(filtro: FiltroOportunidade) {
+  return useQuery({
+    queryKey: K.oportunidades(filtro),
+    queryFn: async (): Promise<ResultadoOportunidades> => {
+      let q = supabase.from("ab_v_oportunidade").select("*");
+
+      if (filtro.modalidade) q = q.eq("modalidade", filtro.modalidade);
+      if (filtro.somentePassivo) q = q.not("polo", "eq", "ATIVO");
+      if (filtro.ocultarGarantidos) q = q.not("garantia_prestada", "is", true);
+      if (filtro.ocultarBloqueados) q = q.is("bloqueios", null);
+      if (filtro.venceEmDias !== undefined) {
+        const lim = new Date();
+        lim.setDate(lim.getDate() + filtro.venceEmDias);
+        q = q.lte("deadline", lim.toISOString().slice(0, 10));
+      }
+      if (filtro.busca?.trim()) {
+        const termo = filtro.busca.trim();
+        const dig = termo.replace(/\D+/g, "");
+        q = dig.length >= 3
+          ? q.or(`razao_social.ilike.%${termo}%,cnpj.like.%${dig}%,referencia.like.%${dig}%`)
+          : q.ilike("razao_social", `%${termo}%`);
+      }
+
+      const ordem = filtro.ordenarPor ?? "importancia_segurada";
+      q = ordem === "deadline"
+        ? q.order("deadline", { ascending: true, nullsFirst: false })
+        : q.order(ordem, { ascending: false, nullsFirst: false });
+
+      const { data, error } = await q.limit(1000);
+      if (error) throw error;
+
+      const todas = (data ?? []) as Oportunidade[];
+      const piso = Math.max(0, filtro.isMinima ?? 0);
+      const linhas = piso > 0
+        ? todas.filter((o) => Number(o.importancia_segurada ?? 0) >= piso)
+        : todas;
+
+      return {
+        linhas,
+        abaixoDoPiso: todas.length - linhas.length,
+        isTotal: linhas.reduce((s, o) => s + Number(o.importancia_segurada ?? 0), 0),
+      };
     },
   });
 }

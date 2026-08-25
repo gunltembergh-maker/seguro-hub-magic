@@ -17,6 +17,18 @@
 // mesma tela é como se perde a minimização por finalidade — e, na
 // prática, é como um analista de RH acaba vendo a fila de vendas.
 //
+// A MESMA página atende por DUAS portas de entrada no menu, e isso é
+// deliberado:
+//
+//   Garantia › Análise de Processos  → foco="originacao"
+//   Jurídico › Background Check      → foco="risco"
+//
+// Quem vende entra pela Garantia e cai na fila do seu ramo; quem instrui
+// caso entra pelo Jurídico e cai na consulta processual. É a mesma base e
+// o mesmo controle de permissão — muda só onde a pessoa começa. Duas
+// páginas separadas duplicariam o código; um menu só obrigaria metade da
+// empresa a passar pela área da outra metade para chegar ao seu trabalho.
+//
 // As chaves são administradas em Administração › Perfis de Acesso:
 //   ab_garantia · ab_juridico · ab_compliance · ab_rh
 //   ab_solicitar (pode gerar consulta paga) · ab_cota_gerir (define teto)
@@ -31,6 +43,7 @@ import { usePermissoesAb } from "@/hooks/use-analise-background";
 import { EstadoVazio } from "@/components/analise-background/AbBits";
 import type { Finalidade } from "@/lib/ab-types";
 import OriginacaoGarantia from "./analise-background/OriginacaoGarantia";
+import Oportunidades from "./analise-background/Oportunidades";
 import LeadDetalhe from "./analise-background/LeadDetalhe";
 import Carteira from "./analise-background/Carteira";
 import BackgroundCheck from "./analise-background/BackgroundCheck";
@@ -104,8 +117,16 @@ export default function AnaliseBackground({ foco }: PropsAnaliseBackground = {})
 
   if (podeGarantia) {
     abas.push({
-      id: "originacao", rotulo: "Oportunidades", area: "originacao",
+      id: "originacao", rotulo: "Pipeline por ramo", area: "originacao",
       render: () => <OriginacaoGarantia onAbrirLead={setLeadId} />,
+    });
+    // A aba de consulta vem DEPOIS do pipeline mas é a mais usada no dia a
+    // dia: o comercial recebe um CNPJ e quer as linhas, não o funil. As duas
+    // leem a mesma base — muda a granularidade: pipeline é por empresa e
+    // modalidade, consulta é por processo.
+    abas.push({
+      id: "oportunidades", rotulo: "Consultar CNPJ", area: "originacao",
+      render: () => <Oportunidades />,
     });
   }
   if (podeGarantia || podeCompliance || podeJuridico) {
@@ -153,10 +174,9 @@ export default function AnaliseBackground({ foco }: PropsAnaliseBackground = {})
 
   // Sem escolha do usuário, abre na primeira aba do grupo em foco; se o
   // perfil não tem acesso a esse grupo, cai na primeira que ele tem.
-  const atual =
-    abas.find((a) => a.id === aba) ??
-    (foco ? abas.find((a) => a.area === foco) : undefined) ??
-    abas[0];
+  const atual = abas.find((a) => a.id === aba)
+    ?? (foco ? abas.find((a) => a.area === foco) : undefined)
+    ?? abas[0];
 
   const grupos: { area: Area; titulo: string; nota: string }[] = [
     {

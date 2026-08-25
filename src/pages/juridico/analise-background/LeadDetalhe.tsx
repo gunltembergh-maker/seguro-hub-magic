@@ -49,6 +49,10 @@ export default function LeadDetalhe({
   const [simValor, setSimValor] = useState<number | null>(null);
   const [simTaxa, setSimTaxa] = useState(1.5);
   const [simSelic, setSimSelic] = useState(15);
+  // Começa VAZIA de propósito: não há percentual de comissão que sirva para
+  // todas as seguradoras, então o número só aparece quando o comercial diz
+  // qual é o dele. Antes havia 17,5% fixo aqui, e ia à tela como cálculo.
+  const [simComissao, setSimComissao] = useState<number | null>(null);
 
   const sim = useMemo(() => {
     if (!data) return null;
@@ -63,11 +67,12 @@ export default function LeadDetalhe({
     const custoCaixa = base * (ehPercentual ? fator : 1) * (simSelic / 100);
     return {
       base, is, premio,
+      comissao: simComissao !== null ? premio * (simComissao / 100) : null,
       custoCaixa,
       economia: Math.max(0, custoCaixa - premio),
       spread: simSelic - simTaxa,
     };
-  }, [data, simValor, simTaxa, simSelic]);
+  }, [data, simValor, simTaxa, simSelic, simComissao]);
 
   if (isLoading) {
     return (
@@ -154,12 +159,12 @@ export default function LeadDetalhe({
         </Card>
       )}
 
-      <div className="grid gap-3 grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
-        <AbKpi valor={brl(lead.importancia_segurada)} rotulo="Importância segurada"
+      <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
+        <AbKpi valor={brl(lead.importancia_segurada)} rotulo="Importância segurada" destaque
           apoio={`valor base ${brl(lead.valor_base)}${
             ["JUDICIAL", "FISCAL"].includes(lead.modalidade) ? " + 30% (execução)" : ""}`} />
         <AbKpi valor={brl(lead.premio_estimado)} rotulo="Prêmio anual (ref.)"
-          apoio="faixa de 0,5% a 3,0% a.a." />
+          apoio="faixa de 0,5% a 3,0% a.a. — simule ao lado" />
         <AbKpi valor={`${num(Number(lead.prob_subscricao) * 100, 0)}%`}
           rotulo="Prob. de subscrição" apoio="heurística — calibrar com seguradoras" />
         <AbKpi valor={lead.deadline ? dataFmt(lead.deadline) : "—"} rotulo="Prazo mais próximo"
@@ -334,6 +339,14 @@ export default function LeadDetalhe({
                   type="number" step="0.25" className="w-[150px] h-8"
                   value={simSelic} onChange={(e) => setSimSelic(Number(e.target.value))}
                 />
+                <Label className="text-xs">Comissão (%)</Label>
+                <Input
+                  type="number" step="0.5" className="w-[150px] h-8"
+                  placeholder="varia por seguradora"
+                  value={simComissao ?? ""}
+                  onChange={(e) =>
+                    setSimComissao(e.target.value === "" ? null : Number(e.target.value))}
+                />
               </div>
               <Separator />
               {sim && (
@@ -342,6 +355,12 @@ export default function LeadDetalhe({
                   <dd className="text-right font-medium tabular-nums">{brl(sim.is)}</dd>
                   <dt className="text-muted-foreground">Prêmio anual</dt>
                   <dd className="text-right tabular-nums">{brl(sim.premio)}</dd>
+                  <dt className="text-muted-foreground">Comissão Lavoro</dt>
+                  <dd className="text-right tabular-nums">
+                    {sim.comissao === null
+                      ? <span className="text-muted-foreground">informe o %</span>
+                      : brl(sim.comissao)}
+                  </dd>
                   <dt className="text-muted-foreground">Custo de imobilizar</dt>
                   <dd className="text-right tabular-nums">{brl(sim.custoCaixa)}</dd>
                   <dt className="text-muted-foreground">Economia líquida</dt>

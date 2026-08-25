@@ -88,8 +88,63 @@ export interface LinhaCarteira {
   divida_ativa: number;
   contratos_publicos: number;
   restritivos: string[];
+  /** IS somada dos leads em aberto. Era `comissao_potencial`, que dependia
+   *  de um percentual estimado; IS é fato. */
   is_potencial: number;
   n_leads: number;
+}
+
+/**
+ * A LINHA que o comercial usa: uma por processo (ou fonte) e modalidade.
+ *
+ * Não tem prêmio nem comissão de propósito. Os dois dependem de taxa que
+ * varia por seguradora, e um número calculado com percentual fixo chega à
+ * tela com cara de cálculo. Aqui só entra fato — valor de execução — e a
+ * regra legal — IS = valor + 30% (CPC art. 835 §2º). O resto é simulação.
+ */
+export interface Oportunidade {
+  empresa_id: string;
+  cnpj: string;
+  razao_social: string;
+  uf: string | null;
+  municipio: string | null;
+  porte: string | null;
+  telefone: string | null;
+  telefone_2: string | null;
+  monitorado: boolean;
+  modalidade: Modalidade;
+  processo_id: string | null;
+  origem: "PROCESSO" | "OUTRA_FONTE";
+  /** Número CNJ quando vem de processo; a chave da fonte quando não vem. */
+  referencia: string;
+  processo_numero: string | null;
+  tribunal: string | null;
+  area: string | null;
+  classe: string | null;
+  classe_codigo: string | null;
+  polo: string | null;
+  fase: string | null;
+  distribuicao: string | null;
+  valor_causa: number | null;
+  valor_execucao: number | null;
+  garantia_prestada: boolean | null;
+  gatilhos: string[];
+  valor_base: number;
+  importancia_segurada: number | null;
+  deadline: string | null;
+  /**
+   * `texto` = o prazo foi lido do andamento; a data pode ser dita ao
+   * cliente. `padrao` = estimativa da parametrização; a tela mostra como
+   * "prazo estimado" e o comercial NÃO deve afirmá-la.
+   */
+  deadline_fonte: "texto" | "padrao" | null;
+  dias_para_prazo: number | null;
+  confianca: number;
+  qualificacao: "CONFIRMADO" | "PROVAVEL" | "A_QUALIFICAR";
+  lead_id: string | null;
+  lead_status: StatusLead | null;
+  responsavel: string | null;
+  bloqueios: string[] | null;
 }
 
 export interface Evento {

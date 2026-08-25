@@ -109,7 +109,7 @@ export default function Carteira() {
                 <TableHead className="text-right">Dívida ativa</TableHead>
                 <TableHead className="text-right">Contratos públicos</TableHead>
                 <TableHead>Restritivos</TableHead>
-                <TableHead className="text-right">IS potencial</TableHead>
+                <TableHead className="text-right">IS em aberto</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
