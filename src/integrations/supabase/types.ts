@@ -53,6 +53,60 @@ export type Database = {
         }
         Relationships: []
       }
+      ab_consumo: {
+        Row: {
+          area: string | null
+          created_at: string
+          custo: number
+          detalhe: string | null
+          documento: string | null
+          id: string
+          provedor: string | null
+          solicitacao_id: string | null
+          tipo: string
+          usuario: string | null
+        }
+        Insert: {
+          area?: string | null
+          created_at?: string
+          custo?: number
+          detalhe?: string | null
+          documento?: string | null
+          id?: string
+          provedor?: string | null
+          solicitacao_id?: string | null
+          tipo: string
+          usuario?: string | null
+        }
+        Update: {
+          area?: string | null
+          created_at?: string
+          custo?: number
+          detalhe?: string | null
+          documento?: string | null
+          id?: string
+          provedor?: string | null
+          solicitacao_id?: string | null
+          tipo?: string
+          usuario?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ab_consumo_solicitacao_id_fkey"
+            columns: ["solicitacao_id"]
+            isOneToOne: false
+            referencedRelation: "ab_solicitacao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ab_consumo_solicitacao_id_fkey"
+            columns: ["solicitacao_id"]
+            isOneToOne: false
+            referencedRelation: "ab_v_solicitacao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ab_contrato_publico: {
         Row: {
           created_at: string
@@ -119,6 +173,45 @@ export type Database = {
             referencedColumns: ["empresa_id"]
           },
         ]
+      }
+      ab_cota: {
+        Row: {
+          area: string
+          consumido_consultas: number
+          consumido_valor: number
+          created_at: string
+          id: string
+          limite_consultas: number | null
+          limite_valor: number | null
+          mes: string
+          observacao: string | null
+          updated_at: string
+        }
+        Insert: {
+          area: string
+          consumido_consultas?: number
+          consumido_valor?: number
+          created_at?: string
+          id?: string
+          limite_consultas?: number | null
+          limite_valor?: number | null
+          mes: string
+          observacao?: string | null
+          updated_at?: string
+        }
+        Update: {
+          area?: string
+          consumido_consultas?: number
+          consumido_valor?: number
+          created_at?: string
+          id?: string
+          limite_consultas?: number | null
+          limite_valor?: number | null
+          mes?: string
+          observacao?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       ab_dossie: {
         Row: {
@@ -630,6 +723,13 @@ export type Database = {
             referencedRelation: "ab_processo"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "ab_movimentacao_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "ab_v_processo"
+            referencedColumns: ["id"]
+          },
         ]
       }
       ab_parametro: {
@@ -746,6 +846,54 @@ export type Database = {
             referencedColumns: ["empresa_id"]
           },
         ]
+      }
+      ab_provedor: {
+        Row: {
+          ativo: boolean
+          auth_header: string | null
+          auth_tipo: string | null
+          base_url: string | null
+          capacidades: Json
+          chave: string
+          created_at: string
+          custo_consulta: number
+          custo_monitoramento_mes: number
+          doc_url: string | null
+          nome: string
+          observacao: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          auth_header?: string | null
+          auth_tipo?: string | null
+          base_url?: string | null
+          capacidades?: Json
+          chave: string
+          created_at?: string
+          custo_consulta?: number
+          custo_monitoramento_mes?: number
+          doc_url?: string | null
+          nome: string
+          observacao?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          auth_header?: string | null
+          auth_tipo?: string | null
+          base_url?: string | null
+          capacidades?: Json
+          chave?: string
+          created_at?: string
+          custo_consulta?: number
+          custo_monitoramento_mes?: number
+          doc_url?: string | null
+          nome?: string
+          observacao?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       ab_restritivo: {
         Row: {
@@ -890,6 +1038,113 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "ab_v_fila"
             referencedColumns: ["empresa_id"]
+          },
+        ]
+      }
+      ab_solicitacao: {
+        Row: {
+          area: string | null
+          concluido_em: string | null
+          created_at: string
+          custo: number
+          detalhe: string | null
+          documento: string
+          empresa_id: string | null
+          escopo: string
+          finalidade: string
+          id: string
+          iniciado_em: string | null
+          leads_gerados: number
+          liberado_em: string | null
+          liberado_por: string | null
+          movimentacoes_novas: number
+          nome: string | null
+          processos_encontrados: number
+          provedor: string | null
+          resultado: Json | null
+          solicitante: string | null
+          status: string
+          tipo_documento: string
+          updated_at: string
+        }
+        Insert: {
+          area?: string | null
+          concluido_em?: string | null
+          created_at?: string
+          custo?: number
+          detalhe?: string | null
+          documento: string
+          empresa_id?: string | null
+          escopo?: string
+          finalidade: string
+          id?: string
+          iniciado_em?: string | null
+          leads_gerados?: number
+          liberado_em?: string | null
+          liberado_por?: string | null
+          movimentacoes_novas?: number
+          nome?: string | null
+          processos_encontrados?: number
+          provedor?: string | null
+          resultado?: Json | null
+          solicitante?: string | null
+          status?: string
+          tipo_documento: string
+          updated_at?: string
+        }
+        Update: {
+          area?: string | null
+          concluido_em?: string | null
+          created_at?: string
+          custo?: number
+          detalhe?: string | null
+          documento?: string
+          empresa_id?: string | null
+          escopo?: string
+          finalidade?: string
+          id?: string
+          iniciado_em?: string | null
+          leads_gerados?: number
+          liberado_em?: string | null
+          liberado_por?: string | null
+          movimentacoes_novas?: number
+          nome?: string | null
+          processos_encontrados?: number
+          provedor?: string | null
+          resultado?: Json | null
+          solicitante?: string | null
+          status?: string
+          tipo_documento?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ab_solicitacao_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "ab_empresa"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ab_solicitacao_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "ab_v_carteira"
+            referencedColumns: ["empresa_id"]
+          },
+          {
+            foreignKeyName: "ab_solicitacao_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "ab_v_fila"
+            referencedColumns: ["empresa_id"]
+          },
+          {
+            foreignKeyName: "ab_solicitacao_provedor_fkey"
+            columns: ["provedor"]
+            isOneToOne: false
+            referencedRelation: "ab_provedor"
+            referencedColumns: ["chave"]
           },
         ]
       }
@@ -1844,6 +2099,62 @@ export type Database = {
         }
         Relationships: []
       }
+      ab_v_consumo_mes: {
+        Row: {
+          area: string | null
+          consultas: number | null
+          mes: string | null
+          provedor: string | null
+          tipo: string | null
+          valor: number | null
+        }
+        Relationships: []
+      }
+      ab_v_cota: {
+        Row: {
+          area: string | null
+          consumido_consultas: number | null
+          consumido_valor: number | null
+          id: string | null
+          limite_consultas: number | null
+          limite_valor: number | null
+          mes: string | null
+          observacao: string | null
+          restante_consultas: number | null
+          restante_valor: number | null
+          situacao: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          area?: string | null
+          consumido_consultas?: number | null
+          consumido_valor?: number | null
+          id?: string | null
+          limite_consultas?: number | null
+          limite_valor?: number | null
+          mes?: string | null
+          observacao?: string | null
+          restante_consultas?: never
+          restante_valor?: never
+          situacao?: never
+          updated_at?: string | null
+        }
+        Update: {
+          area?: string | null
+          consumido_consultas?: number | null
+          consumido_valor?: number | null
+          id?: string | null
+          limite_consultas?: number | null
+          limite_valor?: number | null
+          mes?: string | null
+          observacao?: string | null
+          restante_consultas?: never
+          restante_valor?: never
+          situacao?: never
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       ab_v_fila: {
         Row: {
           bloqueios: string[] | null
@@ -1876,6 +2187,115 @@ export type Database = {
           valor_base: number | null
         }
         Relationships: []
+      }
+      ab_v_processo: {
+        Row: {
+          area: string | null
+          assuntos: Json | null
+          classe: string | null
+          classe_codigo: string | null
+          cnpj: string | null
+          created_at: string | null
+          distribuicao: string | null
+          empresa_id: string | null
+          fase: string | null
+          fonte: string | null
+          garantia_prestada: boolean | null
+          id: string | null
+          movimentacoes: number | null
+          movimentacoes_constricao: number | null
+          movimentacoes_exigencia: number | null
+          numero: string | null
+          orgao_julgador: string | null
+          polo: string | null
+          razao_social: string | null
+          status: string | null
+          tribunal: string | null
+          uf: string | null
+          ultima_movimentacao: string | null
+          updated_at: string | null
+          valor_causa: number | null
+          valor_execucao: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ab_processo_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "ab_empresa"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ab_processo_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "ab_v_carteira"
+            referencedColumns: ["empresa_id"]
+          },
+          {
+            foreignKeyName: "ab_processo_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "ab_v_fila"
+            referencedColumns: ["empresa_id"]
+          },
+        ]
+      }
+      ab_v_solicitacao: {
+        Row: {
+          area: string | null
+          concluido_em: string | null
+          created_at: string | null
+          custo: number | null
+          detalhe: string | null
+          documento: string | null
+          duracao_seg: number | null
+          empresa_id: string | null
+          escopo: string | null
+          finalidade: string | null
+          id: string | null
+          iniciado_em: string | null
+          leads_gerados: number | null
+          movimentacoes_novas: number | null
+          nome: string | null
+          processos_encontrados: number | null
+          provedor: string | null
+          razao_social: string | null
+          solicitante: string | null
+          solicitante_nome: string | null
+          status: string | null
+          tipo_documento: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ab_solicitacao_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "ab_empresa"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ab_solicitacao_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "ab_v_carteira"
+            referencedColumns: ["empresa_id"]
+          },
+          {
+            foreignKeyName: "ab_solicitacao_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "ab_v_fila"
+            referencedColumns: ["empresa_id"]
+          },
+          {
+            foreignKeyName: "ab_solicitacao_provedor_fkey"
+            columns: ["provedor"]
+            isOneToOne: false
+            referencedRelation: "ab_provedor"
+            referencedColumns: ["chave"]
+          },
+        ]
       }
       vw_lavoro_depara_ramo: {
         Row: {
@@ -2030,6 +2450,7 @@ export type Database = {
         }[]
       }
       ab_limpar_demo: { Args: never; Returns: string }
+      ab_minha_area: { Args: never; Returns: string }
       ab_pode: { Args: { p_chave: string }; Returns: boolean }
       ab_seed_demo: { Args: never; Returns: string }
       divide_safe: {
@@ -2082,6 +2503,14 @@ export type Database = {
       retry_lavoro_sync_if_needed: { Args: never; Returns: undefined }
       rpc_ab_atualizar_derivados: { Args: { p_linhas: Json }; Returns: number }
       rpc_ab_atualizar_sinais: { Args: { p_linhas: Json }; Returns: number }
+      rpc_ab_consumir_cota: {
+        Args: { p_area: string; p_consultas?: number; p_valor?: number }
+        Returns: Json
+      }
+      rpc_ab_devolver_cota: {
+        Args: { p_area: string; p_consultas?: number; p_valor?: number }
+        Returns: undefined
+      }
       rpc_ab_mover_lead: {
         Args: {
           p_lead_id: string
