@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS ab_socio_unico_cols ON public.ab_socio (empresa_id, nome, qualificacao) NULLS NOT DISTINCT;
