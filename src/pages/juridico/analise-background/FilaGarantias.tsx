@@ -81,19 +81,22 @@ export default function FilaGarantias({ onAbrirLead, modalidade }: PropsFila) {
       {/* O time precisa saber, na tela, o que é fato e o que é conta. Um
           número sem essa ressalva vira promessa na boca de quem vende. */}
       <div className="rounded-md border bg-muted/40 px-3 py-2 text-[12px] text-muted-foreground">
-        <strong className="text-foreground">Prêmio é simulação de referência</strong> —
-        aritmética sobre os parâmetros em Administração › Fontes, não cotação. Servem para
-        ordenar a fila e dimensionar o esforço. O que decide se é lead está no dossiê:
-        o gatilho, a evidência e o que falta confirmar.
+        <strong className="text-foreground">A IS é fato; o prêmio é referência.</strong>{" "}
+        A importância segurada sai do valor de execução mais o acréscimo legal. O prêmio usa
+        a taxa de referência da parametrização só para dimensionar esforço — não é cotação, e
+        <strong className="text-foreground"> comissão não é calculada aqui</strong>: o
+        percentual varia por seguradora e por empresa, e se simula na aba Oportunidades com
+        o número que você acordou. O que decide se é lead está no dossiê: o gatilho, a
+        evidência e o que falta confirmar.
       </div>
 
-      <div className="grid gap-3 grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+      <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
         <KpiSimples valor={num(kpi.leads)} rotulo="Leads ativos"
           apoio={`${kpi.bloqueados} com filtro negativo`} />
-        <KpiSimples valor={brlCurto(kpi.is)} rotulo="Importância segurada"
+        <KpiSimples valor={brlCurto(kpi.is)} rotulo="Importância segurada" destaque
           apoio="soma da carteira mapeada" />
-        <KpiSimples valor={brlCurto(kpi.premio)} rotulo="Prêmio estimado/ano"
-          apoio="taxa de referência × IS" />
+        <KpiSimples valor={brlCurto(kpi.premio)} rotulo="Prêmio de referência/ano"
+          apoio="taxa de referência × IS — não é cotação" />
         <KpiSimples valor={num(kpi.urgentes)} rotulo="Prazo em ≤ 15 dias"
           apoio="ação imediata" />
       </div>
@@ -200,7 +203,7 @@ export default function FilaGarantias({ onAbrirLead, modalidade }: PropsFila) {
                 <TableHead className="min-w-[190px]">Modalidade / produto</TableHead>
                 <TableHead>Gatilhos</TableHead>
                 <TableHead className="text-right">IS</TableHead>
-                <TableHead className="text-right">Prêmio/ano</TableHead>
+                <TableHead className="text-right">Prêmio/ano (ref.)</TableHead>
                 <TableHead>Prazo</TableHead>
                 <TableHead>Subscr.</TableHead>
                 <TableHead>Status</TableHead>
@@ -237,7 +240,7 @@ export default function FilaGarantias({ onAbrirLead, modalidade }: PropsFila) {
                       {(l.gatilhos ?? []).map((g) => <GatilhoBadge key={g} codigo={g} />)}
                     </div>
                   </TableCell>
-                  <TableCell className="text-right"><Dinheiro valor={l.importancia_segurada} /></TableCell>
+                  <TableCell className="text-right"><Dinheiro valor={l.importancia_segurada} forte /></TableCell>
                   <TableCell className="text-right"><Dinheiro valor={l.premio_estimado} /></TableCell>
                   <TableCell className="whitespace-nowrap">
                     {l.deadline ? (
@@ -266,7 +269,7 @@ export default function FilaGarantias({ onAbrirLead, modalidade }: PropsFila) {
 
       {!!data?.length && (
         <p className="text-xs text-muted-foreground">
-          {data.length} linha(s) · importância segurada somada {brl(kpi.is)} ·
+          {data.length} linha(s) · IS somada {brl(kpi.is)} ·
           clique em qualquer linha para abrir o dossiê com a evidência e a minuta.
         </p>
       )}

@@ -32,11 +32,12 @@ export default function OriginacaoGarantia({ onAbrirLead }: Props) {
   const total = Object.values(resumo ?? {}).reduce(
     (acc, r) => ({
       leads: acc.leads + r.leads,
+      is: acc.is + r.is,
       premio: acc.premio + r.premio,
       vencendo: acc.vencendo + r.vencendo,
       bloqueados: acc.bloqueados + r.bloqueados,
     }),
-    { leads: 0, premio: 0, vencendo: 0, bloqueados: 0 },
+    { leads: 0, is: 0, premio: 0, vencendo: 0, bloqueados: 0 },
   );
 
   const ativo = RAMOS.find((r) => r.chave === ramo) ?? RAMOS[0];
@@ -44,14 +45,16 @@ export default function OriginacaoGarantia({ onAbrirLead }: Props) {
   return (
     <div className="space-y-5">
       {/* -------- consolidado -------------------------------------- */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {isLoading
-          ? [...Array(4)].map((_, i) => <Skeleton key={i} className="h-20 w-full" />)
+          ? [...Array(5)].map((_, i) => <Skeleton key={i} className="h-20 w-full" />)
           : (
             <>
               <Cartao rotulo="Oportunidades" valor={num(total.leads)} />
-              <Cartao rotulo="Prêmio estimado" valor={brlCurto(total.premio)}
-                nota="taxa de referência × IS" />
+              <Cartao rotulo="IS necessária" valor={brlCurto(total.is)} destaque
+                nota="valor de execução + acréscimo legal" />
+              <Cartao rotulo="Prêmio de referência" valor={brlCurto(total.premio)}
+                nota="taxa de referência × IS — não é cotação" />
               <Cartao
                 rotulo="Prazo em 15 dias"
                 valor={num(total.vencendo)}
