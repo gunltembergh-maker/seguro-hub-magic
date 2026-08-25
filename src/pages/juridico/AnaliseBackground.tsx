@@ -41,7 +41,15 @@ import CotasCustos from "./analise-background/CotasCustos";
 
 type Area = "originacao" | "risco" | "admin";
 
-export default function AnaliseBackground() {
+export interface PropsAnaliseBackground {
+  /**
+   * Onde a página abre. Não restringe nada — só escolhe a primeira aba.
+   * Quem tem permissão continua vendo todos os grupos, venha por onde vier.
+   */
+  foco?: Area;
+}
+
+export default function AnaliseBackground({ foco }: PropsAnaliseBackground = {}) {
   const { isLoading, pode, temAlgum, isAdmin } = usePermissoesAb();
   const [aba, setAba] = useState<string | null>(null);
   const [leadId, setLeadId] = useState<string | null>(null);
