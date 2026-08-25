@@ -101,7 +101,7 @@ export interface FiltroFila {
   status?: string;
   bloqueados?: "ocultar" | "mostrar" | "somente";
   busca?: string;
-  ordenarPor?: "prioridade" | "comissao_estimada" | "deadline";
+  ordenarPor?: "prioridade" | "importancia_segurada" | "deadline";
 }
 
 export function useFila(filtro: FiltroFila) {
@@ -148,7 +148,7 @@ export function useCarteira(filtro: { busca?: string; relacao?: string }) {
           ? q.or(`razao_social.ilike.%${termo}%,cnpj.like.%${dig}%`)
           : q.ilike("razao_social", `%${termo}%`);
       }
-      const { data, error } = await q.order("comissao_potencial", { ascending: false }).limit(500);
+      const { data, error } = await q.order("is_potencial", { ascending: false }).limit(500);
       if (error) throw error;
       return (data ?? []) as LinhaCarteira[];
     },
@@ -612,25 +612,24 @@ export function useResumoRamos() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ab_v_fila")
-        .select("modalidade, comissao_estimada, premio_estimado, importancia_segurada, bloqueios, deadline")
+        .select("modalidade, premio_estimado, importancia_segurada, bloqueios, deadline")
         .limit(2000);
       if (error) throw error;
       const linhas = (data ?? []) as {
-        modalidade: Modalidade; comissao_estimada: number; premio_estimado: number;
+        modalidade: Modalidade; premio_estimado: number;
         importancia_segurada: number; bloqueios: string[] | null; deadline: string | null;
       }[];
       const hoje = new Date().toISOString().slice(0, 10);
       const porRamo: Record<string, {
-        leads: number; bloqueados: number; comissao: number;
+        leads: number; bloqueados: number;
         premio: number; is: number; vencendo: number;
       }> = {};
       for (const l of linhas) {
         const r = (porRamo[l.modalidade] ??= {
-          leads: 0, bloqueados: 0, comissao: 0, premio: 0, is: 0, vencendo: 0,
+          leads: 0, bloqueados: 0, premio: 0, is: 0, vencendo: 0,
         });
         if (l.bloqueios?.length) { r.bloqueados++; continue; }
         r.leads++;
-        r.comissao += Number(l.comissao_estimada ?? 0);
         r.premio += Number(l.premio_estimado ?? 0);
         r.is += Number(l.importancia_segurada ?? 0);
         if (l.deadline && l.deadline >= hoje) {

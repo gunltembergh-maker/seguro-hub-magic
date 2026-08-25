@@ -47,8 +47,6 @@ export interface LinhaFila {
   valor_base: number;
   importancia_segurada: number;
   premio_estimado: number;
-  comissao_estimada: number;
-  economia_cliente: number;
   prioridade: number;
   urgencia: number;
   prob_subscricao: number;
@@ -90,7 +88,7 @@ export interface LinhaCarteira {
   divida_ativa: number;
   contratos_publicos: number;
   restritivos: string[];
-  comissao_potencial: number;
+  is_potencial: number;
   n_leads: number;
 }
 
