@@ -55,8 +55,6 @@ export default function FilaGarantias({ onAbrirLead, modalidade }: PropsFila) {
       bloqueados: linhas.length - ativos.length,
       is: ativos.reduce((s, l) => s + Number(l.importancia_segurada), 0),
       premio: ativos.reduce((s, l) => s + Number(l.premio_estimado), 0),
-      comissao: ativos.reduce((s, l) => s + Number(l.comissao_estimada), 0),
-      economia: ativos.reduce((s, l) => s + Number(l.economia_cliente), 0),
       urgentes: ativos.filter(
         (l) => l.dias_para_prazo !== null && l.dias_para_prazo <= 15,
       ).length,
@@ -83,25 +81,21 @@ export default function FilaGarantias({ onAbrirLead, modalidade }: PropsFila) {
       {/* O time precisa saber, na tela, o que é fato e o que é conta. Um
           número sem essa ressalva vira promessa na boca de quem vende. */}
       <div className="rounded-md border bg-muted/40 px-3 py-2 text-[12px] text-muted-foreground">
-        <strong className="text-foreground">Prêmio e comissão são estimativas</strong> —
+        <strong className="text-foreground">Prêmio é simulação de referência</strong> —
         aritmética sobre os parâmetros em Administração › Fontes, não cotação. Servem para
         ordenar a fila e dimensionar o esforço. O que decide se é lead está no dossiê:
         o gatilho, a evidência e o que falta confirmar.
       </div>
 
-      <div className="grid gap-3 grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+      <div className="grid gap-3 grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
         <KpiSimples valor={num(kpi.leads)} rotulo="Leads ativos"
           apoio={`${kpi.bloqueados} com filtro negativo`} />
         <KpiSimples valor={brlCurto(kpi.is)} rotulo="Importância segurada"
           apoio="soma da carteira mapeada" />
         <KpiSimples valor={brlCurto(kpi.premio)} rotulo="Prêmio estimado/ano"
           apoio="taxa de referência × IS" />
-        <KpiSimples valor={brlCurto(kpi.comissao)} rotulo="Comissão estimada" destaque
-          apoio="sobre o prêmio estimado" />
         <KpiSimples valor={num(kpi.urgentes)} rotulo="Prazo em ≤ 15 dias"
           apoio="ação imediata" />
-        <KpiSimples valor={brlCurto(kpi.economia)} rotulo="Economia p/ clientes"
-          apoio="capital liberado × Selic − prêmio" />
       </div>
 
       <div className="flex flex-wrap gap-2 items-center">
@@ -170,7 +164,7 @@ export default function FilaGarantias({ onAbrirLead, modalidade }: PropsFila) {
           <SelectTrigger className="w-[190px]"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="prioridade">Ordenar por prioridade</SelectItem>
-            <SelectItem value="comissao_estimada">Ordenar por comissão</SelectItem>
+            <SelectItem value="importancia_segurada">Ordenar por IS</SelectItem>
             <SelectItem value="deadline">Ordenar por prazo</SelectItem>
           </SelectContent>
         </Select>
@@ -207,7 +201,6 @@ export default function FilaGarantias({ onAbrirLead, modalidade }: PropsFila) {
                 <TableHead>Gatilhos</TableHead>
                 <TableHead className="text-right">IS</TableHead>
                 <TableHead className="text-right">Prêmio/ano</TableHead>
-                <TableHead className="text-right">Comissão</TableHead>
                 <TableHead>Prazo</TableHead>
                 <TableHead>Subscr.</TableHead>
                 <TableHead>Status</TableHead>
@@ -246,7 +239,6 @@ export default function FilaGarantias({ onAbrirLead, modalidade }: PropsFila) {
                   </TableCell>
                   <TableCell className="text-right"><Dinheiro valor={l.importancia_segurada} /></TableCell>
                   <TableCell className="text-right"><Dinheiro valor={l.premio_estimado} /></TableCell>
-                  <TableCell className="text-right"><Dinheiro valor={l.comissao_estimada} forte /></TableCell>
                   <TableCell className="whitespace-nowrap">
                     {l.deadline ? (
                       <div className="space-y-1">
@@ -274,7 +266,7 @@ export default function FilaGarantias({ onAbrirLead, modalidade }: PropsFila) {
 
       {!!data?.length && (
         <p className="text-xs text-muted-foreground">
-          {data.length} linha(s) · comissão potencial somada {brl(kpi.comissao)} ·
+          {data.length} linha(s) · importância segurada somada {brl(kpi.is)} ·
           clique em qualquer linha para abrir o dossiê com a evidência e a minuta.
         </p>
       )}
