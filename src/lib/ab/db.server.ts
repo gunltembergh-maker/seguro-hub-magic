@@ -78,6 +78,28 @@ export async function exigirPerfil(
   return { userId: user.user.id };
 }
 
+/**
+ * Autenticação por segredo compartilhado, para rotas chamadas por máquina
+ * (pg_cron e webhook do bureau). Aceita header ou query string, porque nem
+ * todo fornecedor deixa configurar header customizado no callback.
+ *
+ * Devolve `null` quando está tudo certo, ou a Response de erro.
+ */
+export function conferirSegredo(req: Request, esperado: string | undefined): Response | null {
+  if (!esperado) {
+    return json({
+      erro: "server_misconfigured",
+      detalhe: "O segredo desta rota não está definido nos secrets do projeto.",
+    }, 500);
+  }
+  const url = new URL(req.url);
+  const recebido = req.headers.get("x-ab-secret")
+    ?? req.headers.get("x-hub-secret")
+    ?? url.searchParams.get("secret");
+  if (recebido !== esperado) return json({ erro: "unauthorized" }, 401);
+  return null;
+}
+
 /** Lê ab_parametro. Cai no padrão se a tabela estiver vazia. */
 export async function carregarParametros(sb: SupabaseClient): Promise<Parametros> {
   const { data } = await sb.from("ab_parametro").select("chave, valor");
@@ -124,6 +146,103 @@ export async function upsertEmpresa(
     .single();
   if (error) throw new Error(`upsertEmpresa(${doc}): ${error.message}`);
   return (data as { id: string }).id;
+}
+
+/**
+ * Versão em lote do upsertEmpresa. Existe por causa do runtime: no
+ * Cloudflare Workers cada ida ao banco custa latência de rede, e uma
+ * ingestão do PNCP com 2.000 itens fazendo um upsert por item estoura o
+ * limite da borda muito antes de terminar. Aqui são 3 idas ao banco,
+ * independentemente do tamanho da lista.
+ *
+ * Regra de nome: `razao_social` é NOT NULL, então empresa nova sem nome
+ * entra com o próprio CNPJ como placeholder. Se depois chegar o nome de
+ * verdade, ele substitui o placeholder — e só o placeholder. Nome já bom
+ * na base nunca é sobrescrito por ingestão.
+ */
+export async function upsertEmpresasEmLote(
+  sb: SupabaseClient,
+  linhas: { cnpj: string; [campo: string]: unknown }[],
+  chunk = 200,
+): Promise<Map<string, string>> {
+  const porCnpj = new Map<string, Record<string, unknown>>();
+  for (const l of linhas) {
+    const doc = soDigitos(l.cnpj).padStart(14, "0");
+    if (doc.length !== 14) continue;
+    const campos = Object.fromEntries(
+      Object.entries(l).filter(
+        ([k, v]) => k !== "cnpj" && v !== null && v !== undefined && v !== "",
+      ),
+    );
+    porCnpj.set(doc, { ...(porCnpj.get(doc) ?? {}), ...campos });
+  }
+
+  const docs = [...porCnpj.keys()];
+  const mapa = new Map<string, string>();
+  if (!docs.length) return mapa;
+
+  // 1. o que já existe
+  const placeholder = new Set<string>();
+  for (let i = 0; i < docs.length; i += chunk) {
+    const { data, error } = await sb
+      .from("ab_empresa")
+      .select("id, cnpj, razao_social")
+      .in("cnpj", docs.slice(i, i + chunk));
+    if (error) throw new Error(`upsertEmpresasEmLote/select: ${error.message}`);
+    for (const r of (data ?? []) as { id: string; cnpj: string; razao_social: string }[]) {
+      mapa.set(r.cnpj, r.id);
+      if (r.razao_social === r.cnpj) placeholder.add(r.cnpj);
+    }
+  }
+
+  // 2. insere os que faltam
+  const novos = docs.filter((d) => !mapa.has(d)).map((d) => ({
+    razao_social: d,
+    ...porCnpj.get(d)!,
+    cnpj: d,
+    cnpj_raiz: d.slice(0, 8),
+  }));
+  for (let i = 0; i < novos.length; i += chunk) {
+    const { data, error } = await sb
+      .from("ab_empresa")
+      .upsert(novos.slice(i, i + chunk), { onConflict: "cnpj" })
+      .select("id, cnpj");
+    if (error) throw new Error(`upsertEmpresasEmLote/insert: ${error.message}`);
+    for (const r of (data ?? []) as { id: string; cnpj: string }[]) mapa.set(r.cnpj, r.id);
+  }
+
+  // 3. troca o placeholder pelo nome real, quando ele chegou agora
+  const renomear = [...placeholder]
+    .filter((d) => typeof porCnpj.get(d)?.razao_social === "string")
+    .map((d) => ({
+      cnpj: d,
+      cnpj_raiz: d.slice(0, 8),
+      razao_social: porCnpj.get(d)!.razao_social,
+    }));
+  for (let i = 0; i < renomear.length; i += chunk) {
+    await sb.from("ab_empresa").upsert(renomear.slice(i, i + chunk), { onConflict: "cnpj" });
+  }
+
+  return mapa;
+}
+
+/** Upsert em fatias, para não estourar o tamanho de payload da borda. */
+export async function upsertEmLote(
+  sb: SupabaseClient,
+  tabela: string,
+  rows: Record<string, unknown>[],
+  onConflict: string,
+  chunk = 200,
+): Promise<{ gravados: number; erros: string[] }> {
+  let gravados = 0;
+  const erros: string[] = [];
+  for (let i = 0; i < rows.length; i += chunk) {
+    const fatia = rows.slice(i, i + chunk);
+    const { error } = await sb.from(tabela).upsert(fatia, { onConflict });
+    if (error) erros.push(`${tabela}[${i}]: ${error.message}`);
+    else gravados += fatia.length;
+  }
+  return { gravados, erros };
 }
 
 export async function logIngest(

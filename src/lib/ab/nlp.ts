@@ -89,7 +89,12 @@ export const SINAIS: Sinal[] = [
   {
     nome: "SENTENCA_CONDENATORIA",
     padrao:
-      "\\b(julgo (parcialmente )?procedente|condeno a? re|sentenca de procedencia|acolho o pedido)\\b",
+      "\\b(julgo\\s+(parcialmente\\s+)?procedent" +
+      "|julgo\\s+procedentes?\\s+em\\s+parte" +
+      "|conden(o|ei)\\s+(a|o)\\s" +
+      "|conden(ada|ado)\\s+(a|o|ao)\\s" +
+      "|sentenca\\s+de\\s+procedencia" +
+      "|acolho\\s+(parcialmente\\s+)?(o\\s+pedido|os\\s+pedidos))",
     peso: 0.82,
     categoria: "FASE",
   },
