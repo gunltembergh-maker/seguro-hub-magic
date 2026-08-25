@@ -392,6 +392,7 @@ export type RotinaAb =
   | "ab-ingest-pncp"
   | "ab-ingest-pgfn"
   | "ab-ingest-transparencia"
+  | "ab-enriquecer"
   | "ab-bureau-monitorar";
 
 export function useRodarFuncao() {

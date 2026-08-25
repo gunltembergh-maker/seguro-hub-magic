@@ -15,6 +15,7 @@ const ROTINAS = [
   'ab-ingest-pncp',
   'ab-ingest-pgfn',
   'ab-ingest-transparencia',
+  'ab-enriquecer',
   'ab-bureau-monitorar',
 ] as const
 
@@ -82,6 +83,11 @@ async function handle(request: Request): Promise<Response> {
       case 'ab-ingest-transparencia': {
         const { ingestTransparencia } = await import('@/lib/ab/ingest-transparencia.server')
         const r = await ingestTransparencia(corpo)
+        return json(r.body, r.status)
+      }
+      case 'ab-enriquecer': {
+        const { enriquecerCadastro } = await import('@/lib/ab/enriquecer.server')
+        const r = await enriquecerCadastro(corpo)
         return json(r.body, r.status)
       }
       case 'ab-bureau-monitorar': {

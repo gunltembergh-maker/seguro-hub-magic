@@ -59,6 +59,16 @@ const FONTES: Fonte[] = [
       "BUREAU_API_KEY, BUREAU_CALLBACK_URL e BUREAU_WEBHOOK_SECRET.",
   },
   {
+    chave: "rfb", funcao: "ab-enriquecer",
+    label: "Receita Federal — cadastro de CNPJ",
+    gratuita: true, alimenta: ["contato", "porte", "CNAE", "situação", "QSA"],
+    doc: "https://minhareceita.org",
+    body: {},
+    nota: "É o que dá TELEFONE e endereço ao lead — sem isso o comercial tem o CNPJ e " +
+      "não tem quem ligar. Também alimenta porte, capital social e CNAE, que pesam na " +
+      "probabilidade de subscrição. E-mail tem cobertura baixa: a Receita raramente preenche.",
+  },
+  {
     chave: "motor", funcao: "ab-motor-run", label: "Motor de regras (gatilhos + preço)",
     gratuita: true, alimenta: ["todos"], doc: "", body: {},
   },
