@@ -57,7 +57,8 @@ const areasAll: AreaItem[] = [
     icon: Scale,
     perm: "menu_area_juridico",
     children: [
-      { title: "Background Check", url: "/juridico/analise-background", icon: SearchCheck, perm: "ab_juridico" },
+      { title: "Background Check", url: "/juridico/analise-background", icon: SearchCheck,
+        perms: ["ab_juridico", "ab_compliance", "ab_rh"] },
     ],
   },
   { title: "Operacional", url: "/operacional", icon: Cog, perm: "menu_area_operacional" },
@@ -65,7 +66,7 @@ const areasAll: AreaItem[] = [
   { title: "Facilities", url: "/facilities", icon: Wrench, perm: "menu_area_facilities" },
 ];
 
-type ChildItem = { title: string; url: string; icon: LucideIcon; perm?: string };
+type ChildItem = { title: string; url: string; icon: LucideIcon; perms?: string[] };
 
 type CollapsibleItem = {
   title: string;
@@ -93,7 +94,8 @@ const ramosAll: CollapsibleItem[] = [
     perm: "menu_ramo_garantia",
     children: [
       { title: "Operacional", url: "/garantia/analise-limite", icon: FileSearch },
-      { title: "Análise de Processos", url: "/garantia/analise-background", icon: FileSearch, perm: "ab_garantia" },
+      { title: "Análise de Processos", url: "/garantia/analise-background", icon: SearchCheck,
+        perms: ["ab_garantia"] },
     ],
   },
   { title: "Benefícios", url: "/beneficios", icon: HeartPulse, tooltip: "Benefícios", perm: "menu_ramo_beneficios" },
@@ -135,7 +137,7 @@ function CollapsibleNavItem({
       <SidebarMenuButton
         asChild={!!item.url}
         isActive={isActiveParent}
-        tooltip={item.tooltip}
+        tooltip={item.tooltip ?? item.title}
         onClick={item.url ? undefined : toggle}
       >
         {item.url ? (
@@ -202,7 +204,9 @@ function semFilhosProibidos<T extends { children?: ChildItem[] }>(
   isAdmin: boolean,
 ): T {
   if (!item.children || item.children.length === 0) return item;
-  const filhos = item.children.filter((c) => isAdmin || !c.perm || hasPermission(meuPerfil, c.perm));
+  const filhos = item.children.filter(
+    (c) => isAdmin || !c.perms?.length || c.perms.some((p) => hasPermission(meuPerfil, p)),
+  );
   // children vazio TEM de ser undefined, nunca []
   return { ...item, children: filhos?.length ? filhos : undefined };
 }
