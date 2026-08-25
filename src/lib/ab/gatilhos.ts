@@ -96,6 +96,16 @@ export interface EventoDetectado {
   grandeVulto?: boolean;
   fatorIs?: null | number;
   /**
+   * O processo de onde este evento saiu. É o que transforma a fila de
+   * "esta empresa, esta modalidade, este total" em "este processo, vence
+   * tal dia, precisa de tanto" — que é a linha que o comercial usa.
+   * Fica nulo nos gatilhos que não nascem de processo (CNDT, dívida
+   * ativa, edital, contrato).
+   */
+  processoId?: string | null;
+  /** `texto` = prazo lido do andamento. `padrao` = estimativa. */
+  deadlineFonte?: "texto" | "padrao" | null;
+  /**
    * O que ainda precisa ser confirmado para isto ser um lead de verdade.
    *
    * Existe porque o time de Garantia não precisa primeiro do valor — precisa
@@ -161,6 +171,29 @@ function trecho(p: ProcessoCtx, limite = 320): string | null {
 const valorDe = (p: ProcessoCtx, a: Analise) =>
   a.valorMaximo || p.valor_execucao || p.valor_causa || 0;
 
+/**
+ * O prazo do evento, e de onde ele veio.
+ *
+ * Regra: prazo declarado no andamento SEMPRE ganha do padrão, e a origem
+ * viaja junto até a tela. `padraoDias = null` significa "este gatilho não
+ * tem prazo presumido" — aí, sem prazo no texto, o evento fica sem data em
+ * vez de ganhar uma inventada.
+ */
+function prazo(
+  p: ProcessoCtx,
+  a: Analise,
+  padraoDias: number | null,
+): { deadline: string | null; deadlineFonte: "texto" | "padrao" | null } {
+  if (a.prazoDias !== null) {
+    return {
+      deadline: maisDias(a.prazoBase ?? ultimaMov(p), a.prazoDias),
+      deadlineFonte: "texto",
+    };
+  }
+  if (padraoDias === null) return { deadline: null, deadlineFonte: null };
+  return { deadline: maisDias(ultimaMov(p), padraoDias), deadlineFonte: "padrao" };
+}
+
 // =====================================================================
 // JUDICIAL
 // =====================================================================
@@ -188,7 +221,8 @@ export const GATILHOS: MetaGatilho[] = [
             `(${p.area ?? "área não informada"}). Passível de resgate e substituição por ` +
             `seguro garantia (CLT art. 899 §11 + Ato Conjunto TST/CSJT 1/2019).`,
           valorBase: valorDe(p, a),
-          deadline: null,
+          processoId: p.id,
+          ...prazo(p, a, null),
           confianca: Math.min(0.95, a.confianca),
           evidencia: { sinais: a.sinais, processo: p.numero },
         }];
@@ -216,7 +250,8 @@ export const GATILHOS: MetaGatilho[] = [
             `Sentença condenatória recente em ${processoFmt(p.numero)}. Janela de 8 dias ` +
             `para recurso — o depósito recursal pode ser substituído por seguro garantia.`,
           valorBase: a.valorMaximo || p.valor_causa || 0,
-          deadline: maisDias(ultima, 8),
+          processoId: p.id,
+          ...prazo(p, a, 8),
           confianca: a.confianca,
           evidencia: { sinais: a.sinais, ultima_movimentacao: ultima },
         }];
@@ -273,7 +308,8 @@ export const GATILHOS: MetaGatilho[] = [
             `${rotulo} em ${processoFmt(p.numero)} (${p.tribunal ?? "—"}). ` +
             `Substituição por seguro garantia com base no CPC art. 835 §2º / art. 848.`,
           valorBase: valorDe(p, a),
-          deadline: maisDias(ultimaMov(p), 15),
+          processoId: p.id,
+          ...prazo(p, a, 15),
           confianca: a.confianca,
           evidencia: { sinais: a.sinais, processo: p.numero, trecho: trecho(p) },
         }];
@@ -297,7 +333,8 @@ export const GATILHOS: MetaGatilho[] = [
             `Ação de improbidade / ACP em ${processoFmt(p.numero)} com risco de ` +
             `indisponibilidade de bens. Garantia judicial pode preservar a operação.`,
           valorBase: valorDe(p, a),
-          deadline: null,
+          processoId: p.id,
+          ...prazo(p, a, null),
           confianca: Math.min(0.7, a.confianca),
           evidencia: { sinais: a.sinais },
         }];
@@ -332,7 +369,8 @@ export const GATILHOS: MetaGatilho[] = [
             `§3º: seguro garantia equiparado a depósito em dinheiro. Lei 14.689/2023 veda ` +
             `liquidação antecipada antes do trânsito em julgado.`,
           valorBase: valorDe(p, a),
-          deadline: maisDias(ultimaMov(p) ?? p.distribuicao, 5),
+          processoId: p.id,
+          ...prazo(p, a, 5),
           confianca: Math.max(0.75, a.confianca),
           evidencia: { classe: p.classe, classe_codigo: p.classe_codigo, sinais: a.sinais },
         }];
