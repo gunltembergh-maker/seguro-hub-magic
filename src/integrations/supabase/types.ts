@@ -422,12 +422,15 @@ export type Database = {
           confianca: number
           created_at: string
           deadline: string | null
+          deadline_fonte: string | null
           descricao: string
           empresa_id: string
           evidencia: Json | null
           gatilho: string
           id: string
+          importancia_segurada: number | null
           modalidade: string
+          processo_id: string | null
           referencia: string
           valor_base: number
         }
@@ -435,12 +438,15 @@ export type Database = {
           confianca?: number
           created_at?: string
           deadline?: string | null
+          deadline_fonte?: string | null
           descricao: string
           empresa_id: string
           evidencia?: Json | null
           gatilho: string
           id?: string
+          importancia_segurada?: number | null
           modalidade: string
+          processo_id?: string | null
           referencia: string
           valor_base?: number
         }
@@ -448,12 +454,15 @@ export type Database = {
           confianca?: number
           created_at?: string
           deadline?: string | null
+          deadline_fonte?: string | null
           descricao?: string
           empresa_id?: string
           evidencia?: Json | null
           gatilho?: string
           id?: string
+          importancia_segurada?: number | null
           modalidade?: string
+          processo_id?: string | null
           referencia?: string
           valor_base?: number
         }
@@ -478,6 +487,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "ab_v_fila"
             referencedColumns: ["empresa_id"]
+          },
+          {
+            foreignKeyName: "ab_evento_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "ab_processo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ab_evento_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "ab_v_processo"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -639,11 +662,9 @@ export type Database = {
         Row: {
           argumento: string | null
           bloqueios: string[] | null
-          comissao_estimada: number
           confianca: number
           created_at: string
           deadline: string | null
-          economia_cliente: number
           empresa_id: string
           gatilhos: string[]
           id: string
@@ -663,11 +684,9 @@ export type Database = {
         Insert: {
           argumento?: string | null
           bloqueios?: string[] | null
-          comissao_estimada?: number
           confianca?: number
           created_at?: string
           deadline?: string | null
-          economia_cliente?: number
           empresa_id: string
           gatilhos?: string[]
           id?: string
@@ -687,11 +706,9 @@ export type Database = {
         Update: {
           argumento?: string | null
           bloqueios?: string[] | null
-          comissao_estimada?: number
           confianca?: number
           created_at?: string
           deadline?: string | null
-          economia_cliente?: number
           empresa_id?: string
           gatilhos?: string[]
           id?: string
@@ -773,6 +790,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "ab_v_fila"
+            referencedColumns: ["lead_id"]
+          },
+          {
+            foreignKeyName: "ab_lead_evento_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "ab_v_oportunidade"
             referencedColumns: ["lead_id"]
           },
         ]
@@ -2189,11 +2213,11 @@ export type Database = {
         Row: {
           cnae_descricao: string | null
           cnpj: string | null
-          comissao_potencial: number | null
           contratos_publicos: number | null
           divida_ativa: number | null
           empresa_id: string | null
           exposicao_judicial: number | null
+          is_potencial: number | null
           monitorado: boolean | null
           n_em_execucao: number | null
           n_leads: number | null
@@ -2269,12 +2293,10 @@ export type Database = {
           cnae: string | null
           cnae_descricao: string | null
           cnpj: string | null
-          comissao_estimada: number | null
           confianca: number | null
           created_at: string | null
           deadline: string | null
           dias_para_prazo: number | null
-          economia_cliente: number | null
           empresa_id: string | null
           gatilhos: string[] | null
           importancia_segurada: number | null
@@ -2292,11 +2314,90 @@ export type Database = {
           relacao: string | null
           responsavel: string | null
           status: string | null
+          telefone: string | null
+          telefone_2: string | null
           uf: string | null
           urgencia: number | null
           valor_base: number | null
         }
         Relationships: []
+      }
+      ab_v_oportunidade: {
+        Row: {
+          area: string | null
+          bloqueios: string[] | null
+          classe: string | null
+          classe_codigo: string | null
+          cnpj: string | null
+          confianca: number | null
+          deadline: string | null
+          deadline_fonte: string | null
+          dias_para_prazo: number | null
+          distribuicao: string | null
+          empresa_id: string | null
+          fase: string | null
+          garantia_prestada: boolean | null
+          gatilhos: string[] | null
+          importancia_segurada: number | null
+          lead_id: string | null
+          lead_status: string | null
+          modalidade: string | null
+          monitorado: boolean | null
+          municipio: string | null
+          origem: string | null
+          polo: string | null
+          porte: string | null
+          processo_id: string | null
+          processo_numero: string | null
+          qualificacao: string | null
+          razao_social: string | null
+          referencia: string | null
+          responsavel: string | null
+          telefone: string | null
+          telefone_2: string | null
+          tribunal: string | null
+          uf: string | null
+          valor_base: number | null
+          valor_causa: number | null
+          valor_execucao: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ab_evento_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "ab_empresa"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ab_evento_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "ab_v_carteira"
+            referencedColumns: ["empresa_id"]
+          },
+          {
+            foreignKeyName: "ab_evento_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "ab_v_fila"
+            referencedColumns: ["empresa_id"]
+          },
+          {
+            foreignKeyName: "ab_evento_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "ab_processo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ab_evento_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "ab_v_processo"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ab_v_processo: {
         Row: {
@@ -2631,11 +2732,9 @@ export type Database = {
         Returns: {
           argumento: string | null
           bloqueios: string[] | null
-          comissao_estimada: number
           confianca: number
           created_at: string
           deadline: string | null
-          economia_cliente: number
           empresa_id: string
           gatilhos: string[]
           id: string
