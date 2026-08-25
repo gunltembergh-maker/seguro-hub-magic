@@ -121,3 +121,46 @@ export async function encaminhar(
     headers: { "Content-Type": contentType, ...corsHeaders(origin, methods) },
   });
 }
+
+const WORKER_ROOT = "https://lucky-hat-b241.kyuri887.workers.dev/";
+
+/** Fallback legado (chat direto no Worker) — mesmo padrão de segurança. */
+export async function encaminharLegacy(body: unknown, origin: string | null): Promise<Response> {
+  const clientId = process.env["CF_ACCESS_CLIENT_ID"];
+  const clientSecret = process.env["CF_ACCESS_CLIENT_SECRET"];
+  if (!clientId || !clientSecret) {
+    console.error("[tc-lavoro/legacy-analysis] credenciais CF-Access não configuradas");
+    return json({ error: "Serviço indisponível." }, 503, origin, "POST");
+  }
+
+  const started = Date.now();
+  let upstream: Response;
+  try {
+    upstream = await fetch(WORKER_ROOT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "CF-Access-Client-Id": clientId,
+        "CF-Access-Client-Secret": clientSecret,
+      },
+      body: JSON.stringify(body ?? {}),
+    });
+  } catch {
+    console.error(`[tc-lavoro/legacy-analysis] falha de rede (${Date.now() - started}ms)`);
+    return json({ error: "Serviço temporariamente indisponível." }, 502, origin, "POST");
+  }
+
+  const contentType = upstream.headers.get("content-type") ?? "application/json";
+  const text = await upstream.text();
+
+  console.info(`[tc-lavoro/legacy-analysis] status=${upstream.status} dur=${Date.now() - started}ms`);
+
+  if (!upstream.ok && !contentType.includes("application/json")) {
+    return json({ error: "Não foi possível concluir a análise." }, upstream.status, origin, "POST");
+  }
+
+  return new Response(text, {
+    status: upstream.status,
+    headers: { "Content-Type": contentType, ...corsHeaders(origin, "POST") },
+  });
+}
