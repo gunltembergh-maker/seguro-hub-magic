@@ -57,7 +57,8 @@ const areasAll: AreaItem[] = [
     icon: Scale,
     perm: "menu_area_juridico",
     children: [
-      { title: "Background Check", url: "/juridico/analise-background", icon: SearchCheck, perm: "ab_juridico" },
+      { title: "Background Check", url: "/juridico/analise-background", icon: SearchCheck,
+        perms: ["ab_juridico", "ab_compliance", "ab_rh"] },
     ],
   },
   { title: "Operacional", url: "/operacional", icon: Cog, perm: "menu_area_operacional" },
