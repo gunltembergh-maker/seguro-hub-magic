@@ -56,6 +56,7 @@ import { Route as ApiPublicHooksAbMotorRunRouteImport } from './routes/api/publi
 import { Route as ApiPublicHooksAbIngestTransparenciaRouteImport } from './routes/api/public/hooks/ab-ingest-transparencia'
 import { Route as ApiPublicHooksAbIngestPncpRouteImport } from './routes/api/public/hooks/ab-ingest-pncp'
 import { Route as ApiPublicHooksAbIngestPgfnRouteImport } from './routes/api/public/hooks/ab-ingest-pgfn'
+import { Route as ApiPublicHooksAbEnriquecerRouteImport } from './routes/api/public/hooks/ab-enriquecer'
 import { Route as ApiPublicHooksAbBureauWebhookRouteImport } from './routes/api/public/hooks/ab-bureau-webhook'
 import { Route as AuthenticatedAdminEmailsSchedulesRouteImport } from './routes/_authenticated/admin/emails_.schedules'
 import { Route as AuthenticatedAdminEmailsLogRouteImport } from './routes/_authenticated/admin/emails_.log'
@@ -318,6 +319,12 @@ const ApiPublicHooksAbIngestPgfnRoute =
     path: '/api/public/hooks/ab-ingest-pgfn',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksAbEnriquecerRoute =
+  ApiPublicHooksAbEnriquecerRouteImport.update({
+    id: '/api/public/hooks/ab-enriquecer',
+    path: '/api/public/hooks/ab-enriquecer',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksAbBureauWebhookRoute =
   ApiPublicHooksAbBureauWebhookRouteImport.update({
     id: '/api/public/hooks/ab-bureau-webhook',
@@ -383,6 +390,7 @@ export interface FileRoutesByFullPath {
   '/admin/emails/log': typeof AuthenticatedAdminEmailsLogRoute
   '/admin/emails/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
   '/api/public/hooks/ab-bureau-webhook': typeof ApiPublicHooksAbBureauWebhookRoute
+  '/api/public/hooks/ab-enriquecer': typeof ApiPublicHooksAbEnriquecerRoute
   '/api/public/hooks/ab-ingest-pgfn': typeof ApiPublicHooksAbIngestPgfnRoute
   '/api/public/hooks/ab-ingest-pncp': typeof ApiPublicHooksAbIngestPncpRoute
   '/api/public/hooks/ab-ingest-transparencia': typeof ApiPublicHooksAbIngestTransparenciaRoute
@@ -435,6 +443,7 @@ export interface FileRoutesByTo {
   '/admin/emails/log': typeof AuthenticatedAdminEmailsLogRoute
   '/admin/emails/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
   '/api/public/hooks/ab-bureau-webhook': typeof ApiPublicHooksAbBureauWebhookRoute
+  '/api/public/hooks/ab-enriquecer': typeof ApiPublicHooksAbEnriquecerRoute
   '/api/public/hooks/ab-ingest-pgfn': typeof ApiPublicHooksAbIngestPgfnRoute
   '/api/public/hooks/ab-ingest-pncp': typeof ApiPublicHooksAbIngestPncpRoute
   '/api/public/hooks/ab-ingest-transparencia': typeof ApiPublicHooksAbIngestTransparenciaRoute
@@ -489,6 +498,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/emails_/log': typeof AuthenticatedAdminEmailsLogRoute
   '/_authenticated/admin/emails_/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
   '/api/public/hooks/ab-bureau-webhook': typeof ApiPublicHooksAbBureauWebhookRoute
+  '/api/public/hooks/ab-enriquecer': typeof ApiPublicHooksAbEnriquecerRoute
   '/api/public/hooks/ab-ingest-pgfn': typeof ApiPublicHooksAbIngestPgfnRoute
   '/api/public/hooks/ab-ingest-pncp': typeof ApiPublicHooksAbIngestPncpRoute
   '/api/public/hooks/ab-ingest-transparencia': typeof ApiPublicHooksAbIngestTransparenciaRoute
@@ -543,6 +553,7 @@ export interface FileRouteTypes {
     | '/admin/emails/log'
     | '/admin/emails/schedules'
     | '/api/public/hooks/ab-bureau-webhook'
+    | '/api/public/hooks/ab-enriquecer'
     | '/api/public/hooks/ab-ingest-pgfn'
     | '/api/public/hooks/ab-ingest-pncp'
     | '/api/public/hooks/ab-ingest-transparencia'
@@ -595,6 +606,7 @@ export interface FileRouteTypes {
     | '/admin/emails/log'
     | '/admin/emails/schedules'
     | '/api/public/hooks/ab-bureau-webhook'
+    | '/api/public/hooks/ab-enriquecer'
     | '/api/public/hooks/ab-ingest-pgfn'
     | '/api/public/hooks/ab-ingest-pncp'
     | '/api/public/hooks/ab-ingest-transparencia'
@@ -648,6 +660,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/emails_/log'
     | '/_authenticated/admin/emails_/schedules'
     | '/api/public/hooks/ab-bureau-webhook'
+    | '/api/public/hooks/ab-enriquecer'
     | '/api/public/hooks/ab-ingest-pgfn'
     | '/api/public/hooks/ab-ingest-pncp'
     | '/api/public/hooks/ab-ingest-transparencia'
@@ -675,6 +688,7 @@ export interface RootRouteChildren {
   ApiTcLavoroLimitsQueryRoute: typeof ApiTcLavoroLimitsQueryRoute
   ApiTcLavoroTcAnalisesRoute: typeof ApiTcLavoroTcAnalisesRouteWithChildren
   ApiPublicHooksAbBureauWebhookRoute: typeof ApiPublicHooksAbBureauWebhookRoute
+  ApiPublicHooksAbEnriquecerRoute: typeof ApiPublicHooksAbEnriquecerRoute
   ApiPublicHooksAbIngestPgfnRoute: typeof ApiPublicHooksAbIngestPgfnRoute
   ApiPublicHooksAbIngestPncpRoute: typeof ApiPublicHooksAbIngestPncpRoute
   ApiPublicHooksAbIngestTransparenciaRoute: typeof ApiPublicHooksAbIngestTransparenciaRoute
@@ -1016,6 +1030,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksAbIngestPgfnRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/ab-enriquecer': {
+      id: '/api/public/hooks/ab-enriquecer'
+      path: '/api/public/hooks/ab-enriquecer'
+      fullPath: '/api/public/hooks/ab-enriquecer'
+      preLoaderRoute: typeof ApiPublicHooksAbEnriquecerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/ab-bureau-webhook': {
       id: '/api/public/hooks/ab-bureau-webhook'
       path: '/api/public/hooks/ab-bureau-webhook'
@@ -1193,6 +1214,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiTcLavoroLimitsQueryRoute: ApiTcLavoroLimitsQueryRoute,
   ApiTcLavoroTcAnalisesRoute: ApiTcLavoroTcAnalisesRouteWithChildren,
   ApiPublicHooksAbBureauWebhookRoute: ApiPublicHooksAbBureauWebhookRoute,
+  ApiPublicHooksAbEnriquecerRoute: ApiPublicHooksAbEnriquecerRoute,
   ApiPublicHooksAbIngestPgfnRoute: ApiPublicHooksAbIngestPgfnRoute,
   ApiPublicHooksAbIngestPncpRoute: ApiPublicHooksAbIngestPncpRoute,
   ApiPublicHooksAbIngestTransparenciaRoute:
