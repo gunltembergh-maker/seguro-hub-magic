@@ -36,6 +36,36 @@ test("prazo na forma 'N dias para apresentar'", () => {
   );
 });
 
+test("'cite-se para pagar em 5 dias' — a fórmula do art. 8º da LEF", () => {
+  // Este é o caso que eu tinha deixado passar: o número vem DEPOIS do
+  // verbo. Achei rodando o classificador contra os andamentos reais da
+  // base, onde a execução fiscal usa exatamente esta redação.
+  assert.equal(
+    analisar(
+      "Distribuída execução fiscal com base na CDA nº 80.6.26.000123-45, " +
+      "no valor de R$ 4.820.000,00. Cite-se para pagar em 5 dias ou garantir a execução.",
+    ).prazoDias,
+    5,
+  );
+});
+
+test("'em 15 dias, sob pena de penhora, garantir o juízo' — ordem inversa", () => {
+  assert.equal(
+    analisar("Intime-se para, em 15 dias, sob pena de penhora, garantir o juízo.").prazoDias,
+    15,
+  );
+});
+
+test("prazo não atravessa frase", () => {
+  // "Aguarde-se em 30 dias." é uma determinação; "garantir o juízo" é
+  // outra. Sem a barreira de pontuação, o prazo de uma viraria prazo da
+  // outra — e a data na tela seria de um ato que não gera oportunidade.
+  assert.equal(
+    analisar("Aguarde-se em 30 dias. Após, intime-se a executada.").prazoDias,
+    null,
+  );
+});
+
 test("prazo improrrogável também conta", () => {
   assert.equal(analisar("prazo improrrogavel de 10 dias").prazoDias, 10);
 });

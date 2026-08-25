@@ -187,6 +187,13 @@ const PRAZO_RX: RegExp[] = [
   /prazo\s+(?:legal\s+|improrrogavel\s+|comum\s+)?de\s+(cinco|oito|dez|quinze|vinte|trinta|sessenta)\s+dias/,
   // "15 dias para apresentar garantia", "5 (cinco) dias uteis para indicar bens"
   /(\d{1,3})\s*(?:\([a-z\s]+\)\s*)?dias\s+(?:uteis\s+)?para\s+(?:apresentar|indicar|oferecer|garantir|efetuar|pagar|comprovar|substituir|nomear)/,
+  // "cite-se para pagar em 5 dias ou garantir a execucao" — a formula do
+  // art. 8º da LEF, e o caso que eu tinha deixado passar: o numero vem
+  // DEPOIS do verbo. `[^.;]` impede atravessar frase: prazo de uma
+  // determinacao nao pode virar prazo de outra.
+  /(?:pagar|garantir|apresentar|indicar|oferecer|comprovar|substituir|nomear|efetuar|quitar)\b[^.;]{0,40}?\bem\s+(\d{1,3})\s*(?:\([a-z\s]+\)\s*)?dias/,
+  // "em 15 dias, sob pena de penhora, garantir o juizo" — o inverso
+  /\bem\s+(\d{1,3})\s*(?:\([a-z\s]+\)\s*)?dias\b[^.;]{0,40}?(?:pagar|garantir|apresentar|indicar|oferecer|comprovar|substituir|nomear)/,
 ];
 
 function extrairPrazoDias(base: string): number | null {
