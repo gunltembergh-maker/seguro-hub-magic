@@ -1003,9 +1003,13 @@ function mensagemProgressoJob(data, passo, totalPassos) {
 }
 
 async function chamarWorkerDireto(messages, maxTokens = 8192) {
-  const resp = await fetch(DEEPSEEK_WORKER_URL, {
+  // Fallback legado via proxy server-side do Hub (Cloudflare Access no servidor).
+  const resp = await fetch('/api/tc-lavoro/legacy-analysis', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${_lavoroAuthToken}`,
+    },
     body: JSON.stringify({ model: 'deepseek-chat', messages, max_tokens: maxTokens }),
   });
   if (!resp.ok) throw new Error('Erro na API: ' + await resp.text());

@@ -26,6 +26,7 @@ import { Route as AuthenticatedDemaisRamosRouteImport } from './routes/_authenti
 import { Route as AuthenticatedBeneficiosRouteImport } from './routes/_authenticated/beneficios'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as ApiTcLavoroLimitsQueryRouteImport } from './routes/api/tc-lavoro/limits-query'
+import { Route as ApiTcLavoroLegacyAnalysisRouteImport } from './routes/api/tc-lavoro/legacy-analysis'
 import { Route as ApiTcLavoroAnalysisJobsRouteImport } from './routes/api/tc-lavoro/analysis-jobs'
 import { Route as ApiAbSolicitarRouteImport } from './routes/api/ab/solicitar'
 import { Route as ApiAbExecutarRouteImport } from './routes/api/ab/executar'
@@ -143,6 +144,12 @@ const ApiTcLavoroLimitsQueryRoute = ApiTcLavoroLimitsQueryRouteImport.update({
   path: '/api/tc-lavoro/limits-query',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTcLavoroLegacyAnalysisRoute =
+  ApiTcLavoroLegacyAnalysisRouteImport.update({
+    id: '/api/tc-lavoro/legacy-analysis',
+    path: '/api/tc-lavoro/legacy-analysis',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiTcLavoroAnalysisJobsRoute = ApiTcLavoroAnalysisJobsRouteImport.update({
   id: '/api/tc-lavoro/analysis-jobs',
   path: '/api/tc-lavoro/analysis-jobs',
@@ -350,6 +357,7 @@ export interface FileRoutesByFullPath {
   '/api/ab/executar': typeof ApiAbExecutarRoute
   '/api/ab/solicitar': typeof ApiAbSolicitarRoute
   '/api/tc-lavoro/analysis-jobs': typeof ApiTcLavoroAnalysisJobsRouteWithChildren
+  '/api/tc-lavoro/legacy-analysis': typeof ApiTcLavoroLegacyAnalysisRoute
   '/api/tc-lavoro/limits-query': typeof ApiTcLavoroLimitsQueryRoute
   '/admin/emails/log': typeof AuthenticatedAdminEmailsLogRoute
   '/admin/emails/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
@@ -398,6 +406,7 @@ export interface FileRoutesByTo {
   '/api/ab/executar': typeof ApiAbExecutarRoute
   '/api/ab/solicitar': typeof ApiAbSolicitarRoute
   '/api/tc-lavoro/analysis-jobs': typeof ApiTcLavoroAnalysisJobsRouteWithChildren
+  '/api/tc-lavoro/legacy-analysis': typeof ApiTcLavoroLegacyAnalysisRoute
   '/api/tc-lavoro/limits-query': typeof ApiTcLavoroLimitsQueryRoute
   '/admin/emails/log': typeof AuthenticatedAdminEmailsLogRoute
   '/admin/emails/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
@@ -448,6 +457,7 @@ export interface FileRoutesById {
   '/api/ab/executar': typeof ApiAbExecutarRoute
   '/api/ab/solicitar': typeof ApiAbSolicitarRoute
   '/api/tc-lavoro/analysis-jobs': typeof ApiTcLavoroAnalysisJobsRouteWithChildren
+  '/api/tc-lavoro/legacy-analysis': typeof ApiTcLavoroLegacyAnalysisRoute
   '/api/tc-lavoro/limits-query': typeof ApiTcLavoroLimitsQueryRoute
   '/_authenticated/admin/emails_/log': typeof AuthenticatedAdminEmailsLogRoute
   '/_authenticated/admin/emails_/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
@@ -498,6 +508,7 @@ export interface FileRouteTypes {
     | '/api/ab/executar'
     | '/api/ab/solicitar'
     | '/api/tc-lavoro/analysis-jobs'
+    | '/api/tc-lavoro/legacy-analysis'
     | '/api/tc-lavoro/limits-query'
     | '/admin/emails/log'
     | '/admin/emails/schedules'
@@ -546,6 +557,7 @@ export interface FileRouteTypes {
     | '/api/ab/executar'
     | '/api/ab/solicitar'
     | '/api/tc-lavoro/analysis-jobs'
+    | '/api/tc-lavoro/legacy-analysis'
     | '/api/tc-lavoro/limits-query'
     | '/admin/emails/log'
     | '/admin/emails/schedules'
@@ -595,6 +607,7 @@ export interface FileRouteTypes {
     | '/api/ab/executar'
     | '/api/ab/solicitar'
     | '/api/tc-lavoro/analysis-jobs'
+    | '/api/tc-lavoro/legacy-analysis'
     | '/api/tc-lavoro/limits-query'
     | '/_authenticated/admin/emails_/log'
     | '/_authenticated/admin/emails_/schedules'
@@ -621,6 +634,7 @@ export interface RootRouteChildren {
   ApiAbExecutarRoute: typeof ApiAbExecutarRoute
   ApiAbSolicitarRoute: typeof ApiAbSolicitarRoute
   ApiTcLavoroAnalysisJobsRoute: typeof ApiTcLavoroAnalysisJobsRouteWithChildren
+  ApiTcLavoroLegacyAnalysisRoute: typeof ApiTcLavoroLegacyAnalysisRoute
   ApiTcLavoroLimitsQueryRoute: typeof ApiTcLavoroLimitsQueryRoute
   ApiPublicHooksAbBureauWebhookRoute: typeof ApiPublicHooksAbBureauWebhookRoute
   ApiPublicHooksAbIngestPgfnRoute: typeof ApiPublicHooksAbIngestPgfnRoute
@@ -752,6 +766,13 @@ declare module '@tanstack/react-router' {
       path: '/api/tc-lavoro/limits-query'
       fullPath: '/api/tc-lavoro/limits-query'
       preLoaderRoute: typeof ApiTcLavoroLimitsQueryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/tc-lavoro/legacy-analysis': {
+      id: '/api/tc-lavoro/legacy-analysis'
+      path: '/api/tc-lavoro/legacy-analysis'
+      fullPath: '/api/tc-lavoro/legacy-analysis'
+      preLoaderRoute: typeof ApiTcLavoroLegacyAnalysisRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/tc-lavoro/analysis-jobs': {
@@ -1093,6 +1114,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAbExecutarRoute: ApiAbExecutarRoute,
   ApiAbSolicitarRoute: ApiAbSolicitarRoute,
   ApiTcLavoroAnalysisJobsRoute: ApiTcLavoroAnalysisJobsRouteWithChildren,
+  ApiTcLavoroLegacyAnalysisRoute: ApiTcLavoroLegacyAnalysisRoute,
   ApiTcLavoroLimitsQueryRoute: ApiTcLavoroLimitsQueryRoute,
   ApiPublicHooksAbBureauWebhookRoute: ApiPublicHooksAbBureauWebhookRoute,
   ApiPublicHooksAbIngestPgfnRoute: ApiPublicHooksAbIngestPgfnRoute,
