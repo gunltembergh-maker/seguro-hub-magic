@@ -175,6 +175,11 @@ export default function AnaliseBackground({ foco }: PropsAnaliseBackground = {})
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">Análise Background</h1>
         <p className="text-sm text-muted-foreground max-w-3xl">
+          {foco === "risco"
+            ? "Você entrou pelo Jurídico, então a página abre na consulta processual. "
+            : foco === "originacao"
+              ? "Você entrou pela Garantia, então a página abre na fila de oportunidades. "
+              : ""}
           Um só acervo, dois usos. Para o time de <strong>Garantia</strong>, é um motor de
           originação: lê fonte pública oficial, classifica o que aparece no andamento
           processual e devolve fila com valor, prazo e argumento. Para o{" "}
