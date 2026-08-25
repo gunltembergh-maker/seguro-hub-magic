@@ -237,6 +237,7 @@ export type Database = {
           razao_social: string
           relacao: string
           situacao_cadastral: string | null
+          transparencia_checado_em: string | null
           uf: string | null
           updated_at: string
         }
@@ -257,6 +258,7 @@ export type Database = {
           razao_social: string
           relacao?: string
           situacao_cadastral?: string | null
+          transparencia_checado_em?: string | null
           uf?: string | null
           updated_at?: string
         }
@@ -277,6 +279,7 @@ export type Database = {
           razao_social?: string
           relacao?: string
           situacao_cadastral?: string | null
+          transparencia_checado_em?: string | null
           uf?: string | null
           updated_at?: string
         }
