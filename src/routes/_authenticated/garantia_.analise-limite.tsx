@@ -1,6 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
+import { useCallback, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+
 
 export const Route = createFileRoute("/_authenticated/garantia_/analise-limite")({
   component: AnaliseLimitePage,
@@ -25,6 +28,29 @@ export const Route = createFileRoute("/_authenticated/garantia_/analise-limite")
 });
 
 function AnaliseLimitePage() {
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+
+  // Entrega o access_token da sessão (Microsoft SSO) ao iframe para que a
+  // consulta de limites autentique no proxy server-side do Hub.
+  const enviarToken = useCallback(async () => {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token || !iframeRef.current?.contentWindow) return;
+    iframeRef.current.contentWindow.postMessage(
+      { type: "lavoro-auth-token", token },
+      window.location.origin,
+    );
+  }, []);
+
+  useEffect(() => {
+    const id = window.setInterval(() => { void enviarToken(); }, 60_000);
+    const { data: sub } = supabase.auth.onAuthStateChange(() => { void enviarToken(); });
+    return () => {
+      window.clearInterval(id);
+      sub.subscription.unsubscribe();
+    };
+  }, [enviarToken]);
+
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col gap-3">
       <div className="flex items-center gap-3 px-1">
@@ -37,6 +63,8 @@ function AnaliseLimitePage() {
         <h1 className="text-lg font-semibold text-white">Análise de Limite</h1>
       </div>
       <iframe
+        ref={iframeRef}
+        onLoad={() => { void enviarToken(); }}
         src="/analise-limite/index.html"
         title="Análise de Limite"
         className="h-full w-full flex-1 rounded-xl border border-white/10 bg-white"
@@ -45,3 +73,4 @@ function AnaliseLimitePage() {
     </div>
   );
 }
+
