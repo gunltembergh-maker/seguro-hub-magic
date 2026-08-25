@@ -25,6 +25,10 @@ import { Route as AuthenticatedFacilitiesRouteImport } from './routes/_authentic
 import { Route as AuthenticatedDemaisRamosRouteImport } from './routes/_authenticated/demais-ramos'
 import { Route as AuthenticatedBeneficiosRouteImport } from './routes/_authenticated/beneficios'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
+import { Route as ApiAbSolicitarRouteImport } from './routes/api/ab/solicitar'
+import { Route as ApiAbExecutarRouteImport } from './routes/api/ab/executar'
+import { Route as ApiAbCotaRouteImport } from './routes/api/ab/cota'
+import { Route as ApiAbBgcheckRouteImport } from './routes/api/ab/bgcheck'
 import { Route as AuthenticatedGarantiaAnaliseLimiteRouteImport } from './routes/_authenticated/garantia_.analise-limite'
 import { Route as AuthenticatedDashboardReportFechamentoRouteImport } from './routes/_authenticated/dashboard.report-fechamento'
 import { Route as AuthenticatedDashboardReceitaExecutivoRouteImport } from './routes/_authenticated/dashboard.receita-executivo'
@@ -44,6 +48,7 @@ import { Route as ApiPublicHooksAbMotorRunRouteImport } from './routes/api/publi
 import { Route as ApiPublicHooksAbIngestTransparenciaRouteImport } from './routes/api/public/hooks/ab-ingest-transparencia'
 import { Route as ApiPublicHooksAbIngestPncpRouteImport } from './routes/api/public/hooks/ab-ingest-pncp'
 import { Route as ApiPublicHooksAbIngestPgfnRouteImport } from './routes/api/public/hooks/ab-ingest-pgfn'
+import { Route as ApiPublicHooksAbBureauWebhookRouteImport } from './routes/api/public/hooks/ab-bureau-webhook'
 import { Route as AuthenticatedAdminEmailsSchedulesRouteImport } from './routes/_authenticated/admin/emails_.schedules'
 import { Route as AuthenticatedAdminEmailsLogRouteImport } from './routes/_authenticated/admin/emails_.log'
 
@@ -127,6 +132,26 @@ const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ApiAbSolicitarRoute = ApiAbSolicitarRouteImport.update({
+  id: '/api/ab/solicitar',
+  path: '/api/ab/solicitar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAbExecutarRoute = ApiAbExecutarRouteImport.update({
+  id: '/api/ab/executar',
+  path: '/api/ab/executar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAbCotaRoute = ApiAbCotaRouteImport.update({
+  id: '/api/ab/cota',
+  path: '/api/ab/cota',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAbBgcheckRoute = ApiAbBgcheckRouteImport.update({
+  id: '/api/ab/bgcheck',
+  path: '/api/ab/bgcheck',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedGarantiaAnaliseLimiteRoute =
   AuthenticatedGarantiaAnaliseLimiteRouteImport.update({
@@ -240,6 +265,12 @@ const ApiPublicHooksAbIngestPgfnRoute =
     path: '/api/public/hooks/ab-ingest-pgfn',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksAbBureauWebhookRoute =
+  ApiPublicHooksAbBureauWebhookRouteImport.update({
+    id: '/api/public/hooks/ab-bureau-webhook',
+    path: '/api/public/hooks/ab-bureau-webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAdminEmailsSchedulesRoute =
   AuthenticatedAdminEmailsSchedulesRouteImport.update({
     id: '/emails_/schedules',
@@ -280,8 +311,13 @@ export interface FileRoutesByFullPath {
   '/dashboard/receita-executivo': typeof AuthenticatedDashboardReceitaExecutivoRoute
   '/dashboard/report-fechamento': typeof AuthenticatedDashboardReportFechamentoRoute
   '/garantia/analise-limite': typeof AuthenticatedGarantiaAnaliseLimiteRoute
+  '/api/ab/bgcheck': typeof ApiAbBgcheckRoute
+  '/api/ab/cota': typeof ApiAbCotaRoute
+  '/api/ab/executar': typeof ApiAbExecutarRoute
+  '/api/ab/solicitar': typeof ApiAbSolicitarRoute
   '/admin/emails/log': typeof AuthenticatedAdminEmailsLogRoute
   '/admin/emails/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
+  '/api/public/hooks/ab-bureau-webhook': typeof ApiPublicHooksAbBureauWebhookRoute
   '/api/public/hooks/ab-ingest-pgfn': typeof ApiPublicHooksAbIngestPgfnRoute
   '/api/public/hooks/ab-ingest-pncp': typeof ApiPublicHooksAbIngestPncpRoute
   '/api/public/hooks/ab-ingest-transparencia': typeof ApiPublicHooksAbIngestTransparenciaRoute
@@ -318,8 +354,13 @@ export interface FileRoutesByTo {
   '/dashboard/receita-executivo': typeof AuthenticatedDashboardReceitaExecutivoRoute
   '/dashboard/report-fechamento': typeof AuthenticatedDashboardReportFechamentoRoute
   '/garantia/analise-limite': typeof AuthenticatedGarantiaAnaliseLimiteRoute
+  '/api/ab/bgcheck': typeof ApiAbBgcheckRoute
+  '/api/ab/cota': typeof ApiAbCotaRoute
+  '/api/ab/executar': typeof ApiAbExecutarRoute
+  '/api/ab/solicitar': typeof ApiAbSolicitarRoute
   '/admin/emails/log': typeof AuthenticatedAdminEmailsLogRoute
   '/admin/emails/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
+  '/api/public/hooks/ab-bureau-webhook': typeof ApiPublicHooksAbBureauWebhookRoute
   '/api/public/hooks/ab-ingest-pgfn': typeof ApiPublicHooksAbIngestPgfnRoute
   '/api/public/hooks/ab-ingest-pncp': typeof ApiPublicHooksAbIngestPncpRoute
   '/api/public/hooks/ab-ingest-transparencia': typeof ApiPublicHooksAbIngestTransparenciaRoute
@@ -358,8 +399,13 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/receita-executivo': typeof AuthenticatedDashboardReceitaExecutivoRoute
   '/_authenticated/dashboard/report-fechamento': typeof AuthenticatedDashboardReportFechamentoRoute
   '/_authenticated/garantia_/analise-limite': typeof AuthenticatedGarantiaAnaliseLimiteRoute
+  '/api/ab/bgcheck': typeof ApiAbBgcheckRoute
+  '/api/ab/cota': typeof ApiAbCotaRoute
+  '/api/ab/executar': typeof ApiAbExecutarRoute
+  '/api/ab/solicitar': typeof ApiAbSolicitarRoute
   '/_authenticated/admin/emails_/log': typeof AuthenticatedAdminEmailsLogRoute
   '/_authenticated/admin/emails_/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
+  '/api/public/hooks/ab-bureau-webhook': typeof ApiPublicHooksAbBureauWebhookRoute
   '/api/public/hooks/ab-ingest-pgfn': typeof ApiPublicHooksAbIngestPgfnRoute
   '/api/public/hooks/ab-ingest-pncp': typeof ApiPublicHooksAbIngestPncpRoute
   '/api/public/hooks/ab-ingest-transparencia': typeof ApiPublicHooksAbIngestTransparenciaRoute
@@ -398,8 +444,13 @@ export interface FileRouteTypes {
     | '/dashboard/receita-executivo'
     | '/dashboard/report-fechamento'
     | '/garantia/analise-limite'
+    | '/api/ab/bgcheck'
+    | '/api/ab/cota'
+    | '/api/ab/executar'
+    | '/api/ab/solicitar'
     | '/admin/emails/log'
     | '/admin/emails/schedules'
+    | '/api/public/hooks/ab-bureau-webhook'
     | '/api/public/hooks/ab-ingest-pgfn'
     | '/api/public/hooks/ab-ingest-pncp'
     | '/api/public/hooks/ab-ingest-transparencia'
@@ -436,8 +487,13 @@ export interface FileRouteTypes {
     | '/dashboard/receita-executivo'
     | '/dashboard/report-fechamento'
     | '/garantia/analise-limite'
+    | '/api/ab/bgcheck'
+    | '/api/ab/cota'
+    | '/api/ab/executar'
+    | '/api/ab/solicitar'
     | '/admin/emails/log'
     | '/admin/emails/schedules'
+    | '/api/public/hooks/ab-bureau-webhook'
     | '/api/public/hooks/ab-ingest-pgfn'
     | '/api/public/hooks/ab-ingest-pncp'
     | '/api/public/hooks/ab-ingest-transparencia'
@@ -475,8 +531,13 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/receita-executivo'
     | '/_authenticated/dashboard/report-fechamento'
     | '/_authenticated/garantia_/analise-limite'
+    | '/api/ab/bgcheck'
+    | '/api/ab/cota'
+    | '/api/ab/executar'
+    | '/api/ab/solicitar'
     | '/_authenticated/admin/emails_/log'
     | '/_authenticated/admin/emails_/schedules'
+    | '/api/public/hooks/ab-bureau-webhook'
     | '/api/public/hooks/ab-ingest-pgfn'
     | '/api/public/hooks/ab-ingest-pncp'
     | '/api/public/hooks/ab-ingest-transparencia'
@@ -492,6 +553,11 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiAbBgcheckRoute: typeof ApiAbBgcheckRoute
+  ApiAbCotaRoute: typeof ApiAbCotaRoute
+  ApiAbExecutarRoute: typeof ApiAbExecutarRoute
+  ApiAbSolicitarRoute: typeof ApiAbSolicitarRoute
+  ApiPublicHooksAbBureauWebhookRoute: typeof ApiPublicHooksAbBureauWebhookRoute
   ApiPublicHooksAbIngestPgfnRoute: typeof ApiPublicHooksAbIngestPgfnRoute
   ApiPublicHooksAbIngestPncpRoute: typeof ApiPublicHooksAbIngestPncpRoute
   ApiPublicHooksAbIngestTransparenciaRoute: typeof ApiPublicHooksAbIngestTransparenciaRoute
@@ -615,6 +681,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/ab/solicitar': {
+      id: '/api/ab/solicitar'
+      path: '/api/ab/solicitar'
+      fullPath: '/api/ab/solicitar'
+      preLoaderRoute: typeof ApiAbSolicitarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ab/executar': {
+      id: '/api/ab/executar'
+      path: '/api/ab/executar'
+      fullPath: '/api/ab/executar'
+      preLoaderRoute: typeof ApiAbExecutarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ab/cota': {
+      id: '/api/ab/cota'
+      path: '/api/ab/cota'
+      fullPath: '/api/ab/cota'
+      preLoaderRoute: typeof ApiAbCotaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ab/bgcheck': {
+      id: '/api/ab/bgcheck'
+      path: '/api/ab/bgcheck'
+      fullPath: '/api/ab/bgcheck'
+      preLoaderRoute: typeof ApiAbBgcheckRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/garantia_/analise-limite': {
       id: '/_authenticated/garantia_/analise-limite'
@@ -749,6 +843,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksAbIngestPgfnRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/ab-bureau-webhook': {
+      id: '/api/public/hooks/ab-bureau-webhook'
+      path: '/api/public/hooks/ab-bureau-webhook'
+      fullPath: '/api/public/hooks/ab-bureau-webhook'
+      preLoaderRoute: typeof ApiPublicHooksAbBureauWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin/emails_/schedules': {
       id: '/_authenticated/admin/emails_/schedules'
       path: '/emails/schedules'
@@ -855,6 +956,11 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiAbBgcheckRoute: ApiAbBgcheckRoute,
+  ApiAbCotaRoute: ApiAbCotaRoute,
+  ApiAbExecutarRoute: ApiAbExecutarRoute,
+  ApiAbSolicitarRoute: ApiAbSolicitarRoute,
+  ApiPublicHooksAbBureauWebhookRoute: ApiPublicHooksAbBureauWebhookRoute,
   ApiPublicHooksAbIngestPgfnRoute: ApiPublicHooksAbIngestPgfnRoute,
   ApiPublicHooksAbIngestPncpRoute: ApiPublicHooksAbIngestPncpRoute,
   ApiPublicHooksAbIngestTransparenciaRoute:
