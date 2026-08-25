@@ -1,5 +1,13 @@
 const DEEPSEEK_WORKER_URL = 'https://lucky-hat-b241.kyuri887.workers.dev/';
 const DEEPSEEK_JOBS_URL = DEEPSEEK_WORKER_URL.replace(/\/+$/, '') + '/v1/analysis-jobs';
+let _lavoroAuthToken = '';
+
+window.addEventListener('message', event => {
+  if (event.origin !== window.location.origin) return;
+  if (event.data && event.data.type === 'lavoro-auth-token' && typeof event.data.token === 'string') {
+    _lavoroAuthToken = event.data.token;
+  }
+});
 const MAX_PDF_PAGES = 600;
 const TEXT_CHUNK_SIZE = 30000;
 // Um passo de job = 1 chunk analisado, 1 grupo de notas consolidado ou a sintese
@@ -1241,12 +1249,15 @@ async function analisarDocumentosFinanceiros(arquivos) {
 }
 
 async function consultarLimitesSeguradoras(cnpj, seguradoras, onProgress, forceRefresh = false) {
-  const url = DEEPSEEK_WORKER_URL.replace(/\/+$/, '') + '/v1/limits/query';
+  const url = '/api/tc-lavoro/limits-query';
   const deadline = Date.now() + 6 * 60 * 1000;
   for (;;) {
     const resp = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${_lavoroAuthToken}`,
+      },
       body: JSON.stringify({ cnpj, seguradoras, forceRefresh }),
     });
 
