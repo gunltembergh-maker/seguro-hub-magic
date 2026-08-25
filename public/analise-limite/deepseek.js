@@ -1,4 +1,4 @@
-const DEEPSEEK_WORKER_URL = 'https://lucky-hat-b241.kyuri887.workers.dev/';
+// Worker T&C acessado exclusivamente pelos proxies server-side do Hub (/api/tc-lavoro/*).
 // Analysis-jobs passam pelo proxy server-side do Hub (Cloudflare Access fica no servidor).
 const DEEPSEEK_JOBS_URL = '/api/tc-lavoro/analysis-jobs';
 let _lavoroAuthToken = '';
