@@ -204,7 +204,9 @@ function semFilhosProibidos<T extends { children?: ChildItem[] }>(
   isAdmin: boolean,
 ): T {
   if (!item.children || item.children.length === 0) return item;
-  const filhos = item.children.filter((c) => isAdmin || !c.perm || hasPermission(meuPerfil, c.perm));
+  const filhos = item.children.filter(
+    (c) => isAdmin || !c.perms?.length || c.perms.some((p) => hasPermission(meuPerfil, p)),
+  );
   // children vazio TEM de ser undefined, nunca []
   return { ...item, children: filhos?.length ? filhos : undefined };
 }
