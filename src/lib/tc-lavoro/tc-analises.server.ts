@@ -1,6 +1,8 @@
 // Helper server-side dedicado ao histórico T&C do Worker (Cloudflare Access).
 // Mesmo padrão de segurança de limits-query / analysis-jobs: valida a sessão
 // Supabase do Hub e só então encaminha, injetando CF-Access apenas no servidor.
+import { corsHeaders as cors, json as jsonResp } from "./analysis-jobs.server";
+
 export { isAllowedOrigin, corsHeaders, json, autenticar } from "./analysis-jobs.server";
 
 const WORKER_BASE = "https://lucky-hat-b241.kyuri887.workers.dev/v1/tc/analises";
@@ -9,8 +11,6 @@ const WORKER_BASE = "https://lucky-hat-b241.kyuri887.workers.dev/v1/tc/analises"
 export function isValidAnaliseId(id: string | undefined): id is string {
   return !!id && /^[A-Za-z0-9_-]{1,128}$/.test(id);
 }
-
-import { corsHeaders as cors, json as jsonResp } from "./analysis-jobs.server";
 
 /** Encaminha ao Worker preservando status e corpo. `path` é montado só aqui. */
 export async function encaminharTc(
