@@ -19,8 +19,24 @@ export interface Parametros {
   comissao: number;
   acrescimo_execucao: number;
   ticket_minimo: number;
+  /** Prazo presumido para apresentar garantia contratual, em dias. */
+  prazo_garantia_dias: number;
 }
 
+/**
+ * Padrões de partida. TRÊS destes são estimativa, não dado da Lavoro, e
+ * estão marcados para não serem confundidos com fato:
+ *
+ *   taxa_ref  — não existe taxa única: varia por seguradora, prazo, limite
+ *               de crédito e apetite. 1,5% é ordem de grandeza.
+ *   comissao  — referência do mercado geral de seguros. Não encontrei fonte
+ *               pública para o ramo garantia. É o parâmetro mais frágil.
+ *   prazo_garantia_dias — a lei não fixa prazo; ele vem do edital. E é ele
+ *               que move a urgência, que ordena a fila.
+ *
+ * Calibrar é UPDATE em ab_parametro. Enquanto não for calibrado, o número
+ * serve para RANQUEAR a fila — não para falar com o cliente.
+ */
 export const PARAMETROS_PADRAO: Parametros = {
   selic_aa: 0.15,
   taxa_min: 0.005,
@@ -29,6 +45,7 @@ export const PARAMETROS_PADRAO: Parametros = {
   comissao: 0.175,
   acrescimo_execucao: 0.3,
   ticket_minimo: 50_000,
+  prazo_garantia_dias: 10,
 };
 
 export type Modalidade =

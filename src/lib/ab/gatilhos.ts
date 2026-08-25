@@ -94,7 +94,16 @@ export interface EventoDetectado {
   confianca: number;
   evidencia: Record<string, unknown>;
   grandeVulto?: boolean;
-  fatorIs?: number | null;
+  fatorIs?: null | number;
+  /**
+   * O que ainda precisa ser confirmado para isto ser um lead de verdade.
+   *
+   * Existe porque o time de Garantia não precisa primeiro do valor — precisa
+   * saber se o caso realmente demanda garantia e se a Lavoro pode atender.
+   * Um gatilho é uma HIPÓTESE com evidência; a lista abaixo é o que separa a
+   * hipótese da venda, e some da tela quando está vazia.
+   */
+  verificar?: string[];
 }
 
 export interface MetaGatilho {
@@ -440,11 +449,25 @@ export const GATILHOS: MetaGatilho[] = [
           referencia: c.identificador,
           descricao:
             `Contrato público assinado com ${c.orgao ?? "órgão"} no valor de ${brl(valor)}. ` +
-            `Garantia devida de ${(pct * 100).toFixed(0)}% (Lei 14.133/2021, art. ` +
+            `Se o edital exigiu garantia de execução, o limite legal é de até ` +
+            `${(pct * 100).toFixed(0)}% (Lei 14.133/2021, art. ` +
             `${grande ? "99 — grande vulto, com cláusula de retomada" : "98"}).`,
           valorBase: valor,
-          deadline: maisDias(c.data_assinatura, 10),
-          confianca: 0.85,
+          // O prazo para prestar a garantia vem do edital, não da lei. Este é
+          // um padrão calibrável em ab_parametro.
+          deadline: maisDias(c.data_assinatura, ctx.params.prazo_garantia_dias),
+          // 0,55 e não 0,85: o PNCP confirma que o contrato existe, não que a
+          // garantia foi exigida. Art. 96, caput — "A critério da
+          // Administração, a garantia de execução contratual PODERÁ ser
+          // exigida". Tratar como devida faria o time ligar para o cliente
+          // cobrando uma garantia que o órgão não pediu.
+          confianca: 0.55,
+          verificar: [
+            "O edital ou o contrato exigiu garantia de execução? (art. 96 — é facultativo)",
+            `Qual percentual foi exigido? O limite é ${(pct * 100).toFixed(0)}%, mas o edital manda`,
+            "A garantia já foi prestada, e em que modalidade?",
+            "Qual o prazo contratual para apresentá-la?",
+          ],
           grandeVulto: grande,
           fatorIs: pct,
           evidencia: { objeto: c.objeto, identificador: c.identificador },

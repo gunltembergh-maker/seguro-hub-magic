@@ -96,32 +96,58 @@ export function itens<T>(env: Envelope<T> | null): T[] {
   return env.data ?? env.items ?? [];
 }
 
+/** Um ponto de leitura: qual página, de que tamanho. */
+export interface Pagina {
+  pagina: number;
+  tamanho: number;
+}
+
 /**
- * GET de uma página, com timeout derivado do prazo. Em caso de abort,
- * repete a MESMA página com metade do tamanho — página grande é a causa
- * usual da lentidão, e mudar de página perderia registros. Erro de
- * negócio (4xx, JSON inválido) falha de primeira: repetir não ajuda.
+ * Onde a leitura começa, em registros. É este número — não a página — que
+ * precisa ser preservado quando o tamanho muda.
+ */
+export const deslocamento = (p: Pagina): number => (p.pagina - 1) * p.tamanho;
+
+/**
+ * Recalcula a página para preservar o MESMO deslocamento com outro tamanho.
+ *
+ * Isto existe por causa de um bug real: ao abortar, o código encolhia a
+ * página pela metade e repetia "a mesma página". Mas página 11 de 100 são
+ * os registros 1001–1100, e página 11 de 50 são os registros 501–550 —
+ * trecho já lido. O que faltava nunca era buscado, e a varredura ficava
+ * com um buraco que nada denunciava.
+ */
+export function mesmoTrecho(base: Pagina, novoTamanho: number): Pagina {
+  return { pagina: Math.floor(deslocamento(base) / novoTamanho) + 1, tamanho: novoTamanho };
+}
+
+/**
+ * GET de uma página, com timeout derivado do prazo.
+ *
+ * Em caso de abort, repete o MESMO TRECHO com metade do tamanho — página
+ * grande é a causa usual da lentidão. Erro de negócio (4xx, JSON inválido)
+ * e limite de taxa falham de primeira: repetir não ajuda.
  */
 export async function buscarPagina<T>(
-  montarUrl: (tamanho: number) => string,
-  tamanho: number,
+  montarUrl: (p: Pagina) => string,
+  inicial: Pagina,
   prazo: Prazo,
-): Promise<{ env: Envelope<T> | null; ms: number; tamanhoUsado: number }> {
-  let tamanhoAtual = tamanho;
+): Promise<{ env: Envelope<T> | null; ms: number; usado: Pagina }> {
+  let atual = inicial;
   for (let tentativa = 0; tentativa < 2; tentativa++) {
     const t0 = Date.now();
     const ctrl = new AbortController();
     const limite = prazo.timeoutParaFetch();
     const t = setTimeout(() => ctrl.abort(), limite);
     try {
-      const r = await fetch(montarUrl(tamanhoAtual), {
+      const r = await fetch(montarUrl(atual), {
         signal: ctrl.signal,
         headers: {
           "User-Agent": "HubLavoro/1.0 (+garantias@lavoroseguros.com.br)",
           Accept: "application/json",
         },
       });
-      if (r.status === 204) return { env: null, ms: Date.now() - t0, tamanhoUsado: tamanhoAtual };
+      if (r.status === 204) return { env: null, ms: Date.now() - t0, usado: atual };
       if (!r.ok) {
         const corpo = await r.text().catch(() => "");
         const erro = Object.assign(
@@ -146,10 +172,10 @@ export async function buscarPagina<T>(
       return {
         env: (txt ? JSON.parse(txt) : null) as Envelope<T> | null,
         ms: Date.now() - t0,
-        tamanhoUsado: tamanhoAtual,
+        usado: atual,
       };
     } catch (err) {
-      const ultima = tentativa === 1 || tamanhoAtual <= TAMANHO_MINIMO
+      const ultima = tentativa === 1 || atual.tamanho <= TAMANHO_MINIMO
         || ehRateLimit(err) || !ehAbort(err);
       if (ultima) {
         // Reembrulhar para acrescentar o contexto, PRESERVANDO status e
@@ -157,12 +183,15 @@ export async function buscarPagina<T>(
         // no caminho em que ele é usado.
         const orig = err as Error & { status?: number; retryAfterSeg?: number };
         throw Object.assign(
-          new Error(`${orig.message} (tamanhoPagina=${tamanhoAtual}, limite=${limite}ms)`),
+          new Error(
+            `${orig.message} (pagina=${atual.pagina}, tamanhoPagina=${atual.tamanho}, ` +
+            `registro=${deslocamento(atual) + 1}, limite=${limite}ms)`,
+          ),
           orig.status !== undefined ? { status: orig.status } : {},
           orig.retryAfterSeg !== undefined ? { retryAfterSeg: orig.retryAfterSeg } : {},
         );
       }
-      tamanhoAtual = Math.max(TAMANHO_MINIMO, Math.floor(tamanhoAtual / 2));
+      atual = mesmoTrecho(atual, Math.max(TAMANHO_MINIMO, Math.floor(atual.tamanho / 2)));
     } finally {
       clearTimeout(t);
     }

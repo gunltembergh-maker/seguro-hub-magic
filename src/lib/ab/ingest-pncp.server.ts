@@ -76,6 +76,12 @@ import {
   buscarPagina, criarPrazo, ehRateLimit, esperaSugerida, itens, latencia,
 } from "./orcamento.ts";
 
+// Depois de tantas falhas consecutivas na MESMA página, ela é abandonada e
+// registrada em paginas_puladas. Perder ~100 contratos de uma página é
+// muito melhor que travar a varredura inteira nela: sem isso, o cursor não
+// avança e toda execução seguinte queima o orçamento no mesmo ponto.
+const TETO_FALHAS_POR_PAGINA = 3;
+
 const BASE = process.env.PNCP_BASE ?? "https://pncp.gov.br/api/consulta";
 const OBRA_RX = /obra|engenharia|constru|pavimenta|saneament|rodovi/i;
 
@@ -132,7 +138,8 @@ export async function ingestPncp(
   const estado = estadoRaw as {
     cursor_pagina: number; janela_inicio: string | null; janela_fim: string | null;
     total_paginas: number | null; ciclos: number; paginas_no_ciclo: number;
-    rate_limited_ate: string | null;
+    rate_limited_ate: string | null; falhas_na_pagina: number;
+    paginas_puladas: number[] | null;
   } | null;
 
   // Back-off do 429: enquanto a punição vale, não vale nem tentar.
@@ -163,6 +170,8 @@ export async function ingestPncp(
   const valorMinimo = cfg.valorMinimo ??
     Math.round(params.ticket_minimo / (FATOR_IS.PERFORMANCE || 0.05));
 
+  const falhasHerdadas = estado && !janelaMudou ? (estado.falhas_na_pagina ?? 0) : 0;
+
   const resumo = {
     contratos: 0,
     contratos_recebidos: 0,
@@ -179,6 +188,8 @@ export async function ingestPncp(
   const avisos: string[] = [];
   let parcial = false;
   let rateLimitSeg = 0;
+  let falhasNaPagina = 0;
+  let pularPagina: number | null = null;
 
   // -------- 1. contratos assinados (T9 / T10) ----------------------
   try {
@@ -197,8 +208,9 @@ export async function ingestPncp(
       let resposta;
       try {
         resposta = await buscarPagina<Record<string, unknown>>(
-          (t) => `${BASE}/v1/contratos?${janela}&pagina=${pagina}&tamanhoPagina=${t}`,
-          tamanhoPagina,
+          (pg) => `${BASE}/v1/contratos?${janela}` +
+            `&pagina=${pg.pagina}&tamanhoPagina=${pg.tamanho}`,
+          { pagina, tamanho: tamanhoPagina },
           prazo,
         );
       } catch (err) {
@@ -211,13 +223,34 @@ export async function ingestPncp(
             `back-off de ${rateLimitSeg}s`);
           break;
         }
-        throw err;
+        // Falha nesta página. Conta, e decide entre tentar de novo depois
+        // ou abandoná-la para a varredura poder seguir.
+        parcial = true;
+        falhasNaPagina = (pagina === paginaInicial ? falhasHerdadas : 0) + 1;
+        if (falhasNaPagina >= TETO_FALHAS_POR_PAGINA) {
+          pularPagina = pagina;
+          avisos.push(
+            `página ${pagina} abandonada após ${falhasNaPagina} tentativas ` +
+            `(${(err as Error).message.slice(0, 120)}) — registrada para nova ` +
+            `tentativa num ciclo futuro`,
+          );
+        } else {
+          avisos.push(
+            `página ${pagina} falhou (tentativa ${falhasNaPagina} de ` +
+            `${TETO_FALHAS_POR_PAGINA}): ${(err as Error).message.slice(0, 140)}`,
+          );
+        }
+        break;
       }
-      const { env, ms, tamanhoUsado } = resposta;
+      const { env, ms, usado } = resposta;
       resumo.ms_por_pagina.push(ms);
       resumo.paginas_lidas++;
-      if (tamanhoUsado !== tamanhoPagina) {
-        avisos.push(`página ${pagina} refeita com tamanhoPagina=${tamanhoUsado}`);
+      if (usado.tamanho !== tamanhoPagina) {
+        // O deslocamento é preservado: mesmo trecho, página menor.
+        avisos.push(
+          `trecho da página ${pagina} lido como página ${usado.pagina} ` +
+          `com tamanhoPagina=${usado.tamanho}`,
+        );
       }
 
       const lista = itens(env);
@@ -227,6 +260,7 @@ export async function ingestPncp(
         else if (env?.items && !env?.data) avisos.push("envelope veio como {items}");
       }
       brutos.push(...lista);
+      falhasNaPagina = 0;   // página lida: o contador desta página zera
       pagina++;
       if (!totalPaginas || pagina > totalPaginas) break;
     }
@@ -330,10 +364,10 @@ export async function ingestPncp(
         }
         try {
           const { env, ms } = await buscarPagina<Record<string, unknown>>(
-            (t) =>
+            (pg) =>
               `${BASE}/v1/contratacoes/proposta?dataFinal=${aaaammdd(fimProposta)}` +
-              `${recorte}&pagina=1&tamanhoPagina=${t}`,
-            tamanhoPagina,
+              `${recorte}&pagina=${pg.pagina}&tamanhoPagina=${pg.tamanho}`,
+            { pagina: 1, tamanho: tamanhoPagina },
             prazo,
           );
           resumo.ms_por_pagina.push(ms);
@@ -383,14 +417,25 @@ export async function ingestPncp(
   }
 
   // -------- grava o cursor ----------------------------------------
-  // Sem isto, a próxima execução recomeça da página 1 e o cron nunca
-  // alcança a 113. Escreve mesmo em caso de erro parcial: o que foi lido
-  // foi lido, e reler é desperdício de rate limit.
-  const totalPag = resumo.total_paginas || 0;
-  const terminou = totalPag > 0 && !resumo.proxima_pagina;
+  // Escreve mesmo em falha: o que foi lido foi lido, e reler é desperdício.
+  // Três cuidados que a primeira versão errava:
+  //  * total_paginas só é sobrescrito quando esta execução aprendeu algo —
+  //    senão um run que falhou apagaria o 118 que já sabíamos;
+  //  * página abandonada avança o cursor e fica registrada, para a
+  //    varredura não travar nela para sempre;
+  //  * "janela completa" só quando ela realmente terminou.
+  const totalPag = resumo.total_paginas || estado?.total_paginas || 0;
+  const puladas = new Set<number>(estado?.paginas_puladas ?? []);
+  if (pularPagina) puladas.add(pularPagina);
+
+  const cursorNovo = pularPagina
+    ? pularPagina + 1
+    : (resumo.proxima_pagina ?? paginaInicial);
+  const terminou = totalPag > 0 && cursorNovo > totalPag;
+
   await sb.from("ab_ingest_estado").upsert({
     fonte: "pncp_contratos",
-    cursor_pagina: terminou ? 1 : (resumo.proxima_pagina ?? paginaInicial),
+    cursor_pagina: terminou ? 1 : cursorNovo,
     janela_inicio: janelaIni,
     janela_fim: janelaFim,
     total_paginas: totalPag || null,
@@ -398,13 +443,19 @@ export async function ingestPncp(
     paginas_no_ciclo: terminou
       ? 0
       : (janelaMudou ? 0 : (estado?.paginas_no_ciclo ?? 0)) + resumo.paginas_lidas,
+    falhas_na_pagina: pularPagina ? 0 : falhasNaPagina,
+    // O ciclo novo recomeça sem dívida: as páginas puladas voltam a ser
+    // tentadas do zero em vez de carregar a marca para sempre.
+    paginas_puladas: terminou ? [] : [...puladas].sort((a, b) => a - b),
     ultima_execucao: new Date().toISOString(),
     rate_limited_ate: rateLimitSeg
       ? new Date(Date.now() + rateLimitSeg * 1000).toISOString()
       : null,
     detalhe: terminou
-      ? `varredura completa da janela ${janelaIni}..${janelaFim}`
-      : `parou na página ${resumo.proxima_pagina ?? paginaInicial} de ${totalPag || "?"}`,
+      ? `varredura completa da janela ${janelaIni}..${janelaFim}` +
+        (puladas.size ? ` (${puladas.size} página(s) pulada(s), serão retentadas)` : "")
+      : `próxima página ${cursorNovo} de ${totalPag || "?"}` +
+        (falhasNaPagina ? ` · ${falhasNaPagina} falha(s) nela` : ""),
   }, { onConflict: "fonte" });
 
   // -------- log e resposta ----------------------------------------
@@ -422,23 +473,32 @@ export async function ingestPncp(
       `${resumo.descartados.abaixo_do_valor} abaixo de ${valorMinimo}, ` +
       `${resumo.descartados.fora_das_ufs} fora das UFs do órgão), ` +
       `editais ${resumo.editais}/${resumo.editais_recebidos}, ` +
-      `páginas ${paginaInicial}–${paginaInicial + resumo.paginas_lidas - 1} ` +
-      `de ${resumo.total_paginas || "?"}, fetch média ${media}ms pico ${pico}ms` +
-      (resumo.proxima_pagina ? `, retomar em ${resumo.proxima_pagina}` : ", janela completa") +
+      (resumo.paginas_lidas
+        ? `páginas ${paginaInicial}–${paginaInicial + resumo.paginas_lidas - 1} de ${totalPag || "?"}, `
+        : `nenhuma página lida (tentativa na ${paginaInicial} de ${totalPag || "?"}), `) +
+      `fetch média ${media}ms pico ${pico}ms` +
+      (terminou ? ", janela completa" : `, retomar em ${cursorNovo}`) +
+      (pularPagina ? `, página ${pularPagina} abandonada` : "") +
       (avisos.length ? ` · ${avisos.slice(0, 4).join("; ")}` : ""),
     duracao_ms: ms,
   });
 
   // Parcial não é erro: é o comportamento correto quando o prazo aperta.
   // O cron continua de onde parou. 500 só se nada entrou e houve falha.
+  // Pular página é comportamento previsto, não falha: responder 500 faria o
+  // cron tratar como incidente uma rotina que está justamente se
+  // recuperando. 500 fica para o que não tem plano B.
   const nadaEntrou = resumo.contratos === 0 && resumo.editais === 0;
-  const status = nadaEntrou && avisos.length ? 500 : 200;
+  const status = nadaEntrou && avisos.length && !pularPagina && !rateLimitSeg ? 500 : 200;
   return {
     status,
     body: {
       ok: status === 200,
       parcial,
       rate_limited: rateLimitSeg > 0,
+      proxima_pagina_salva: terminou ? 1 : cursorNovo,
+      paginas_puladas: [...puladas].sort((a, b) => a - b),
+      falhas_na_pagina: pularPagina ? 0 : falhasNaPagina,
       valor_minimo: valorMinimo,
       pagina_inicial: paginaInicial,
       janela: `${janelaIni}..${janelaFim}`,
