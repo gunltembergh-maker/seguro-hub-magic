@@ -41,6 +41,9 @@ import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/em
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicHooksDispatchScheduledNewslettersRouteImport } from './routes/api/public/hooks/dispatch-scheduled-newsletters'
 import { Route as ApiPublicHooksAbMotorRunRouteImport } from './routes/api/public/hooks/ab-motor-run'
+import { Route as ApiPublicHooksAbIngestTransparenciaRouteImport } from './routes/api/public/hooks/ab-ingest-transparencia'
+import { Route as ApiPublicHooksAbIngestPncpRouteImport } from './routes/api/public/hooks/ab-ingest-pncp'
+import { Route as ApiPublicHooksAbIngestPgfnRouteImport } from './routes/api/public/hooks/ab-ingest-pgfn'
 import { Route as AuthenticatedAdminEmailsSchedulesRouteImport } from './routes/_authenticated/admin/emails_.schedules'
 import { Route as AuthenticatedAdminEmailsLogRouteImport } from './routes/_authenticated/admin/emails_.log'
 
@@ -219,6 +222,24 @@ const ApiPublicHooksAbMotorRunRoute =
     path: '/api/public/hooks/ab-motor-run',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksAbIngestTransparenciaRoute =
+  ApiPublicHooksAbIngestTransparenciaRouteImport.update({
+    id: '/api/public/hooks/ab-ingest-transparencia',
+    path: '/api/public/hooks/ab-ingest-transparencia',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksAbIngestPncpRoute =
+  ApiPublicHooksAbIngestPncpRouteImport.update({
+    id: '/api/public/hooks/ab-ingest-pncp',
+    path: '/api/public/hooks/ab-ingest-pncp',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksAbIngestPgfnRoute =
+  ApiPublicHooksAbIngestPgfnRouteImport.update({
+    id: '/api/public/hooks/ab-ingest-pgfn',
+    path: '/api/public/hooks/ab-ingest-pgfn',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAdminEmailsSchedulesRoute =
   AuthenticatedAdminEmailsSchedulesRouteImport.update({
     id: '/emails_/schedules',
@@ -261,6 +282,9 @@ export interface FileRoutesByFullPath {
   '/garantia/analise-limite': typeof AuthenticatedGarantiaAnaliseLimiteRoute
   '/admin/emails/log': typeof AuthenticatedAdminEmailsLogRoute
   '/admin/emails/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
+  '/api/public/hooks/ab-ingest-pgfn': typeof ApiPublicHooksAbIngestPgfnRoute
+  '/api/public/hooks/ab-ingest-pncp': typeof ApiPublicHooksAbIngestPncpRoute
+  '/api/public/hooks/ab-ingest-transparencia': typeof ApiPublicHooksAbIngestTransparenciaRoute
   '/api/public/hooks/ab-motor-run': typeof ApiPublicHooksAbMotorRunRoute
   '/api/public/hooks/dispatch-scheduled-newsletters': typeof ApiPublicHooksDispatchScheduledNewslettersRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -296,6 +320,9 @@ export interface FileRoutesByTo {
   '/garantia/analise-limite': typeof AuthenticatedGarantiaAnaliseLimiteRoute
   '/admin/emails/log': typeof AuthenticatedAdminEmailsLogRoute
   '/admin/emails/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
+  '/api/public/hooks/ab-ingest-pgfn': typeof ApiPublicHooksAbIngestPgfnRoute
+  '/api/public/hooks/ab-ingest-pncp': typeof ApiPublicHooksAbIngestPncpRoute
+  '/api/public/hooks/ab-ingest-transparencia': typeof ApiPublicHooksAbIngestTransparenciaRoute
   '/api/public/hooks/ab-motor-run': typeof ApiPublicHooksAbMotorRunRoute
   '/api/public/hooks/dispatch-scheduled-newsletters': typeof ApiPublicHooksDispatchScheduledNewslettersRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -333,6 +360,9 @@ export interface FileRoutesById {
   '/_authenticated/garantia_/analise-limite': typeof AuthenticatedGarantiaAnaliseLimiteRoute
   '/_authenticated/admin/emails_/log': typeof AuthenticatedAdminEmailsLogRoute
   '/_authenticated/admin/emails_/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
+  '/api/public/hooks/ab-ingest-pgfn': typeof ApiPublicHooksAbIngestPgfnRoute
+  '/api/public/hooks/ab-ingest-pncp': typeof ApiPublicHooksAbIngestPncpRoute
+  '/api/public/hooks/ab-ingest-transparencia': typeof ApiPublicHooksAbIngestTransparenciaRoute
   '/api/public/hooks/ab-motor-run': typeof ApiPublicHooksAbMotorRunRoute
   '/api/public/hooks/dispatch-scheduled-newsletters': typeof ApiPublicHooksDispatchScheduledNewslettersRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -370,6 +400,9 @@ export interface FileRouteTypes {
     | '/garantia/analise-limite'
     | '/admin/emails/log'
     | '/admin/emails/schedules'
+    | '/api/public/hooks/ab-ingest-pgfn'
+    | '/api/public/hooks/ab-ingest-pncp'
+    | '/api/public/hooks/ab-ingest-transparencia'
     | '/api/public/hooks/ab-motor-run'
     | '/api/public/hooks/dispatch-scheduled-newsletters'
     | '/lovable/email/auth/preview'
@@ -405,6 +438,9 @@ export interface FileRouteTypes {
     | '/garantia/analise-limite'
     | '/admin/emails/log'
     | '/admin/emails/schedules'
+    | '/api/public/hooks/ab-ingest-pgfn'
+    | '/api/public/hooks/ab-ingest-pncp'
+    | '/api/public/hooks/ab-ingest-transparencia'
     | '/api/public/hooks/ab-motor-run'
     | '/api/public/hooks/dispatch-scheduled-newsletters'
     | '/lovable/email/auth/preview'
@@ -441,6 +477,9 @@ export interface FileRouteTypes {
     | '/_authenticated/garantia_/analise-limite'
     | '/_authenticated/admin/emails_/log'
     | '/_authenticated/admin/emails_/schedules'
+    | '/api/public/hooks/ab-ingest-pgfn'
+    | '/api/public/hooks/ab-ingest-pncp'
+    | '/api/public/hooks/ab-ingest-transparencia'
     | '/api/public/hooks/ab-motor-run'
     | '/api/public/hooks/dispatch-scheduled-newsletters'
     | '/lovable/email/auth/preview'
@@ -453,6 +492,9 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiPublicHooksAbIngestPgfnRoute: typeof ApiPublicHooksAbIngestPgfnRoute
+  ApiPublicHooksAbIngestPncpRoute: typeof ApiPublicHooksAbIngestPncpRoute
+  ApiPublicHooksAbIngestTransparenciaRoute: typeof ApiPublicHooksAbIngestTransparenciaRoute
   ApiPublicHooksAbMotorRunRoute: typeof ApiPublicHooksAbMotorRunRoute
   ApiPublicHooksDispatchScheduledNewslettersRoute: typeof ApiPublicHooksDispatchScheduledNewslettersRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -686,6 +728,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksAbMotorRunRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/ab-ingest-transparencia': {
+      id: '/api/public/hooks/ab-ingest-transparencia'
+      path: '/api/public/hooks/ab-ingest-transparencia'
+      fullPath: '/api/public/hooks/ab-ingest-transparencia'
+      preLoaderRoute: typeof ApiPublicHooksAbIngestTransparenciaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/ab-ingest-pncp': {
+      id: '/api/public/hooks/ab-ingest-pncp'
+      path: '/api/public/hooks/ab-ingest-pncp'
+      fullPath: '/api/public/hooks/ab-ingest-pncp'
+      preLoaderRoute: typeof ApiPublicHooksAbIngestPncpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/ab-ingest-pgfn': {
+      id: '/api/public/hooks/ab-ingest-pgfn'
+      path: '/api/public/hooks/ab-ingest-pgfn'
+      fullPath: '/api/public/hooks/ab-ingest-pgfn'
+      preLoaderRoute: typeof ApiPublicHooksAbIngestPgfnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin/emails_/schedules': {
       id: '/_authenticated/admin/emails_/schedules'
       path: '/emails/schedules'
@@ -792,6 +855,10 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiPublicHooksAbIngestPgfnRoute: ApiPublicHooksAbIngestPgfnRoute,
+  ApiPublicHooksAbIngestPncpRoute: ApiPublicHooksAbIngestPncpRoute,
+  ApiPublicHooksAbIngestTransparenciaRoute:
+    ApiPublicHooksAbIngestTransparenciaRoute,
   ApiPublicHooksAbMotorRunRoute: ApiPublicHooksAbMotorRunRoute,
   ApiPublicHooksDispatchScheduledNewslettersRoute:
     ApiPublicHooksDispatchScheduledNewslettersRoute,
