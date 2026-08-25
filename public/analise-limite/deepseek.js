@@ -1,4 +1,4 @@
-const DEEPSEEK_WORKER_URL = 'https://lucky-hat-b241.kyuri887.workers.dev/';
+// Worker T&C acessado exclusivamente pelos proxies server-side do Hub (/api/tc-lavoro/*).
 // Analysis-jobs passam pelo proxy server-side do Hub (Cloudflare Access fica no servidor).
 const DEEPSEEK_JOBS_URL = '/api/tc-lavoro/analysis-jobs';
 let _lavoroAuthToken = '';
@@ -1294,11 +1294,19 @@ async function consultarLimitesSeguradoras(cnpj, seguradoras, onProgress, forceR
 }
 
 // ── T&C — histórico de análises por tomador (D1, ver SPEC.md secao 13) ──────
+// Passa pelo proxy server-side do Hub (Cloudflare Access fica no servidor).
+const TC_ANALISES_URL = '/api/tc-lavoro/tc-analises';
+
+function tcAuthHeaders(extra) {
+  const headers = Object.assign({}, extra || {});
+  if (_lavoroAuthToken) headers['Authorization'] = `Bearer ${_lavoroAuthToken}`;
+  return headers;
+}
 
 async function salvarTcAnalise(payload) {
-  const resp = await fetch(DEEPSEEK_WORKER_URL.replace(/\/+$/, '') + '/v1/tc/analises', {
+  const resp = await fetch(TC_ANALISES_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: tcAuthHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(payload),
   });
   if (!resp.ok) {
@@ -1313,7 +1321,8 @@ async function listarTcAnalises(filtro) {
   if (filtro && filtro.cnpj) params.set('cnpj', filtro.cnpj);
   if (filtro && filtro.nome) params.set('nome', filtro.nome);
 
-  const resp = await fetch(DEEPSEEK_WORKER_URL.replace(/\/+$/, '') + '/v1/tc/analises?' + params.toString());
+  const qs = params.toString();
+  const resp = await fetch(TC_ANALISES_URL + (qs ? '?' + qs : ''), { headers: tcAuthHeaders() });
   if (!resp.ok) {
     const text = await resp.text();
     throw new Error(`Falha ao listar historico (${resp.status}): ${text}`);
@@ -1322,7 +1331,7 @@ async function listarTcAnalises(filtro) {
 }
 
 async function buscarTcAnalise(id) {
-  const resp = await fetch(DEEPSEEK_WORKER_URL.replace(/\/+$/, '') + '/v1/tc/analises/' + encodeURIComponent(id));
+  const resp = await fetch(TC_ANALISES_URL + '/' + encodeURIComponent(id), { headers: tcAuthHeaders() });
   if (!resp.ok) {
     const text = await resp.text();
     throw new Error(`Falha ao abrir analise (${resp.status}): ${text}`);
@@ -1331,8 +1340,9 @@ async function buscarTcAnalise(id) {
 }
 
 async function apagarTcAnalise(id) {
-  const resp = await fetch(DEEPSEEK_WORKER_URL.replace(/\/+$/, '') + '/v1/tc/analises/' + encodeURIComponent(id), {
+  const resp = await fetch(TC_ANALISES_URL + '/' + encodeURIComponent(id), {
     method: 'DELETE',
+    headers: tcAuthHeaders(),
   });
   if (!resp.ok) {
     const text = await resp.text();
