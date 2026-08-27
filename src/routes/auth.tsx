@@ -14,17 +14,17 @@ import logoBranca from "@/assets/logo-branca.png.asset.json";
 import fundoPredio from "@/assets/fundo-login-predio.png.asset.json";
 
 const ALLOWED_DOMAIN = "lavoroseguros.com.br";
-// Domínios corporativos autorizados a entrar com e-mail e senha
-export const ALLOWED_PASSWORD_DOMAINS = [
-  "lavoroseguros.com.br",
-  "zin.com.br",
-  "taicons.com.br",
+// Acesso é exclusivamente por SSO (Microsoft). Apenas esta conta administrativa
+// pode entrar com e-mail e senha.
+export const ALLOWED_PASSWORD_EMAILS = [
+  "alessandro.oliveira@lavoroseguros.com.br",
 ];
 
 export function isCorporateEmail(value: string) {
   const clean = value.trim().toLowerCase();
-  return ALLOWED_PASSWORD_DOMAINS.some((d) => clean.endsWith(`@${d}`));
+  return ALLOWED_PASSWORD_EMAILS.includes(clean);
 }
+
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
@@ -332,11 +332,12 @@ function AuthPage() {
     const clean = email.trim().toLowerCase();
     if (!clean) return;
     if (!isCorporateEmail(clean)) {
-      toast.error("E-mail não autorizado", {
-        description: `Use um e-mail corporativo (${ALLOWED_PASSWORD_DOMAINS.map((d) => `@${d}`).join(", ")}).`,
+      toast.error("Acesso somente por SSO", {
+        description: "Entre com sua conta Microsoft corporativa.",
       });
       return;
     }
+
     if (!showPassword) {
       setShowPassword(true);
       return;
@@ -460,7 +461,8 @@ function AuthPage() {
                     value={email}
                     onChange={(e) => {
                       setEmail(e.target.value);
-                      if (!isCorporateEmail(e.target.value)) setShowPassword(false);
+                      setShowPassword(isCorporateEmail(e.target.value));
+
                     }}
                     placeholder={`nome@${ALLOWED_DOMAIN}`}
                   />
@@ -483,16 +485,19 @@ function AuthPage() {
                   </div>
                 )}
 
-                <Button
-                  type="submit"
-                  variant="outline"
-                  size="sm"
-                  disabled={pwLoading}
-                  className="w-full text-[#14405C]"
-                >
-                  {pwLoading && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
-                  {showPassword ? "Entrar" : "Continuar com senha"}
-                </Button>
+                {showPassword && (
+                  <Button
+                    type="submit"
+                    variant="outline"
+                    size="sm"
+                    disabled={pwLoading}
+                    className="w-full text-[#14405C]"
+                  >
+                    {pwLoading && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+                    Entrar
+                  </Button>
+                )}
+
 
                 {showPassword && (
                   <button
