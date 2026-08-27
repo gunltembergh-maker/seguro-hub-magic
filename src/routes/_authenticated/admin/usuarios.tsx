@@ -198,10 +198,10 @@ function AdminUsuariosPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setImportOpen(true)} className="gap-2">
+          <Button variant="outline" onClick={() => setImportOpen(true)} className="gap-2 text-foreground hover:text-accent-foreground">
             <Upload className="h-4 w-4" /> Importar planilha
           </Button>
-          <Button variant="outline" onClick={openCreate} className="gap-2">
+          <Button variant="outline" onClick={openCreate} className="gap-2 text-foreground hover:text-accent-foreground">
             <Plus className="h-4 w-4" /> Pré-cadastrar Usuário
           </Button>
           <Button onClick={() => setConvidarOpen(true)} className="gap-2">
