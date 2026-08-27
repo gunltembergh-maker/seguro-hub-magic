@@ -88,14 +88,14 @@ type AreaItem = {
 const ramosAll: CollapsibleItem[] = [
   {
     title: "Garantia",
-    url: "/garantia",
     icon: ShieldCheck,
     tooltip: "Garantia",
     perm: "menu_ramo_garantia",
     children: [
-      { title: "Operacional", url: "/garantia/analise-limite", icon: FileSearch },
+      { title: "Operacional", url: "/garantia/analise-limite", icon: FileSearch,
+        perms: ["menu_garantia_operacional"] },
       { title: "Análise de Processos", url: "/garantia/analise-background", icon: SearchCheck,
-        perms: ["ab_garantia"] },
+        perms: ["menu_garantia_analise_processos", "ab_garantia"] },
     ],
   },
   { title: "Benefícios", url: "/beneficios", icon: HeartPulse, tooltip: "Benefícios", perm: "menu_ramo_beneficios" },
@@ -252,12 +252,27 @@ export function AppSidebar() {
     { title: "Comunicados", url: "/admin/comunicados", icon: Megaphone, show: isAdmin || hasPermission(meuPerfil, "menu_admin_comunicados") },
     { title: "Importar Bases", url: "/admin/importar-bases", icon: Upload,
       show: isAdmin || hasPermission(meuPerfil, "menu_admin_importar") || hasPermission(meuPerfil, "menu_importar_gerencial") || hasPermission(meuPerfil, "menu_importar_caixa") },
-    { title: "Emails", url: "/admin/emails", icon: Mail, show: isAdmin || hasPermission(meuPerfil, "menu_admin_emails") },
-    { title: "Agendamento de E-mail", url: "/admin/emails/schedules", icon: Mail, show: isAdmin || hasPermission(meuPerfil, "menu_admin_emails_schedules") },
-    { title: "Log de Emails", url: "/admin/emails/log", icon: Mail, show: isAdmin || hasPermission(meuPerfil, "menu_admin_emails_log") },
     { title: "Configurações", url: "/admin/configuracoes", icon: Settings,
       show: isAdmin || hasPermission(meuPerfil, "menu_admin_configuracoes") },
   ].filter((i) => i.show);
+
+  // Todos os itens de e-mail ficam dentro de uma única caixa "E-mails"
+  const emailChildren = [
+    { title: "Envio e testes", url: "/admin/emails", icon: CornerDownRight,
+      show: isAdmin || hasPermission(meuPerfil, "menu_admin_emails") },
+    { title: "Agendamentos", url: "/admin/emails/schedules", icon: CornerDownRight,
+      show: isAdmin || hasPermission(meuPerfil, "menu_admin_emails_schedules") },
+    { title: "Log de E-mails", url: "/admin/emails/log", icon: CornerDownRight,
+      show: isAdmin || hasPermission(meuPerfil, "menu_admin_emails_log") },
+  ].filter((i) => i.show).map(({ title, url, icon }) => ({ title, url, icon }));
+
+  const emailsCollapsible: CollapsibleItem = {
+    title: "E-mails",
+    icon: Mail,
+    tooltip: "E-mails",
+    children: emailChildren,
+  };
+  const hasActiveEmailChild = emailChildren.some((c) => isActive(c.url));
 
   // Item "Dashboards" agrupador com filhos recolhíveis
   const dashboardsCollapsible: CollapsibleItem = {
@@ -386,21 +401,47 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
-        {adminItems.length > 0 && (
+        {(adminItems.length > 0 || emailChildren.length > 0) && (
           <SidebarGroup>
             <SidebarGroupLabel>Administração</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {adminItems.map((i) => (
-                  <SidebarMenuItem key={i.url}>
-                    <SidebarMenuButton asChild isActive={isActive(i.url)} tooltip={i.title}>
-                      <Link to={i.url}>
-                        <i.icon />
-                        <span>{i.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {adminItems
+                  .filter((i) => i.url !== "/admin/configuracoes")
+                  .map((i) => (
+                    <SidebarMenuItem key={i.url}>
+                      <SidebarMenuButton asChild isActive={isActive(i.url)} tooltip={i.title}>
+                        <Link to={i.url}>
+                          <i.icon />
+                          <span>{i.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+
+                {emailChildren.length > 0 && (
+                  <CollapsibleNavItem
+                    item={emailsCollapsible}
+                    isActiveParent={false}
+                    hasActiveChild={hasActiveEmailChild}
+                    isActiveChild={isActive}
+                    collapsed={collapsed}
+                    onChildNavigate={collapseOnNavigate}
+                  />
+                )}
+
+                {adminItems
+                  .filter((i) => i.url === "/admin/configuracoes")
+                  .map((i) => (
+                    <SidebarMenuItem key={i.url}>
+                      <SidebarMenuButton asChild isActive={isActive(i.url)} tooltip={i.title}>
+                        <Link to={i.url}>
+                          <i.icon />
+                          <span>{i.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
