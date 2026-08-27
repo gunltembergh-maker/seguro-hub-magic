@@ -58,6 +58,36 @@ function StatusBadge({ u }: { u: AdminUserV2 }) {
   return <Badge className="border border-emerald-500/30 bg-emerald-500/10 text-emerald-700">✅ Ativo</Badge>;
 }
 
+const CONVITE_LABEL: Record<string, string> = {
+  invite: "Convite",
+  magiclink: "Magic link",
+  recovery: "Recuperação",
+};
+
+function ConviteCell({ u }: { u: AdminUserV2 }) {
+  const dt = (v: string) => new Date(v).toLocaleDateString("pt-BR");
+  if (u.convite_aceito_em) {
+    return (
+      <div className="space-y-0.5 text-xs">
+        <Badge className="border border-emerald-500/30 bg-emerald-500/10 text-emerald-700">✅ Aceito</Badge>
+        <div className="text-muted-foreground">em {dt(u.convite_aceito_em)}</div>
+      </div>
+    );
+  }
+  if (u.convite_enviado_em) {
+    return (
+      <div className="space-y-0.5 text-xs">
+        <Badge className="border border-amber-500/30 bg-amber-500/10 text-amber-700">
+          ✉️ {CONVITE_LABEL[u.convite_tipo ?? ""] ?? "Enviado"}
+        </Badge>
+        <div className="text-muted-foreground">em {dt(u.convite_enviado_em)}</div>
+      </div>
+    );
+  }
+  return <span className="text-xs text-muted-foreground">Não enviado</span>;
+}
+
+
 const TIME_LABEL: Record<string, string> = {
   GARANTIA: "Garantia",
   BENEFICIOS: "Benefícios",
@@ -114,13 +144,20 @@ function AdminUsuariosPage() {
       user_id: u.user_id,
       email: u.email,
       full_name: u.full_name,
+      cpf: u.cpf ?? null,
       perfil_id: u.perfil_id,
+      area: u.area ?? null,
+      gestor: u.gestor ?? null,
+      empresa: u.empresa ?? null,
+      tipo_usuario: u.tipo_usuario,
       blocked: u.blocked,
       active: u.active,
       times_receita: u.times_receita ?? [],
     });
     setFormOpen(true);
   };
+
+
 
   const metrics = useMemo(() => {
     const list = users ?? [];
@@ -306,7 +343,9 @@ function AdminUsuariosPage() {
                         <TableHead>Time(s) Receita</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Sessões</TableHead>
+                        <TableHead>Convite</TableHead>
                         <TableHead>Último acesso</TableHead>
+
                         <TableHead className="text-right">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -320,7 +359,9 @@ function AdminUsuariosPage() {
                           <TableCell><TimesReceitaBadge times={u.times_receita} roles={(u.roles ?? []) as string[]} /></TableCell>
                           <TableCell><StatusBadge u={u} /></TableCell>
                           <TableCell className="text-center tabular-nums">{u.total_sessoes}</TableCell>
+                          <TableCell><ConviteCell u={u} /></TableCell>
                           <TableCell className="text-muted-foreground">{formatUltimoAcesso(u.ultimo_acesso)}</TableCell>
+
                           <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                             <div className="flex justify-end gap-1">
                               <Button size="sm" variant="ghost" title="Ver detalhes" onClick={() => setDetailUser(u)}>

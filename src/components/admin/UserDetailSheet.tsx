@@ -147,6 +147,9 @@ export function UserDetailSheet({ user, open, onOpenChange, onEdit, onBlock, onD
               <Field label="Cadastrado em" value={formatDate(criadoEm)} />
               <Field label="Último Acesso" value={user.ultimo_acesso ? formatDT(user.ultimo_acesso) : "Nunca"} />
               <Field label="Total de Sessões" value={String(detalhe?.total_sessoes ?? user.total_sessoes ?? 0)} />
+              <Field label="Convite enviado" value={user.convite_enviado_em ? formatDT(user.convite_enviado_em) : "Não enviado"} />
+              <Field label="Convite aceito" value={user.convite_aceito_em ? formatDT(user.convite_aceito_em) : "Pendente"} />
+
             </div>
 
             <div className="flex flex-wrap gap-2 pt-2">
