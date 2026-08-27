@@ -21,6 +21,7 @@ import {
   CornerDownRight,
   Mail,
   ChevronRight,
+  Activity,
   type LucideIcon,
 } from "lucide-react";
 
