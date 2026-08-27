@@ -48,22 +48,24 @@ interface KpiRow {
   competencia_demais: number;
 }
 
-const breakdownPrevisto = (k: KpiRow | null | undefined) => [
-  { label: "Garantia", value: BRL(k?.previsto_garantia) },
-  { label: "Benefícios", value: BRL(k?.previsto_beneficios) },
-  { label: "Demais Ramos", value: BRL(k?.previsto_demais) },
+type Parte = { label: string; raw: number };
+
+const partesPrevisto = (k: KpiRow | null | undefined): Parte[] => [
+  { label: "Garantia", raw: Number(k?.previsto_garantia || 0) },
+  { label: "Benefícios", raw: Number(k?.previsto_beneficios || 0) },
+  { label: "Demais Ramos", raw: Number(k?.previsto_demais || 0) },
 ];
 
-const breakdownCaixa = (k: KpiRow | null | undefined) => [
-  { label: "Garantia", value: BRL(k?.caixa_garantia) },
-  { label: "Benefícios", value: BRL(k?.caixa_beneficios) },
-  { label: "Demais Ramos", value: BRL(k?.caixa_demais) },
+const partesCaixa = (k: KpiRow | null | undefined): Parte[] => [
+  { label: "Garantia", raw: Number(k?.caixa_garantia || 0) },
+  { label: "Benefícios", raw: Number(k?.caixa_beneficios || 0) },
+  { label: "Demais Ramos", raw: Number(k?.caixa_demais || 0) },
 ];
 
-const breakdownCompetencia = (k: KpiRow | null | undefined) => [
-  { label: "Garantia", value: BRL(k?.competencia_garantia) },
-  { label: "Benefícios", value: BRL(k?.competencia_beneficios) },
-  { label: "Demais Ramos", value: BRL(k?.competencia_demais) },
+const partesCompetencia = (k: KpiRow | null | undefined): Parte[] => [
+  { label: "Garantia", raw: Number(k?.competencia_garantia || 0) },
+  { label: "Benefícios", raw: Number(k?.competencia_beneficios || 0) },
+  { label: "Demais Ramos", raw: Number(k?.competencia_demais || 0) },
 ];
 
 function useKpis(ano: number, mes: number, periodo: "MTD" | "YTD") {
