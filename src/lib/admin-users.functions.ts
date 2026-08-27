@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { sendAdminAuthEmail } from "@/lib/admin-users-email.server";
 
 export const adminSendAuthEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -12,6 +11,7 @@ export const adminSendAuthEmail = createServerFn({ method: "POST" })
     redirect_to: z.string().url().optional(),
   }).parse(i))
   .handler(async ({ data, context }) => {
+    const { sendAdminAuthEmail } = await import("@/lib/admin-users-email.server");
     return sendAdminAuthEmail({
       userId: data.user_id,
       email: data.email,
