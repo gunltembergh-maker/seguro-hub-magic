@@ -329,7 +329,9 @@ function AdminUsuariosPage() {
                           <TableCell><TimesReceitaBadge times={u.times_receita} roles={(u.roles ?? []) as string[]} /></TableCell>
                           <TableCell><StatusBadge u={u} /></TableCell>
                           <TableCell className="text-center tabular-nums">{u.total_sessoes}</TableCell>
+                          <TableCell><ConviteCell u={u} /></TableCell>
                           <TableCell className="text-muted-foreground">{formatUltimoAcesso(u.ultimo_acesso)}</TableCell>
+
                           <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                             <div className="flex justify-end gap-1">
                               <Button size="sm" variant="ghost" title="Ver detalhes" onClick={() => setDetailUser(u)}>
