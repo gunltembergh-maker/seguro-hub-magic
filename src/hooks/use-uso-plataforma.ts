@@ -25,6 +25,26 @@ export interface UsoPagina {
   acessos: number;
   tempo_min: number;
   ultimo_em: string;
+  primeiro_em: string | null;
+  tempo_min_seg: number;
+  tempo_max_seg: number;
+  tempo_medio_seg: number;
+  dias: number;
+}
+
+export interface UsoDetalhe {
+  user_id: string;
+  full_name: string | null;
+  email: string;
+  perfil_nome: string | null;
+  dia: string;
+  rota: string;
+  area: string | null;
+  subpagina: string | null;
+  titulo: string | null;
+  entrou_em: string;
+  ultimo_ping_em: string | null;
+  duracao_seg: number;
 }
 
 export interface UsoDiario {
