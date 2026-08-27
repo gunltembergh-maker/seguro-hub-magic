@@ -186,7 +186,7 @@ function PerfilDialog({ perfil, onClose, onDone }: { perfil: PerfilAcesso | null
             <p className="text-xs text-muted-foreground">
               Novos itens (pai ou filho) aparecem aqui automaticamente, sempre desabilitados. Habilite conforme o perfil.
             </p>
-            <div className="max-h-[50vh] space-y-5 overflow-y-auto rounded-lg border border-border p-3">
+            <div className="space-y-5 rounded-lg border border-border p-3">
               {PERMISSION_GROUPS.map((g) => (
                 <div key={g.title} className="space-y-2">
                   <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{g.title}</h4>
