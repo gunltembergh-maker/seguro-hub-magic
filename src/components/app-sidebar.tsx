@@ -88,14 +88,14 @@ type AreaItem = {
 const ramosAll: CollapsibleItem[] = [
   {
     title: "Garantia",
-    url: "/garantia",
     icon: ShieldCheck,
     tooltip: "Garantia",
     perm: "menu_ramo_garantia",
     children: [
-      { title: "Operacional", url: "/garantia/analise-limite", icon: FileSearch },
+      { title: "Operacional", url: "/garantia/analise-limite", icon: FileSearch,
+        perms: ["menu_garantia_operacional"] },
       { title: "Análise de Processos", url: "/garantia/analise-background", icon: SearchCheck,
-        perms: ["ab_garantia"] },
+        perms: ["menu_garantia_analise_processos", "ab_garantia"] },
     ],
   },
   { title: "Benefícios", url: "/beneficios", icon: HeartPulse, tooltip: "Benefícios", perm: "menu_ramo_beneficios" },
