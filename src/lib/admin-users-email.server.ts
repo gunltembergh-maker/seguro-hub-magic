@@ -16,9 +16,7 @@ interface SendAdminAuthEmailInput {
 }
 
 interface AuthContext {
-  supabase: {
-    rpc: (name: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
-  };
+  supabase: any;
   userId: string;
 }
 
