@@ -5,6 +5,7 @@ import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/s
 import { AppSidebar } from "@/components/app-sidebar";
 import { HubHeader } from "@/components/hub-header";
 import { useMeuPerfil } from "@/hooks/use-meu-perfil";
+import { usePageTracking } from "@/hooks/use-page-tracking";
 import { ShieldAlert, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LoadingSplash } from "@/components/loading-splash";
@@ -40,6 +41,8 @@ function AuthenticatedLayout() {
       void supabase.rpc("rpc_registrar_acesso").then(() => {});
     }
   }, [perfil?.user_id, perfil?.blocked, perfil?.active]);
+
+  usePageTracking(!!perfil && !perfil.blocked && perfil.active);
 
   if (isLoading) {
     return <LoadingSplash />;
