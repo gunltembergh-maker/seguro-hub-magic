@@ -401,21 +401,47 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
-        {adminItems.length > 0 && (
+        {(adminItems.length > 0 || emailChildren.length > 0) && (
           <SidebarGroup>
             <SidebarGroupLabel>Administração</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {adminItems.map((i) => (
-                  <SidebarMenuItem key={i.url}>
-                    <SidebarMenuButton asChild isActive={isActive(i.url)} tooltip={i.title}>
-                      <Link to={i.url}>
-                        <i.icon />
-                        <span>{i.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {adminItems
+                  .filter((i) => i.url !== "/admin/configuracoes")
+                  .map((i) => (
+                    <SidebarMenuItem key={i.url}>
+                      <SidebarMenuButton asChild isActive={isActive(i.url)} tooltip={i.title}>
+                        <Link to={i.url}>
+                          <i.icon />
+                          <span>{i.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+
+                {emailChildren.length > 0 && (
+                  <CollapsibleNavItem
+                    item={emailsCollapsible}
+                    isActiveParent={false}
+                    hasActiveChild={hasActiveEmailChild}
+                    isActiveChild={isActive}
+                    collapsed={collapsed}
+                    onChildNavigate={collapseOnNavigate}
+                  />
+                )}
+
+                {adminItems
+                  .filter((i) => i.url === "/admin/configuracoes")
+                  .map((i) => (
+                    <SidebarMenuItem key={i.url}>
+                      <SidebarMenuButton asChild isActive={isActive(i.url)} tooltip={i.title}>
+                        <Link to={i.url}>
+                          <i.icon />
+                          <span>{i.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
