@@ -105,6 +105,7 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
       { key: "menu_admin_emails", label: "E-mails", desc: "Destinatários e templates" },
       { key: "menu_admin_emails_schedules", label: "↳ Agendamentos", desc: "Configurar disparos recorrentes", child: true },
       { key: "menu_admin_emails_log", label: "↳ Log de E-mails", desc: "Histórico de envios", child: true },
+      { key: "menu_admin_uso", label: "Relatório de Uso", desc: "Uso diário por usuário e auditoria administrativa" },
       { key: "menu_admin_configuracoes", label: "Configurações", desc: "Configurações gerais do Hub" },
     ],
   },

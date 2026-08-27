@@ -41,6 +41,7 @@ import { Route as AuthenticatedDashboardReceitaExecutivoRouteImport } from './ro
 import { Route as AuthenticatedDashboardReceitaCaixaRouteImport } from './routes/_authenticated/dashboard.receita-caixa'
 import { Route as AuthenticatedDashboardReceitaRouteImport } from './routes/_authenticated/dashboard.receita'
 import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authenticated/admin/usuarios'
+import { Route as AuthenticatedAdminUsoRouteImport } from './routes/_authenticated/admin/uso'
 import { Route as AuthenticatedAdminPerfisRouteImport } from './routes/_authenticated/admin/perfis'
 import { Route as AuthenticatedAdminImportarBasesRouteImport } from './routes/_authenticated/admin/importar-bases'
 import { Route as AuthenticatedAdminEmailsRouteImport } from './routes/_authenticated/admin/emails'
@@ -52,6 +53,7 @@ import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/em
 import { Route as ApiTcLavoroTcAnalisesIdRouteImport } from './routes/api/tc-lavoro/tc-analises.$id'
 import { Route as ApiTcLavoroAnalysisJobsJobIdRouteImport } from './routes/api/tc-lavoro/analysis-jobs.$jobId'
 import { Route as ApiPublicHooksDispatchScheduledNewslettersRouteImport } from './routes/api/public/hooks/dispatch-scheduled-newsletters'
+import { Route as ApiPublicHooksAdminAuditNotifyRouteImport } from './routes/api/public/hooks/admin-audit-notify'
 import { Route as ApiPublicHooksAbMotorRunRouteImport } from './routes/api/public/hooks/ab-motor-run'
 import { Route as ApiPublicHooksAbIngestTransparenciaRouteImport } from './routes/api/public/hooks/ab-ingest-transparencia'
 import { Route as ApiPublicHooksAbIngestPncpRouteImport } from './routes/api/public/hooks/ab-ingest-pncp'
@@ -232,6 +234,11 @@ const AuthenticatedAdminUsuariosRoute =
     path: '/usuarios',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminUsoRoute = AuthenticatedAdminUsoRouteImport.update({
+  id: '/uso',
+  path: '/uso',
+  getParentRoute: () => AuthenticatedAdminRouteRoute,
+} as any)
 const AuthenticatedAdminPerfisRoute =
   AuthenticatedAdminPerfisRouteImport.update({
     id: '/perfis',
@@ -293,6 +300,12 @@ const ApiPublicHooksDispatchScheduledNewslettersRoute =
   ApiPublicHooksDispatchScheduledNewslettersRouteImport.update({
     id: '/api/public/hooks/dispatch-scheduled-newsletters',
     path: '/api/public/hooks/dispatch-scheduled-newsletters',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksAdminAuditNotifyRoute =
+  ApiPublicHooksAdminAuditNotifyRouteImport.update({
+    id: '/api/public/hooks/admin-audit-notify',
+    path: '/api/public/hooks/admin-audit-notify',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicHooksAbMotorRunRoute =
@@ -371,6 +384,7 @@ export interface FileRoutesByFullPath {
   '/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/admin/importar-bases': typeof AuthenticatedAdminImportarBasesRoute
   '/admin/perfis': typeof AuthenticatedAdminPerfisRoute
+  '/admin/uso': typeof AuthenticatedAdminUsoRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/dashboard/receita': typeof AuthenticatedDashboardReceitaRoute
   '/dashboard/receita-caixa': typeof AuthenticatedDashboardReceitaCaixaRoute
@@ -395,6 +409,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/ab-ingest-pncp': typeof ApiPublicHooksAbIngestPncpRoute
   '/api/public/hooks/ab-ingest-transparencia': typeof ApiPublicHooksAbIngestTransparenciaRoute
   '/api/public/hooks/ab-motor-run': typeof ApiPublicHooksAbMotorRunRoute
+  '/api/public/hooks/admin-audit-notify': typeof ApiPublicHooksAdminAuditNotifyRoute
   '/api/public/hooks/dispatch-scheduled-newsletters': typeof ApiPublicHooksDispatchScheduledNewslettersRoute
   '/api/tc-lavoro/analysis-jobs/$jobId': typeof ApiTcLavoroAnalysisJobsJobIdRouteWithChildren
   '/api/tc-lavoro/tc-analises/$id': typeof ApiTcLavoroTcAnalisesIdRoute
@@ -424,6 +439,7 @@ export interface FileRoutesByTo {
   '/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/admin/importar-bases': typeof AuthenticatedAdminImportarBasesRoute
   '/admin/perfis': typeof AuthenticatedAdminPerfisRoute
+  '/admin/uso': typeof AuthenticatedAdminUsoRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/dashboard/receita': typeof AuthenticatedDashboardReceitaRoute
   '/dashboard/receita-caixa': typeof AuthenticatedDashboardReceitaCaixaRoute
@@ -448,6 +464,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/ab-ingest-pncp': typeof ApiPublicHooksAbIngestPncpRoute
   '/api/public/hooks/ab-ingest-transparencia': typeof ApiPublicHooksAbIngestTransparenciaRoute
   '/api/public/hooks/ab-motor-run': typeof ApiPublicHooksAbMotorRunRoute
+  '/api/public/hooks/admin-audit-notify': typeof ApiPublicHooksAdminAuditNotifyRoute
   '/api/public/hooks/dispatch-scheduled-newsletters': typeof ApiPublicHooksDispatchScheduledNewslettersRoute
   '/api/tc-lavoro/analysis-jobs/$jobId': typeof ApiTcLavoroAnalysisJobsJobIdRouteWithChildren
   '/api/tc-lavoro/tc-analises/$id': typeof ApiTcLavoroTcAnalisesIdRoute
@@ -479,6 +496,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/_authenticated/admin/importar-bases': typeof AuthenticatedAdminImportarBasesRoute
   '/_authenticated/admin/perfis': typeof AuthenticatedAdminPerfisRoute
+  '/_authenticated/admin/uso': typeof AuthenticatedAdminUsoRoute
   '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/_authenticated/dashboard/receita': typeof AuthenticatedDashboardReceitaRoute
   '/_authenticated/dashboard/receita-caixa': typeof AuthenticatedDashboardReceitaCaixaRoute
@@ -503,6 +521,7 @@ export interface FileRoutesById {
   '/api/public/hooks/ab-ingest-pncp': typeof ApiPublicHooksAbIngestPncpRoute
   '/api/public/hooks/ab-ingest-transparencia': typeof ApiPublicHooksAbIngestTransparenciaRoute
   '/api/public/hooks/ab-motor-run': typeof ApiPublicHooksAbMotorRunRoute
+  '/api/public/hooks/admin-audit-notify': typeof ApiPublicHooksAdminAuditNotifyRoute
   '/api/public/hooks/dispatch-scheduled-newsletters': typeof ApiPublicHooksDispatchScheduledNewslettersRoute
   '/api/tc-lavoro/analysis-jobs/$jobId': typeof ApiTcLavoroAnalysisJobsJobIdRouteWithChildren
   '/api/tc-lavoro/tc-analises/$id': typeof ApiTcLavoroTcAnalisesIdRoute
@@ -534,6 +553,7 @@ export interface FileRouteTypes {
     | '/admin/emails'
     | '/admin/importar-bases'
     | '/admin/perfis'
+    | '/admin/uso'
     | '/admin/usuarios'
     | '/dashboard/receita'
     | '/dashboard/receita-caixa'
@@ -558,6 +578,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/ab-ingest-pncp'
     | '/api/public/hooks/ab-ingest-transparencia'
     | '/api/public/hooks/ab-motor-run'
+    | '/api/public/hooks/admin-audit-notify'
     | '/api/public/hooks/dispatch-scheduled-newsletters'
     | '/api/tc-lavoro/analysis-jobs/$jobId'
     | '/api/tc-lavoro/tc-analises/$id'
@@ -587,6 +608,7 @@ export interface FileRouteTypes {
     | '/admin/emails'
     | '/admin/importar-bases'
     | '/admin/perfis'
+    | '/admin/uso'
     | '/admin/usuarios'
     | '/dashboard/receita'
     | '/dashboard/receita-caixa'
@@ -611,6 +633,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/ab-ingest-pncp'
     | '/api/public/hooks/ab-ingest-transparencia'
     | '/api/public/hooks/ab-motor-run'
+    | '/api/public/hooks/admin-audit-notify'
     | '/api/public/hooks/dispatch-scheduled-newsletters'
     | '/api/tc-lavoro/analysis-jobs/$jobId'
     | '/api/tc-lavoro/tc-analises/$id'
@@ -641,6 +664,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/emails'
     | '/_authenticated/admin/importar-bases'
     | '/_authenticated/admin/perfis'
+    | '/_authenticated/admin/uso'
     | '/_authenticated/admin/usuarios'
     | '/_authenticated/dashboard/receita'
     | '/_authenticated/dashboard/receita-caixa'
@@ -665,6 +689,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/ab-ingest-pncp'
     | '/api/public/hooks/ab-ingest-transparencia'
     | '/api/public/hooks/ab-motor-run'
+    | '/api/public/hooks/admin-audit-notify'
     | '/api/public/hooks/dispatch-scheduled-newsletters'
     | '/api/tc-lavoro/analysis-jobs/$jobId'
     | '/api/tc-lavoro/tc-analises/$id'
@@ -693,6 +718,7 @@ export interface RootRouteChildren {
   ApiPublicHooksAbIngestPncpRoute: typeof ApiPublicHooksAbIngestPncpRoute
   ApiPublicHooksAbIngestTransparenciaRoute: typeof ApiPublicHooksAbIngestTransparenciaRoute
   ApiPublicHooksAbMotorRunRoute: typeof ApiPublicHooksAbMotorRunRoute
+  ApiPublicHooksAdminAuditNotifyRoute: typeof ApiPublicHooksAdminAuditNotifyRoute
   ApiPublicHooksDispatchScheduledNewslettersRoute: typeof ApiPublicHooksDispatchScheduledNewslettersRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -925,6 +951,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminUsuariosRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/uso': {
+      id: '/_authenticated/admin/uso'
+      path: '/uso'
+      fullPath: '/admin/uso'
+      preLoaderRoute: typeof AuthenticatedAdminUsoRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/perfis': {
       id: '/_authenticated/admin/perfis'
       path: '/perfis'
@@ -1002,6 +1035,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksDispatchScheduledNewslettersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/admin-audit-notify': {
+      id: '/api/public/hooks/admin-audit-notify'
+      path: '/api/public/hooks/admin-audit-notify'
+      fullPath: '/api/public/hooks/admin-audit-notify'
+      preLoaderRoute: typeof ApiPublicHooksAdminAuditNotifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/ab-motor-run': {
       id: '/api/public/hooks/ab-motor-run'
       path: '/api/public/hooks/ab-motor-run'
@@ -1074,6 +1114,7 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminEmailsRoute: typeof AuthenticatedAdminEmailsRoute
   AuthenticatedAdminImportarBasesRoute: typeof AuthenticatedAdminImportarBasesRoute
   AuthenticatedAdminPerfisRoute: typeof AuthenticatedAdminPerfisRoute
+  AuthenticatedAdminUsoRoute: typeof AuthenticatedAdminUsoRoute
   AuthenticatedAdminUsuariosRoute: typeof AuthenticatedAdminUsuariosRoute
   AuthenticatedAdminEmailsLogRoute: typeof AuthenticatedAdminEmailsLogRoute
   AuthenticatedAdminEmailsSchedulesRoute: typeof AuthenticatedAdminEmailsSchedulesRoute
@@ -1086,6 +1127,7 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminEmailsRoute: AuthenticatedAdminEmailsRoute,
     AuthenticatedAdminImportarBasesRoute: AuthenticatedAdminImportarBasesRoute,
     AuthenticatedAdminPerfisRoute: AuthenticatedAdminPerfisRoute,
+    AuthenticatedAdminUsoRoute: AuthenticatedAdminUsoRoute,
     AuthenticatedAdminUsuariosRoute: AuthenticatedAdminUsuariosRoute,
     AuthenticatedAdminEmailsLogRoute: AuthenticatedAdminEmailsLogRoute,
     AuthenticatedAdminEmailsSchedulesRoute:
@@ -1220,6 +1262,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksAbIngestTransparenciaRoute:
     ApiPublicHooksAbIngestTransparenciaRoute,
   ApiPublicHooksAbMotorRunRoute: ApiPublicHooksAbMotorRunRoute,
+  ApiPublicHooksAdminAuditNotifyRoute: ApiPublicHooksAdminAuditNotifyRoute,
   ApiPublicHooksDispatchScheduledNewslettersRoute:
     ApiPublicHooksDispatchScheduledNewslettersRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
