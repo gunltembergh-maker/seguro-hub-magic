@@ -332,11 +332,12 @@ function AuthPage() {
     const clean = email.trim().toLowerCase();
     if (!clean) return;
     if (!isCorporateEmail(clean)) {
-      toast.error("E-mail não autorizado", {
-        description: `Use um e-mail corporativo (${ALLOWED_PASSWORD_DOMAINS.map((d) => `@${d}`).join(", ")}).`,
+      toast.error("Acesso somente por SSO", {
+        description: "Entre com sua conta Microsoft corporativa.",
       });
       return;
     }
+
     if (!showPassword) {
       setShowPassword(true);
       return;
