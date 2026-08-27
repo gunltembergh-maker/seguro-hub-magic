@@ -90,6 +90,7 @@ export function ViewAsProvider({ children }: { children: ReactNode }) {
         perfil_nome: row.perfil_nome ?? null,
         permissoes: (row.permissoes ?? {}) as Record<string, boolean>,
         roles: (row.roles ?? []) as AppRole[],
+        times_receita: (row.times_receita ?? []) as string[],
       };
     },
   });
@@ -108,7 +109,7 @@ export function ViewAsProvider({ children }: { children: ReactNode }) {
           perfil_nome: viewAsProfile!.perfil_nome,
           permissoes: viewAsProfile!.permissoes,
           roles: viewAsProfile!.roles,
-          times_receita: [],
+          times_receita: viewAsProfile!.times_receita ?? [],
         }
       : (realPerfil ?? null);
 
