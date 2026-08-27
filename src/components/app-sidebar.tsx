@@ -135,7 +135,7 @@ function CollapsibleNavItem({
       onMouseLeave={() => setHovered(false)}
     >
       <SidebarMenuButton
-        asChild={!!item.url}
+        asChild
         isActive={isActiveParent}
         tooltip={item.tooltip ?? item.title}
         onClick={item.url ? undefined : toggle}
@@ -154,7 +154,7 @@ function CollapsibleNavItem({
             )}
           </Link>
         ) : (
-          <button type="button" onClick={toggle} className="flex w-full items-center gap-2">
+          <button type="button" onClick={toggle}>
             <Icon />
             <span>{item.title}</span>
             {item.children && item.children.length > 0 && (
