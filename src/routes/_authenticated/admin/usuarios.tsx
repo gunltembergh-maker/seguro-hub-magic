@@ -381,6 +381,14 @@ function AdminUsuariosPage() {
         onSaved={refresh}
       />
 
+      <ImportUsuariosModal
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        emailsExistentes={(users ?? []).map((u) => u.email)}
+        perfisExistentes={(perfis ?? []).map((p) => p.nome)}
+        onDone={refresh}
+      />
+
       <UserDetailSheet
         user={detailUser}
         open={!!detailUser}
