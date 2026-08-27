@@ -90,7 +90,15 @@ export interface AdminUserV2 {
   tipo_usuario: "interno" | "externo";
   roles: AppRole[];
   times_receita: string[];
+  cpf: string | null;
+  area: string | null;
+  gestor: string | null;
+  empresa: string | null;
+  convite_enviado_em: string | null;
+  convite_tipo: string | null;
+  convite_aceito_em: string | null;
 }
+
 
 export interface ConviteExterno {
   id: string;
