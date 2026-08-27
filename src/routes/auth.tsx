@@ -14,17 +14,17 @@ import logoBranca from "@/assets/logo-branca.png.asset.json";
 import fundoPredio from "@/assets/fundo-login-predio.png.asset.json";
 
 const ALLOWED_DOMAIN = "lavoroseguros.com.br";
-// Domínios corporativos autorizados a entrar com e-mail e senha
-export const ALLOWED_PASSWORD_DOMAINS = [
-  "lavoroseguros.com.br",
-  "zin.com.br",
-  "taicons.com.br",
+// Acesso é exclusivamente por SSO (Microsoft). Apenas esta conta administrativa
+// pode entrar com e-mail e senha.
+export const ALLOWED_PASSWORD_EMAILS = [
+  "alessandro.oliveira@lavoroseguros.com.br",
 ];
 
 export function isCorporateEmail(value: string) {
   const clean = value.trim().toLowerCase();
-  return ALLOWED_PASSWORD_DOMAINS.some((d) => clean.endsWith(`@${d}`));
+  return ALLOWED_PASSWORD_EMAILS.includes(clean);
 }
+
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
