@@ -1280,6 +1280,57 @@ export type Database = {
           },
         ]
       }
+      admin_audit_log: {
+        Row: {
+          acao: string
+          alvo_descricao: string | null
+          alvo_id: string | null
+          antes: Json | null
+          ator_email: string | null
+          ator_id: string | null
+          ator_nome: string | null
+          created_at: string
+          depois: Json | null
+          entidade: string
+          id: string
+          mudancas: Json | null
+          notificacao_erro: string | null
+          notificado_em: string | null
+        }
+        Insert: {
+          acao: string
+          alvo_descricao?: string | null
+          alvo_id?: string | null
+          antes?: Json | null
+          ator_email?: string | null
+          ator_id?: string | null
+          ator_nome?: string | null
+          created_at?: string
+          depois?: Json | null
+          entidade: string
+          id?: string
+          mudancas?: Json | null
+          notificacao_erro?: string | null
+          notificado_em?: string | null
+        }
+        Update: {
+          acao?: string
+          alvo_descricao?: string | null
+          alvo_id?: string | null
+          antes?: Json | null
+          ator_email?: string | null
+          ator_id?: string | null
+          ator_nome?: string | null
+          created_at?: string
+          depois?: Json | null
+          entidade?: string
+          id?: string
+          mudancas?: Json | null
+          notificacao_erro?: string | null
+          notificado_em?: string | null
+        }
+        Relationships: []
+      }
       admin_popup_dismissals: {
         Row: {
           dismissed_at: string
@@ -2127,6 +2178,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_page_view: {
+        Row: {
+          created_at: string
+          duracao_seg: number
+          entrou_em: string
+          id: string
+          rota: string
+          titulo: string | null
+          ultimo_ping_em: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duracao_seg?: number
+          entrou_em?: string
+          id?: string
+          rota: string
+          titulo?: string | null
+          ultimo_ping_em?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duracao_seg?: number
+          entrou_em?: string
+          id?: string
+          rota?: string
+          titulo?: string | null
+          ultimo_ping_em?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -2703,6 +2790,7 @@ export type Database = {
         Args: { categoria: string }
         Returns: string
       }
+      notificar_admin_audit: { Args: never; Returns: undefined }
       pode_gerenciar_configuracoes: {
         Args: { _user_id: string }
         Returns: boolean
@@ -2773,6 +2861,31 @@ export type Database = {
           momento: string
           tipo: string
         }[]
+      }
+      rpc_admin_audit_listar: {
+        Args: { _ate: string; _de: string; _limit?: number }
+        Returns: {
+          acao: string
+          alvo_descricao: string | null
+          alvo_id: string | null
+          antes: Json | null
+          ator_email: string | null
+          ator_id: string | null
+          ator_nome: string | null
+          created_at: string
+          depois: Json | null
+          entidade: string
+          id: string
+          mudancas: Json | null
+          notificacao_erro: string | null
+          notificado_em: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "admin_audit_log"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       rpc_admin_caixa_append: {
         Args: { _rows: Json; _sync_id: string }
@@ -3019,6 +3132,50 @@ export type Database = {
           _permissoes: Json
         }
         Returns: string
+      }
+      rpc_admin_uso_diario: {
+        Args: { _ate: string; _de: string; _user_id?: string }
+        Returns: {
+          dia: string
+          email: string
+          full_name: string
+          paginas: number
+          primeiro_em: string
+          rotas: string[]
+          tempo_min: number
+          ultimo_em: string
+          user_id: string
+        }[]
+      }
+      rpc_admin_uso_paginas: {
+        Args: { _ate: string; _de: string; _user_id?: string }
+        Returns: {
+          acessos: number
+          email: string
+          full_name: string
+          rota: string
+          tempo_min: number
+          titulo: string
+          ultimo_em: string
+          user_id: string
+        }[]
+      }
+      rpc_admin_uso_resumo: {
+        Args: { _ate: string; _de: string }
+        Returns: {
+          dias_ativos: number
+          dias_sem_acessar: number
+          email: string
+          full_name: string
+          perfil_nome: string
+          primeiro_acesso: string
+          sessoes: number
+          tempo_total_min: number
+          top_rota: string
+          total_paginas: number
+          ultimo_acesso: string
+          user_id: string
+        }[]
       }
       rpc_atualizar_schedule_config: {
         Args: {
@@ -3357,6 +3514,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      rpc_pageview_ping: { Args: { _id: string }; Returns: undefined }
       rpc_permitir_login_senha: { Args: never; Returns: boolean }
       rpc_proxima_execucao_schedule: {
         Args: { p_modulo: string }
@@ -3501,6 +3659,10 @@ export type Database = {
         }[]
       }
       rpc_registrar_acesso: { Args: never; Returns: undefined }
+      rpc_registrar_pageview: {
+        Args: { _rota: string; _titulo?: string; _user_agent?: string }
+        Returns: string
+      }
       rpc_remover_destinatario_automatico: {
         Args: { p_id: string }
         Returns: boolean
