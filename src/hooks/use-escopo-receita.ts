@@ -1,4 +1,4 @@
-import { useMeuPerfil } from "@/hooks/use-meu-perfil";
+import { useMeuPerfilEfetivo } from "@/contexts/view-as-context";
 import {
   escopoFrase,
   escopoSufixo,
