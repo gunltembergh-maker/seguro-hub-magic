@@ -2861,10 +2861,17 @@ export type Database = {
         Args: never
         Returns: {
           active: boolean
+          area: string
           blocked: boolean
+          convite_aceito_em: string
+          convite_enviado_em: string
+          convite_tipo: string
+          cpf: string
           criado_em: string
           email: string
+          empresa: string
           full_name: string
+          gestor: string
           perfil_id: string
           perfil_nome: string
           primeiro_acesso: boolean
