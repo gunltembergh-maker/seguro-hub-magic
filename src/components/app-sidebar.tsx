@@ -252,6 +252,8 @@ export function AppSidebar() {
     { title: "Comunicados", url: "/admin/comunicados", icon: Megaphone, show: isAdmin || hasPermission(meuPerfil, "menu_admin_comunicados") },
     { title: "Importar Bases", url: "/admin/importar-bases", icon: Upload,
       show: isAdmin || hasPermission(meuPerfil, "menu_admin_importar") || hasPermission(meuPerfil, "menu_importar_gerencial") || hasPermission(meuPerfil, "menu_importar_caixa") },
+    { title: "Relatório de Uso", url: "/admin/uso", icon: Activity,
+      show: isAdmin || hasPermission(meuPerfil, "menu_admin_uso") },
     { title: "Configurações", url: "/admin/configuracoes", icon: Settings,
       show: isAdmin || hasPermission(meuPerfil, "menu_admin_configuracoes") },
   ].filter((i) => i.show);
