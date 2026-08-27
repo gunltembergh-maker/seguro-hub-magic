@@ -14,7 +14,7 @@ import {
  * - array vazio/nulo => NÃO vê receita nenhuma
  */
 export function useEscopoReceita() {
-  const { data: perfil } = useMeuPerfil();
+  const perfil = useMeuPerfilEfetivo();
   const isAdmin = !!perfil?.roles?.includes("ADMIN");
   const raw = perfil?.times_receita;
   const semAcesso = !isAdmin && semAcessoReceita(raw);
