@@ -58,6 +58,36 @@ function StatusBadge({ u }: { u: AdminUserV2 }) {
   return <Badge className="border border-emerald-500/30 bg-emerald-500/10 text-emerald-700">✅ Ativo</Badge>;
 }
 
+const CONVITE_LABEL: Record<string, string> = {
+  invite: "Convite",
+  magiclink: "Magic link",
+  recovery: "Recuperação",
+};
+
+function ConviteCell({ u }: { u: AdminUserV2 }) {
+  const dt = (v: string) => new Date(v).toLocaleDateString("pt-BR");
+  if (u.convite_aceito_em) {
+    return (
+      <div className="space-y-0.5 text-xs">
+        <Badge className="border border-emerald-500/30 bg-emerald-500/10 text-emerald-700">✅ Aceito</Badge>
+        <div className="text-muted-foreground">em {dt(u.convite_aceito_em)}</div>
+      </div>
+    );
+  }
+  if (u.convite_enviado_em) {
+    return (
+      <div className="space-y-0.5 text-xs">
+        <Badge className="border border-amber-500/30 bg-amber-500/10 text-amber-700">
+          ✉️ {CONVITE_LABEL[u.convite_tipo ?? ""] ?? "Enviado"}
+        </Badge>
+        <div className="text-muted-foreground">em {dt(u.convite_enviado_em)}</div>
+      </div>
+    );
+  }
+  return <span className="text-xs text-muted-foreground">Não enviado</span>;
+}
+
+
 const TIME_LABEL: Record<string, string> = {
   GARANTIA: "Garantia",
   BENEFICIOS: "Benefícios",
