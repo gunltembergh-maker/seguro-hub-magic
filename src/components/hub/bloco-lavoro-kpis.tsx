@@ -48,22 +48,24 @@ interface KpiRow {
   competencia_demais: number;
 }
 
-const breakdownPrevisto = (k: KpiRow | null | undefined) => [
-  { label: "Garantia", value: BRL(k?.previsto_garantia) },
-  { label: "Benefícios", value: BRL(k?.previsto_beneficios) },
-  { label: "Demais Ramos", value: BRL(k?.previsto_demais) },
+type Parte = { label: string; raw: number };
+
+const partesPrevisto = (k: KpiRow | null | undefined): Parte[] => [
+  { label: "Garantia", raw: Number(k?.previsto_garantia || 0) },
+  { label: "Benefícios", raw: Number(k?.previsto_beneficios || 0) },
+  { label: "Demais Ramos", raw: Number(k?.previsto_demais || 0) },
 ];
 
-const breakdownCaixa = (k: KpiRow | null | undefined) => [
-  { label: "Garantia", value: BRL(k?.caixa_garantia) },
-  { label: "Benefícios", value: BRL(k?.caixa_beneficios) },
-  { label: "Demais Ramos", value: BRL(k?.caixa_demais) },
+const partesCaixa = (k: KpiRow | null | undefined): Parte[] => [
+  { label: "Garantia", raw: Number(k?.caixa_garantia || 0) },
+  { label: "Benefícios", raw: Number(k?.caixa_beneficios || 0) },
+  { label: "Demais Ramos", raw: Number(k?.caixa_demais || 0) },
 ];
 
-const breakdownCompetencia = (k: KpiRow | null | undefined) => [
-  { label: "Garantia", value: BRL(k?.competencia_garantia) },
-  { label: "Benefícios", value: BRL(k?.competencia_beneficios) },
-  { label: "Demais Ramos", value: BRL(k?.competencia_demais) },
+const partesCompetencia = (k: KpiRow | null | undefined): Parte[] => [
+  { label: "Garantia", raw: Number(k?.competencia_garantia || 0) },
+  { label: "Benefícios", raw: Number(k?.competencia_beneficios || 0) },
+  { label: "Demais Ramos", raw: Number(k?.competencia_demais || 0) },
 ];
 
 function useKpis(ano: number, mes: number, periodo: "MTD" | "YTD") {
@@ -86,6 +88,11 @@ export function BlocoLavoroKpis({ canSee }: { canSee: boolean }) {
   const ano = hoje.getFullYear();
   const mes = hoje.getMonth() + 1;
   const mesLabel = `${MESES[mes - 1]}/${ano}`;
+
+  const visiveis = (partes: Parte[]) => escopo.filtrar(partes) as Parte[];
+  const bd = (partes: Parte[]) => visiveis(partes).map((p) => ({ label: p.label, value: BRL(p.raw) }));
+  const totalOu = (partes: Parte[], total: number | null | undefined) =>
+    escopo.restrito ? visiveis(partes).reduce((a, p) => a + p.raw, 0) : Number(total || 0);
 
   const ytdQ = useKpis(ano, mes, "YTD");
   const mtdQ = useKpis(ano, mes, "MTD");
@@ -149,20 +156,20 @@ export function BlocoLavoroKpis({ canSee }: { canSee: boolean }) {
             <Kpi
               label={`A RECEBER EM YTD ${ano}${escopo.sufixo.toUpperCase()}`}
               hint="Previsto Caixa (parcelas emitidas por data de pagamento)"
-              value={loadingY ? null : BRL(ytd?.previsto_caixa)}
+              value={loadingY ? null : BRL(totalOu(partesPrevisto(ytd), ytd?.previsto_caixa))}
               accent={L.amber}
               hintColor={L.amber}
               loading={loadingY}
-              breakdown={escopo.filtrar(breakdownPrevisto(ytd))}
+              breakdown={bd(partesPrevisto(ytd))}
             />
             <Kpi
-              label={`RECEITA CAIXA EM YTD ${ano}`}
+              label={`RECEITA CAIXA EM YTD ${ano}${escopo.sufixo.toUpperCase()}`}
               hint="Receita Caixa (efetivamente recebido)"
-              value={loadingY ? null : BRL(ytd?.receita_caixa)}
+              value={loadingY ? null : BRL(totalOu(partesCaixa(ytd), ytd?.receita_caixa))}
               accent={L.green}
               hintColor={L.green}
               loading={loadingY}
-              breakdown={escopo.filtrar(breakdownCaixa(ytd))}
+              breakdown={bd(partesCaixa(ytd))}
             />
           </div>
         </div>
@@ -176,20 +183,20 @@ export function BlocoLavoroKpis({ canSee }: { canSee: boolean }) {
             <Kpi
               label={`A RECEBER EM ${mesLabel.toUpperCase()}${escopo.sufixo.toUpperCase()}`}
               hint="Previsto Caixa (parcelas emitidas por data de pagamento)"
-              value={loadingM ? null : BRL(mtd?.previsto_caixa)}
+              value={loadingM ? null : BRL(totalOu(partesPrevisto(mtd), mtd?.previsto_caixa))}
               accent={L.amber}
               hintColor={L.amber}
               loading={loadingM}
-              breakdown={escopo.filtrar(breakdownPrevisto(mtd))}
+              breakdown={bd(partesPrevisto(mtd))}
             />
             <Kpi
-              label={`RECEITA CAIXA EM ${mesLabel.toUpperCase()}`}
+              label={`RECEITA CAIXA EM ${mesLabel.toUpperCase()}${escopo.sufixo.toUpperCase()}`}
               hint="Receita Caixa (efetivamente recebido)"
-              value={loadingM ? null : BRL(mtd?.receita_caixa)}
+              value={loadingM ? null : BRL(totalOu(partesCaixa(mtd), mtd?.receita_caixa))}
               accent={L.green}
               hintColor={L.green}
               loading={loadingM}
-              breakdown={escopo.filtrar(breakdownCaixa(mtd))}
+              breakdown={bd(partesCaixa(mtd))}
             />
           </div>
         </div>
@@ -202,8 +209,8 @@ export function BlocoLavoroKpis({ canSee }: { canSee: boolean }) {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <Compact
               label={`RECEITA COMPETÊNCIA (${mesLabel.toUpperCase()})`}
-              value={loadingM ? null : BRL(mtd?.receita_competencia)}
-              breakdown={escopo.filtrar(breakdownCompetencia(mtd))}
+              value={loadingM ? null : BRL(totalOu(partesCompetencia(mtd), mtd?.receita_competencia))}
+              breakdown={bd(partesCompetencia(mtd))}
             />
             <Compact label={`META (${mesLabel.toUpperCase()})`} value={loadingM ? null : BRL(mtd?.meta_periodo)} />
             <Compact

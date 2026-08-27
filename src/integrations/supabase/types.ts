@@ -2919,6 +2919,7 @@ export type Database = {
           perfil_nome: string
           permissoes: Json
           roles: Database["public"]["Enums"]["app_role"][]
+          times_receita: string[]
           user_id: string
         }[]
       }
