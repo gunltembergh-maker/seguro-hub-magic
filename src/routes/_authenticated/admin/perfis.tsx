@@ -168,7 +168,7 @@ function PerfilDialog({ perfil, onClose, onDone }: { perfil: PerfilAcesso | null
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden">
+      <DialogContent className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden [&>*]:min-w-0">
         <DialogHeader>
           <DialogTitle>{perfil ? "Editar perfil" : "Novo perfil"}</DialogTitle>
         </DialogHeader>
