@@ -461,7 +461,8 @@ function AuthPage() {
                     value={email}
                     onChange={(e) => {
                       setEmail(e.target.value);
-                      if (!isCorporateEmail(e.target.value)) setShowPassword(false);
+                      setShowPassword(isCorporateEmail(e.target.value));
+
                     }}
                     placeholder={`nome@${ALLOWED_DOMAIN}`}
                   />
