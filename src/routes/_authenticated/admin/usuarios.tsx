@@ -313,7 +313,9 @@ function AdminUsuariosPage() {
                         <TableHead>Time(s) Receita</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Sessões</TableHead>
+                        <TableHead>Convite</TableHead>
                         <TableHead>Último acesso</TableHead>
+
                         <TableHead className="text-right">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
