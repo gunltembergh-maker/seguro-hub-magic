@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   CheckCircle2, Loader2, ShieldAlert, Pencil, UserCheck, Users, UserX,
-  Clock, ShieldOff, Search, Plus, Trash2, Activity, Lock, Unlock, Mail,
+  Clock, ShieldOff, Search, Plus, Trash2, Activity, Lock, Unlock, Mail, Upload,
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +16,7 @@ import {
 } from "@/hooks/use-admin-users-v2";
 import { UserFormModal, type UserFormInitial } from "@/components/admin/UserFormModal";
 import { UserDetailSheet } from "@/components/admin/UserDetailSheet";
+import { ImportUsuariosModal } from "@/components/admin/ImportUsuariosModal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -97,6 +98,7 @@ function AdminUsuariosPage() {
   const [deletingUser, setDeletingUser] = useState<AdminUserV2 | null>(null);
   const [convidarOpen, setConvidarOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [formInitial, setFormInitial] = useState<UserFormInitial | null>(null);
 
   const refresh = () => {
