@@ -12,6 +12,7 @@ export interface ViewAsProfile {
   perfil_nome: string | null;
   permissoes: Record<string, boolean>;
   roles: AppRole[];
+  times_receita: string[];
 }
 
 interface ViewAsContextType {
