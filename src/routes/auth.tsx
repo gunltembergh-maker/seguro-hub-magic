@@ -485,16 +485,19 @@ function AuthPage() {
                   </div>
                 )}
 
-                <Button
-                  type="submit"
-                  variant="outline"
-                  size="sm"
-                  disabled={pwLoading}
-                  className="w-full text-[#14405C]"
-                >
-                  {pwLoading && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
-                  {showPassword ? "Entrar" : "Continuar com senha"}
-                </Button>
+                {showPassword && (
+                  <Button
+                    type="submit"
+                    variant="outline"
+                    size="sm"
+                    disabled={pwLoading}
+                    className="w-full text-[#14405C]"
+                  >
+                    {pwLoading && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+                    Entrar
+                  </Button>
+                )}
+
 
                 {showPassword && (
                   <button
