@@ -30,9 +30,10 @@ import {
   AlertTriangle, XCircle, Clock, ChevronDown, ChevronRight, ShieldAlert, Save,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { SuperAdminGate } from "@/components/admin/SuperAdminGate";
 
 export const Route = createFileRoute('/_authenticated/admin/emails_/schedules')({
-  component: SchedulesPage,
+  component: ProtegidoSchedulesPage,
 })
 
 const MODULOS: Array<{ key: 'receita_lavoro' | 'executivo_lavoro' | 'fechamento_lavoro'; label: string }> = [
@@ -558,4 +559,12 @@ function SchedulesPage() {
       </AlertDialog>
     </div>
   )
+}
+
+function ProtegidoSchedulesPage() {
+  return (
+    <SuperAdminGate area="emails_schedules" titulo="O Agendamento de e-mails">
+      <SchedulesPage />
+    </SuperAdminGate>
+  );
 }

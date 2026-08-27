@@ -27,9 +27,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { SuperAdminGate } from "@/components/admin/SuperAdminGate";
 
 export const Route = createFileRoute("/_authenticated/admin/usuarios")({
-  component: AdminUsuariosPage,
+  component: ProtegidoAdminUsuariosPage,
 });
 
 const LAVORO_DOMAIN = "lavoroseguros.com.br";
@@ -609,5 +610,13 @@ function ConvitesExternosTab({ convites, onChanged }: { convites: ConviteExterno
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function ProtegidoAdminUsuariosPage() {
+  return (
+    <SuperAdminGate area="usuarios" titulo="A gestão de Usuários">
+      <AdminUsuariosPage />
+    </SuperAdminGate>
   );
 }

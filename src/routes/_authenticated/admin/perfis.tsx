@@ -19,9 +19,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { SuperAdminGate } from "@/components/admin/SuperAdminGate";
 
 export const Route = createFileRoute("/_authenticated/admin/perfis")({
-  component: AdminPerfisPage,
+  component: ProtegidoAdminPerfisPage,
 });
 
 const PROTECTED_NAMES = ["Admin", "Diretoria Geral"];
@@ -220,5 +221,13 @@ function PerfilDialog({ perfil, onClose, onDone }: { perfil: PerfilAcesso | null
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ProtegidoAdminPerfisPage() {
+  return (
+    <SuperAdminGate area="perfis" titulo="Perfis de Acesso">
+      <AdminPerfisPage />
+    </SuperAdminGate>
   );
 }
