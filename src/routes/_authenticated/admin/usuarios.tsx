@@ -114,13 +114,20 @@ function AdminUsuariosPage() {
       user_id: u.user_id,
       email: u.email,
       full_name: u.full_name,
+      cpf: u.cpf ?? null,
       perfil_id: u.perfil_id,
+      area: u.area ?? null,
+      gestor: u.gestor ?? null,
+      empresa: u.empresa ?? null,
+      tipo_usuario: u.tipo_usuario,
       blocked: u.blocked,
       active: u.active,
       times_receita: u.times_receita ?? [],
     });
     setFormOpen(true);
   };
+
+
 
   const metrics = useMemo(() => {
     const list = users ?? [];
