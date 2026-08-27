@@ -196,6 +196,9 @@ function AdminUsuariosPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setImportOpen(true)} className="gap-2">
+            <Upload className="h-4 w-4" /> Importar planilha
+          </Button>
           <Button variant="outline" onClick={openCreate} className="gap-2">
             <Plus className="h-4 w-4" /> Pré-cadastrar Usuário
           </Button>
