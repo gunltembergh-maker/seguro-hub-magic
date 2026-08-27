@@ -25,7 +25,7 @@ export const MagicLinkEmail = ({ confirmationUrl, userName, userEmail }: MagicLi
       <Body style={main}>
         <Container style={container}>
           <Section style={header}>
-            <Img src={LOGO_URL} alt="Lavoro Seguros" style={logoImg} />
+            <Img src={LOGO_URL} alt="Lavoro Seguros" width="101" height="34" style={logoImg} />
           </Section>
           <Section style={accentBar}>&nbsp;</Section>
 
