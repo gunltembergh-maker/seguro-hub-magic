@@ -15,11 +15,12 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
+import { SuperAdminGate } from "@/components/admin/SuperAdminGate";
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/admin/uso")({
-  component: AdminUsoPage,
+  component: ProtegidoAdminUsoPage,
   head: () => ({
     meta: [
       { title: "Relatório de uso por usuário — Hub Lavoro Seguros" },
@@ -410,4 +411,12 @@ function descreveMudancas(a: AuditItem): string {
   return Object.entries(a.mudancas)
     .map(([campo, v]) => `${campo}: ${valor(v?.antes)} -> ${valor(v?.depois)}`)
     .join(" | ");
+}
+
+function ProtegidoAdminUsoPage() {
+  return (
+    <SuperAdminGate area="uso" titulo="O Relatório de Uso">
+      <AdminUsoPage />
+    </SuperAdminGate>
+  );
 }
