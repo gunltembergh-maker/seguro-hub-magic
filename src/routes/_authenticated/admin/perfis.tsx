@@ -168,11 +168,11 @@ function PerfilDialog({ perfil, onClose, onDone }: { perfil: PerfilAcesso | null
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>{perfil ? "Editar perfil" : "Novo perfil"}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
+        <div className="min-h-0 min-w-0 flex-1 space-y-4 overflow-y-auto pr-1">
           <div className="space-y-2">
             <Label>Nome</Label>
             <Input value={nome} onChange={(e) => setNome(e.target.value)} disabled={!!isProtected} />
