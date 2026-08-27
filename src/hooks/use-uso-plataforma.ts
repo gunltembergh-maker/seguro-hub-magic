@@ -25,6 +25,26 @@ export interface UsoPagina {
   acessos: number;
   tempo_min: number;
   ultimo_em: string;
+  primeiro_em: string | null;
+  tempo_min_seg: number;
+  tempo_max_seg: number;
+  tempo_medio_seg: number;
+  dias: number;
+}
+
+export interface UsoDetalhe {
+  user_id: string;
+  full_name: string | null;
+  email: string;
+  perfil_nome: string | null;
+  dia: string;
+  rota: string;
+  area: string | null;
+  subpagina: string | null;
+  titulo: string | null;
+  entrou_em: string;
+  ultimo_ping_em: string | null;
+  duracao_seg: number;
 }
 
 export interface UsoDiario {
@@ -84,7 +104,29 @@ export function useUsoPaginas(de: string, ate: string, userId: string | null) {
       } as never);
       if (error) throw error;
       return ((data as unknown as UsoPagina[]) ?? []).map((r) => ({
-        ...r, acessos: num(r.acessos), tempo_min: num(r.tempo_min),
+        ...r,
+        acessos: num(r.acessos),
+        tempo_min: num(r.tempo_min),
+        tempo_min_seg: num(r.tempo_min_seg),
+        tempo_max_seg: num(r.tempo_max_seg),
+        tempo_medio_seg: num(r.tempo_medio_seg),
+        dias: num(r.dias),
+      }));
+    },
+  });
+}
+
+export function useUsoDetalhado(de: string, ate: string, userId: string | null, enabled = true) {
+  return useQuery({
+    queryKey: ["uso-detalhado", de, ate, userId],
+    enabled,
+    queryFn: async (): Promise<UsoDetalhe[]> => {
+      const { data, error } = await supabase.rpc("rpc_admin_uso_detalhado" as never, {
+        _de: de, _ate: ate, _user_id: userId, _limit: 20000,
+      } as never);
+      if (error) throw error;
+      return ((data as unknown as UsoDetalhe[]) ?? []).map((r) => ({
+        ...r, duracao_seg: num(r.duracao_seg),
       }));
     },
   });

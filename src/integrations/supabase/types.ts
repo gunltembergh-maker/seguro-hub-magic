@@ -3133,6 +3133,23 @@ export type Database = {
         }
         Returns: string
       }
+      rpc_admin_uso_detalhado: {
+        Args: { _ate: string; _de: string; _limit?: number; _user_id?: string }
+        Returns: {
+          area: string
+          dia: string
+          duracao_seg: number
+          email: string
+          entrou_em: string
+          full_name: string
+          perfil_nome: string
+          rota: string
+          subpagina: string
+          titulo: string
+          ultimo_ping_em: string
+          user_id: string
+        }[]
+      }
       rpc_admin_uso_diario: {
         Args: { _ate: string; _de: string; _user_id?: string }
         Returns: {
@@ -3151,10 +3168,15 @@ export type Database = {
         Args: { _ate: string; _de: string; _user_id?: string }
         Returns: {
           acessos: number
+          dias: number
           email: string
           full_name: string
+          primeiro_em: string
           rota: string
+          tempo_max_seg: number
+          tempo_medio_seg: number
           tempo_min: number
+          tempo_min_seg: number
           titulo: string
           ultimo_em: string
           user_id: string

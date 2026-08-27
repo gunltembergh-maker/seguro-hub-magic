@@ -1,10 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Download, ShieldAlert, Loader2, Activity, Clock, Users, MousePointerClick } from "lucide-react";
 
 import { useMeuPerfil, hasRole } from "@/hooks/use-meu-perfil";
 import {
-  useUsoResumo, useUsoPaginas, useUsoDiario, useAuditoria,
+  useUsoResumo, useUsoPaginas, useUsoDiario, useAuditoria, useUsoDetalhado,
   type UsoResumo, type AuditItem,
 } from "@/hooks/use-uso-plataforma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,6 +50,14 @@ function baixarCsv(nome: string, linhas: (string | number | null)[][]) {
   URL.revokeObjectURL(url);
 }
 
+const fmtDur = (seg: number) => {
+  const s = Math.max(0, Math.round(seg));
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ${s % 60}s`;
+  return `${Math.floor(m / 60)}h ${m % 60}m`;
+};
+
 function AdminUsoPage() {
   const { data: perfil } = useMeuPerfil();
   const isAdmin = hasRole(perfil, "ADMIN");
@@ -66,8 +74,33 @@ function AdminUsoPage() {
   const diario = useUsoDiario(de, ate, alvo);
   const auditoria = useAuditoria(de, ate);
 
+  const [exportando, setExportando] = useState(false);
+  const detalhado = useUsoDetalhado(de, ate, alvo, exportando);
+  const jaExportou = useRef(false);
+
+  const usuariosTodos = (resumo.data ?? []) as UsoResumo[];
+  const usuarios = useMemo(
+    () => (alvo ? usuariosTodos.filter((u) => u.user_id === alvo) : usuariosTodos),
+    [usuariosTodos, alvo],
+  );
+
+  useEffect(() => {
+    if (!exportando || !detalhado.data || jaExportou.current) return;
+    jaExportou.current = true;
+    baixarCsv("uso-detalhado-completo", [
+      ["Usuário", "E-mail", "Perfil", "Dia", "Área (menu pai)", "Página filha", "Rota completa", "Título", "Entrada", "Saída/último sinal", "Permanência (s)", "Permanência"],
+      ...detalhado.data.map((d) => [
+        d.full_name, d.email, d.perfil_nome, fmtDate(d.dia), d.area, d.subpagina ?? "—",
+        d.rota, d.titulo, fmtDateTime(d.entrou_em), fmtDateTime(d.ultimo_ping_em),
+        d.duracao_seg, fmtDur(d.duracao_seg),
+      ]),
+    ]);
+    setExportando(false);
+    jaExportou.current = false;
+  }, [exportando, detalhado.data]);
+
   const metrics = useMemo(() => {
-    const rows = resumo.data ?? [];
+    const rows = usuarios;
     const ativos = rows.filter((r) => r.total_paginas > 0);
     return {
       ativos: ativos.length,
@@ -75,7 +108,7 @@ function AdminUsoPage() {
       paginas: rows.reduce((s, r) => s + r.total_paginas, 0),
       horas: Math.round(rows.reduce((s, r) => s + r.tempo_total_min, 0) / 6) / 10,
     };
-  }, [resumo.data]);
+  }, [usuarios]);
 
   if (!isAdmin) {
     return (
@@ -86,8 +119,6 @@ function AdminUsoPage() {
       </div>
     );
   }
-
-  const usuarios = (resumo.data ?? []) as UsoResumo[];
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-8">
@@ -114,12 +145,21 @@ function AdminUsoPage() {
               <SelectTrigger className="w-64"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos os usuários</SelectItem>
-                {usuarios.map((u) => (
+                {usuariosTodos.map((u) => (
                   <SelectItem key={u.user_id} value={u.user_id}>{u.full_name ?? u.email}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
+          <Button
+            variant="default"
+            className="gap-2"
+            disabled={exportando}
+            onClick={() => setExportando(true)}
+          >
+            {exportando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            Exportar relatório completo
+          </Button>
         </CardContent>
       </Card>
 
@@ -220,8 +260,8 @@ function AdminUsoPage() {
               <CardTitle className="text-base">Páginas acessadas</CardTitle>
               <Button variant="outline" size="sm" className="gap-2 text-foreground hover:text-accent-foreground"
                 onClick={() => baixarCsv("uso-por-pagina", [
-                  ["Usuário", "E-mail", "Rota", "Título", "Acessos", "Tempo (min)", "Último acesso"],
-                  ...(paginas.data ?? []).map((p) => [p.full_name, p.email, p.rota, p.titulo, p.acessos, p.tempo_min, fmtDateTime(p.ultimo_em)]),
+                  ["Usuário", "E-mail", "Rota", "Título", "Acessos", "Dias com acesso", "Tempo total (min)", "Permanência mínima", "Permanência média", "Permanência máxima", "Primeiro acesso", "Último acesso"],
+                  ...(paginas.data ?? []).map((p) => [p.full_name, p.email, p.rota, p.titulo, p.acessos, p.dias, p.tempo_min, fmtDur(p.tempo_min_seg), fmtDur(p.tempo_medio_seg), fmtDur(p.tempo_max_seg), fmtDateTime(p.primeiro_em), fmtDateTime(p.ultimo_em)]),
                 ])}>
                 <Download className="h-4 w-4" /> Exportar CSV
               </Button>
@@ -235,7 +275,11 @@ function AdminUsoPage() {
                         <TableHead>Usuário</TableHead>
                         <TableHead>Página</TableHead>
                         <TableHead className="text-center">Acessos</TableHead>
+                        <TableHead className="text-center">Dias</TableHead>
                         <TableHead className="text-center">Tempo (min)</TableHead>
+                        <TableHead className="text-center">Mín.</TableHead>
+                        <TableHead className="text-center">Média</TableHead>
+                        <TableHead className="text-center">Máx.</TableHead>
                         <TableHead>Último acesso</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -250,7 +294,11 @@ function AdminUsoPage() {
                             {p.titulo && <div className="text-xs text-muted-foreground">{p.titulo}</div>}
                           </TableCell>
                           <TableCell className="text-center tabular-nums">{p.acessos}</TableCell>
+                          <TableCell className="text-center tabular-nums">{p.dias}</TableCell>
                           <TableCell className="text-center tabular-nums">{p.tempo_min}</TableCell>
+                          <TableCell className="text-center text-xs text-muted-foreground">{fmtDur(p.tempo_min_seg)}</TableCell>
+                          <TableCell className="text-center text-xs text-muted-foreground">{fmtDur(p.tempo_medio_seg)}</TableCell>
+                          <TableCell className="text-center text-xs text-muted-foreground">{fmtDur(p.tempo_max_seg)}</TableCell>
                           <TableCell className="text-sm text-muted-foreground">{fmtDateTime(p.ultimo_em)}</TableCell>
                         </TableRow>
                       ))}
