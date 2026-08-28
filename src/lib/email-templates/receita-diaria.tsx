@@ -83,6 +83,7 @@ const ReceitaLavoroEmail = ({
   mtd = empty,
   comissaoVencidaMes = 0,
   escopoTimes,
+  beneficiosTipoPagamento = [],
 }: ReceitaLavoroProps) => {
   const mesLongo = MESES_PT_LONGO[mes - 1]
   const mesUp = mesLongo.toUpperCase()
