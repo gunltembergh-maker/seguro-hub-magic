@@ -3397,6 +3397,15 @@ export type Database = {
           valor_a_receber: number
         }[]
       }
+      rpc_lavoro_beneficios_tipo_pagamento: {
+        Args: { p_ano: number; p_mes: number }
+        Returns: {
+          competencia: number
+          previsto: number
+          recebido: number
+          tipo_pagamento: string
+        }[]
+      }
       rpc_lavoro_get_meta_anual: { Args: { p_ano: number }; Returns: number }
       rpc_lavoro_recebimento_dezenas_empresas: {
         Args: { p_ano: number; p_mes: number }
