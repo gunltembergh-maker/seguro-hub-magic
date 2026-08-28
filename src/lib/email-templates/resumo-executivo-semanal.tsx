@@ -89,6 +89,7 @@ const ResumoExecutivoEmail = ({
   mesDetalhe = null,
   mesDetalheCanais = null,
   escopoTimes,
+  beneficiosTipoPagamento = null,
 }: ResumoExecutivoProps) => {
   const mesLongo = MESES_PT_LONGO[mes - 1]
   const linhasMes = (mesDetalheCanais ?? [])
