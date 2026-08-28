@@ -125,27 +125,11 @@ export async function dispatchNewsletterCore(opts: {
             aReceberFuturo: Number(linhaMes.a_receber_futuro ?? 0),
           }
         : null
-      return { ano, mes, quandoBR, escopoTimes, ytd: { emitido, caixaEsperado, caixaRecebido, aReceberFuturo, pctCaixa }, canais, mesDetalhe, mesDetalheCanais }
+      return { ano, mes, quandoBR, escopoTimes, ytd: { emitido, caixaEsperado, caixaRecebido, aReceberFuturo, pctCaixa }, canais, mesDetalhe, mesDetalheCanais, beneficiosTipoPagamento: await fetchBeneficiosTP() }
     }
-    // Abertura de Benefícios por tipo de pagamento (somente competência) —
-    // exclusivo do e-mail. Só quando o destinatário enxerga o canal Benefícios.
-    let beneficiosTipoPagamento: Array<{
-      tipo_pagamento: string; competencia: number; previsto: number; recebido: number
-    }> = []
-    if (permitidos.length === 0 || permitidos.includes('Benefícios')) {
-      const { data: btp } = await supabase.rpc(
-        'rpc_lavoro_beneficios_tipo_pagamento' as never,
-        { p_ano: ano, p_mes: mes } as never,
-      )
-      beneficiosTipoPagamento = ((((btp as unknown) as any[]) ?? [])
-        .map((r) => ({
-          tipo_pagamento: String(r.tipo_pagamento ?? 'Não informado'),
-          competencia: Number(r.competencia ?? 0),
-          previsto: Number(r.previsto ?? 0),
-          recebido: Number(r.recebido ?? 0),
-        }))
-        .filter((r) => r.competencia !== 0 || r.previsto !== 0 || r.recebido !== 0))
-    }
+    // Abertura de Benefícios por tipo de pagamento — exclusivo do e-mail.
+    const beneficiosTipoPagamento = await fetchBeneficiosTP()
+
 
     return { ano, mes, quandoBR, escopoTimes, ytd: ytdKpis, mtd, comissaoVencidaMes, beneficiosTipoPagamento }
   }
