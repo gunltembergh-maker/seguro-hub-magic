@@ -52,6 +52,13 @@ export interface ResumoExecutivoProps {
     saldo_vencido: number
   }> | null
   escopoTimes?: string[]
+  /** Abertura de Benefícios por tipo de pagamento — só no e-mail */
+  beneficiosTipoPagamento?: Array<{
+    tipo_pagamento: string
+    competencia: number
+    previsto: number
+    recebido: number
+  }> | null
 }
 
 const emptyYtd = { emitido: 0, caixaEsperado: 0, caixaRecebido: 0, aReceberFuturo: 0, pctCaixa: 0 }
@@ -82,6 +89,7 @@ const ResumoExecutivoEmail = ({
   mesDetalhe = null,
   mesDetalheCanais = null,
   escopoTimes,
+  beneficiosTipoPagamento = null,
 }: ResumoExecutivoProps) => {
   const mesLongo = MESES_PT_LONGO[mes - 1]
   const linhasMes = (mesDetalheCanais ?? [])
@@ -173,13 +181,25 @@ const ResumoExecutivoEmail = ({
                 </thead>
                 <tbody>
                   {linhasMes.map((r) => (
-                    <tr key={r.canal}>
-                      <td style={tdCanal}>{r.canal}</td>
-                      <td style={tdStyle}>{BRL(Number(r.emitido || 0))}</td>
-                      <td style={tdStyle}>{BRL(Number(r.caixa_esperado || 0))}</td>
-                      <td style={{ ...tdStyle, color: L.green, fontWeight: 600 }}>{BRL(Number(r.caixa_recebido || 0))}</td>
-                      <td style={{ ...tdStyle, color: L.amber, fontWeight: 600 }}>{BRL(Number(r.saldo_vencido || 0))}</td>
-                    </tr>
+                    <React.Fragment key={r.canal}>
+                      <tr>
+                        <td style={tdCanal}>{r.canal}</td>
+                        <td style={tdStyle}>{BRL(Number(r.emitido || 0))}</td>
+                        <td style={tdStyle}>{BRL(Number(r.caixa_esperado || 0))}</td>
+                        <td style={{ ...tdStyle, color: L.green, fontWeight: 600 }}>{BRL(Number(r.caixa_recebido || 0))}</td>
+                        <td style={{ ...tdStyle, color: L.amber, fontWeight: 600 }}>{BRL(Number(r.saldo_vencido || 0))}</td>
+                      </tr>
+                      {r.canal === 'Benefícios' &&
+                        (beneficiosTipoPagamento ?? []).map((b) => (
+                          <tr key={`${r.canal}-${b.tipo_pagamento}`}>
+                            <td style={tdSubCanal}>↳ {b.tipo_pagamento}</td>
+                            <td style={tdSub}>{BRL(Number(b.competencia || 0))}</td>
+                            <td style={tdSub}>{BRL(Number(b.previsto || 0))}</td>
+                            <td style={{ ...tdSub, color: L.green }}>{BRL(Number(b.recebido || 0))}</td>
+                            <td style={tdSub}>—</td>
+                          </tr>
+                        ))}
+                    </React.Fragment>
                   ))}
                   <tr>
                     <td style={{ ...tdCanal, ...totalCell }}>Total</td>
@@ -307,6 +327,8 @@ const thStyle = { textAlign: 'right' as const, fontSize: '10px', fontWeight: 700
 const thCanal = { ...thStyle, textAlign: 'left' as const }
 const tdStyle = { textAlign: 'right' as const, fontSize: '13px', color: L.navyDark, padding: '10px 6px', fontWeight: 500, ...tabular }
 const tdCanal = { ...tdStyle, textAlign: 'left' as const, fontVariantNumeric: 'normal' as const }
+const tdSub = { ...tdStyle, fontSize: '12px', color: L.textMuted, padding: '6px 6px', fontWeight: 400 }
+const tdSubCanal = { ...tdSub, textAlign: 'left' as const, paddingLeft: '18px', fontVariantNumeric: 'normal' as const }
 const totalCell = { borderTop: `1px solid ${L.border}`, fontWeight: 700, background: '#F1F5F9' }
 const ctaWrap = { background: L.card, padding: '22px', textAlign: 'center' as const, borderRadius: '0 0 10px 10px', border: `1px solid ${L.border}`, borderTop: 'none' }
 const ctaHint = { color: L.textMuted, fontSize: '12px', margin: '0 0 12px' }
