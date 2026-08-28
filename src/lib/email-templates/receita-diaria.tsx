@@ -169,6 +169,30 @@ const ReceitaLavoroEmail = ({
             </Row>
           </Section>
 
+          {beneficiosTipoPagamento.length > 0 && (
+            <Section style={block}>
+              <Text style={sectionTitle}>
+                Benefícios — Competência por tipo de pagamento ({mesLongo}/{ano})
+              </Text>
+              <table style={tpTable} cellPadding={0} cellSpacing={0}>
+                <tbody>
+                  {beneficiosTipoPagamento.map((r) => (
+                    <tr key={r.tipo_pagamento}>
+                      <td style={tpLabel}>{r.tipo_pagamento}</td>
+                      <td style={tpValue}>{BRL(r.competencia)}</td>
+                    </tr>
+                  ))}
+                  <tr>
+                    <td style={{ ...tpLabel, ...tpTotal }}>Total Benefícios</td>
+                    <td style={{ ...tpValue, ...tpTotal }}>
+                      {BRL(beneficiosTipoPagamento.reduce((a, r) => a + Number(r.competencia || 0), 0))}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </Section>
+          )}
+
           {comissaoVencidaMes > 0 && (
             <Section style={alertBanner}>
               <Text style={alertText}>
