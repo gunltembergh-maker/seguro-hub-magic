@@ -313,6 +313,11 @@ export const template = {
       competencia_demais: 60_000,
     },
     comissaoVencidaMes: 82_500,
+    beneficiosTipoPagamento: [
+      { tipo_pagamento: 'Boleto', competencia: 150_000, previsto: 140_000, recebido: 120_000 },
+      { tipo_pagamento: 'Repasse Seguradora', competencia: 80_000, previsto: 75_000, recebido: 60_000 },
+      { tipo_pagamento: 'Não informado', competencia: 30_000, previsto: 28_000, recebido: 20_000 },
+    ],
   },
 } satisfies TemplateEntry
 
