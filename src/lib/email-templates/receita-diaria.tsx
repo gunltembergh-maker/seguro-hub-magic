@@ -53,6 +53,8 @@ export interface ReceitaLavoroProps {
   }
   comissaoVencidaMes?: number
   escopoTimes?: string[]
+  /** Abertura de Benefícios por tipo de pagamento (competência) — só no e-mail */
+  beneficiosTipoPagamento?: Array<{ tipo_pagamento: string; competencia: number }>
 }
 
 const empty = {
