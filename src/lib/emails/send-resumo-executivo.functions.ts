@@ -68,6 +68,24 @@ export const sendResumoExecutivo = createServerFn({ method: 'POST' })
       canal: string; emitido: number; caixa_esperado: number; caixa_recebido: number; saldo_vencido: number
     }>)
 
+    let beneficiosTipoPagamento: Array<{
+      tipo_pagamento: string; competencia: number; previsto: number; recebido: number
+    }> = []
+    if (permitidos.length === 0 || permitidos.includes('Benefícios')) {
+      const { data: btp } = await context.supabase.rpc(
+        'rpc_lavoro_beneficios_tipo_pagamento' as never,
+        { p_ano: ano, p_mes: mes } as never,
+      )
+      beneficiosTipoPagamento = ((((btp as unknown) as any[]) ?? [])
+        .map((r) => ({
+          tipo_pagamento: String(r.tipo_pagamento ?? 'Não informado'),
+          competencia: Number(r.competencia ?? 0),
+          previsto: Number(r.previsto ?? 0),
+          recebido: Number(r.recebido ?? 0),
+        }))
+        .filter((r) => r.competencia !== 0 || r.previsto !== 0 || r.recebido !== 0))
+    }
+
     const linhas = ((mensalRes.data as any[]) ?? []).filter((r) => Number(r.mes) <= mes)
     const soma = (k: string) => linhas.reduce((acc, r) => acc + Number(r[k] ?? 0), 0)
     const linhaMes = linhas.find((r) => Number(r.mes) === mes)
