@@ -172,20 +172,34 @@ const ReceitaLavoroEmail = ({
           {beneficiosTipoPagamento.length > 0 && (
             <Section style={block}>
               <Text style={sectionTitle}>
-                Benefícios — Competência por tipo de pagamento ({mesLongo}/{ano})
+                Benefícios por tipo de pagamento ({mesLongo}/{ano})
               </Text>
               <table style={tpTable} cellPadding={0} cellSpacing={0}>
                 <tbody>
+                  <tr>
+                    <td style={tpHead}>Tipo de pagamento</td>
+                    <td style={{ ...tpHead, textAlign: 'right' as const }}>Emitido</td>
+                    <td style={{ ...tpHead, textAlign: 'right' as const }}>Caixa previsto</td>
+                    <td style={{ ...tpHead, textAlign: 'right' as const }}>Caixa recebido</td>
+                  </tr>
                   {beneficiosTipoPagamento.map((r) => (
                     <tr key={r.tipo_pagamento}>
                       <td style={tpLabel}>{r.tipo_pagamento}</td>
                       <td style={tpValue}>{BRL(r.competencia)}</td>
+                      <td style={tpValue}>{BRL(r.previsto)}</td>
+                      <td style={tpValue}>{BRL(r.recebido)}</td>
                     </tr>
                   ))}
                   <tr>
                     <td style={{ ...tpLabel, ...tpTotal }}>Total Benefícios</td>
                     <td style={{ ...tpValue, ...tpTotal }}>
                       {BRL(beneficiosTipoPagamento.reduce((a, r) => a + Number(r.competencia || 0), 0))}
+                    </td>
+                    <td style={{ ...tpValue, ...tpTotal }}>
+                      {BRL(beneficiosTipoPagamento.reduce((a, r) => a + Number(r.previsto || 0), 0))}
+                    </td>
+                    <td style={{ ...tpValue, ...tpTotal }}>
+                      {BRL(beneficiosTipoPagamento.reduce((a, r) => a + Number(r.recebido || 0), 0))}
                     </td>
                   </tr>
                 </tbody>
