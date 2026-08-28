@@ -54,7 +54,7 @@ export interface ReceitaLavoroProps {
   comissaoVencidaMes?: number
   escopoTimes?: string[]
   /** Abertura de Benefícios por tipo de pagamento (competência) — só no e-mail */
-  beneficiosTipoPagamento?: Array<{ tipo_pagamento: string; competencia: number }>
+  beneficiosTipoPagamento?: Array<{ tipo_pagamento: string; competencia: number; previsto: number; recebido: number }>
 }
 
 const empty = {
@@ -318,6 +318,11 @@ export const template = {
 
 const breakdownTable = { width: '100%', marginTop: '8px', borderTop: `1px solid ${L.border}`, paddingTop: '6px' }
 const breakdownLabel = { fontVariantNumeric: 'tabular-nums' as const, color: L.textMuted, fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.04em', padding: '2px 0' }
+const tpTable = { width: '100%', borderCollapse: 'collapse' as const, marginTop: '8px' }
+const tpHead = { color: L.textMuted, fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.04em', padding: '4px 6px', borderBottom: `1px solid ${L.border}` }
+const tpLabel = { color: L.textDark, fontSize: '12px', padding: '5px 6px', borderBottom: `1px solid ${L.border}` }
+const tpValue = { fontVariantNumeric: 'tabular-nums' as const, color: L.navyDark, fontSize: '12px', fontWeight: 600, textAlign: 'right' as const, padding: '5px 6px', borderBottom: `1px solid ${L.border}` }
+const tpTotal = { fontWeight: 700 as const, borderBottom: 'none', borderTop: `2px solid ${L.border}` }
 const breakdownValue = { fontVariantNumeric: 'tabular-nums' as const, color: L.navyDark, fontSize: '12px', fontWeight: 600, textAlign: 'right' as const, padding: '2px 0' }
 
 // ─── Styles ────────────────────────────────────────────────────────────
