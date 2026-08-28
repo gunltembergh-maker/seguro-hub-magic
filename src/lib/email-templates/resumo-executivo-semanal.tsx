@@ -181,13 +181,25 @@ const ResumoExecutivoEmail = ({
                 </thead>
                 <tbody>
                   {linhasMes.map((r) => (
-                    <tr key={r.canal}>
-                      <td style={tdCanal}>{r.canal}</td>
-                      <td style={tdStyle}>{BRL(Number(r.emitido || 0))}</td>
-                      <td style={tdStyle}>{BRL(Number(r.caixa_esperado || 0))}</td>
-                      <td style={{ ...tdStyle, color: L.green, fontWeight: 600 }}>{BRL(Number(r.caixa_recebido || 0))}</td>
-                      <td style={{ ...tdStyle, color: L.amber, fontWeight: 600 }}>{BRL(Number(r.saldo_vencido || 0))}</td>
-                    </tr>
+                    <React.Fragment key={r.canal}>
+                      <tr>
+                        <td style={tdCanal}>{r.canal}</td>
+                        <td style={tdStyle}>{BRL(Number(r.emitido || 0))}</td>
+                        <td style={tdStyle}>{BRL(Number(r.caixa_esperado || 0))}</td>
+                        <td style={{ ...tdStyle, color: L.green, fontWeight: 600 }}>{BRL(Number(r.caixa_recebido || 0))}</td>
+                        <td style={{ ...tdStyle, color: L.amber, fontWeight: 600 }}>{BRL(Number(r.saldo_vencido || 0))}</td>
+                      </tr>
+                      {r.canal === 'Benefícios' &&
+                        (beneficiosTipoPagamento ?? []).map((b) => (
+                          <tr key={`${r.canal}-${b.tipo_pagamento}`}>
+                            <td style={tdSubCanal}>↳ {b.tipo_pagamento}</td>
+                            <td style={tdSub}>{BRL(Number(b.competencia || 0))}</td>
+                            <td style={tdSub}>{BRL(Number(b.previsto || 0))}</td>
+                            <td style={{ ...tdSub, color: L.green }}>{BRL(Number(b.recebido || 0))}</td>
+                            <td style={tdSub}>—</td>
+                          </tr>
+                        ))}
+                    </React.Fragment>
                   ))}
                   <tr>
                     <td style={{ ...tdCanal, ...totalCell }}>Total</td>
