@@ -52,6 +52,13 @@ export interface ResumoExecutivoProps {
     saldo_vencido: number
   }> | null
   escopoTimes?: string[]
+  /** Abertura de Benefícios por tipo de pagamento — só no e-mail */
+  beneficiosTipoPagamento?: Array<{
+    tipo_pagamento: string
+    competencia: number
+    previsto: number
+    recebido: number
+  }> | null
 }
 
 const emptyYtd = { emitido: 0, caixaEsperado: 0, caixaRecebido: 0, aReceberFuturo: 0, pctCaixa: 0 }
