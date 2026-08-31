@@ -41,6 +41,8 @@ import { Route as AuthenticatedDashboardReportFechamentoRouteImport } from './ro
 import { Route as AuthenticatedDashboardReceitaExecutivoRouteImport } from './routes/_authenticated/dashboard.receita-executivo'
 import { Route as AuthenticatedDashboardReceitaCaixaRouteImport } from './routes/_authenticated/dashboard.receita-caixa'
 import { Route as AuthenticatedDashboardReceitaRouteImport } from './routes/_authenticated/dashboard.receita'
+import { Route as AuthenticatedBeneficiosClientesRouteImport } from './routes/_authenticated/beneficios.clientes'
+import { Route as AuthenticatedBeneficiosCadastrosRouteImport } from './routes/_authenticated/beneficios.cadastros'
 import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authenticated/admin/usuarios'
 import { Route as AuthenticatedAdminUsoRouteImport } from './routes/_authenticated/admin/uso'
 import { Route as AuthenticatedAdminPerfisRouteImport } from './routes/_authenticated/admin/perfis'
@@ -61,6 +63,7 @@ import { Route as ApiPublicHooksAbIngestPncpRouteImport } from './routes/api/pub
 import { Route as ApiPublicHooksAbIngestPgfnRouteImport } from './routes/api/public/hooks/ab-ingest-pgfn'
 import { Route as ApiPublicHooksAbEnriquecerRouteImport } from './routes/api/public/hooks/ab-enriquecer'
 import { Route as ApiPublicHooksAbBureauWebhookRouteImport } from './routes/api/public/hooks/ab-bureau-webhook'
+import { Route as AuthenticatedBeneficiosContratosIdRouteImport } from './routes/_authenticated/beneficios.contratos.$id'
 import { Route as AuthenticatedAdminEmailsSchedulesRouteImport } from './routes/_authenticated/admin/emails_.schedules'
 import { Route as AuthenticatedAdminEmailsLogRouteImport } from './routes/_authenticated/admin/emails_.log'
 import { Route as ApiTcLavoroAnalysisJobsJobIdRunRouteImport } from './routes/api/tc-lavoro/analysis-jobs.$jobId.run'
@@ -235,6 +238,18 @@ const AuthenticatedDashboardReceitaRoute =
     path: '/dashboard/receita',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedBeneficiosClientesRoute =
+  AuthenticatedBeneficiosClientesRouteImport.update({
+    id: '/clientes',
+    path: '/clientes',
+    getParentRoute: () => AuthenticatedBeneficiosRoute,
+  } as any)
+const AuthenticatedBeneficiosCadastrosRoute =
+  AuthenticatedBeneficiosCadastrosRouteImport.update({
+    id: '/cadastros',
+    path: '/cadastros',
+    getParentRoute: () => AuthenticatedBeneficiosRoute,
+  } as any)
 const AuthenticatedAdminUsuariosRoute =
   AuthenticatedAdminUsuariosRouteImport.update({
     id: '/usuarios',
@@ -351,6 +366,12 @@ const ApiPublicHooksAbBureauWebhookRoute =
     path: '/api/public/hooks/ab-bureau-webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedBeneficiosContratosIdRoute =
+  AuthenticatedBeneficiosContratosIdRouteImport.update({
+    id: '/contratos/$id',
+    path: '/contratos/$id',
+    getParentRoute: () => AuthenticatedBeneficiosRoute,
+  } as any)
 const AuthenticatedAdminEmailsSchedulesRoute =
   AuthenticatedAdminEmailsSchedulesRouteImport.update({
     id: '/emails_/schedules',
@@ -393,6 +414,8 @@ export interface FileRoutesByFullPath {
   '/admin/perfis': typeof AuthenticatedAdminPerfisRoute
   '/admin/uso': typeof AuthenticatedAdminUsoRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/beneficios/cadastros': typeof AuthenticatedBeneficiosCadastrosRoute
+  '/beneficios/clientes': typeof AuthenticatedBeneficiosClientesRoute
   '/dashboard/receita': typeof AuthenticatedDashboardReceitaRoute
   '/dashboard/receita-caixa': typeof AuthenticatedDashboardReceitaCaixaRoute
   '/dashboard/receita-executivo': typeof AuthenticatedDashboardReceitaExecutivoRoute
@@ -411,6 +434,7 @@ export interface FileRoutesByFullPath {
   '/beneficios/': typeof AuthenticatedBeneficiosIndexRoute
   '/admin/emails/log': typeof AuthenticatedAdminEmailsLogRoute
   '/admin/emails/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
+  '/beneficios/contratos/$id': typeof AuthenticatedBeneficiosContratosIdRoute
   '/api/public/hooks/ab-bureau-webhook': typeof ApiPublicHooksAbBureauWebhookRoute
   '/api/public/hooks/ab-enriquecer': typeof ApiPublicHooksAbEnriquecerRoute
   '/api/public/hooks/ab-ingest-pgfn': typeof ApiPublicHooksAbIngestPgfnRoute
@@ -448,6 +472,8 @@ export interface FileRoutesByTo {
   '/admin/perfis': typeof AuthenticatedAdminPerfisRoute
   '/admin/uso': typeof AuthenticatedAdminUsoRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/beneficios/cadastros': typeof AuthenticatedBeneficiosCadastrosRoute
+  '/beneficios/clientes': typeof AuthenticatedBeneficiosClientesRoute
   '/dashboard/receita': typeof AuthenticatedDashboardReceitaRoute
   '/dashboard/receita-caixa': typeof AuthenticatedDashboardReceitaCaixaRoute
   '/dashboard/receita-executivo': typeof AuthenticatedDashboardReceitaExecutivoRoute
@@ -466,6 +492,7 @@ export interface FileRoutesByTo {
   '/beneficios': typeof AuthenticatedBeneficiosIndexRoute
   '/admin/emails/log': typeof AuthenticatedAdminEmailsLogRoute
   '/admin/emails/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
+  '/beneficios/contratos/$id': typeof AuthenticatedBeneficiosContratosIdRoute
   '/api/public/hooks/ab-bureau-webhook': typeof ApiPublicHooksAbBureauWebhookRoute
   '/api/public/hooks/ab-enriquecer': typeof ApiPublicHooksAbEnriquecerRoute
   '/api/public/hooks/ab-ingest-pgfn': typeof ApiPublicHooksAbIngestPgfnRoute
@@ -506,6 +533,8 @@ export interface FileRoutesById {
   '/_authenticated/admin/perfis': typeof AuthenticatedAdminPerfisRoute
   '/_authenticated/admin/uso': typeof AuthenticatedAdminUsoRoute
   '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/_authenticated/beneficios/cadastros': typeof AuthenticatedBeneficiosCadastrosRoute
+  '/_authenticated/beneficios/clientes': typeof AuthenticatedBeneficiosClientesRoute
   '/_authenticated/dashboard/receita': typeof AuthenticatedDashboardReceitaRoute
   '/_authenticated/dashboard/receita-caixa': typeof AuthenticatedDashboardReceitaCaixaRoute
   '/_authenticated/dashboard/receita-executivo': typeof AuthenticatedDashboardReceitaExecutivoRoute
@@ -524,6 +553,7 @@ export interface FileRoutesById {
   '/_authenticated/beneficios/': typeof AuthenticatedBeneficiosIndexRoute
   '/_authenticated/admin/emails_/log': typeof AuthenticatedAdminEmailsLogRoute
   '/_authenticated/admin/emails_/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
+  '/_authenticated/beneficios/contratos/$id': typeof AuthenticatedBeneficiosContratosIdRoute
   '/api/public/hooks/ab-bureau-webhook': typeof ApiPublicHooksAbBureauWebhookRoute
   '/api/public/hooks/ab-enriquecer': typeof ApiPublicHooksAbEnriquecerRoute
   '/api/public/hooks/ab-ingest-pgfn': typeof ApiPublicHooksAbIngestPgfnRoute
@@ -564,6 +594,8 @@ export interface FileRouteTypes {
     | '/admin/perfis'
     | '/admin/uso'
     | '/admin/usuarios'
+    | '/beneficios/cadastros'
+    | '/beneficios/clientes'
     | '/dashboard/receita'
     | '/dashboard/receita-caixa'
     | '/dashboard/receita-executivo'
@@ -582,6 +614,7 @@ export interface FileRouteTypes {
     | '/beneficios/'
     | '/admin/emails/log'
     | '/admin/emails/schedules'
+    | '/beneficios/contratos/$id'
     | '/api/public/hooks/ab-bureau-webhook'
     | '/api/public/hooks/ab-enriquecer'
     | '/api/public/hooks/ab-ingest-pgfn'
@@ -619,6 +652,8 @@ export interface FileRouteTypes {
     | '/admin/perfis'
     | '/admin/uso'
     | '/admin/usuarios'
+    | '/beneficios/cadastros'
+    | '/beneficios/clientes'
     | '/dashboard/receita'
     | '/dashboard/receita-caixa'
     | '/dashboard/receita-executivo'
@@ -637,6 +672,7 @@ export interface FileRouteTypes {
     | '/beneficios'
     | '/admin/emails/log'
     | '/admin/emails/schedules'
+    | '/beneficios/contratos/$id'
     | '/api/public/hooks/ab-bureau-webhook'
     | '/api/public/hooks/ab-enriquecer'
     | '/api/public/hooks/ab-ingest-pgfn'
@@ -676,6 +712,8 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/perfis'
     | '/_authenticated/admin/uso'
     | '/_authenticated/admin/usuarios'
+    | '/_authenticated/beneficios/cadastros'
+    | '/_authenticated/beneficios/clientes'
     | '/_authenticated/dashboard/receita'
     | '/_authenticated/dashboard/receita-caixa'
     | '/_authenticated/dashboard/receita-executivo'
@@ -694,6 +732,7 @@ export interface FileRouteTypes {
     | '/_authenticated/beneficios/'
     | '/_authenticated/admin/emails_/log'
     | '/_authenticated/admin/emails_/schedules'
+    | '/_authenticated/beneficios/contratos/$id'
     | '/api/public/hooks/ab-bureau-webhook'
     | '/api/public/hooks/ab-enriquecer'
     | '/api/public/hooks/ab-ingest-pgfn'
@@ -962,6 +1001,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardReceitaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/beneficios/clientes': {
+      id: '/_authenticated/beneficios/clientes'
+      path: '/clientes'
+      fullPath: '/beneficios/clientes'
+      preLoaderRoute: typeof AuthenticatedBeneficiosClientesRouteImport
+      parentRoute: typeof AuthenticatedBeneficiosRoute
+    }
+    '/_authenticated/beneficios/cadastros': {
+      id: '/_authenticated/beneficios/cadastros'
+      path: '/cadastros'
+      fullPath: '/beneficios/cadastros'
+      preLoaderRoute: typeof AuthenticatedBeneficiosCadastrosRouteImport
+      parentRoute: typeof AuthenticatedBeneficiosRoute
+    }
     '/_authenticated/admin/usuarios': {
       id: '/_authenticated/admin/usuarios'
       path: '/usuarios'
@@ -1102,6 +1155,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksAbBureauWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/beneficios/contratos/$id': {
+      id: '/_authenticated/beneficios/contratos/$id'
+      path: '/contratos/$id'
+      fullPath: '/beneficios/contratos/$id'
+      preLoaderRoute: typeof AuthenticatedBeneficiosContratosIdRouteImport
+      parentRoute: typeof AuthenticatedBeneficiosRoute
+    }
     '/_authenticated/admin/emails_/schedules': {
       id: '/_authenticated/admin/emails_/schedules'
       path: '/emails/schedules'
@@ -1158,12 +1218,20 @@ const AuthenticatedAdminRouteRouteWithChildren =
   )
 
 interface AuthenticatedBeneficiosRouteChildren {
+  AuthenticatedBeneficiosCadastrosRoute: typeof AuthenticatedBeneficiosCadastrosRoute
+  AuthenticatedBeneficiosClientesRoute: typeof AuthenticatedBeneficiosClientesRoute
   AuthenticatedBeneficiosIndexRoute: typeof AuthenticatedBeneficiosIndexRoute
+  AuthenticatedBeneficiosContratosIdRoute: typeof AuthenticatedBeneficiosContratosIdRoute
 }
 
 const AuthenticatedBeneficiosRouteChildren: AuthenticatedBeneficiosRouteChildren =
   {
+    AuthenticatedBeneficiosCadastrosRoute:
+      AuthenticatedBeneficiosCadastrosRoute,
+    AuthenticatedBeneficiosClientesRoute: AuthenticatedBeneficiosClientesRoute,
     AuthenticatedBeneficiosIndexRoute: AuthenticatedBeneficiosIndexRoute,
+    AuthenticatedBeneficiosContratosIdRoute:
+      AuthenticatedBeneficiosContratosIdRoute,
   }
 
 const AuthenticatedBeneficiosRouteWithChildren =
