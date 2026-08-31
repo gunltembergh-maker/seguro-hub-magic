@@ -25,6 +25,7 @@ import { Route as AuthenticatedFacilitiesRouteImport } from './routes/_authentic
 import { Route as AuthenticatedDemaisRamosRouteImport } from './routes/_authenticated/demais-ramos'
 import { Route as AuthenticatedBeneficiosRouteImport } from './routes/_authenticated/beneficios'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
+import { Route as AuthenticatedBeneficiosIndexRouteImport } from './routes/_authenticated/beneficios.index'
 import { Route as ApiTcLavoroTcAnalisesRouteImport } from './routes/api/tc-lavoro/tc-analises'
 import { Route as ApiTcLavoroLimitsQueryRouteImport } from './routes/api/tc-lavoro/limits-query'
 import { Route as ApiTcLavoroLegacyAnalysisRouteImport } from './routes/api/tc-lavoro/legacy-analysis'
@@ -145,6 +146,12 @@ const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBeneficiosIndexRoute =
+  AuthenticatedBeneficiosIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedBeneficiosRoute,
+  } as any)
 const ApiTcLavoroTcAnalisesRoute = ApiTcLavoroTcAnalisesRouteImport.update({
   id: '/api/tc-lavoro/tc-analises',
   path: '/api/tc-lavoro/tc-analises',
@@ -368,7 +375,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
-  '/beneficios': typeof AuthenticatedBeneficiosRoute
+  '/beneficios': typeof AuthenticatedBeneficiosRouteWithChildren
   '/demais-ramos': typeof AuthenticatedDemaisRamosRoute
   '/facilities': typeof AuthenticatedFacilitiesRoute
   '/financeiro': typeof AuthenticatedFinanceiroRoute
@@ -401,6 +408,7 @@ export interface FileRoutesByFullPath {
   '/api/tc-lavoro/legacy-analysis': typeof ApiTcLavoroLegacyAnalysisRoute
   '/api/tc-lavoro/limits-query': typeof ApiTcLavoroLimitsQueryRoute
   '/api/tc-lavoro/tc-analises': typeof ApiTcLavoroTcAnalisesRouteWithChildren
+  '/beneficios/': typeof AuthenticatedBeneficiosIndexRoute
   '/admin/emails/log': typeof AuthenticatedAdminEmailsLogRoute
   '/admin/emails/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
   '/api/public/hooks/ab-bureau-webhook': typeof ApiPublicHooksAbBureauWebhookRoute
@@ -423,7 +431,6 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
-  '/beneficios': typeof AuthenticatedBeneficiosRoute
   '/demais-ramos': typeof AuthenticatedDemaisRamosRoute
   '/facilities': typeof AuthenticatedFacilitiesRoute
   '/financeiro': typeof AuthenticatedFinanceiroRoute
@@ -456,6 +463,7 @@ export interface FileRoutesByTo {
   '/api/tc-lavoro/legacy-analysis': typeof ApiTcLavoroLegacyAnalysisRoute
   '/api/tc-lavoro/limits-query': typeof ApiTcLavoroLimitsQueryRoute
   '/api/tc-lavoro/tc-analises': typeof ApiTcLavoroTcAnalisesRouteWithChildren
+  '/beneficios': typeof AuthenticatedBeneficiosIndexRoute
   '/admin/emails/log': typeof AuthenticatedAdminEmailsLogRoute
   '/admin/emails/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
   '/api/public/hooks/ab-bureau-webhook': typeof ApiPublicHooksAbBureauWebhookRoute
@@ -480,7 +488,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
-  '/_authenticated/beneficios': typeof AuthenticatedBeneficiosRoute
+  '/_authenticated/beneficios': typeof AuthenticatedBeneficiosRouteWithChildren
   '/_authenticated/demais-ramos': typeof AuthenticatedDemaisRamosRoute
   '/_authenticated/facilities': typeof AuthenticatedFacilitiesRoute
   '/_authenticated/financeiro': typeof AuthenticatedFinanceiroRoute
@@ -513,6 +521,7 @@ export interface FileRoutesById {
   '/api/tc-lavoro/legacy-analysis': typeof ApiTcLavoroLegacyAnalysisRoute
   '/api/tc-lavoro/limits-query': typeof ApiTcLavoroLimitsQueryRoute
   '/api/tc-lavoro/tc-analises': typeof ApiTcLavoroTcAnalisesRouteWithChildren
+  '/_authenticated/beneficios/': typeof AuthenticatedBeneficiosIndexRoute
   '/_authenticated/admin/emails_/log': typeof AuthenticatedAdminEmailsLogRoute
   '/_authenticated/admin/emails_/schedules': typeof AuthenticatedAdminEmailsSchedulesRoute
   '/api/public/hooks/ab-bureau-webhook': typeof ApiPublicHooksAbBureauWebhookRoute
@@ -570,6 +579,7 @@ export interface FileRouteTypes {
     | '/api/tc-lavoro/legacy-analysis'
     | '/api/tc-lavoro/limits-query'
     | '/api/tc-lavoro/tc-analises'
+    | '/beneficios/'
     | '/admin/emails/log'
     | '/admin/emails/schedules'
     | '/api/public/hooks/ab-bureau-webhook'
@@ -592,7 +602,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/admin'
-    | '/beneficios'
     | '/demais-ramos'
     | '/facilities'
     | '/financeiro'
@@ -625,6 +634,7 @@ export interface FileRouteTypes {
     | '/api/tc-lavoro/legacy-analysis'
     | '/api/tc-lavoro/limits-query'
     | '/api/tc-lavoro/tc-analises'
+    | '/beneficios'
     | '/admin/emails/log'
     | '/admin/emails/schedules'
     | '/api/public/hooks/ab-bureau-webhook'
@@ -681,6 +691,7 @@ export interface FileRouteTypes {
     | '/api/tc-lavoro/legacy-analysis'
     | '/api/tc-lavoro/limits-query'
     | '/api/tc-lavoro/tc-analises'
+    | '/_authenticated/beneficios/'
     | '/_authenticated/admin/emails_/log'
     | '/_authenticated/admin/emails_/schedules'
     | '/api/public/hooks/ab-bureau-webhook'
@@ -838,6 +849,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/beneficios/': {
+      id: '/_authenticated/beneficios/'
+      path: '/'
+      fullPath: '/beneficios/'
+      preLoaderRoute: typeof AuthenticatedBeneficiosIndexRouteImport
+      parentRoute: typeof AuthenticatedBeneficiosRoute
     }
     '/api/tc-lavoro/tc-analises': {
       id: '/api/tc-lavoro/tc-analises'
@@ -1139,9 +1157,23 @@ const AuthenticatedAdminRouteRouteWithChildren =
     AuthenticatedAdminRouteRouteChildren,
   )
 
+interface AuthenticatedBeneficiosRouteChildren {
+  AuthenticatedBeneficiosIndexRoute: typeof AuthenticatedBeneficiosIndexRoute
+}
+
+const AuthenticatedBeneficiosRouteChildren: AuthenticatedBeneficiosRouteChildren =
+  {
+    AuthenticatedBeneficiosIndexRoute: AuthenticatedBeneficiosIndexRoute,
+  }
+
+const AuthenticatedBeneficiosRouteWithChildren =
+  AuthenticatedBeneficiosRoute._addFileChildren(
+    AuthenticatedBeneficiosRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
-  AuthenticatedBeneficiosRoute: typeof AuthenticatedBeneficiosRoute
+  AuthenticatedBeneficiosRoute: typeof AuthenticatedBeneficiosRouteWithChildren
   AuthenticatedDemaisRamosRoute: typeof AuthenticatedDemaisRamosRoute
   AuthenticatedFacilitiesRoute: typeof AuthenticatedFacilitiesRoute
   AuthenticatedFinanceiroRoute: typeof AuthenticatedFinanceiroRoute
@@ -1162,7 +1194,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
-  AuthenticatedBeneficiosRoute: AuthenticatedBeneficiosRoute,
+  AuthenticatedBeneficiosRoute: AuthenticatedBeneficiosRouteWithChildren,
   AuthenticatedDemaisRamosRoute: AuthenticatedDemaisRamosRoute,
   AuthenticatedFacilitiesRoute: AuthenticatedFacilitiesRoute,
   AuthenticatedFinanceiroRoute: AuthenticatedFinanceiroRoute,
