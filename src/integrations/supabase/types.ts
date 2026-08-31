@@ -1444,6 +1444,243 @@ export type Database = {
         }
         Relationships: []
       }
+      canais: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      clientes: {
+        Row: {
+          ativo: boolean
+          canal_id: string
+          cidade: string | null
+          contato_principal: string | null
+          cpf_cnpj: string
+          created_at: string
+          email: string | null
+          email_copia: string | null
+          estado: string | null
+          id: string
+          nome_razao_social: string
+          numero_cliente: string
+          porte_empresa: string | null
+          telefone: string | null
+          tipo_pessoa: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          canal_id: string
+          cidade?: string | null
+          contato_principal?: string | null
+          cpf_cnpj: string
+          created_at?: string
+          email?: string | null
+          email_copia?: string | null
+          estado?: string | null
+          id?: string
+          nome_razao_social: string
+          numero_cliente?: string
+          porte_empresa?: string | null
+          telefone?: string | null
+          tipo_pessoa?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          canal_id?: string
+          cidade?: string | null
+          contato_principal?: string | null
+          cpf_cnpj?: string
+          created_at?: string
+          email?: string | null
+          email_copia?: string | null
+          estado?: string | null
+          id?: string
+          nome_razao_social?: string
+          numero_cliente?: string
+          porte_empresa?: string | null
+          telefone?: string | null
+          tipo_pessoa?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clientes_canal_id_fkey"
+            columns: ["canal_id"]
+            isOneToOne: false
+            referencedRelation: "canais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coberturas: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      contrato_coberturas: {
+        Row: {
+          ativa_ate: string | null
+          ativa_desde: string
+          cobertura_id: string
+          contrato_id: string
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          ativa_ate?: string | null
+          ativa_desde: string
+          cobertura_id: string
+          contrato_id: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          ativa_ate?: string | null
+          ativa_desde?: string
+          cobertura_id?: string
+          contrato_id?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contrato_coberturas_cobertura_id_fkey"
+            columns: ["cobertura_id"]
+            isOneToOne: false
+            referencedRelation: "coberturas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contrato_coberturas_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contratos: {
+        Row: {
+          canal_id: string
+          cliente_id: string
+          created_at: string
+          data_fim_vigencia: string
+          data_inicio_vigencia: string
+          id: string
+          migrou_outra_corretora: boolean
+          numero_apolice: string | null
+          percentual_agenciamento: number | null
+          percentual_vitalicio: number | null
+          premio_atual: number | null
+          quantidade_vidas: number | null
+          responsavel_id: string | null
+          seguradora_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          canal_id: string
+          cliente_id: string
+          created_at?: string
+          data_fim_vigencia: string
+          data_inicio_vigencia: string
+          id?: string
+          migrou_outra_corretora?: boolean
+          numero_apolice?: string | null
+          percentual_agenciamento?: number | null
+          percentual_vitalicio?: number | null
+          premio_atual?: number | null
+          quantidade_vidas?: number | null
+          responsavel_id?: string | null
+          seguradora_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          canal_id?: string
+          cliente_id?: string
+          created_at?: string
+          data_fim_vigencia?: string
+          data_inicio_vigencia?: string
+          id?: string
+          migrou_outra_corretora?: boolean
+          numero_apolice?: string | null
+          percentual_agenciamento?: number | null
+          percentual_vitalicio?: number | null
+          premio_atual?: number | null
+          quantidade_vidas?: number | null
+          responsavel_id?: string | null
+          seguradora_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contratos_canal_id_fkey"
+            columns: ["canal_id"]
+            isOneToOne: false
+            referencedRelation: "canais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratos_seguradora_id_fkey"
+            columns: ["seguradora_id"]
+            isOneToOne: false
+            referencedRelation: "seguradoras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dominio_empresa: {
         Row: {
           ativo: boolean
@@ -2133,6 +2370,30 @@ export type Database = {
         }
         Relationships: []
       }
+      seguradoras: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sso_handoff: {
         Row: {
           code: string
@@ -2791,6 +3052,7 @@ export type Database = {
         Returns: string
       }
       notificar_admin_audit: { Args: never; Returns: undefined }
+      pode_beneficios: { Args: never; Returns: boolean }
       pode_gerenciar_configuracoes: {
         Args: { _user_id: string }
         Returns: boolean
