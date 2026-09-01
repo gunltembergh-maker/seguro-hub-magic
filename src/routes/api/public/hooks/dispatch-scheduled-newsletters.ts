@@ -153,7 +153,7 @@ async function handle(request: Request): Promise<Response> {
     let mesReport = mmNum
     if (modulo === 'executivo_lavoro') {
       const segundoDiaUtil = nthBusinessDay(yyyy, mmNum, 2)
-      const hoje = new Date(yyyy, mmNum - 1, ddNum as unknown as number)
+      const hoje = new Date(yyyy, mmNum - 1, nowBRT.getDate())
       if (hoje.getTime() <= segundoDiaUtil.getTime()) {
         mesReport = mmNum === 1 ? 12 : mmNum - 1
         anoReport = mmNum === 1 ? yyyy - 1 : yyyy
