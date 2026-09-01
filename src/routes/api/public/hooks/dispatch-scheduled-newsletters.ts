@@ -16,6 +16,18 @@ export const Route = createFileRoute('/api/public/hooks/dispatch-scheduled-newsl
 
 type Modulo = 'receita_lavoro' | 'executivo_lavoro' | 'fechamento_lavoro'
 
+// Retorna o N-ésimo dia útil (seg-sex) do mês/ano informado.
+function nthBusinessDay(ano: number, mes1a12: number, n: number): Date {
+  const d = new Date(ano, mes1a12 - 1, 1)
+  let count = 0
+  while (true) {
+    const dow = d.getDay()
+    if (dow !== 0 && dow !== 6) count++
+    if (count === n) return d
+    d.setDate(d.getDate() + 1)
+  }
+}
+
 async function handle(request: Request): Promise<Response> {
   const expected = process.env.SUPABASE_PUBLISHABLE_KEY
   if (!expected) return json({ error: 'server_misconfigured' }, 500)
@@ -135,17 +147,30 @@ async function handle(request: Request): Promise<Response> {
       .update({ total_destinatarios: destinatarios.length } as never)
       .eq('id', disparoId)
 
+    // Report executivo: até o 2º dia útil do mês corrente, envia o mês anterior
+    // (fechamento do mês). Ex.: até o 2º dia útil de setembro, envia agosto.
+    let anoReport = yyyy
+    let mesReport = mmNum
+    if (modulo === 'executivo_lavoro') {
+      const segundoDiaUtil = nthBusinessDay(yyyy, mmNum, 2)
+      const hoje = new Date(yyyy, mmNum - 1, nowBRT.getDate())
+      if (hoje.getTime() <= segundoDiaUtil.getTime()) {
+        mesReport = mmNum === 1 ? 12 : mmNum - 1
+        anoReport = mmNum === 1 ? yyyy - 1 : yyyy
+      }
+    }
+
     const { dispatchNewsletterCore } = await import('@/lib/emails/dispatch-newsletter.server')
     const r = await dispatchNewsletterCore({
       supabase: supabaseAdmin as any,
       modulo,
-      ano: yyyy,
-      mes: mmNum,
+      ano: anoReport,
+      mes: mesReport,
       disparoId,
       destinatarios,
       idempotencyPrefix: 'auto',
     })
-    results.push({ modulo, ...r })
+    results.push({ modulo, anoReport, mesReport, ...r })
   }
 
   return json({ ok: true, at: nowBRT.toISOString(), currentHM, currentDow, results })
