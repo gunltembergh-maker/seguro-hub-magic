@@ -147,17 +147,30 @@ async function handle(request: Request): Promise<Response> {
       .update({ total_destinatarios: destinatarios.length } as never)
       .eq('id', disparoId)
 
+    // Report executivo: até o 2º dia útil do mês corrente, envia o mês anterior
+    // (fechamento do mês). Ex.: até o 2º dia útil de setembro, envia agosto.
+    let anoReport = yyyy
+    let mesReport = mmNum
+    if (modulo === 'executivo_lavoro') {
+      const segundoDiaUtil = nthBusinessDay(yyyy, mmNum, 2)
+      const hoje = new Date(yyyy, mmNum - 1, ddNum as unknown as number)
+      if (hoje.getTime() <= segundoDiaUtil.getTime()) {
+        mesReport = mmNum === 1 ? 12 : mmNum - 1
+        anoReport = mmNum === 1 ? yyyy - 1 : yyyy
+      }
+    }
+
     const { dispatchNewsletterCore } = await import('@/lib/emails/dispatch-newsletter.server')
     const r = await dispatchNewsletterCore({
       supabase: supabaseAdmin as any,
       modulo,
-      ano: yyyy,
-      mes: mmNum,
+      ano: anoReport,
+      mes: mesReport,
       disparoId,
       destinatarios,
       idempotencyPrefix: 'auto',
     })
-    results.push({ modulo, ...r })
+    results.push({ modulo, anoReport, mesReport, ...r })
   }
 
   return json({ ok: true, at: nowBRT.toISOString(), currentHM, currentDow, results })
