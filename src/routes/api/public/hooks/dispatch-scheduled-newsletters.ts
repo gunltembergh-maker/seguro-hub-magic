@@ -16,6 +16,18 @@ export const Route = createFileRoute('/api/public/hooks/dispatch-scheduled-newsl
 
 type Modulo = 'receita_lavoro' | 'executivo_lavoro' | 'fechamento_lavoro'
 
+// Retorna o N-ésimo dia útil (seg-sex) do mês/ano informado.
+function nthBusinessDay(ano: number, mes1a12: number, n: number): Date {
+  const d = new Date(ano, mes1a12 - 1, 1)
+  let count = 0
+  while (true) {
+    const dow = d.getDay()
+    if (dow !== 0 && dow !== 6) count++
+    if (count === n) return d
+    d.setDate(d.getDate() + 1)
+  }
+}
+
 async function handle(request: Request): Promise<Response> {
   const expected = process.env.SUPABASE_PUBLISHABLE_KEY
   if (!expected) return json({ error: 'server_misconfigured' }, 500)
