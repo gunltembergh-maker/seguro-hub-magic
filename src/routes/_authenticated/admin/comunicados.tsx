@@ -529,28 +529,53 @@ function AdminComunicadosPage() {
                   />
                   Todas as páginas
                 </label>
-                <div className="border-t pt-2 flex flex-wrap gap-2">
-                  {(rotas || []).map((r) => (
-                    <label
-                      key={r.rota}
-                      className="flex items-center gap-1.5 text-sm cursor-pointer"
-                    >
-                      <Checkbox
-                        checked={form.paginas.includes(r.rota)}
-                        disabled={form.paginas.includes("__all__")}
-                        onCheckedChange={(c) => {
-                          const next = c
-                            ? [...form.paginas.filter((x) => x !== "__all__"), r.rota]
-                            : form.paginas.filter((x) => x !== r.rota);
-                          setForm({
-                            ...form,
-                            paginas: next.length === 0 ? ["__all__"] : next,
-                          });
-                        }}
-                      />
-                      {r.nome}
-                    </label>
-                  ))}
+                <div className="border-t pt-3 space-y-3 max-h-64 overflow-y-auto pr-1">
+                  {gruposPaginas.map((g) => {
+                    const todasDoGrupo = g.paginas.every((p) => form.paginas.includes(p.rota));
+                    const bloqueado = form.paginas.includes("__all__");
+                    return (
+                      <div key={g.grupo} className="space-y-1.5">
+                        <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground cursor-pointer">
+                          <Checkbox
+                            checked={todasDoGrupo}
+                            disabled={bloqueado}
+                            onCheckedChange={(c) => {
+                              const rotasGrupo = g.paginas.map((p) => p.rota);
+                              const base = form.paginas.filter(
+                                (x) => x !== "__all__" && !rotasGrupo.includes(x),
+                              );
+                              const next = c ? [...base, ...rotasGrupo] : base;
+                              setForm({ ...form, paginas: next.length === 0 ? ["__all__"] : next });
+                            }}
+                          />
+                          {g.grupo}
+                        </label>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1.5 pl-5">
+                          {g.paginas.map((r) => (
+                            <label
+                              key={r.rota}
+                              className="flex items-center gap-1.5 text-sm cursor-pointer"
+                            >
+                              <Checkbox
+                                checked={form.paginas.includes(r.rota)}
+                                disabled={bloqueado}
+                                onCheckedChange={(c) => {
+                                  const next = c
+                                    ? [...form.paginas.filter((x) => x !== "__all__"), r.rota]
+                                    : form.paginas.filter((x) => x !== r.rota);
+                                  setForm({
+                                    ...form,
+                                    paginas: next.length === 0 ? ["__all__"] : next,
+                                  });
+                                }}
+                              />
+                              {r.nome}
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
