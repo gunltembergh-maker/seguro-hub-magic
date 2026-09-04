@@ -752,6 +752,10 @@ type Linha = {
   pago: number;
 };
 
+function mesAnoISO(iso: string) {
+  return `${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
+}
+
 function LinhaCanal({
   l,
   info,
