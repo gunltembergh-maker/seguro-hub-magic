@@ -692,7 +692,6 @@ function SubtotalRow({
   border,
 }: {
   label: string;
-  valores: number[];
   grupo: Linha[];
   navy: string;
   border: string;
@@ -705,22 +704,22 @@ function SubtotalRow({
         {label}
       </TableCell>
       <TableCell className="border-l text-right font-mono font-semibold tabular-nums" style={{ color: navy, borderColor: border, borderTop: top }}>
-        {BRL(s((l) => l.mesAtual))}
+        {BRL(s((l) => l.m1avencer))}
       </TableCell>
       <TableCell className="text-right font-mono font-semibold tabular-nums" style={{ color: navy, borderTop: top }}>
-        {BRL(s((l) => l.apurado))}
+        {BRL(s((l) => l.m1apurado))}
       </TableCell>
       <TableCell className="text-right font-mono font-bold tabular-nums" style={{ color: navy, borderTop: top }}>
-        {BRL(s((l) => l.mesAtual + l.apurado))}
+        {BRL(s((l) => l.m1avencer + l.m1apurado))}
       </TableCell>
       <TableCell className="border-l text-right font-mono font-semibold tabular-nums" style={{ color: navy, borderColor: border, borderTop: top }}>
-        {BRL(s((l) => l.mesSeguinte))}
+        {BRL(s((l) => l.m2avencer))}
       </TableCell>
       <TableCell className="text-right font-mono font-semibold tabular-nums" style={{ color: navy, borderTop: top }}>
-        {BRL(0)}
+        {BRL(s((l) => l.m2apurado))}
       </TableCell>
       <TableCell className="text-right font-mono font-bold tabular-nums" style={{ color: navy, borderTop: top }}>
-        {BRL(s((l) => l.mesSeguinte))}
+        {BRL(s((l) => l.m2avencer + l.m2apurado))}
       </TableCell>
       <TableCell className="border-l" style={{ borderColor: border, borderTop: top }} />
     </TableRow>
