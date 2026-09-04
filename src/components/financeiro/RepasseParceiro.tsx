@@ -688,7 +688,7 @@ export function RepasseParceiro() {
                       {grupoAPagar.length > 0 && (
                         <>
                           {grupoAPagar.map((l) => (
-                            <LinhaCanal key={l.canal} l={l} info={porCanal.get(l.canal)} pill={pill} valorCell={valorCell} border={BORDER} navy={NAVY} />
+                            <LinhaCanal key={l.canal} l={l} info={porCanal.get(l.canal)} pill={pill} valorCell={valorCell} border={BORDER} navy={NAVY} exportando={exportando === l.canal} onExport={exportar} />
                           ))}
                           <SubtotalRow
                             label={`A pagar em 10/${String(mesAncora.mes).padStart(2, "0")}`}
