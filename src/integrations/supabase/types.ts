@@ -3973,7 +3973,12 @@ export type Database = {
         }[]
       }
       rpc_lavoro_repasse_idade: {
-        Args: { p_ano?: number; p_canal_repasse?: string; p_mes?: number }
+        Args: {
+          p_ano?: number
+          p_canal_repasse?: string
+          p_mes?: number
+          p_situacao_repasse?: string
+        }
         Returns: {
           canal_repasse: string
           faixa: string
