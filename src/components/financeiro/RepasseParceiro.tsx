@@ -252,7 +252,10 @@ export function RepasseParceiro() {
   const totalCicloSeguinte = soma(linhas, cicloSeguinte);
 
   const totalPago = soma(linhas, (l) => l.pago);
-  const totalParcelas = (data || []).length;
+  const maiorRepasse = linhas.reduce(
+    (top, l) => (l.pago > (top?.pago ?? -1) ? l : top),
+    null as (typeof linhas)[number] | null,
+  );
 
   // Previsão longa: agrega por mês
   const prevMeses = useMemo(() => {
