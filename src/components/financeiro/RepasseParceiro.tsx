@@ -224,7 +224,7 @@ export function RepasseParceiro() {
       }
 
       if (truncado) {
-        toast.warning("Resultado truncado em 20.000 linhas. Ajuste os filtros para exportar tudo.", { id: toastId, duration: 6000 });
+        toast.warning("Resultado truncado em 20.000 linhas. Ajuste os filtros para exportar tudo.", { duration: 8000 });
       }
 
       const totalRepasse = todas.reduce((acc, r) => acc + (Number(r.valor_repasse_total) || 0), 0);
