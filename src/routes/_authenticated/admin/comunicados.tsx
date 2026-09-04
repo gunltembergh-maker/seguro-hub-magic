@@ -165,9 +165,18 @@ function AdminComunicadosPage() {
   }, [usuarios, userSearch]);
 
   const rotasMap = useMemo(() => {
-    const m = new Map<string, string>();
-    (rotas || []).forEach((r) => m.set(r.rota, r.nome));
+    const m = new Map<string, string>(HUB_PAGINAS_MAP);
+    (rotas || []).forEach((r) => { if (!m.has(r.rota)) m.set(r.rota, r.nome); });
     return m;
+  }, [rotas]);
+
+  // Catálogo do app + rotas extras cadastradas no banco que não constam no catálogo
+  const gruposPaginas = useMemo(() => {
+    const conhecidas = new Set(HUB_PAGINAS.flatMap((g) => g.paginas.map((p) => p.rota)));
+    const extras = (rotas || []).filter((r) => !conhecidas.has(r.rota));
+    return extras.length > 0
+      ? [...HUB_PAGINAS, { grupo: "Outras", paginas: extras.map((r) => ({ rota: r.rota, nome: r.nome })) }]
+      : HUB_PAGINAS;
   }, [rotas]);
 
   if (!isAdmin) {
