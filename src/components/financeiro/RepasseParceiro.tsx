@@ -1,9 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Download, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { exportarXlsx, type ColunaExport } from "@/lib/export-xlsx";
 import {
   NAVY,
   NAVY_DEEP,
@@ -14,6 +23,98 @@ import {
 } from "@/lib/email-templates/_lavoro-shared";
 
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+const MESES_LONGOS = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+];
+
+type ModoExport = "INTERNO" | "PARCEIRO";
+
+const COLS_INTERNO: ColunaExport[] = [
+  { header: "Grupo", key: "grupo", formato: "texto" },
+  { header: "Tomador", key: "tomador", formato: "texto", width: 34 },
+  { header: "Segurado", key: "segurado", formato: "texto", width: 34 },
+  { header: "Documento", key: "documento", formato: "texto", width: 20 },
+  { header: "Ramo", key: "ramo", formato: "texto" },
+  { header: "Seguradora", key: "seguradora", formato: "texto", width: 24 },
+  { header: "Nº Apólice", key: "numero_apolice", formato: "texto", width: 26 },
+  { header: "Data Emissão", key: "data_emissao", formato: "data" },
+  { header: "Início Vigência", key: "inicio_vigencia", formato: "data" },
+  { header: "Fim Vigência", key: "fim_vigencia", formato: "data" },
+  { header: "Período Atualização", key: "periodo_atualizacao", formato: "texto" },
+  { header: "Valor IS", key: "valor_is", formato: "moeda" },
+  { header: "Prêmio Total", key: "premio_total", formato: "moeda" },
+  { header: "% Comissão", key: "percentual_comissao", formato: "percentual" },
+  { header: "Comissão Emitida", key: "comissao_emitida", formato: "moeda" },
+  { header: "Qtd Parcelas", key: "qtd_parcelas", formato: "inteiro" },
+  { header: "Prêmio Parcela", key: "premio_parcela", formato: "moeda" },
+  { header: "Comissão Bruta", key: "comissao_bruta", formato: "moeda" },
+  { header: "Imposto Ret", key: "imposto_ret", formato: "moeda" },
+  { header: "Valor ISS", key: "valor_iss", formato: "moeda" },
+  { header: "Valor Recebido / A Receber", key: "valor_recebido_a_receber", formato: "moeda", width: 20 },
+  { header: "Nº da Parcela", key: "numero_da_parcela", formato: "inteiro" },
+  { header: "Tipo Pagamento", key: "tipo_pagamento", formato: "texto" },
+  { header: "Empresa Faturada", key: "empresa_faturada", formato: "texto", width: 22 },
+  { header: "Data Pagamento", key: "data_pagamento", formato: "data" },
+  { header: "Mês", key: "mes", formato: "inteiro" },
+  { header: "Ano", key: "ano", formato: "inteiro" },
+  { header: "Fat Competência", key: "fat_competencia", formato: "texto" },
+  { header: "Status da Parcela de Comissão", key: "status_parcela_comissao", formato: "texto", width: 24 },
+  { header: "Análise", key: "analise", formato: "texto", width: 24 },
+  { header: "Possui Repasse", key: "possui_repasse", formato: "texto" },
+  { header: "% Repasse", key: "percentual_repasse", formato: "percentual" },
+  { header: "Parcelas", key: "parcelas", formato: "texto" },
+  { header: "% Imposto", key: "percentual_imposto", formato: "percentual" },
+  { header: "Valor Repasse Total", key: "valor_repasse_total", formato: "moeda", width: 18 },
+  { header: "Data do Repasse", key: "data_repasse", formato: "data" },
+  { header: "Status do Repasse", key: "status_repasse", formato: "texto" },
+  { header: "Observação", key: "observacao", formato: "texto", width: 40 },
+];
+
+const COLS_PARCEIRO_RESUMO: ColunaExport[] = [
+  { header: "Nº Apólice", key: "numero_apolice", formato: "texto", width: 26 },
+  { header: "Tomador", key: "tomador", formato: "texto", width: 34 },
+  { header: "Parcela", key: "parcela", formato: "texto", width: 10 },
+  { header: "Data Pgto Comissão", key: "data_pagamento", formato: "data" },
+  { header: "Base Líquida", key: "base_liquida", formato: "moeda" },
+  { header: "% Repasse", key: "percentual_repasse", formato: "percentual" },
+  { header: "Valor do Repasse", key: "valor_repasse_total", formato: "moeda", width: 18 },
+];
+
+const COLS_PARCEIRO_DETALHE: ColunaExport[] = [
+  { header: "Nº Apólice", key: "numero_apolice", formato: "texto", width: 26 },
+  { header: "Tomador", key: "tomador", formato: "texto", width: 34 },
+  { header: "Segurado", key: "segurado", formato: "texto", width: 34 },
+  { header: "Ramo", key: "ramo", formato: "texto" },
+  { header: "Seguradora", key: "seguradora", formato: "texto", width: 24 },
+  { header: "Data Emissão", key: "data_emissao", formato: "data" },
+  { header: "Início Vigência", key: "inicio_vigencia", formato: "data" },
+  { header: "Fim Vigência", key: "fim_vigencia", formato: "data" },
+  { header: "Nº da Parcela", key: "numero_da_parcela", formato: "inteiro" },
+  { header: "Qtd Parcelas", key: "qtd_parcelas", formato: "inteiro" },
+  { header: "Data Pagamento", key: "data_pagamento", formato: "data" },
+  { header: "Status da Parcela", key: "status_parcela_comissao", formato: "texto", width: 24 },
+  { header: "Comissão Recebida", key: "valor_recebido_a_receber", formato: "moeda", width: 18 },
+  { header: "% Imposto", key: "percentual_imposto", formato: "percentual" },
+  { header: "Base Líquida", key: "base_liquida", formato: "moeda" },
+  { header: "% Repasse", key: "percentual_repasse", formato: "percentual" },
+  { header: "Valor do Repasse", key: "valor_repasse_total", formato: "moeda", width: 18 },
+  { header: "Status do Repasse", key: "status_repasse", formato: "texto" },
+];
+
+// Colunas que NUNCA podem sair no arquivo do parceiro.
+const COLS_PROIBIDAS_PARCEIRO = new Set([
+  "documento", "observacao", "analise", "premio_total", "premio_parcela", "valor_is",
+  "percentual_comissao", "comissao_emitida", "comissao_bruta", "imposto_ret", "valor_iss",
+]);
+
+function slugCanal(canal: string) {
+  return canal
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^A-Za-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
 
 const BRL = (v: number | null | undefined) =>
   Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
