@@ -170,12 +170,17 @@ export function RepasseParceiro() {
 
   // Idade do provisionado
   const { data: idade } = useQuery({
-    queryKey: ["lavoro-repasse-idade", mesAncora.ano, mesAncora.mes, canal],
+    queryKey: ["lavoro-repasse-idade", mesAncora.ano, mesAncora.mes, canal, sit.situacaoRepasse],
     enabled: !isHistorico,
     queryFn: async () => {
       const { data, error } = await supabase.rpc(
         "rpc_lavoro_repasse_idade" as never,
-        { p_ano: mesAncora.ano, p_mes: mesAncora.mes, p_canal_repasse: canal } as never,
+        {
+          p_ano: mesAncora.ano,
+          p_mes: mesAncora.mes,
+          p_canal_repasse: canal,
+          p_situacao_repasse: sit.situacaoRepasse,
+        } as never,
       );
       if (error) throw error;
       return (data || []) as Array<{
@@ -747,6 +752,10 @@ type Linha = {
   pago: number;
 };
 
+function mesAnoISO(iso: string) {
+  return `${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
+}
+
 function LinhaCanal({
   l,
   info,
@@ -771,7 +780,7 @@ function LinhaCanal({
             <span
               className="inline-block h-2 w-2 rounded-full"
               style={{ background: "#92400E" }}
-              title={`Parcela mais antiga: ${new Date(info.maisAntigo).toLocaleDateString("pt-BR", { month: "2-digit", year: "numeric" })}`}
+              title={`Parcela mais antiga: ${mesAnoISO(info.maisAntigo)}`}
             />
           )}
         </div>
