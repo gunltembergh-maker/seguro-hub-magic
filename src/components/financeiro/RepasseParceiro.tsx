@@ -168,6 +168,24 @@ export function RepasseParceiro() {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Idade do provisionado
+  const { data: idade } = useQuery({
+    queryKey: ["lavoro-repasse-idade", mesAncora.ano, mesAncora.mes, canal],
+    enabled: !isHistorico,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc(
+        "rpc_lavoro_repasse_idade" as never,
+        { p_ano: mesAncora.ano, p_mes: mesAncora.mes, p_canal_repasse: canal } as never,
+      );
+      if (error) throw error;
+      return (data || []) as Array<{
+        canal_repasse: string; faixa: string; ordem: number;
+        parcelas: number; valor: number; mes_mais_antigo: string;
+      }>;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   // Realtime: revalida quando uma sync termina com sucesso
   useEffect(() => {
     const channel = supabase
@@ -181,6 +199,7 @@ export function RepasseParceiro() {
             queryClient.invalidateQueries({ queryKey: ["lavoro-repasse-por-canal"] });
             queryClient.invalidateQueries({ queryKey: ["lavoro-repasse-rodape"] });
             queryClient.invalidateQueries({ queryKey: ["lavoro-repasse-previsao-longa"] });
+            queryClient.invalidateQueries({ queryKey: ["lavoro-repasse-idade"] });
           }
         },
       )
@@ -270,6 +289,36 @@ export function RepasseParceiro() {
   }, [previsao]);
 
   const prevTotal = prevMeses.reduce((acc, m) => acc + m.valor, 0);
+
+  // Faixas etárias agregadas por faixa
+  const faixas = useMemo(() => {
+    const map = new Map<number, { ordem: number; faixa: string; parcelas: number; valor: number }>();
+    for (const r of idade || []) {
+      const cur = map.get(r.ordem) || { ordem: r.ordem, faixa: r.faixa, parcelas: 0, valor: 0 };
+      cur.parcelas += Number(r.parcelas || 0);
+      cur.valor += Number(r.valor || 0);
+      map.set(r.ordem, cur);
+    }
+    return Array.from(map.values()).sort((a, b) => a.ordem - b.ordem);
+  }, [idade]);
+
+  const pctParadoMais1Mes = useMemo(() => {
+    const total = faixas.reduce((acc, f) => acc + f.valor, 0);
+    const parado = faixas.filter((f) => f.ordem >= 2).reduce((acc, f) => acc + f.valor, 0);
+    if (!total) return 0;
+    return Math.round((parado / total) * 100);
+  }, [faixas]);
+
+  const porCanal = useMemo(() => {
+    const map = new Map<string, { parcelas: number; maiorOrdem: number; maisAntigo: string | null }>();
+    for (const r of idade || []) {
+      const cur = map.get(r.canal_repasse) || { parcelas: 0, maiorOrdem: 0, maisAntigo: null };
+      cur.parcelas += Number(r.parcelas || 0);
+      if (r.ordem > cur.maiorOrdem) { cur.maiorOrdem = r.ordem; cur.maisAntigo = r.mes_mais_antigo; }
+      map.set(r.canal_repasse, cur);
+    }
+    return map;
+  }, [idade]);
 
   const pill = (s: CanalRow["situacao"]) => {
     const styles: Record<CanalRow["situacao"], { bg: string; color: string; label: string }> = {
@@ -400,6 +449,34 @@ export function RepasseParceiro() {
         )}
       </div>
 
+      {/* FAIXA DE IDADE */}
+      {!isHistorico && faixas.length > 0 && (
+        <div className="rounded-xl border bg-white px-5 py-4 shadow-sm" style={{ borderColor: BORDER }}>
+          <h3 className="font-display text-base font-semibold" style={{ color: NAVY }}>
+            Há quanto tempo está parado
+          </h3>
+          <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {faixas.map((f) => (
+              <div key={f.ordem} className="rounded-lg border p-3" style={{ borderColor: BORDER }}>
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">{f.faixa}</div>
+                <div
+                  className="mt-1 font-mono text-lg font-bold tabular-nums"
+                  style={{ color: f.ordem >= 3 ? "#92400E" : NAVY_DEEP }}
+                >
+                  {BRL(f.valor)}
+                </div>
+                <div className="mt-0.5 text-[11px] text-gray-500">{f.parcelas} parcelas</div>
+              </div>
+            ))}
+          </div>
+          {pctParadoMais1Mes > 0 && (
+            <p className="mt-3 text-[11px] text-gray-500">
+              {pctParadoMais1Mes}% do total provisionado está parado há mais de 1 mês
+            </p>
+          )}
+        </div>
+      )}
+
       {/* BLOCO 2 + 3: quadro e rodapé */}
       <div className="rounded-xl border bg-white shadow-sm" style={{ borderColor: BORDER }}>
         <div className="border-b px-5 py-4" style={{ borderColor: BORDER }}>
@@ -505,7 +582,7 @@ export function RepasseParceiro() {
                       {grupoAPagar.length > 0 && (
                         <>
                           {grupoAPagar.map((l) => (
-                            <LinhaCanal key={l.canal} l={l} pill={pill} valorCell={valorCell} border={BORDER} navy={NAVY} />
+                            <LinhaCanal key={l.canal} l={l} info={porCanal.get(l.canal)} pill={pill} valorCell={valorCell} border={BORDER} navy={NAVY} />
                           ))}
                           <SubtotalRow
                             label={`A pagar em 10/${String(mesAncora.mes).padStart(2, "0")}`}
@@ -527,7 +604,7 @@ export function RepasseParceiro() {
                             </TableCell>
                           </TableRow>
                           {grupoRetido.map((l) => (
-                            <LinhaCanal key={l.canal} l={l} pill={pill} valorCell={valorCell} border={BORDER} navy={NAVY} />
+                            <LinhaCanal key={l.canal} l={l} info={porCanal.get(l.canal)} pill={pill} valorCell={valorCell} border={BORDER} navy={NAVY} />
                           ))}
                           <SubtotalRow
                             label="Retido pelo mínimo"
@@ -672,12 +749,14 @@ type Linha = {
 
 function LinhaCanal({
   l,
+  info,
   pill,
   valorCell,
   border,
   navy,
 }: {
   l: Linha;
+  info?: { parcelas: number; maiorOrdem: number; maisAntigo: string | null };
   pill: (s: Linha["situacao"]) => React.ReactNode;
   valorCell: (v: number) => React.ReactNode;
   border: string;
@@ -685,7 +764,19 @@ function LinhaCanal({
 }) {
   return (
     <TableRow>
-      <TableCell className="font-medium" style={{ color: navy }}>{l.canal}</TableCell>
+      <TableCell className="font-medium" style={{ color: navy }}>
+        <div className="flex items-center gap-2">
+          {l.canal}
+          {info && info.maiorOrdem >= 3 && info.maisAntigo && (
+            <span
+              className="inline-block h-2 w-2 rounded-full"
+              style={{ background: "#92400E" }}
+              title={`Parcela mais antiga: ${new Date(info.maisAntigo).toLocaleDateString("pt-BR", { month: "2-digit", year: "numeric" })}`}
+            />
+          )}
+        </div>
+        {info && <div className="text-[11px] text-gray-500">{info.parcelas} parcelas</div>}
+      </TableCell>
       <TableCell className="border-l text-right font-mono tabular-nums" style={{ borderColor: border }}>
         {valorCell(l.m1avencer)}
       </TableCell>
