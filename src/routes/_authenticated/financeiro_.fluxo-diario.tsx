@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { CalendarClock } from "lucide-react";
 import { RecebimentoDezenas } from "@/components/financeiro/RecebimentoDezenas";
+import { RepasseParceiro } from "@/components/financeiro/RepasseParceiro";
 
 export const Route = createFileRoute("/_authenticated/financeiro_/fluxo-diario")({
   head: () => ({
@@ -28,7 +28,7 @@ function FluxoDiarioPage() {
 
         <RecebimentoDezenas />
 
-        {/* Parte 3: quadro de repasse de parceiro entra aqui */}
+        <RepasseParceiro />
       </div>
     </div>
   );
