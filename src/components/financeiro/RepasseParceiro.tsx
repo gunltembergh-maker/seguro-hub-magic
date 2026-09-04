@@ -196,28 +196,43 @@ export function RepasseParceiro() {
     setSituacaoKey("AVENCER_APURADO");
   };
 
-  // Pivot por canal: grupo de mês vem de ciclo_ano/ciclo_mes; a coluna (A Vencer/Apurado) vem de situacao_repasse
+  // Pivot por canal: situação que decide o grupo é sempre a do mês âncora;
+  // só fallback para o mês seguinte quando não há linha no mês âncora.
   const linhas = useMemo(() => {
-    const map = new Map<string, Linha>();
+    type Acc = Omit<Linha, "situacao"> & {
+      situacaoAncora: Linha["situacao"] | null;
+      situacaoSeguinte: Linha["situacao"] | null;
+    };
+    const map = new Map<string, Acc>();
     for (const r of data || []) {
-      const cur =
-        map.get(r.canal_repasse) ||
-        { canal: r.canal_repasse, situacao: r.situacao, m1avencer: 0, m1apurado: 0, m2avencer: 0, m2apurado: 0, pago: 0 };
+      const cur: Acc =
+        map.get(r.canal_repasse) || {
+          canal: r.canal_repasse,
+          situacaoAncora: null,
+          situacaoSeguinte: null,
+          m1avencer: 0, m1apurado: 0, m2avencer: 0, m2apurado: 0, pago: 0,
+        };
       const v = Number(r.valor || 0);
       const ehMesSeguinte = r.ciclo_ano === mesSeguinte.ano && r.ciclo_mes === mesSeguinte.mes;
       const sr = (r.situacao_repasse || "").toLowerCase();
       if (isHistorico) {
         cur.pago += v;
-      } else if (sr === "apurado") {
-        if (ehMesSeguinte) cur.m2apurado += v;
-        else cur.m1apurado += v;
+        cur.situacaoAncora = r.situacao;
+      } else if (ehMesSeguinte) {
+        cur.situacaoSeguinte = r.situacao;
+        if (sr === "apurado") cur.m2apurado += v;
+        else cur.m2avencer += v;
       } else {
-        if (ehMesSeguinte) cur.m2avencer += v;
+        cur.situacaoAncora = r.situacao;
+        if (sr === "apurado") cur.m1apurado += v;
         else cur.m1avencer += v;
       }
       map.set(r.canal_repasse, cur);
     }
-    const arr = Array.from(map.values());
+    const arr: Linha[] = Array.from(map.values()).map(({ situacaoAncora, situacaoSeguinte, ...rest }) => ({
+      ...rest,
+      situacao: (situacaoAncora ?? situacaoSeguinte ?? "A_PAGAR") as Linha["situacao"],
+    }));
     const total = (l: Linha) => l.m1avencer + l.m1apurado + l.m2avencer + l.m2apurado;
     arr.sort((a, b) => (isHistorico ? b.pago - a.pago : total(b) - total(a)));
     return arr;
