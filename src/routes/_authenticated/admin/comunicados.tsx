@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { HUB_PAGINAS, HUB_PAGINAS_MAP } from "@/lib/hub-paginas";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import {
