@@ -28,7 +28,7 @@ function FluxoDiarioPage() {
 
         <RecebimentoDezenas />
 
-        {/* Parte 3: quadro de repasse de parceiro entra aqui */}
+        <RepasseParceiro />
       </div>
     </div>
   );
