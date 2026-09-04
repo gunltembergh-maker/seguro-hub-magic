@@ -857,6 +857,36 @@ function mesAnoISO(iso: string) {
   return `${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
 }
 
+function ExportBtn({
+  canal,
+  exportando,
+  onExport,
+}: {
+  canal: string;
+  exportando: boolean;
+  onExport: (canal: string, modo: ModoExport) => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          disabled={exportando}
+          aria-label={`Exportar repasse de ${canal}`}
+          title="Exportar planilha"
+          className="inline-flex h-6 w-6 items-center justify-center rounded text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {exportando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start">
+        <DropdownMenuItem onClick={() => onExport(canal, "INTERNO")}>Exportar completo (interno)</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onExport(canal, "PARCEIRO")}>Exportar para o parceiro</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 function LinhaCanal({
   l,
   info,
@@ -864,6 +894,8 @@ function LinhaCanal({
   valorCell,
   border,
   navy,
+  exportando,
+  onExport,
 }: {
   l: Linha;
   info?: { parcelas: number; maiorOrdem: number; maisAntigo: string | null };
@@ -871,12 +903,15 @@ function LinhaCanal({
   valorCell: (v: number) => React.ReactNode;
   border: string;
   navy: string;
+  exportando: boolean;
+  onExport: (canal: string, modo: ModoExport) => void;
 }) {
   return (
     <TableRow>
       <TableCell className="font-medium" style={{ color: navy }}>
         <div className="flex items-center gap-2">
           {l.canal}
+          <ExportBtn canal={l.canal} exportando={exportando} onExport={onExport} />
           {info && info.maiorOrdem >= 3 && info.maisAntigo && (
             <span
               className="inline-block h-2 w-2 rounded-full"
