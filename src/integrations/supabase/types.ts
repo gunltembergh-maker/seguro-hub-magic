@@ -3913,11 +3913,74 @@ export type Database = {
           variacao_mes_anterior: number
         }[]
       }
+      rpc_lavoro_repasse_detalhe: {
+        Args: {
+          p_ano?: number
+          p_canal_repasse?: string
+          p_limit?: number
+          p_mes?: number
+          p_modo?: string
+          p_offset?: number
+          p_situacao_repasse?: string
+        }
+        Returns: {
+          analise: string
+          ano: number
+          base_liquida: number
+          comissao_bruta: number
+          comissao_emitida: number
+          data_emissao: string
+          data_pagamento: string
+          data_repasse: string
+          documento: string
+          empresa_faturada: string
+          fat_competencia: string
+          fim_vigencia: string
+          grupo: string
+          imposto_ret: number
+          inicio_vigencia: string
+          mes: number
+          numero_apolice: string
+          numero_da_parcela: number
+          observacao: string
+          parcelas: string
+          percentual_comissao: number
+          percentual_imposto: number
+          percentual_repasse: number
+          periodo_atualizacao: string
+          possui_repasse: string
+          premio_parcela: number
+          premio_total: number
+          qtd_parcelas: number
+          ramo: string
+          segurado: string
+          seguradora: string
+          status_parcela_comissao: string
+          status_repasse: string
+          tipo_pagamento: string
+          tomador: string
+          valor_is: number
+          valor_iss: number
+          valor_recebido_a_receber: number
+          valor_repasse_total: number
+        }[]
+      }
       rpc_lavoro_repasse_filtros: {
         Args: never
         Returns: {
           tipo: string
           valor: string
+        }[]
+      }
+      rpc_lavoro_repasse_idade: {
+        Args: { p_ano?: number; p_canal_repasse?: string; p_mes?: number }
+        Returns: {
+          canal_repasse: string
+          faixa: string
+          mes_mais_antigo: string
+          ordem: number
+          parcelas: number
+          valor: number
         }[]
       }
       rpc_lavoro_repasse_por_canal: {
