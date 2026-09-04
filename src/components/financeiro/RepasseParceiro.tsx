@@ -780,7 +780,7 @@ function LinhaCanal({
             <span
               className="inline-block h-2 w-2 rounded-full"
               style={{ background: "#92400E" }}
-              title={`Parcela mais antiga: ${new Date(info.maisAntigo).toLocaleDateString("pt-BR", { month: "2-digit", year: "numeric" })}`}
+              title={`Parcela mais antiga: ${mesAnoISO(info.maisAntigo)}`}
             />
           )}
         </div>
