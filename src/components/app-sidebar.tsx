@@ -369,9 +369,9 @@ export function AppSidebar() {
                     const hasActiveChild = !!i.children.some((c) => isActive(c.url));
                     return (
                       <CollapsibleNavItem
-                        key={i.url}
+                        key={i.title}
                         item={i}
-                        isActiveParent={isActive(i.url)}
+                        isActiveParent={i.url ? isActive(i.url) : false}
                         hasActiveChild={hasActiveChild}
                         isActiveChild={isActive}
                         collapsed={collapsed}
@@ -380,9 +380,9 @@ export function AppSidebar() {
                     );
                   }
                   return (
-                    <SidebarMenuItem key={i.url}>
-                      <SidebarMenuButton asChild isActive={isActive(i.url)} tooltip={i.title}>
-                        <Link to={i.url}>
+                    <SidebarMenuItem key={i.title}>
+                      <SidebarMenuButton asChild isActive={i.url ? isActive(i.url) : false} tooltip={i.title}>
+                        <Link to={i.url!}>
                           <i.icon />
                           <span>{i.title}</span>
                         </Link>
