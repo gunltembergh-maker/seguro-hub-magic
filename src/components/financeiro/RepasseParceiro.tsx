@@ -195,42 +195,30 @@ export function RepasseParceiro() {
     setSituacaoKey("AVENCER_APURADO");
   };
 
-  // Pivot por canal
+  // Pivot por canal: grupo de mês vem de ciclo_ano/ciclo_mes; a coluna (A Vencer/Apurado) vem de situacao_repasse
   const linhas = useMemo(() => {
-    const map = new Map<
-      string,
-      {
-        canal: string;
-        situacao: CanalRow["situacao"];
-        avencer: number;
-        apurado: number;
-        mesAtual: number;
-        mesSeguinte: number;
-        pago: number;
-      }
-    >();
+    const map = new Map<string, Linha>();
     for (const r of data || []) {
       const cur =
         map.get(r.canal_repasse) ||
-        { canal: r.canal_repasse, situacao: r.situacao, avencer: 0, apurado: 0, mesAtual: 0, mesSeguinte: 0, pago: 0 };
+        { canal: r.canal_repasse, situacao: r.situacao, m1avencer: 0, m1apurado: 0, m2avencer: 0, m2apurado: 0, pago: 0 };
       const v = Number(r.valor || 0);
       const ehMesSeguinte = r.ciclo_ano === mesSeguinte.ano && r.ciclo_mes === mesSeguinte.mes;
       const sr = (r.situacao_repasse || "").toLowerCase();
       if (isHistorico) {
         cur.pago += v;
-      } else if (ehMesSeguinte) {
-        if (sr === "apurado") cur.apurado += v;
-        else {
-          cur.avencer += v;
-          cur.mesSeguinte += v;
-        }
+      } else if (sr === "apurado") {
+        if (ehMesSeguinte) cur.m2apurado += v;
+        else cur.m1apurado += v;
       } else {
-        cur.mesAtual += v;
+        if (ehMesSeguinte) cur.m2avencer += v;
+        else cur.m1avencer += v;
       }
       map.set(r.canal_repasse, cur);
     }
     const arr = Array.from(map.values());
-    arr.sort((a, b) => (isHistorico ? b.pago - a.pago : b.mesAtual + b.mesSeguinte - (a.mesAtual + a.mesSeguinte)));
+    const total = (l: Linha) => l.m1avencer + l.m1apurado + l.m2avencer + l.m2apurado;
+    arr.sort((a, b) => (isHistorico ? b.pago - a.pago : total(b) - total(a)));
     return arr;
   }, [data, isHistorico, mesSeguinte]);
 
@@ -240,9 +228,12 @@ export function RepasseParceiro() {
   const soma = (arr: typeof linhas, f: (l: (typeof linhas)[number]) => number) =>
     arr.reduce((acc, l) => acc + f(l), 0);
 
-  const totalAPagar = soma(grupoAPagar, (l) => l.mesAtual);
-  const totalRetido = soma(grupoRetido, (l) => l.mesAtual);
-  const totalCicloSeguinte = soma(linhas, (l) => l.mesSeguinte);
+  const cicloAncora = (l: (typeof linhas)[number]) => l.m1avencer + l.m1apurado;
+  const cicloSeguinte = (l: (typeof linhas)[number]) => l.m2avencer + l.m2apurado;
+
+  const totalAPagar = soma(grupoAPagar, cicloAncora);
+  const totalRetido = soma(grupoRetido, cicloAncora);
+  const totalCicloSeguinte = soma(linhas, cicloSeguinte);
 
   const totalPago = soma(linhas, (l) => l.pago);
   const totalParcelas = (data || []).length;
