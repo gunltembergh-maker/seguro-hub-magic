@@ -487,9 +487,6 @@ export function RepasseParceiro() {
                           ))}
                           <SubtotalRow
                             label={`A pagar em 10/${String(mesAncora.mes).padStart(2, "0")}`}
-                            valores={[
-                              soma(grupoAPagar, (l) => 0), // placeholder replaced below
-                            ]}
                             grupo={grupoAPagar}
                             navy={NAVY}
                             border={BORDER}
@@ -512,7 +509,6 @@ export function RepasseParceiro() {
                           ))}
                           <SubtotalRow
                             label="Retido pelo mínimo"
-                            valores={[0]}
                             grupo={grupoRetido}
                             navy={NAVY}
                             border={BORDER}
