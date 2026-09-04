@@ -376,7 +376,11 @@ export function RepasseParceiro() {
           <>
             <ResumoCard titulo={`Pago em ${MESES[mesAncora.mes - 1]}/${String(mesAncora.ano).slice(2)}`} valor={BRL(totalPago)} destaque />
             <ResumoCard titulo="Parceiros" valor={String(linhas.length)} />
-            <ResumoCard titulo="Parcelas" valor={String(totalParcelas)} />
+            <ResumoCard
+              titulo="Maior repasse"
+              valor={maiorRepasse ? BRL(maiorRepasse.pago) : BRL(0)}
+              legenda={maiorRepasse?.canal}
+            />
             <ResumoCard titulo="Mês de referência" valor={`${MESES[mesAncora.mes - 1]}/${mesAncora.ano}`} />
           </>
         ) : (
@@ -640,7 +644,8 @@ export function RepasseParceiro() {
   );
 }
 
-function ResumoCard({ titulo, valor, destaque }: { titulo: string; valor: string; destaque?: boolean }) {
+function ResumoCard({ titulo, valor, destaque, legenda }:
+  { titulo: string; valor: string; destaque?: boolean; legenda?: string }) {
   return (
     <div
       className="rounded-xl border bg-white px-4 py-3 shadow-sm"
@@ -650,6 +655,7 @@ function ResumoCard({ titulo, valor, destaque }: { titulo: string; valor: string
       <div className="mt-1 font-mono text-lg font-bold tabular-nums" style={{ color: destaque ? CYAN : NAVY_DEEP }}>
         {valor}
       </div>
+      {legenda && <div className="mt-0.5 truncate text-[11px] text-gray-500">{legenda}</div>}
     </div>
   );
 }
