@@ -1,8 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Landmark } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Landmark, CalendarClock, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { RecebimentoDezenas } from "@/components/financeiro/RecebimentoDezenas";
 
 const NAVY = "#14405C";
 
@@ -65,14 +64,27 @@ function FinanceiroPage() {
           </CardContent>
         </Card>
 
-        {/* Comissionamento */}
-        <section className="mt-8">
-          <div className="mb-3 flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full" style={{ background: "#00BAF2" }} />
-            <h2 className="font-display text-lg font-semibold text-white">Comissionamento</h2>
-          </div>
-          <RecebimentoDezenas />
-        </section>
+        {/* Link para o Fluxo Diário */}
+        <div className="mt-8">
+          <Link
+            to="/financeiro/fluxo-diario"
+            className="group flex items-center gap-4 rounded-xl border border-white/15 bg-white/5 p-5 transition-colors hover:bg-white/10"
+          >
+            <div
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-white"
+              style={{ background: "#00BAF2" }}
+            >
+              <CalendarClock className="h-5 w-5" />
+            </div>
+            <div className="flex-1">
+              <p className="font-display text-base font-semibold text-white">Fluxo Diário</p>
+              <p className="text-sm text-white/70">
+                Previsão de recebimento por dezenas e repasse de parceiro.
+              </p>
+            </div>
+            <ArrowRight className="h-5 w-5 text-white/60 transition-transform group-hover:translate-x-1" />
+          </Link>
+        </div>
 
         {/* Outras seções */}
         <div className="mt-8 grid gap-4 md:grid-cols-2">

@@ -1446,78 +1446,192 @@ export type Database = {
       }
       canais: {
         Row: {
+          apelidos: string[]
           ativo: boolean
+          cnpj: string | null
+          contato_email: string | null
+          contato_nome: string | null
+          contato_telefone: string | null
           created_at: string
+          email_financeiro: string | null
           id: string
+          modelo_repasse: string | null
           nome: string
+          percentual_repasse: number | null
+          pipefy_card_id: number | null
+          razao_social: string | null
           updated_at: string
         }
         Insert: {
+          apelidos?: string[]
           ativo?: boolean
+          cnpj?: string | null
+          contato_email?: string | null
+          contato_nome?: string | null
+          contato_telefone?: string | null
           created_at?: string
+          email_financeiro?: string | null
           id?: string
+          modelo_repasse?: string | null
           nome: string
+          percentual_repasse?: number | null
+          pipefy_card_id?: number | null
+          razao_social?: string | null
           updated_at?: string
         }
         Update: {
+          apelidos?: string[]
           ativo?: boolean
+          cnpj?: string | null
+          contato_email?: string | null
+          contato_nome?: string | null
+          contato_telefone?: string | null
           created_at?: string
+          email_financeiro?: string | null
           id?: string
+          modelo_repasse?: string | null
           nome?: string
+          percentual_repasse?: number | null
+          pipefy_card_id?: number | null
+          razao_social?: string | null
           updated_at?: string
         }
         Relationships: []
       }
+      cliente_ramos: {
+        Row: {
+          cliente_id: string
+          created_at: string
+          ramo_id: string
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string
+          ramo_id: string
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string
+          ramo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cliente_ramos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cliente_ramos_ramo_id_fkey"
+            columns: ["ramo_id"]
+            isOneToOne: false
+            referencedRelation: "ramos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cliente_vinculos: {
+        Row: {
+          cliente_id: string
+          created_at: string
+          observacao: string | null
+          vinculado_id: string
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string
+          observacao?: string | null
+          vinculado_id: string
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string
+          observacao?: string | null
+          vinculado_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cliente_vinculos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cliente_vinculos_vinculado_id_fkey"
+            columns: ["vinculado_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clientes: {
         Row: {
+          atividade_principal: string | null
           ativo: boolean
           canal_id: string
           cidade: string | null
+          cliente_bradesco_6332: boolean | null
           contato_principal: string | null
-          cpf_cnpj: string
+          cpf_cnpj: string | null
           created_at: string
           email: string | null
           email_copia: string | null
+          endereco: string | null
           estado: string | null
           id: string
           nome_razao_social: string
           numero_cliente: string
+          observacoes: string | null
+          pipefy_card_id: number | null
           porte_empresa: string | null
           telefone: string | null
           tipo_pessoa: string
           updated_at: string
         }
         Insert: {
+          atividade_principal?: string | null
           ativo?: boolean
           canal_id: string
           cidade?: string | null
+          cliente_bradesco_6332?: boolean | null
           contato_principal?: string | null
-          cpf_cnpj: string
+          cpf_cnpj?: string | null
           created_at?: string
           email?: string | null
           email_copia?: string | null
+          endereco?: string | null
           estado?: string | null
           id?: string
           nome_razao_social: string
           numero_cliente?: string
+          observacoes?: string | null
+          pipefy_card_id?: number | null
           porte_empresa?: string | null
           telefone?: string | null
           tipo_pessoa?: string
           updated_at?: string
         }
         Update: {
+          atividade_principal?: string | null
           ativo?: boolean
           canal_id?: string
           cidade?: string | null
+          cliente_bradesco_6332?: boolean | null
           contato_principal?: string | null
-          cpf_cnpj?: string
+          cpf_cnpj?: string | null
           created_at?: string
           email?: string | null
           email_copia?: string | null
+          endereco?: string | null
           estado?: string | null
           id?: string
           nome_razao_social?: string
           numero_cliente?: string
+          observacoes?: string | null
+          pipefy_card_id?: number | null
           porte_empresa?: string | null
           telefone?: string | null
           tipo_pessoa?: string
@@ -2087,6 +2201,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ramos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       raw_lavoro_caixa_comissao: {
         Row: {
@@ -3053,6 +3191,7 @@ export type Database = {
       }
       notificar_admin_audit: { Args: never; Returns: undefined }
       pode_beneficios: { Args: never; Returns: boolean }
+      pode_cadastros: { Args: never; Returns: boolean }
       pode_gerenciar_configuracoes: {
         Args: { _user_id: string }
         Returns: boolean
@@ -3987,12 +4126,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -4016,11 +4155,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -4041,11 +4180,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -4066,11 +4205,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -4083,11 +4222,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

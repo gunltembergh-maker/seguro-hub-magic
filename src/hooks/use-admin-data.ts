@@ -59,7 +59,8 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
   {
     title: "Áreas",
     items: [
-      { key: "menu_area_financeiro", label: "Financeiro" },
+      { key: "menu_area_financeiro", label: "Financeiro", desc: "Controle mestre do grupo Financeiro" },
+      { key: "menu_financeiro_fluxo_diario", label: "↳ Fluxo Diário", desc: "Sub-item de Financeiro, previsão de recebimento e repasse", child: true },
       { key: "menu_area_juridico", label: "Jurídico" },
       { key: "menu_area_operacional", label: "Operacional" },
       { key: "menu_area_middle", label: "Middle" },
