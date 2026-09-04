@@ -170,12 +170,17 @@ export function RepasseParceiro() {
 
   // Idade do provisionado
   const { data: idade } = useQuery({
-    queryKey: ["lavoro-repasse-idade", mesAncora.ano, mesAncora.mes, canal],
+    queryKey: ["lavoro-repasse-idade", mesAncora.ano, mesAncora.mes, canal, sit.situacaoRepasse],
     enabled: !isHistorico,
     queryFn: async () => {
       const { data, error } = await supabase.rpc(
         "rpc_lavoro_repasse_idade" as never,
-        { p_ano: mesAncora.ano, p_mes: mesAncora.mes, p_canal_repasse: canal } as never,
+        {
+          p_ano: mesAncora.ano,
+          p_mes: mesAncora.mes,
+          p_canal_repasse: canal,
+          p_situacao_repasse: sit.situacaoRepasse,
+        } as never,
       );
       if (error) throw error;
       return (data || []) as Array<{
