@@ -643,10 +643,10 @@ function ResumoCard({ titulo, valor, destaque }: { titulo: string; valor: string
 type Linha = {
   canal: string;
   situacao: "A_PAGAR" | "RETIDO_MINIMO" | "PAGO";
-  avencer: number;
-  apurado: number;
-  mesAtual: number;
-  mesSeguinte: number;
+  m1avencer: number;
+  m1apurado: number;
+  m2avencer: number;
+  m2apurado: number;
   pago: number;
 };
 
