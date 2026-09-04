@@ -667,18 +667,18 @@ function LinhaCanal({
     <TableRow>
       <TableCell className="font-medium" style={{ color: navy }}>{l.canal}</TableCell>
       <TableCell className="border-l text-right font-mono tabular-nums" style={{ borderColor: border }}>
-        {valorCell(l.mesAtual)}
+        {valorCell(l.m1avencer)}
       </TableCell>
-      <TableCell className="text-right font-mono tabular-nums">{valorCell(l.apurado)}</TableCell>
+      <TableCell className="text-right font-mono tabular-nums">{valorCell(l.m1apurado)}</TableCell>
       <TableCell className="text-right font-mono font-semibold tabular-nums" style={{ color: navy }}>
-        {valorCell(l.mesAtual + l.apurado)}
+        {valorCell(l.m1avencer + l.m1apurado)}
       </TableCell>
       <TableCell className="border-l text-right font-mono tabular-nums" style={{ borderColor: border }}>
-        {valorCell(l.mesSeguinte)}
+        {valorCell(l.m2avencer)}
       </TableCell>
-      <TableCell className="text-right font-mono tabular-nums">{valorCell(0)}</TableCell>
+      <TableCell className="text-right font-mono tabular-nums">{valorCell(l.m2apurado)}</TableCell>
       <TableCell className="text-right font-mono font-semibold tabular-nums" style={{ color: navy }}>
-        {valorCell(l.mesSeguinte)}
+        {valorCell(l.m2avencer + l.m2apurado)}
       </TableCell>
       <TableCell className="border-l text-right" style={{ borderColor: border }}>{pill(l.situacao)}</TableCell>
     </TableRow>
