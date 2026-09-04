@@ -3185,6 +3185,7 @@ export type Database = {
         Returns: boolean
       }
       lavoro_times_usuario: { Args: { _user_id: string }; Returns: string[] }
+      normalize_canal_repasse: { Args: { p_canal: string }; Returns: string }
       normalize_categoria_financeira: {
         Args: { categoria: string }
         Returns: string
@@ -3910,6 +3911,31 @@ export type Database = {
         Returns: {
           variacao_ano_anterior: number
           variacao_mes_anterior: number
+        }[]
+      }
+      rpc_lavoro_repasse_filtros: {
+        Args: never
+        Returns: {
+          tipo: string
+          valor: string
+        }[]
+      }
+      rpc_lavoro_repasse_por_canal: {
+        Args: {
+          p_ano?: number
+          p_canal_repasse?: string
+          p_mes?: number
+          p_modo?: string
+          p_situacao_repasse?: string
+        }
+        Returns: {
+          canal_repasse: string
+          ciclo_ano: number
+          ciclo_mes: number
+          situacao: string
+          situacao_repasse: string
+          total_canal_no_ciclo: number
+          valor: number
         }[]
       }
       rpc_lavoro_set_meta_anual: {
