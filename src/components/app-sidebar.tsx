@@ -22,6 +22,7 @@ import {
   Mail,
   ChevronRight,
   Activity,
+  CalendarClock,
   type LucideIcon,
 } from "lucide-react";
 
@@ -51,7 +52,20 @@ const primary = [
 ];
 
 const areasAll: AreaItem[] = [
-  { title: "Financeiro", url: "/financeiro", icon: Landmark, perm: "menu_area_financeiro" },
+  {
+    title: "Financeiro",
+    icon: Landmark,
+    tooltip: "Financeiro",
+    perm: "menu_area_financeiro",
+    children: [
+      {
+        title: "Fluxo Diário",
+        url: "/financeiro/fluxo-diario",
+        icon: CalendarClock,
+        perms: ["menu_financeiro_fluxo_diario"],
+      },
+    ],
+  },
   {
     title: "Jurídico",
     url: "/juridico",
@@ -80,8 +94,9 @@ type CollapsibleItem = {
 
 type AreaItem = {
   title: string;
-  url: string;
+  url?: string;
   icon: LucideIcon;
+  tooltip?: string;
   perm: string;
   children?: ChildItem[];
 };
