@@ -24,7 +24,7 @@ const WHITE = "FFFFFFFF";
 
 const NUM_FMT: Record<FormatoCol, string | undefined> = {
   moeda: "R$ #,##0.00",
-  percentual: "0%",
+  percentual: "0.00%",
   data: "dd/mm/yyyy",
   inteiro: "0",
   texto: undefined,

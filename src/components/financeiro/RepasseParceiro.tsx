@@ -199,6 +199,7 @@ export function RepasseParceiro() {
       const PAGINA = 500;
       let offset = 0;
       const todas: any[] = [];
+      let truncado = false;
       for (let i = 0; i < 40; i++) {
         const { data, error } = await supabase.rpc("rpc_lavoro_repasse_detalhe" as never, {
           p_ano: mesAncora.ano,
@@ -213,7 +214,17 @@ export function RepasseParceiro() {
         const lote = (data || []) as any[];
         todas.push(...lote);
         if (lote.length < PAGINA) break;
+        if (i === 39) truncado = true;
         offset += PAGINA;
+      }
+
+      if (todas.length === 0) {
+        toast.error("Nada a exportar para este parceiro neste ciclo", { id: toastId });
+        return;
+      }
+
+      if (truncado) {
+        toast.warning("Resultado truncado em 20.000 linhas. Ajuste os filtros para exportar tudo.", { id: toastId, duration: 6000 });
       }
 
       const totalRepasse = todas.reduce((acc, r) => acc + (Number(r.valor_repasse_total) || 0), 0);
@@ -240,13 +251,14 @@ export function RepasseParceiro() {
         for (const cols of abasCols) {
           for (const c of cols) if (COLS_PROIBIDAS_PARCEIRO.has(c.key)) throw new Error(`Coluna proibida no modo parceiro: ${c.key}`);
         }
-        const permitidas = new Set(abasCols.flatMap((cols) => cols.map((c) => c.key)));
-        const linhas = todas.map((r) => {
+        function projetar(linha: any, cols: ColunaExport[]) {
           const out: Record<string, unknown> = {};
-          for (const k of permitidas) out[k] = r[k];
-          out.parcela = `${r.numero_da_parcela ?? ""} / ${r.qtd_parcelas ?? ""}`;
+          for (const c of cols) out[c.key] = linha[c.key];
+          out.parcela = `${linha.numero_da_parcela ?? ""} / ${linha.qtd_parcelas ?? ""}`;
           return out;
-        });
+        }
+        const linhasResumo = todas.map((r) => projetar(r, COLS_PARCEIRO_RESUMO));
+        const linhasDetalhe = todas.map((r) => projetar(r, COLS_PARCEIRO_DETALHE));
         arquivo = `Repasse_${slugCanal(canalClicado)}_${anoMes}_parceiro.xlsx`;
         await exportarXlsx({
           arquivo,
@@ -255,11 +267,11 @@ export function RepasseParceiro() {
             {
               nome: "Resumo",
               colunas: COLS_PARCEIRO_RESUMO,
-              linhas,
+              linhas: linhasResumo,
               totalizar: ["base_liquida", "valor_repasse_total"],
               nota: "Valor do Repasse = Comissão Recebida × (1 − % Imposto) × % Repasse. A aba Detalhe traz a conta aberta linha a linha.",
             },
-            { nome: "Detalhe", colunas: COLS_PARCEIRO_DETALHE, linhas, totalizar: ["valor_repasse_total"] },
+            { nome: "Detalhe", colunas: COLS_PARCEIRO_DETALHE, linhas: linhasDetalhe, totalizar: ["valor_repasse_total"] },
           ],
         });
       }
@@ -748,8 +760,8 @@ export function RepasseParceiro() {
                         <TableRow key={l.canal}>
                           <TableCell className="font-medium" style={{ color: NAVY }}>
                             <div className="flex items-center gap-2">
-                              {l.canal}
-                              <ExportBtn canal={l.canal} exportando={exportando === l.canal} onExport={exportar} />
+                            {l.canal}
+                            <ExportBtn canal={l.canal} exportando={exportando === l.canal} bloqueado={exportando !== null} onExport={exportar} />
                             </div>
                           </TableCell>
                           <TableCell className="border-l text-right font-mono tabular-nums" style={{ borderColor: BORDER }}>
@@ -776,7 +788,7 @@ export function RepasseParceiro() {
                       {grupoAPagar.length > 0 && (
                         <>
                           {grupoAPagar.map((l) => (
-                            <LinhaCanal key={l.canal} l={l} info={porCanal.get(l.canal)} pill={pill} valorCell={valorCell} border={BORDER} navy={NAVY} exportando={exportando === l.canal} onExport={exportar} />
+                            <LinhaCanal key={l.canal} l={l} info={porCanal.get(l.canal)} pill={pill} valorCell={valorCell} border={BORDER} navy={NAVY} exportando={exportando === l.canal} bloqueado={exportando !== null} onExport={exportar} />
                           ))}
                           <SubtotalRow
                             label={`A pagar em 10/${String(mesAncora.mes).padStart(2, "0")}`}
@@ -798,7 +810,7 @@ export function RepasseParceiro() {
                             </TableCell>
                           </TableRow>
                           {grupoRetido.map((l) => (
-                            <LinhaCanal key={l.canal} l={l} info={porCanal.get(l.canal)} pill={pill} valorCell={valorCell} border={BORDER} navy={NAVY} exportando={exportando === l.canal} onExport={exportar} />
+                            <LinhaCanal key={l.canal} l={l} info={porCanal.get(l.canal)} pill={pill} valorCell={valorCell} border={BORDER} navy={NAVY} exportando={exportando === l.canal} bloqueado={exportando !== null} onExport={exportar} />
                           ))}
                           <SubtotalRow
                             label="Retido pelo mínimo"
@@ -948,10 +960,12 @@ function mesAnoISO(iso: string) {
 function ExportBtn({
   canal,
   exportando,
+  bloqueado,
   onExport,
 }: {
   canal: string;
   exportando: boolean;
+  bloqueado: boolean;
   onExport: (canal: string, modo: ModoExport) => void;
 }) {
   return (
@@ -959,7 +973,7 @@ function ExportBtn({
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          disabled={exportando}
+          disabled={bloqueado}
           aria-label={`Exportar repasse de ${canal}`}
           title="Exportar planilha"
           className="inline-flex h-6 w-6 items-center justify-center rounded text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
@@ -983,6 +997,7 @@ function LinhaCanal({
   border,
   navy,
   exportando,
+  bloqueado,
   onExport,
 }: {
   l: Linha;
@@ -992,6 +1007,7 @@ function LinhaCanal({
   border: string;
   navy: string;
   exportando: boolean;
+  bloqueado: boolean;
   onExport: (canal: string, modo: ModoExport) => void;
 }) {
   return (
@@ -999,7 +1015,7 @@ function LinhaCanal({
       <TableCell className="font-medium" style={{ color: navy }}>
         <div className="flex items-center gap-2">
           {l.canal}
-          <ExportBtn canal={l.canal} exportando={exportando} onExport={onExport} />
+          <ExportBtn canal={l.canal} exportando={exportando} bloqueado={bloqueado} onExport={onExport} />
           {info && info.maiorOrdem >= 3 && info.maisAntigo && (
             <span
               className="inline-block h-2 w-2 rounded-full"
