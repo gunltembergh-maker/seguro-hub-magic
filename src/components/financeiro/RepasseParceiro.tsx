@@ -188,6 +188,89 @@ export function RepasseParceiro() {
   const sit = SITUACOES.find((s) => s.key === situacaoKey)!;
   const isHistorico = sit.modo === "HISTORICO";
 
+  // Exportação do detalhe por parceiro (ExcelJS carregado sob demanda)
+  const [exportando, setExportando] = useState<string | null>(null);
+
+  const exportar = async (canalClicado: string, modo: ModoExport) => {
+    if (exportando) return;
+    setExportando(canalClicado);
+    const toastId = toast.loading("Gerando planilha…");
+    try {
+      const PAGINA = 500;
+      let offset = 0;
+      const todas: any[] = [];
+      for (let i = 0; i < 40; i++) {
+        const { data, error } = await supabase.rpc("rpc_lavoro_repasse_detalhe" as never, {
+          p_ano: mesAncora.ano,
+          p_mes: mesAncora.mes,
+          p_modo: sit.modo,
+          p_canal_repasse: canalClicado,
+          p_situacao_repasse: sit.situacaoRepasse,
+          p_limit: PAGINA,
+          p_offset: offset,
+        } as never);
+        if (error) throw error;
+        const lote = (data || []) as any[];
+        todas.push(...lote);
+        if (lote.length < PAGINA) break;
+        offset += PAGINA;
+      }
+
+      const totalRepasse = todas.reduce((acc, r) => acc + (Number(r.valor_repasse_total) || 0), 0);
+      const anoMes = `${mesAncora.ano}-${String(mesAncora.mes).padStart(2, "0")}`;
+      const info = [
+        { rotulo: "Parceiro", valor: canalClicado },
+        { rotulo: "Ciclo", valor: `${MESES_LONGOS[mesAncora.mes - 1]} / ${mesAncora.ano}` },
+        { rotulo: "Data prevista de pagamento", valor: `10/${String(mesAncora.mes).padStart(2, "0")}/${mesAncora.ano}` },
+        { rotulo: "Total a repassar", valor: BRL(totalRepasse) },
+        { rotulo: "Parcelas", valor: String(todas.length) },
+      ];
+
+      let arquivo: string;
+      if (modo === "INTERNO") {
+        arquivo = `Repasse_${slugCanal(canalClicado)}_${anoMes}.xlsx`;
+        await exportarXlsx({
+          arquivo,
+          cabecalho: { titulo: "Repasse de Parceiro · conferência interna", subtitulo: `${canalClicado} · ${anoMes}`, info },
+          abas: [{ nome: "Detalhe", colunas: COLS_INTERNO, linhas: todas, totalizar: ["valor_repasse_total"] }],
+        });
+      } else {
+        // Garantia: nenhuma coluna proibida sai no arquivo do parceiro.
+        const abasCols = [COLS_PARCEIRO_RESUMO, COLS_PARCEIRO_DETALHE];
+        for (const cols of abasCols) {
+          for (const c of cols) if (COLS_PROIBIDAS_PARCEIRO.has(c.key)) throw new Error(`Coluna proibida no modo parceiro: ${c.key}`);
+        }
+        const permitidas = new Set(abasCols.flatMap((cols) => cols.map((c) => c.key)));
+        const linhas = todas.map((r) => {
+          const out: Record<string, unknown> = {};
+          for (const k of permitidas) out[k] = r[k];
+          out.parcela = `${r.numero_da_parcela ?? ""} / ${r.qtd_parcelas ?? ""}`;
+          return out;
+        });
+        arquivo = `Repasse_${slugCanal(canalClicado)}_${anoMes}_parceiro.xlsx`;
+        await exportarXlsx({
+          arquivo,
+          cabecalho: { titulo: "Repasse de Parceiro", subtitulo: "RELAÇÃO PARA CONFERÊNCIA E EMISSÃO DE NOTA", info },
+          abas: [
+            {
+              nome: "Resumo",
+              colunas: COLS_PARCEIRO_RESUMO,
+              linhas,
+              totalizar: ["base_liquida", "valor_repasse_total"],
+              nota: "Valor do Repasse = Comissão Recebida × (1 − % Imposto) × % Repasse. A aba Detalhe traz a conta aberta linha a linha.",
+            },
+            { nome: "Detalhe", colunas: COLS_PARCEIRO_DETALHE, linhas, totalizar: ["valor_repasse_total"] },
+          ],
+        });
+      }
+      toast.success(arquivo, { id: toastId });
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao gerar a planilha", { id: toastId });
+    } finally {
+      setExportando(null);
+    }
+  };
+
   const mesSeguinte = useMemo(() => {
     const d = new Date(mesAncora.ano, mesAncora.mes, 1);
     return { ano: d.getFullYear(), mes: d.getMonth() + 1 };
