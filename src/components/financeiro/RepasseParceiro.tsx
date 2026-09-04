@@ -1,9 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Download, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { exportarXlsx, type ColunaExport } from "@/lib/export-xlsx";
 import {
   NAVY,
   NAVY_DEEP,
@@ -14,6 +23,98 @@ import {
 } from "@/lib/email-templates/_lavoro-shared";
 
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+const MESES_LONGOS = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+];
+
+type ModoExport = "INTERNO" | "PARCEIRO";
+
+const COLS_INTERNO: ColunaExport[] = [
+  { header: "Grupo", key: "grupo", formato: "texto" },
+  { header: "Tomador", key: "tomador", formato: "texto", width: 34 },
+  { header: "Segurado", key: "segurado", formato: "texto", width: 34 },
+  { header: "Documento", key: "documento", formato: "texto", width: 20 },
+  { header: "Ramo", key: "ramo", formato: "texto" },
+  { header: "Seguradora", key: "seguradora", formato: "texto", width: 24 },
+  { header: "Nº Apólice", key: "numero_apolice", formato: "texto", width: 26 },
+  { header: "Data Emissão", key: "data_emissao", formato: "data" },
+  { header: "Início Vigência", key: "inicio_vigencia", formato: "data" },
+  { header: "Fim Vigência", key: "fim_vigencia", formato: "data" },
+  { header: "Período Atualização", key: "periodo_atualizacao", formato: "texto" },
+  { header: "Valor IS", key: "valor_is", formato: "moeda" },
+  { header: "Prêmio Total", key: "premio_total", formato: "moeda" },
+  { header: "% Comissão", key: "percentual_comissao", formato: "percentual" },
+  { header: "Comissão Emitida", key: "comissao_emitida", formato: "moeda" },
+  { header: "Qtd Parcelas", key: "qtd_parcelas", formato: "inteiro" },
+  { header: "Prêmio Parcela", key: "premio_parcela", formato: "moeda" },
+  { header: "Comissão Bruta", key: "comissao_bruta", formato: "moeda" },
+  { header: "Imposto Ret", key: "imposto_ret", formato: "moeda" },
+  { header: "Valor ISS", key: "valor_iss", formato: "moeda" },
+  { header: "Valor Recebido / A Receber", key: "valor_recebido_a_receber", formato: "moeda", width: 20 },
+  { header: "Nº da Parcela", key: "numero_da_parcela", formato: "inteiro" },
+  { header: "Tipo Pagamento", key: "tipo_pagamento", formato: "texto" },
+  { header: "Empresa Faturada", key: "empresa_faturada", formato: "texto", width: 22 },
+  { header: "Data Pagamento", key: "data_pagamento", formato: "data" },
+  { header: "Mês", key: "mes", formato: "inteiro" },
+  { header: "Ano", key: "ano", formato: "inteiro" },
+  { header: "Fat Competência", key: "fat_competencia", formato: "texto" },
+  { header: "Status da Parcela de Comissão", key: "status_parcela_comissao", formato: "texto", width: 24 },
+  { header: "Análise", key: "analise", formato: "texto", width: 24 },
+  { header: "Possui Repasse", key: "possui_repasse", formato: "texto" },
+  { header: "% Repasse", key: "percentual_repasse", formato: "percentual" },
+  { header: "Parcelas", key: "parcelas", formato: "texto" },
+  { header: "% Imposto", key: "percentual_imposto", formato: "percentual" },
+  { header: "Valor Repasse Total", key: "valor_repasse_total", formato: "moeda", width: 18 },
+  { header: "Data do Repasse", key: "data_repasse", formato: "data" },
+  { header: "Status do Repasse", key: "status_repasse", formato: "texto" },
+  { header: "Observação", key: "observacao", formato: "texto", width: 40 },
+];
+
+const COLS_PARCEIRO_RESUMO: ColunaExport[] = [
+  { header: "Nº Apólice", key: "numero_apolice", formato: "texto", width: 26 },
+  { header: "Tomador", key: "tomador", formato: "texto", width: 34 },
+  { header: "Parcela", key: "parcela", formato: "texto", width: 10 },
+  { header: "Data Pgto Comissão", key: "data_pagamento", formato: "data" },
+  { header: "Base Líquida", key: "base_liquida", formato: "moeda" },
+  { header: "% Repasse", key: "percentual_repasse", formato: "percentual" },
+  { header: "Valor do Repasse", key: "valor_repasse_total", formato: "moeda", width: 18 },
+];
+
+const COLS_PARCEIRO_DETALHE: ColunaExport[] = [
+  { header: "Nº Apólice", key: "numero_apolice", formato: "texto", width: 26 },
+  { header: "Tomador", key: "tomador", formato: "texto", width: 34 },
+  { header: "Segurado", key: "segurado", formato: "texto", width: 34 },
+  { header: "Ramo", key: "ramo", formato: "texto" },
+  { header: "Seguradora", key: "seguradora", formato: "texto", width: 24 },
+  { header: "Data Emissão", key: "data_emissao", formato: "data" },
+  { header: "Início Vigência", key: "inicio_vigencia", formato: "data" },
+  { header: "Fim Vigência", key: "fim_vigencia", formato: "data" },
+  { header: "Nº da Parcela", key: "numero_da_parcela", formato: "inteiro" },
+  { header: "Qtd Parcelas", key: "qtd_parcelas", formato: "inteiro" },
+  { header: "Data Pagamento", key: "data_pagamento", formato: "data" },
+  { header: "Status da Parcela", key: "status_parcela_comissao", formato: "texto", width: 24 },
+  { header: "Comissão Recebida", key: "valor_recebido_a_receber", formato: "moeda", width: 18 },
+  { header: "% Imposto", key: "percentual_imposto", formato: "percentual" },
+  { header: "Base Líquida", key: "base_liquida", formato: "moeda" },
+  { header: "% Repasse", key: "percentual_repasse", formato: "percentual" },
+  { header: "Valor do Repasse", key: "valor_repasse_total", formato: "moeda", width: 18 },
+  { header: "Status do Repasse", key: "status_repasse", formato: "texto" },
+];
+
+// Colunas que NUNCA podem sair no arquivo do parceiro.
+const COLS_PROIBIDAS_PARCEIRO = new Set([
+  "documento", "observacao", "analise", "premio_total", "premio_parcela", "valor_is",
+  "percentual_comissao", "comissao_emitida", "comissao_bruta", "imposto_ret", "valor_iss",
+]);
+
+function slugCanal(canal: string) {
+  return canal
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^A-Za-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
 
 const BRL = (v: number | null | undefined) =>
   Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -86,6 +187,89 @@ export function RepasseParceiro() {
 
   const sit = SITUACOES.find((s) => s.key === situacaoKey)!;
   const isHistorico = sit.modo === "HISTORICO";
+
+  // Exportação do detalhe por parceiro (ExcelJS carregado sob demanda)
+  const [exportando, setExportando] = useState<string | null>(null);
+
+  const exportar = async (canalClicado: string, modo: ModoExport) => {
+    if (exportando) return;
+    setExportando(canalClicado);
+    const toastId = toast.loading("Gerando planilha…");
+    try {
+      const PAGINA = 500;
+      let offset = 0;
+      const todas: any[] = [];
+      for (let i = 0; i < 40; i++) {
+        const { data, error } = await supabase.rpc("rpc_lavoro_repasse_detalhe" as never, {
+          p_ano: mesAncora.ano,
+          p_mes: mesAncora.mes,
+          p_modo: sit.modo,
+          p_canal_repasse: canalClicado,
+          p_situacao_repasse: sit.situacaoRepasse,
+          p_limit: PAGINA,
+          p_offset: offset,
+        } as never);
+        if (error) throw error;
+        const lote = (data || []) as any[];
+        todas.push(...lote);
+        if (lote.length < PAGINA) break;
+        offset += PAGINA;
+      }
+
+      const totalRepasse = todas.reduce((acc, r) => acc + (Number(r.valor_repasse_total) || 0), 0);
+      const anoMes = `${mesAncora.ano}-${String(mesAncora.mes).padStart(2, "0")}`;
+      const info = [
+        { rotulo: "Parceiro", valor: canalClicado },
+        { rotulo: "Ciclo", valor: `${MESES_LONGOS[mesAncora.mes - 1]} / ${mesAncora.ano}` },
+        { rotulo: "Data prevista de pagamento", valor: `10/${String(mesAncora.mes).padStart(2, "0")}/${mesAncora.ano}` },
+        { rotulo: "Total a repassar", valor: BRL(totalRepasse) },
+        { rotulo: "Parcelas", valor: String(todas.length) },
+      ];
+
+      let arquivo: string;
+      if (modo === "INTERNO") {
+        arquivo = `Repasse_${slugCanal(canalClicado)}_${anoMes}.xlsx`;
+        await exportarXlsx({
+          arquivo,
+          cabecalho: { titulo: "Repasse de Parceiro · conferência interna", subtitulo: `${canalClicado} · ${anoMes}`, info },
+          abas: [{ nome: "Detalhe", colunas: COLS_INTERNO, linhas: todas, totalizar: ["valor_repasse_total"] }],
+        });
+      } else {
+        // Garantia: nenhuma coluna proibida sai no arquivo do parceiro.
+        const abasCols = [COLS_PARCEIRO_RESUMO, COLS_PARCEIRO_DETALHE];
+        for (const cols of abasCols) {
+          for (const c of cols) if (COLS_PROIBIDAS_PARCEIRO.has(c.key)) throw new Error(`Coluna proibida no modo parceiro: ${c.key}`);
+        }
+        const permitidas = new Set(abasCols.flatMap((cols) => cols.map((c) => c.key)));
+        const linhas = todas.map((r) => {
+          const out: Record<string, unknown> = {};
+          for (const k of permitidas) out[k] = r[k];
+          out.parcela = `${r.numero_da_parcela ?? ""} / ${r.qtd_parcelas ?? ""}`;
+          return out;
+        });
+        arquivo = `Repasse_${slugCanal(canalClicado)}_${anoMes}_parceiro.xlsx`;
+        await exportarXlsx({
+          arquivo,
+          cabecalho: { titulo: "Repasse de Parceiro", subtitulo: "RELAÇÃO PARA CONFERÊNCIA E EMISSÃO DE NOTA", info },
+          abas: [
+            {
+              nome: "Resumo",
+              colunas: COLS_PARCEIRO_RESUMO,
+              linhas,
+              totalizar: ["base_liquida", "valor_repasse_total"],
+              nota: "Valor do Repasse = Comissão Recebida × (1 − % Imposto) × % Repasse. A aba Detalhe traz a conta aberta linha a linha.",
+            },
+            { nome: "Detalhe", colunas: COLS_PARCEIRO_DETALHE, linhas, totalizar: ["valor_repasse_total"] },
+          ],
+        });
+      }
+      toast.success(arquivo, { id: toastId });
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao gerar a planilha", { id: toastId });
+    } finally {
+      setExportando(null);
+    }
+  };
 
   const mesSeguinte = useMemo(() => {
     const d = new Date(mesAncora.ano, mesAncora.mes, 1);
@@ -562,7 +746,12 @@ export function RepasseParceiro() {
                     <>
                       {linhas.map((l) => (
                         <TableRow key={l.canal}>
-                          <TableCell className="font-medium" style={{ color: NAVY }}>{l.canal}</TableCell>
+                          <TableCell className="font-medium" style={{ color: NAVY }}>
+                            <div className="flex items-center gap-2">
+                              {l.canal}
+                              <ExportBtn canal={l.canal} exportando={exportando === l.canal} onExport={exportar} />
+                            </div>
+                          </TableCell>
                           <TableCell className="border-l text-right font-mono tabular-nums" style={{ borderColor: BORDER }}>
                             {valorCell(l.pago)}
                           </TableCell>
@@ -587,7 +776,7 @@ export function RepasseParceiro() {
                       {grupoAPagar.length > 0 && (
                         <>
                           {grupoAPagar.map((l) => (
-                            <LinhaCanal key={l.canal} l={l} info={porCanal.get(l.canal)} pill={pill} valorCell={valorCell} border={BORDER} navy={NAVY} />
+                            <LinhaCanal key={l.canal} l={l} info={porCanal.get(l.canal)} pill={pill} valorCell={valorCell} border={BORDER} navy={NAVY} exportando={exportando === l.canal} onExport={exportar} />
                           ))}
                           <SubtotalRow
                             label={`A pagar em 10/${String(mesAncora.mes).padStart(2, "0")}`}
@@ -609,7 +798,7 @@ export function RepasseParceiro() {
                             </TableCell>
                           </TableRow>
                           {grupoRetido.map((l) => (
-                            <LinhaCanal key={l.canal} l={l} info={porCanal.get(l.canal)} pill={pill} valorCell={valorCell} border={BORDER} navy={NAVY} />
+                            <LinhaCanal key={l.canal} l={l} info={porCanal.get(l.canal)} pill={pill} valorCell={valorCell} border={BORDER} navy={NAVY} exportando={exportando === l.canal} onExport={exportar} />
                           ))}
                           <SubtotalRow
                             label="Retido pelo mínimo"
@@ -756,6 +945,36 @@ function mesAnoISO(iso: string) {
   return `${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
 }
 
+function ExportBtn({
+  canal,
+  exportando,
+  onExport,
+}: {
+  canal: string;
+  exportando: boolean;
+  onExport: (canal: string, modo: ModoExport) => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          disabled={exportando}
+          aria-label={`Exportar repasse de ${canal}`}
+          title="Exportar planilha"
+          className="inline-flex h-6 w-6 items-center justify-center rounded text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {exportando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start">
+        <DropdownMenuItem onClick={() => onExport(canal, "INTERNO")}>Exportar completo (interno)</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onExport(canal, "PARCEIRO")}>Exportar para o parceiro</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 function LinhaCanal({
   l,
   info,
@@ -763,6 +982,8 @@ function LinhaCanal({
   valorCell,
   border,
   navy,
+  exportando,
+  onExport,
 }: {
   l: Linha;
   info?: { parcelas: number; maiorOrdem: number; maisAntigo: string | null };
@@ -770,12 +991,15 @@ function LinhaCanal({
   valorCell: (v: number) => React.ReactNode;
   border: string;
   navy: string;
+  exportando: boolean;
+  onExport: (canal: string, modo: ModoExport) => void;
 }) {
   return (
     <TableRow>
       <TableCell className="font-medium" style={{ color: navy }}>
         <div className="flex items-center gap-2">
           {l.canal}
+          <ExportBtn canal={l.canal} exportando={exportando} onExport={onExport} />
           {info && info.maiorOrdem >= 3 && info.maisAntigo && (
             <span
               className="inline-block h-2 w-2 rounded-full"
