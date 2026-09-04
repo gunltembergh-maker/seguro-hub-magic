@@ -3920,21 +3920,52 @@ export type Database = {
           valor: string
         }[]
       }
-      rpc_lavoro_repasse_por_canal: {
-        Args: {
-          p_ano?: number
-          p_canal_repasse?: string
-          p_mes?: number
-          p_modo?: string
-          p_situacao_repasse?: string
-        }
+      rpc_lavoro_repasse_por_canal:
+        | {
+            Args: { p_ano?: number; p_mes?: number; p_modo?: string }
+            Returns: {
+              canal_repasse: string
+              ciclo_ano: number
+              ciclo_mes: number
+              linhas: number
+              situacao: string
+              valor: number
+            }[]
+          }
+        | {
+            Args: {
+              p_ano?: number
+              p_canal_repasse?: string
+              p_mes?: number
+              p_modo?: string
+              p_situacao_repasse?: string
+            }
+            Returns: {
+              canal_repasse: string
+              ciclo_ano: number
+              ciclo_mes: number
+              situacao: string
+              situacao_repasse: string
+              total_canal_no_ciclo: number
+              valor: number
+            }[]
+          }
+      rpc_lavoro_repasse_previsao_longa: {
+        Args: { p_ano?: number; p_canal_repasse?: string; p_mes?: number }
         Returns: {
           canal_repasse: string
-          ciclo_ano: number
-          ciclo_mes: number
-          situacao: string
+          linhas: number
+          previsto_ano: number
+          previsto_mes: number
+          valor: number
+        }[]
+      }
+      rpc_lavoro_repasse_rodape: {
+        Args: never
+        Returns: {
+          grupo: string
+          linhas: number
           situacao_repasse: string
-          total_canal_no_ciclo: number
           valor: number
         }[]
       }
