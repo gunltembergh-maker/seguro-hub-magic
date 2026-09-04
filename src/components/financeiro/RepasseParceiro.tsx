@@ -663,7 +663,12 @@ export function RepasseParceiro() {
                     <>
                       {linhas.map((l) => (
                         <TableRow key={l.canal}>
-                          <TableCell className="font-medium" style={{ color: NAVY }}>{l.canal}</TableCell>
+                          <TableCell className="font-medium" style={{ color: NAVY }}>
+                            <div className="flex items-center gap-2">
+                              {l.canal}
+                              <ExportBtn canal={l.canal} exportando={exportando === l.canal} onExport={exportar} />
+                            </div>
+                          </TableCell>
                           <TableCell className="border-l text-right font-mono tabular-nums" style={{ borderColor: BORDER }}>
                             {valorCell(l.pago)}
                           </TableCell>
