@@ -42,6 +42,7 @@ export const HUB_PAGINAS: GrupoPaginas[] = [
       { rota: "/operacional", nome: "Operacional" },
       { rota: "/middle", nome: "Middle" },
       { rota: "/facilities", nome: "Facilities" },
+      { rota: "/rh/controle-posicoes", nome: "RH · Controle de Posições" },
     ],
   },
   {

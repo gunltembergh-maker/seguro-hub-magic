@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/select";
 import { exportarXlsx, type ColunaExport } from "@/lib/export-xlsx";
 import { dataBR, hhmm, isoDeData } from "@/lib/rp/rp-tipos";
+import { processarAusencias } from "@/lib/rp/rp-ausencias.functions";
 
 export const Route = createFileRoute("/_authenticated/rh/controle-posicoes")({
   head: () => ({
@@ -129,6 +130,11 @@ function ControlePosicoesPage() {
   const [posicao, setPosicao] = useState<string>("todas");
   const [status, setStatus] = useState<string>("todos");
   const [exportando, setExportando] = useState(false);
+
+  // Processa e notifica ausências pendentes ao abrir a tela (idempotente no servidor).
+  useEffect(() => {
+    processarAusencias().catch(() => undefined);
+  }, []);
 
   const { data: usuarios } = useQuery({
     queryKey: ["rh-usuarios-hub"],

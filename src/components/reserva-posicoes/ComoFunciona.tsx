@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import type { RpParametros } from "@/lib/rp/rp-tipos";
 
 export function ComoFunciona({
@@ -27,8 +26,7 @@ export function ComoFunciona({
     },
     {
       titulo: "Check-in ao chegar",
-      texto: `No dia, abra o Hub e clique em Fazer check-in na sua reserva, disponível a partir de ${antes} minutos antes do início.`,
-      emBreve: true,
+      texto: `No dia, conecte-se ao Wi-Fi do escritório, abra o Hub e clique em Fazer check-in na sua reserva, disponível a partir de ${antes} minutos antes do início.`,
     },
     {
       titulo: "Atenção ao prazo",
@@ -56,11 +54,6 @@ export function ComoFunciona({
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm font-semibold text-foreground">{p.titulo}</span>
-                {p.emBreve && (
-                  <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-normal">
-                    Em breve
-                  </Badge>
-                )}
               </div>
               <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{p.texto}</p>
             </div>

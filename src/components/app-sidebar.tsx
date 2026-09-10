@@ -84,6 +84,20 @@ const areasAll: AreaItem[] = [
   { title: "Operacional", url: "/operacional", icon: Cog, perm: "menu_area_operacional" },
   { title: "Middle", url: "/middle", icon: Layers, perm: "menu_area_middle" },
   { title: "Facilities", url: "/facilities", icon: Wrench, perm: "menu_area_facilities" },
+  {
+    title: "RH",
+    icon: UserSquare2,
+    tooltip: "RH",
+    perm: "menu_rh_controle_posicoes",
+    children: [
+      {
+        title: "Controle de Posições",
+        url: "/rh/controle-posicoes",
+        icon: ClipboardList,
+        perms: ["menu_rh_controle_posicoes"],
+      },
+    ],
+  },
 ];
 
 type ChildItem = { title: string; url: string; icon: LucideIcon; perms?: string[] };
@@ -299,20 +313,6 @@ export function AppSidebar() {
   };
   const hasActiveEmailChild = emailChildren.some((c) => isActive(c.url));
 
-  // Grupo "RH" — itens desabilitados por padrão nos perfis
-  const rhChildren = [
-    { title: "Controle de Posições", url: "/rh/controle-posicoes", icon: ClipboardList,
-      show: isAdmin || hasPermission(meuPerfil, "menu_rh_controle_posicoes") },
-  ].filter((i) => i.show).map(({ title, url, icon }) => ({ title, url, icon }));
-
-  const rhCollapsible: CollapsibleItem = {
-    title: "RH",
-    icon: UserSquare2,
-    tooltip: "RH",
-    children: rhChildren,
-  };
-  const hasActiveRhChild = rhChildren.some((c) => isActive(c.url));
-
   // Item "Dashboards" agrupador com filhos recolhíveis
   const dashboardsCollapsible: CollapsibleItem = {
     title: "Dashboards",
@@ -449,24 +449,6 @@ export function AppSidebar() {
                     />
                   );
                 })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
-        {rhChildren.length > 0 && (
-          <SidebarGroup>
-            <SidebarGroupLabel>RH</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <CollapsibleNavItem
-                  item={rhCollapsible}
-                  isActiveParent={false}
-                  hasActiveChild={hasActiveRhChild}
-                  isActiveChild={isActive}
-                  collapsed={collapsed}
-                  onChildNavigate={collapseOnNavigate}
-                />
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
