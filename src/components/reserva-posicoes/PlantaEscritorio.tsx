@@ -336,7 +336,7 @@ export function PlantaEscritorio({
                 key={p.id}
                 pos={p}
                 x={frenteX + col * (mesaW + gapX)}
-                y={linhaY[linha] ?? linhaY[1]!}
+                y={linhaY[linha] ?? 488}
                 w={mesaW}
                 h={82}
                 cadeira="baixo"
