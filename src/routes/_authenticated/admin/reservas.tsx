@@ -771,9 +771,12 @@ const EXEMPLO: Record<string, string> = {
   checkin_antes_min: "30",
 };
 const TIPO_LABEL: Record<string, string> = {
-  confirmacao: "Confirmação de reserva",
-  cancelamento: "Cancelamento de reserva",
-  ausencia: "Ausência / no-show (em breve)",
+  confirmacao: "Confirmação de reserva (colaborador)",
+  cancelamento: "Cancelamento de reserva (colaborador)",
+  ausencia: "Ausência / no-show (colaborador)",
+  rh_confirmacao: "RH · Confirmação de reserva",
+  rh_cancelamento: "RH · Cancelamento de reserva",
+  rh_ausencia: "RH · Ausência / no-show",
 };
 
 function aplicar(texto: string) {
