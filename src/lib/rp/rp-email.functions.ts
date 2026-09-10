@@ -46,7 +46,13 @@ export const enviarEmailReserva = createServerFn({ method: "POST" })
           ]),
       ]);
 
-      if (!tpl || tpl.ativo === false) return { ok: false, motivo: "template_inativo" };
+      const lista = tpls ?? [];
+      const tplColab = lista.find((t: any) => t.tipo === data.tipo);
+      const tplRh = lista.find((t: any) => t.tipo === `rh_${data.tipo}`);
+      if ((!tplColab || tplColab.ativo === false) && (!tplRh || tplRh.ativo === false)) {
+        return { ok: false, motivo: "template_inativo" };
+      }
+
 
       const cfg = new Map((settings ?? []).map((s: any) => [s.key, s.value]));
       const enviarUsuario = cfg.get("rp_enviar_email_usuario") !== false;
