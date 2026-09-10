@@ -389,7 +389,15 @@ export function PlantaEscritorio({
           ))}
 
           {/* bloco da frente */}
-          <text x={frenteX - 20} y={270} fontSize={12} letterSpacing={2} fill="#9AA5B1">
+          <text
+            x={100}
+            y={380}
+            textAnchor="middle"
+            fontSize={11}
+            letterSpacing={2}
+            fill="#9AA5B1"
+            transform="rotate(-90 100 380)"
+          >
             BLOCO FRENTE
           </text>
           {frente.map((p, i) => {
