@@ -207,26 +207,18 @@ export function MinhasReservas() {
     if (!alvo) return;
     setCancelando(true);
     try {
-      const { data, error } = await supabase.rpc("rpc_rp_cancelar_reserva", {
-        p_reserva_id: alvo.id,
-      });
-      if (error) throw error;
-      const reserva = data as unknown as RpReservaRetorno;
-
+      await cancelarReservaComMotivo(alvo.id);
       setAlvo(null);
       await qc.invalidateQueries({ queryKey: ["rp-minhas-reservas"] });
       await qc.invalidateQueries({ queryKey: ["rp-grade-dia"] });
       toast.success("Reserva cancelada.");
-
-      enviarEmailReserva({ data: { tipo: "cancelamento", reserva } }).catch((e) =>
-        console.error("[rp] e-mail de cancelamento falhou", e),
-      );
     } catch (e) {
       toast.error(mensagemErro(e));
     } finally {
       setCancelando(false);
     }
   };
+
 
   const confirmarAlteracao = async () => {
     if (!editando || !posicaoId) return;
