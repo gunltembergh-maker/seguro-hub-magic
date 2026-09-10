@@ -431,7 +431,7 @@ export function LegendaPlanta() {
     { estado: "inativa", label: "Inativa" },
   ];
   return (
-    <div className="flex flex-wrap items-center justify-center gap-x-7 gap-y-3 pt-1 text-sm font-medium text-foreground/80">
+    <div className="flex flex-wrap items-center justify-center gap-x-7 gap-y-3 pt-1 text-sm font-medium text-foreground">
       {itens.map((i) => (
         <span key={i.estado} className="flex items-center gap-2">
           <i
