@@ -72,30 +72,48 @@ function Mesa({ pos, x, y, w, h, cadeira, onSelecionar }: MesaProps) {
 
       {/* cadeira preta */}
       <g>
+        <path
+          d={`M${x + w / 2 - 31} ${cy + 4}h62M${x + w / 2} ${cy + 4}v27M${x + w / 2 - 18} ${cy + 31}h36`}
+          fill="none"
+          stroke="var(--color-office-frame)"
+          strokeWidth={5}
+          strokeLinecap="round"
+          opacity={0.9}
+        />
+        <circle cx={x + w / 2 - 20} cy={cy + 32} r={4} fill="var(--color-office-frame)" />
+        <circle cx={x + w / 2 + 20} cy={cy + 32} r={4} fill="var(--color-office-frame)" />
         <rect
-          x={x + w / 2 - 26}
-          y={cy - 15}
-          width={52}
-          height={30}
-          rx={12}
-          className="fill-neutral-900 dark:fill-neutral-950"
+          x={x + w / 2 - 30}
+          y={cy - 17}
+          width={60}
+          height={34}
+          rx={10}
+          fill="var(--color-office-frame)"
         />
         <rect
-          x={x + w / 2 - 18}
+          x={x + w / 2 - 22}
           y={cadeira === "cima" ? cy - 24 : cy + 10}
-          width={36}
-          height={12}
-          rx={6}
-          className="fill-neutral-800 dark:fill-neutral-900"
+          width={44}
+          height={14}
+          rx={5}
+          fill="var(--color-office-frame)"
         />
+        <path d={`M${x + w / 2 - 35} ${cy - 3}h10M${x + w / 2 + 25} ${cy - 3}h10`} stroke="#66717A" strokeWidth={4} strokeLinecap="round" />
       </g>
 
       {/* sombra do tampo */}
-      <rect x={x + 3} y={y + 5} width={w} height={h} rx={10} className="fill-black/25" />
+      <rect x={x + 4} y={y + 6} width={w} height={h} rx={5} fill="var(--color-office-frame)" opacity={0.38} />
+
+      {/* estrutura metálica */}
+      <path
+        d={`M${x + 10} ${y + h - 3}v18M${x + w - 10} ${y + h - 3}v18`}
+        stroke="var(--color-office-frame)"
+        strokeWidth={6}
+      />
 
       {/* tampo amadeirado */}
-      <rect x={x} y={y} width={w} height={h} rx={10} fill="url(#madeira)" stroke="#3A2415" strokeWidth={2} />
-      <rect x={x + 8} y={y + 8} width={w - 16} height={h - 16} rx={7} fill="url(#madeiraTopo)" opacity={0.35} />
+      <rect x={x} y={y} width={w} height={h} rx={5} fill="url(#madeira)" stroke="var(--color-office-frame)" strokeWidth={2} />
+      <rect x={x + 7} y={y + 7} width={w - 14} height={h - 14} rx={3} fill="url(#madeiraTopo)" opacity={0.3} />
 
       {/* acessórios discretos sobre o tampo */}
       <rect
@@ -104,10 +122,10 @@ function Mesa({ pos, x, y, w, h, cadeira, onSelecionar }: MesaProps) {
         width={46}
         height={18}
         rx={6}
-        fill="#17191C"
+        fill="var(--color-office-frame)"
         opacity={0.72}
       />
-      <circle cx={x + w - 42} cy={y + h / 2 + 5} r={5} fill="#24201D" opacity={0.8} />
+      <circle cx={x + w - 42} cy={y + h / 2 + 5} r={5} fill="var(--color-office-frame)" opacity={0.8} />
 
       {/* faixa de estado */}
       <rect x={x} y={y + h - 10} width={w} height={10} rx={4} fill={COR_ESTADO[estado]} opacity={0.95} />
@@ -162,10 +180,10 @@ export function PlantaEscritorio({
   const mesaFundoW = bancadaW / 3;
 
   // Bloco da frente: três fileiras de 2, todas voltadas para a janela.
-  const frenteX = 270;
-  const mesaW = 190;
-  const gapX = 54;
-  const linhaY = [322, 488, 654];
+  const frenteX = 224;
+  const mesaW = 218;
+  const gapX = 10;
+  const linhaY = [318, 484, 650];
 
   return (
     <div className="overflow-x-auto">
@@ -173,9 +191,9 @@ export function PlantaEscritorio({
         <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-label="Planta do escritório">
           <defs>
             <linearGradient id="madeira" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#C08A4B" />
-              <stop offset="55%" stopColor="#A9723A" />
-              <stop offset="100%" stopColor="#8B5A28" />
+              <stop offset="0%" stopColor="var(--color-office-wood-light)" />
+              <stop offset="55%" stopColor="var(--color-office-wood)" />
+              <stop offset="100%" stopColor="#805329" />
             </linearGradient>
             <linearGradient id="madeiraTopo" x1="0" y1="0" x2="1" y2="0">
               <stop offset="0%" stopColor="#E4B67C" stopOpacity="0.7" />
@@ -197,14 +215,14 @@ export function PlantaEscritorio({
           </defs>
 
           {/* carpete grafite */}
-          <rect x={0} y={0} width={W} height={H} rx={18} className="fill-[#2A2E33] dark:fill-[#1B1E22]" />
+          <rect x={0} y={0} width={W} height={H} rx={18} fill="var(--color-office-frame)" />
           <rect
             x={10}
             y={10}
             width={W - 20}
             height={H - 20}
             rx={14}
-            className="fill-[#33383E] dark:fill-[#23272C]"
+            fill="var(--color-office-carpet)"
           />
           <rect x={10} y={10} width={W - 20} height={H - 20} rx={14} fill="url(#placasCarpete)" />
 
@@ -225,6 +243,11 @@ export function PlantaEscritorio({
           <text x={410} y={62} textAnchor="middle" fontSize={13} letterSpacing={3} fill="#9FC7DE">
             JANELA · VISTA DA CIDADE
           </text>
+          {/* silhueta sutil de São Paulo além do vidro */}
+          <g fill="#14405C" opacity={0.22}>
+            <path d="M72 38V26h18v12M98 38V22h24v16M134 38V29h18v9M166 38V20h30v18M205 38V25h16v13" />
+            <path d="M560 38V24h20v14M590 38V18h27v20M626 38V28h19v10M656 38V21h31v17M696 38V27h20v11" />
+          </g>
 
           {/* parede de vidro preto (painel/TV) */}
           <rect x={26} y={120} width={26} height={536} rx={8} className="fill-[#111418]" />
@@ -241,7 +264,7 @@ export function PlantaEscritorio({
           </text>
 
           {/* trecho de parede com quadros, antes do vidro lateral */}
-          <rect x={806} y={76} width={28} height={178} rx={7} fill="#DDD1BB" opacity={0.9} />
+          <rect x={796} y={76} width={38} height={178} rx={5} fill="var(--color-office-wall)" opacity={0.95} />
           {[112, 174].map((y) => (
             <g key={y}>
               <rect x={810} y={y} width={20} height={42} rx={2} fill="#151719" />
@@ -314,13 +337,18 @@ export function PlantaEscritorio({
             BLOCO FUNDO
           </text>
 
+          {/* canaleta central preta da mesa principal, como no escritório */}
+          <rect x={frenteX + mesaW - 1} y={318} width={12} height={414} rx={4} fill="var(--color-office-frame)" />
+          {[355, 521, 687].map((y) => (
+            <g key={y}>
+              <circle cx={frenteX + mesaW + 5} cy={y} r={13} fill="#202923" />
+              <circle cx={frenteX + mesaW + 5} cy={y - 3} r={8} fill="var(--color-office-plant)" />
+            </g>
+          ))}
+
           {/* plantas decorativas */}
           <circle cx={142} cy={260} r={16} className="fill-emerald-700" />
           <circle cx={142} cy={260} r={9} className="fill-emerald-500" opacity={0.8} />
-          <circle cx={492} cy={304} r={12} className="fill-emerald-700" />
-          <circle cx={492} cy={304} r={7} className="fill-emerald-500" opacity={0.8} />
-          <circle cx={492} cy={470} r={11} className="fill-emerald-700" />
-          <circle cx={492} cy={636} r={12} className="fill-emerald-700" />
           <circle cx={742} cy={610} r={14} className="fill-emerald-700" />
           <circle cx={742} cy={610} r={8} className="fill-emerald-500" opacity={0.8} />
 
