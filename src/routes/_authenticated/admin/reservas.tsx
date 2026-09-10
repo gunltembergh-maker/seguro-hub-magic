@@ -42,6 +42,7 @@ import {
 } from "@/lib/rp/rp-tipos";
 import { CancelarComMotivoDialog } from "@/components/reserva-posicoes/CancelarComMotivoDialog";
 import { cancelarReservaComMotivo } from "@/lib/rp/rp-cancelar";
+import { entradaIpValida, normalizarEntradaIp } from "@/lib/rp/ip-match";
 
 
 
@@ -715,8 +716,13 @@ function AbaParametros() {
 
       <div className={CARD}>
         <h3 className="mb-1 font-semibold text-[#14405C]">IPs do escritório</h3>
-        <p className="mb-3 text-sm text-slate-600">
+        <p className="mb-1 text-sm text-slate-600">
           Seu IP público agora: <strong>{ipAtual ?? "não identificado"}</strong>
+        </p>
+        <p className="mb-3 text-sm text-slate-600">
+          Cadastre o IP fixo (IPv4), ou a faixa da rede em formato CIDR. Para redes IPv6, cadastre o
+          prefixo /64 da rede do escritório. Use o IP detectado no aviso de check-in para descobrir o
+          endereço da rede.
         </p>
         <div className="mb-3 flex flex-wrap gap-2">
           {form.ips.map((ip) => (
@@ -734,12 +740,18 @@ function AbaParametros() {
           {form.ips.length === 0 && <span className="text-sm text-slate-500">Nenhum IP cadastrado.</span>}
         </div>
         <div className="flex gap-2">
-          <Input value={novoIp} onChange={(e) => setNovoIp(e.target.value)} placeholder="200.100.50.10" />
+          <Input
+            value={novoIp}
+            onChange={(e) => setNovoIp(e.target.value)}
+            placeholder="189.68.252.22, 189.68.252.0/24 ou 2804:1b3:aa42:c7c::/64"
+          />
           <Button
             variant="outline"
             onClick={() => {
-              const v = novoIp.trim();
+              const v = normalizarEntradaIp(novoIp);
               if (!v) return;
+              if (!entradaIpValida(v))
+                return toast.error("Informe um IPv4, IPv6 ou faixa CIDR válida.");
               if (form.ips.includes(v)) return toast.error("IP já cadastrado.");
               setForm({ ...form, ips: [...form.ips, v] });
               setNovoIp("");

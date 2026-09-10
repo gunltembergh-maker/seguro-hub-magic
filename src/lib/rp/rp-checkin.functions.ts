@@ -2,23 +2,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { ipAutorizado, normalizarEntradaIp, normalizarIp } from "@/lib/rp/ip-match";
 
 const InputSchema = z.object({ reserva_id: z.string().uuid() });
-
-/** Remove prefixo IPv4 mapeado, colchetes de IPv6 e porta anexada. */
-function normalizarIp(bruto: string): string {
-  let ip = bruto.trim();
-  if (!ip) return "";
-  // [2001:db8::1]:443
-  const m = ip.match(/^\[(.+)\](?::\d+)?$/);
-  if (m?.[1]) ip = m[1];
-  // IPv4 com porta (189.69.2.78:51234) — IPv6 puro tem vários ":"
-  if ((ip.match(/:/g)?.length ?? 0) === 1 && ip.includes(".")) ip = ip.split(":")[0] ?? ip;
-  // ::ffff:189.69.2.78
-  const mapped = ip.match(/^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/i);
-  if (mapped?.[1]) ip = mapped[1];
-  return ip.trim().toLowerCase();
-}
 
 /**
  * Todos os IPs que a requisição carrega, em ordem de confiabilidade.
@@ -82,7 +68,7 @@ function listaDeIps(value: unknown): string[] {
     : typeof v === "string"
       ? v.split(/[,;\n]/)
       : [];
-  return cru.map((p) => normalizarIp(String(p))).filter(Boolean);
+  return cru.map((p) => normalizarEntradaIp(String(p))).filter(Boolean);
 }
 
 /**
@@ -133,9 +119,9 @@ export const fazerCheckin = createServerFn({ method: "POST" })
       .maybeSingle();
 
     const permitidos = listaDeIps(cfg?.value);
-    const autorizado = candidatos.some((c) => permitidos.includes(c));
+    const casado = candidatos.find((c) => ipAutorizado(c, permitidos)) ?? null;
 
-    if (!autorizado) {
+    if (!casado) {
       await registrarNegado("ip_fora_da_lista");
       return {
         ok: false as const,
@@ -144,12 +130,10 @@ export const fazerCheckin = createServerFn({ method: "POST" })
       };
     }
 
-    const ipAutorizado = candidatos.find((c) => permitidos.includes(c)) ?? principal;
-
     const { data: resultado, error } = await lavoroAdmin.rpc("rp_registrar_checkin", {
       p_reserva_id: data.reserva_id,
       p_user_id: context.userId,
-      p_ip: ipAutorizado,
+      p_ip: casado,
     });
 
     if (error) {
