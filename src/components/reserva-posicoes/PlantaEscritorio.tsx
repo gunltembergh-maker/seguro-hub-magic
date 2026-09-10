@@ -172,18 +172,18 @@ export function PlantaEscritorio({
   const frente = posicoes.filter((p) => p.bloco !== "fundo").sort((a, b) => a.numero - b.numero);
 
   const W = 900;
-  const H = 800;
+  const H = 720;
 
   // Bancada do fundo: 3 mesas contínuas encostadas na janela.
   const bancadaX = 190;
   const bancadaW = 600;
   const mesaFundoW = bancadaW / 3;
 
-  // Bloco da frente: três fileiras de 2, todas voltadas para a janela.
-  const frenteX = 224;
-  const mesaW = 218;
-  const gapX = 10;
-  const linhaY = [318, 484, 650];
+  // Bloco da frente: uma ilha com duas fileiras de 3 posições, como no escritório.
+  const frenteX = 150;
+  const mesaW = 188;
+  const gapX = 8;
+  const linhaY = [332, 490];
 
   return (
     <div className="overflow-x-auto">
@@ -227,26 +227,26 @@ export function PlantaEscritorio({
           <rect x={10} y={10} width={W - 20} height={H - 20} rx={14} fill="url(#placasCarpete)" />
 
           {/* janela panorâmica */}
-          <rect x={26} y={18} width={W - 108} height={22} rx={8} fill="url(#janela)" opacity={0.9} />
+          <rect x={26} y={18} width={W - 108} height={42} rx={8} fill="url(#janela)" opacity={0.95} />
           {Array.from({ length: 11 }).map((_, i) => (
             <line
               key={i}
               x1={26 + ((W - 108) / 11) * (i + 1)}
               y1={18}
               x2={26 + ((W - 108) / 11) * (i + 1)}
-              y2={40}
+              y2={60}
               stroke="#33383E"
               strokeWidth={2}
               opacity={0.5}
             />
           ))}
-          <text x={410} y={62} textAnchor="middle" fontSize={13} letterSpacing={3} fill="#9FC7DE">
+          <text x={410} y={76} textAnchor="middle" fontSize={13} letterSpacing={3} fill="#9FC7DE">
             JANELA · VISTA DA CIDADE
           </text>
           {/* silhueta sutil de São Paulo além do vidro */}
-          <g fill="#14405C" opacity={0.22}>
-            <path d="M72 38V26h18v12M98 38V22h24v16M134 38V29h18v9M166 38V20h30v18M205 38V25h16v13" />
-            <path d="M560 38V24h20v14M590 38V18h27v20M626 38V28h19v10M656 38V21h31v17M696 38V27h20v11" />
+          <g fill="#14405C" opacity={0.28}>
+            <path d="M52 60V39h22v21M80 60V31h32v29M120 60V43h24v17M152 60V26h38v34M198 60V36h23v24M230 60V45h31v15M270 60V30h36v30M315 60V40h25v20" />
+            <path d="M490 60V42h26v18M524 60V32h31v28M563 60V22h38v38M609 60V39h25v21M642 60V28h39v32M689 60V43h26v17M723 60V34h34v26" />
           </g>
 
           {/* parede de vidro preto (painel/TV) */}
@@ -264,8 +264,8 @@ export function PlantaEscritorio({
           </text>
 
           {/* trecho de parede com quadros, antes do vidro lateral */}
-          <rect x={796} y={76} width={38} height={178} rx={5} fill="var(--color-office-wall)" opacity={0.95} />
-          {[112, 174].map((y) => (
+          <rect x={796} y={88} width={38} height={150} rx={5} fill="var(--color-office-wall)" opacity={0.95} />
+          {[104, 164].map((y) => (
             <g key={y}>
               <rect x={810} y={y} width={20} height={42} rx={2} fill="#151719" />
               <rect x={813} y={y + 3} width={14} height={36} rx={1} fill="#B8B09F" />
@@ -278,32 +278,32 @@ export function PlantaEscritorio({
           ))}
 
           {/* vidro lateral e varanda */}
-          <rect x={818} y={270} width={16} height={458} rx={7} fill="url(#vidroVaranda)" />
+          <rect x={818} y={252} width={16} height={430} rx={7} fill="url(#vidroVaranda)" />
           {Array.from({ length: 6 }).map((_, i) => (
             <line
               key={i}
               x1={818}
-              y1={270 + (458 / 6) * (i + 1)}
+              y1={252 + (430 / 6) * (i + 1)}
               x2={834}
-              y2={270 + (458 / 6) * (i + 1)}
+              y2={252 + (430 / 6) * (i + 1)}
               stroke="#D9EFF9"
               strokeWidth={1.5}
               opacity={0.6}
             />
           ))}
-          <rect x={840} y={270} width={38} height={458} rx={12} fill="#A8BAC0" opacity={0.16} />
+          <rect x={840} y={252} width={38} height={430} rx={12} fill="#A8BAC0" opacity={0.16} />
           <text
             x={863}
-            y={500}
+             y={468}
             textAnchor="middle"
             fontSize={11}
             letterSpacing={3}
             fill="#A8CEDD"
-            transform="rotate(90 863 500)"
+             transform="rotate(90 863 468)"
           >
             VARANDA
           </text>
-          {[326, 500, 672].map((y, i) => (
+          {[304, 464, 624].map((y, i) => (
             <g key={y}>
               <path d={`M847 ${y + 14}h24l-4 21h-16Z`} fill="#776756" />
               <circle cx={859} cy={y + 8} r={i === 1 ? 14 : 12} fill="#266044" />
@@ -337,28 +337,28 @@ export function PlantaEscritorio({
             BLOCO FUNDO
           </text>
 
-          {/* canaleta central preta da mesa principal, como no escritório */}
-          <rect x={frenteX + mesaW - 1} y={318} width={12} height={414} rx={4} fill="var(--color-office-frame)" />
-          {[355, 521, 687].map((y) => (
-            <g key={y}>
-              <circle cx={frenteX + mesaW + 5} cy={y} r={13} fill="#202923" />
-              <circle cx={frenteX + mesaW + 5} cy={y - 3} r={8} fill="var(--color-office-plant)" />
+          {/* divisória/canaleta da ilha central, entre as duas fileiras */}
+          <rect x={frenteX} y={466} width={mesaW * 3 + gapX * 2} height={10} rx={4} fill="var(--color-office-frame)" />
+          {[frenteX + 92, frenteX + 288, frenteX + 484].map((x) => (
+            <g key={x}>
+              <circle cx={x} cy={471} r={12} fill="#202923" />
+              <circle cx={x} cy={468} r={7} fill="var(--color-office-plant)" />
             </g>
           ))}
 
           {/* plantas decorativas */}
           <circle cx={142} cy={260} r={16} className="fill-emerald-700" />
           <circle cx={142} cy={260} r={9} className="fill-emerald-500" opacity={0.8} />
-          <circle cx={742} cy={610} r={14} className="fill-emerald-700" />
-          <circle cx={742} cy={610} r={8} className="fill-emerald-500" opacity={0.8} />
+          <circle cx={748} cy={580} r={14} className="fill-emerald-700" />
+          <circle cx={748} cy={580} r={8} className="fill-emerald-500" opacity={0.8} />
 
           {/* bloco da frente */}
-          <text x={frenteX - 20} y={300} fontSize={12} letterSpacing={2} fill="#9AA5B1">
+          <text x={frenteX - 20} y={304} fontSize={12} letterSpacing={2} fill="#9AA5B1">
             BLOCO FRENTE
           </text>
           {frente.map((p, i) => {
-            const linha = Math.floor(i / 2);
-            const col = i % 2;
+            const linha = Math.floor(i / 3);
+            const col = i % 3;
             return (
               <Mesa
                 key={p.id}
@@ -366,8 +366,8 @@ export function PlantaEscritorio({
                 x={frenteX + col * (mesaW + gapX)}
                 y={linhaY[linha] ?? 488}
                 w={mesaW}
-                h={82}
-                cadeira="baixo"
+                h={86}
+                cadeira={linha === 0 ? "cima" : "baixo"}
                 onSelecionar={onSelecionar}
               />
             );
