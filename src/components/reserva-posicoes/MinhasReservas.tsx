@@ -424,6 +424,79 @@ export function MinhasReservas() {
       </AlertDialog>
 
       <Dialog
+        open={checkinModal.open}
+        onOpenChange={(o) => {
+          if (!o) setCheckinModal({ open: false });
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          {checkinModal.open && checkinModal.type === "success" && (
+            <>
+              <div className="flex flex-col items-center gap-4 py-2 text-center">
+                <CheckCircle2 className="h-14 w-14 text-green-500" aria-hidden="true" />
+                <DialogHeader className="gap-2">
+                  <DialogTitle className="text-xl font-semibold">Check-in confirmado!</DialogTitle>
+                  <DialogDescription className="text-base text-foreground">
+                    Presença registrada na Posição {checkinModal.reserva.posicao_numero} às{" "}
+                    {checkinModal.hora}. Boa jornada!
+                  </DialogDescription>
+                </DialogHeader>
+                <Button
+                  onClick={() => setCheckinModal({ open: false })}
+                  className="min-w-[8rem]"
+                >
+                  Fechar
+                </Button>
+              </div>
+            </>
+          )}
+          {checkinModal.open && checkinModal.type === "error" && (
+            <>
+              <div className="flex flex-col items-center gap-4 py-2 text-center">
+                <AlertTriangle className="h-14 w-14 text-destructive" aria-hidden="true" />
+                <DialogHeader className="gap-2">
+                  <DialogTitle className="text-xl font-semibold">Check-in não realizado</DialogTitle>
+                  <DialogDescription className="text-base text-foreground">
+                    {checkinModal.message}
+                  </DialogDescription>
+                </DialogHeader>
+
+                {checkinModal.rede && (
+                  <div className="w-full rounded-lg bg-amber-50 p-4 text-left text-foreground dark:bg-amber-950/30">
+                    <p className="mb-2 flex items-center gap-2 font-semibold">
+                      <Wifi className="h-4 w-4" /> Siga os passos:
+                    </p>
+                    <ol className="list-decimal space-y-1.5 pl-5 text-[15px]">
+                      <li>Conecte-se ao Wi-Fi do escritório (Zin Group).</li>
+                      <li>Volte ao Hub e clique novamente em Fazer check-in.</li>
+                    </ol>
+                  </div>
+                )}
+
+                <p className="text-sm text-foreground">
+                  Problemas com o check-in? Envie um print para{" "}
+                  <a
+                    href="mailto:operacoes@lavoroseguros.com.br"
+                    className="font-medium underline hover:text-primary"
+                  >
+                    operacoes@lavoroseguros.com.br
+                  </a>
+                </p>
+
+                <Button
+                  onClick={() => setCheckinModal({ open: false })}
+                  variant="outline"
+                  className="min-w-[8rem]"
+                >
+                  Entendi
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
         open={!!editando}
         onOpenChange={(o) => {
           if (!o) {
