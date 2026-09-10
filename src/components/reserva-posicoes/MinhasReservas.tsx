@@ -102,7 +102,7 @@ export function MinhasReservas() {
   const [antigaCancelada, setAntigaCancelada] = useState(false);
 
   const dataIsoEdit = isoDeData(dia);
-  const { data: grade } = useRpGradeDia(editando ? dataIsoEdit : "");
+  const { data: grade } = useRpGradeDia(dataIsoEdit);
 
   const horarios = useMemo(
     () =>
