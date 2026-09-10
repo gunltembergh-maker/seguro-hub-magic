@@ -226,27 +226,33 @@ export function PlantaEscritorio({
           />
           <rect x={10} y={10} width={W - 20} height={H - 20} rx={14} fill="url(#placasCarpete)" />
 
-          {/* janela panorâmica */}
-          <rect x={26} y={18} width={W - 108} height={42} rx={8} fill="url(#janela)" opacity={0.95} />
-          {Array.from({ length: 11 }).map((_, i) => (
+          {/* vidro preto atrás da posição 1 */}
+          <rect x={26} y={18} width={350} height={42} rx={8} fill="#111418" />
+          <rect x={36} y={25} width={330} height={28} rx={5} fill="#252B31" opacity={0.9} />
+          <text x={201} y={76} textAnchor="middle" fontSize={11} letterSpacing={2} fill="#7C8794">
+            PAREDE DE VIDRO PRETO
+          </text>
+
+          {/* janela panorâmica somente atrás das posições 2 e 3 */}
+          <rect x={386} y={18} width={406} height={42} rx={8} fill="url(#janela)" opacity={0.95} />
+          {Array.from({ length: 6 }).map((_, i) => (
             <line
               key={i}
-              x1={26 + ((W - 108) / 11) * (i + 1)}
+              x1={386 + (406 / 6) * (i + 1)}
               y1={18}
-              x2={26 + ((W - 108) / 11) * (i + 1)}
+              x2={386 + (406 / 6) * (i + 1)}
               y2={60}
               stroke="#33383E"
               strokeWidth={2}
               opacity={0.5}
             />
           ))}
-          <text x={410} y={76} textAnchor="middle" fontSize={13} letterSpacing={3} fill="#9FC7DE">
+          <text x={589} y={76} textAnchor="middle" fontSize={13} letterSpacing={3} fill="#9FC7DE">
             JANELA · VISTA DA CIDADE
           </text>
           {/* silhueta sutil de São Paulo além do vidro */}
           <g fill="#14405C" opacity={0.28}>
-            <path d="M52 60V39h22v21M80 60V31h32v29M120 60V43h24v17M152 60V26h38v34M198 60V36h23v24M230 60V45h31v15M270 60V30h36v30M315 60V40h25v20" />
-            <path d="M490 60V42h26v18M524 60V32h31v28M563 60V22h38v38M609 60V39h25v21M642 60V28h39v32M689 60V43h26v17M723 60V34h34v26" />
+            <path d="M398 60V42h26v18M432 60V32h31v28M471 60V22h38v38M517 60V39h25v21M550 60V28h39v32M597 60V43h26v17M631 60V34h34v26M674 60V39h30v21M713 60V27h42v33" />
           </g>
 
           {/* parede de vidro preto (painel/TV) */}
