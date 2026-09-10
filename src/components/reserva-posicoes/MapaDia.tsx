@@ -35,6 +35,8 @@ import {
   type RpReservaRetorno,
 } from "@/lib/rp/rp-tipos";
 import { enviarEmailReserva } from "@/lib/rp/rp-email.functions";
+import { PlantaEscritorio, LegendaPlanta, estadoDaPosicao } from "./PlantaEscritorio";
+import { ComoFunciona } from "./ComoFunciona";
 
 function PosicaoCard({
   pos,
