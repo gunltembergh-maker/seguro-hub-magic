@@ -2579,6 +2579,7 @@ export type Database = {
       }
       rp_reservas: {
         Row: {
+          ausencia_notificada: boolean
           cancelada_em: string | null
           cancelada_por: string | null
           checkin_at: string | null
@@ -2594,6 +2595,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          ausencia_notificada?: boolean
           cancelada_em?: string | null
           cancelada_por?: string | null
           checkin_at?: string | null
@@ -2609,6 +2611,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          ausencia_notificada?: boolean
           cancelada_em?: string | null
           cancelada_por?: string | null
           checkin_at?: string | null
@@ -3327,7 +3330,12 @@ export type Database = {
         Returns: boolean
       }
       retry_lavoro_sync_if_needed: { Args: never; Returns: undefined }
+      rp_expirar_reservas: { Args: never; Returns: number }
       rp_pode_controle: { Args: never; Returns: boolean }
+      rp_registrar_checkin: {
+        Args: { p_ip: string; p_reserva_id: string; p_user_id: string }
+        Returns: Json
+      }
       rpc_ab_atualizar_derivados: { Args: { p_linhas: Json }; Returns: number }
       rpc_ab_atualizar_sinais: { Args: { p_linhas: Json }; Returns: number }
       rpc_ab_consumir_cota: {
