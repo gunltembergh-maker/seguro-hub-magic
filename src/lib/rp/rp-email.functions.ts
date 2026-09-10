@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { dataBR, hhmm } from "./rp-tipos";
 
 const InputSchema = z.object({
   tipo: z.enum(["confirmacao", "cancelamento"]),
@@ -16,8 +17,6 @@ const InputSchema = z.object({
   }),
 });
 
-const hhmm = (h: string) => (h ?? "").slice(0, 5);
-const dataBR = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
 
 /**
  * Dispara os e-mails de confirmação/cancelamento de reserva de posição.
@@ -40,7 +39,12 @@ export const enviarEmailReserva = createServerFn({ method: "POST" })
         lavoroAdmin
           .from("hub_admin_settings")
           .select("key, value")
-          .in("key", ["rp_enviar_email_usuario", "rp_emails_rh", "rp_tolerancia_checkin_min"]),
+          .in("key", [
+            "rp_enviar_email_usuario",
+            "rp_emails_rh",
+            "rp_tolerancia_checkin_min",
+            "rp_checkin_liberado_antes_min",
+          ]),
       ]);
 
       if (!tpl || tpl.ativo === false) return { ok: false, motivo: "template_inativo" };
@@ -49,6 +53,7 @@ export const enviarEmailReserva = createServerFn({ method: "POST" })
       const enviarUsuario = cfg.get("rp_enviar_email_usuario") !== false;
       const emailsRh = Array.isArray(cfg.get("rp_emails_rh")) ? (cfg.get("rp_emails_rh") as string[]) : [];
       const tolerancia = String(cfg.get("rp_tolerancia_checkin_min") ?? 15);
+      const checkinAntes = String(cfg.get("rp_checkin_liberado_antes_min") ?? 30);
 
       const vars = {
         nome: data.reserva.nome ?? "",
@@ -57,6 +62,7 @@ export const enviarEmailReserva = createServerFn({ method: "POST" })
         hora_inicio: hhmm(data.reserva.hora_inicio),
         hora_fim: hhmm(data.reserva.hora_fim),
         tolerancia_min: tolerancia,
+        checkin_antes_min: checkinAntes,
       };
 
       const assunto = aplicarVariaveis(tpl.assunto, vars);
