@@ -62,6 +62,8 @@ import {
 import { enviarEmailReserva } from "@/lib/rp/rp-email.functions";
 import { fazerCheckin } from "@/lib/rp/rp-checkin.functions";
 import { processarAusencias } from "@/lib/rp/rp-ausencias.functions";
+import { cancelarReservaComMotivo } from "@/lib/rp/rp-cancelar";
+
 
 /** Converte a data da reserva (ISO ou DD/MM/AAAA) + hora em um Date local. */
 const dataHoraLocal = (data: string, hora: string) => {
@@ -94,6 +96,22 @@ export function MinhasReservas() {
   const [cancelando, setCancelando] = useState(false);
   const [checkinEm, setCheckinEm] = useState<string | null>(null);
   const hojeIso = isoDeData(new Date());
+
+  // Motivos de cancelamento (quando o RH/Admin cancelou a reserva do colaborador).
+  const { data: motivos } = useQuery({
+    queryKey: ["rp-motivos-cancelamento"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("rp_reservas")
+        .select("id, cancelamento_motivo")
+        .eq("status", "cancelada")
+        .not("cancelamento_motivo", "is", null);
+      if (error) throw error;
+      return new Map((data ?? []).map((r) => [r.id, r.cancelamento_motivo as string]));
+    },
+    staleTime: 60_000,
+  });
+
 
   // Dispara o processamento de ausências ao abrir a tela (idempotente no servidor).
   useEffect(() => {
