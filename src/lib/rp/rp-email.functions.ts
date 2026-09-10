@@ -39,7 +39,12 @@ export const enviarEmailReserva = createServerFn({ method: "POST" })
         lavoroAdmin
           .from("hub_admin_settings")
           .select("key, value")
-          .in("key", ["rp_enviar_email_usuario", "rp_emails_rh", "rp_tolerancia_checkin_min"]),
+          .in("key", [
+            "rp_enviar_email_usuario",
+            "rp_emails_rh",
+            "rp_tolerancia_checkin_min",
+            "rp_checkin_liberado_antes_min",
+          ]),
       ]);
 
       if (!tpl || tpl.ativo === false) return { ok: false, motivo: "template_inativo" };
