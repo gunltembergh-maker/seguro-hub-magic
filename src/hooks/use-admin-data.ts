@@ -69,6 +69,12 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
     ],
   },
   {
+    title: "RH",
+    items: [
+      { key: "menu_rh_controle_posicoes", label: "Controle de Posições", desc: "Reservas, comparecimentos e ranking do escritório" },
+    ],
+  },
+  {
     title: "Ramos",
     items: [
       { key: "menu_ramo_garantia", label: "Garantia", desc: "Controle mestre do grupo Garantia" },

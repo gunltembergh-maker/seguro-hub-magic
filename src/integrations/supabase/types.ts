@@ -3327,6 +3327,7 @@ export type Database = {
         Returns: boolean
       }
       retry_lavoro_sync_if_needed: { Args: never; Returns: undefined }
+      rp_pode_controle: { Args: never; Returns: boolean }
       rpc_ab_atualizar_derivados: { Args: { p_linhas: Json }; Returns: number }
       rpc_ab_atualizar_sinais: { Args: { p_linhas: Json }; Returns: number }
       rpc_ab_consumir_cota: {
@@ -4338,6 +4339,20 @@ export type Database = {
         Returns: boolean
       }
       rpc_rp_cancelar_reserva: { Args: { p_reserva_id: string }; Returns: Json }
+      rpc_rp_controle_ranking: {
+        Args: { p_ate: string; p_de: string }
+        Returns: Json
+      }
+      rpc_rp_controle_reservas: {
+        Args: {
+          p_ate: string
+          p_de: string
+          p_posicao_numero?: number
+          p_status?: string
+          p_user_id?: string
+        }
+        Returns: Json
+      }
       rpc_rp_criar_reserva: {
         Args: {
           p_data: string
