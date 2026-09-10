@@ -233,12 +233,14 @@ export function MapaDia() {
           <Loader2 className="h-4 w-4 animate-spin" /> Carregando o mapa do dia…
         </div>
       ) : (
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="space-y-3 rounded-xl border border-border bg-card p-4">
+        <div className="grid items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+          <div className="flex h-full flex-col rounded-xl border border-border bg-card p-4">
             <PlantaEscritorio posicoes={grade ?? []} onSelecionar={abrirModal} />
             <LegendaPlanta />
           </div>
-          <ComoFunciona params={params} livres={livres} total={(grade ?? []).length || 9} />
+          <div className="h-full">
+            <ComoFunciona params={params} livres={livres} total={(grade ?? []).length || 9} />
+          </div>
         </div>
       )}
 
