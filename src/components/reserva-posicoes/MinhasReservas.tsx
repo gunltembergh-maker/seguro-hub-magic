@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CalendarIcon, Loader2, QrCode } from "lucide-react";
+import { CalendarIcon, Info, Loader2, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -322,10 +322,27 @@ export function MinhasReservas() {
                   {hhmm(r.hora_inicio)} às {hhmm(r.hora_fim)}
                 </TableCell>
                 <TableCell>
-                  <Badge variant="outline" className={STATUS_CLASSE[r.status] ?? ""}>
-                    {STATUS_LABEL[r.status] ?? r.status}
-                  </Badge>
+                  <span className="inline-flex items-center gap-1.5">
+                    <Badge variant="outline" className={STATUS_CLASSE[r.status] ?? ""}>
+                      {STATUS_LABEL[r.status] ?? r.status}
+                    </Badge>
+                    {r.status === "cancelada" && motivos?.get(r.id) && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button type="button" aria-label="Ver motivo do cancelamento">
+                              <Info className="h-4 w-4 text-slate-500" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            Cancelada pelo RH/Administração: {motivos.get(r.id)}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </span>
                 </TableCell>
+
                 <TableCell className="text-right">
                   <div className="flex flex-wrap justify-end gap-2">
                     {isoDaReserva(r.data) === hojeIso && r.status === "reservada" && (
