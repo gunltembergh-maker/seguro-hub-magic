@@ -10,7 +10,9 @@ import {
   Users,
   Download,
   Loader2,
+  Info,
 } from "lucide-react";
+
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -26,9 +28,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { exportarXlsx, type ColunaExport } from "@/lib/export-xlsx";
-import { dataBR, hhmm, isoDeData } from "@/lib/rp/rp-tipos";
+import { dataBR, hhmm, isoDeData, mensagemErro } from "@/lib/rp/rp-tipos";
 import { processarAusencias } from "@/lib/rp/rp-ausencias.functions";
+import { CancelarComMotivoDialog } from "@/components/reserva-posicoes/CancelarComMotivoDialog";
+import { cancelarReservaComMotivo } from "@/lib/rp/rp-cancelar";
+
 
 export const Route = createFileRoute("/_authenticated/rh/controle-posicoes")({
   head: () => ({
