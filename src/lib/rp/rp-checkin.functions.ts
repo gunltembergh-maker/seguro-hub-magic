@@ -68,7 +68,7 @@ function listaDeIps(value: unknown): string[] {
     : typeof v === "string"
       ? v.split(/[,;\n]/)
       : [];
-  return cru.map((p) => normalizarIp(String(p))).filter(Boolean);
+  return cru.map((p) => normalizarEntradaIp(String(p))).filter(Boolean);
 }
 
 /**
