@@ -146,8 +146,10 @@ export function MapaDia() {
     setDia(d);
   };
 
-  const fundo = (grade ?? []).filter((p) => p.bloco === "fundo").sort((a, b) => a.numero - b.numero);
-  const frente = (grade ?? []).filter((p) => p.bloco !== "fundo").sort((a, b) => a.numero - b.numero);
+  const livres = (grade ?? []).filter((p) => {
+    const e = estadoDaPosicao(p);
+    return e === "livre" || e === "parcial" || e === "minha";
+  }).length;
 
   const abrirModal = (pos: RpPosicaoGrade) => {
     setPosSel(pos);
