@@ -554,14 +554,38 @@ function AbaParametros() {
         { key: "rp_emails_rh", value: form.emailsRh },
         { key: "rp_ips_escritorio", value: form.ips },
       ];
+      const falhas: string[] = [];
       for (const e of entradas) {
-        const { error } = await supabase
+        // UPDATE primeiro (a linha já existe); se nada for afetado, INSERT.
+        const { data: atualizado, error: errUpd } = await supabase
           .from("hub_admin_settings")
-          .upsert({ key: e.key, value: e.value }, { onConflict: "key" });
-        if (error) throw error;
+          .update({ value: e.value })
+          .eq("key", e.key)
+          .select("key");
+        if (errUpd) {
+          falhas.push(`${e.key}: ${errUpd.message}`);
+          continue;
+        }
+        if (!atualizado?.length) {
+          const { error: errIns } = await supabase
+            .from("hub_admin_settings")
+            .insert({ key: e.key, value: e.value });
+          if (errIns) falhas.push(`${e.key}: ${errIns.message}`);
+        }
       }
+
+      // recarrega o que foi realmente gravado
+      await qc.invalidateQueries({ queryKey: ["rp-admin-settings"] });
       await qc.invalidateQueries({ queryKey: ["rp-parametros"] });
-      toast.success("Parâmetros salvos.");
+
+      if (falhas.length) {
+        toast.error("Alguns parâmetros não foram salvos.", {
+          description: falhas.join(" · "),
+          duration: 10000,
+        });
+      } else {
+        toast.success("Parâmetros salvos.");
+      }
     } catch (e) {
       toast.error(mensagemErro(e));
     } finally {
