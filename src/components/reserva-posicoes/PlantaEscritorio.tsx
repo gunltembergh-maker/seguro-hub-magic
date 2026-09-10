@@ -282,52 +282,52 @@ export function PlantaEscritorio({
             VISTA DA CIDADE
           </text>
 
-          {/* parede junto à posição 6 e meia parede junto à posição 9 */}
-          <rect x={804} y={276} width={30} height={250} rx={5} fill="var(--color-office-wall)" opacity={0.98} />
+          {/* parede junto à posição 6 e metade da posição 9; o restante vira varanda */}
+          <rect x={786} y={280} width={26} height={141} rx={5} fill="var(--color-office-wall)" opacity={0.98} />
           {[310, 370].map((y) => (
             <g key={y}>
-              <rect x={809} y={y} width={20} height={42} rx={2} fill="#151719" />
-              <rect x={812} y={y + 3} width={14} height={36} rx={1} fill="#B8B09F" />
+              <rect x={791} y={y} width={20} height={42} rx={2} fill="#151719" />
+              <rect x={794} y={y + 3} width={14} height={36} rx={1} fill="#B8B09F" />
               <path
-                d={`M819 ${y + 33}c-7-8-5-17 0-20 6 4 7 12 0 20Zm0-11c5-7 9-6 10-3-1 5-4 8-10 10Z`}
+                d={`M801 ${y + 33}c-7-8-5-17 0-20 6 4 7 12 0 20Zm0-11c5-7 9-6 10-3-1 5-4 8-10 10Z`}
                 fill="#34483D"
                 opacity={0.9}
               />
             </g>
           ))}
 
-          {/* abertura envidraçada para a varanda começa na metade da posição 9 */}
-          <rect x={818} y={526} width={16} height={156} rx={7} fill="url(#vidroVaranda)" />
-          {Array.from({ length: 3 }).map((_, i) => (
+          {/* abertura envidraçada para a varanda a partir da metade da posição 9 */}
+          <rect x={800} y={421} width={16} height={262} rx={7} fill="url(#vidroVaranda)" />
+          {Array.from({ length: 4 }).map((_, i) => (
             <line
               key={i}
-              x1={818}
-              y1={526 + (156 / 3) * (i + 1)}
-              x2={834}
-              y2={526 + (156 / 3) * (i + 1)}
+              x1={800}
+              y1={421 + (262 / 4) * (i + 1)}
+              x2={816}
+              y2={421 + (262 / 4) * (i + 1)}
               stroke="#D9EFF9"
               strokeWidth={1.5}
               opacity={0.6}
             />
           ))}
-          <rect x={840} y={526} width={38} height={156} rx={12} fill="#A8BAC0" opacity={0.16} />
+          <rect x={822} y={421} width={38} height={262} rx={12} fill="#A8BAC0" opacity={0.16} />
           <text
-            x={863}
-             y={603}
+            x={841}
+            y={552}
             textAnchor="middle"
             fontSize={11}
             letterSpacing={3}
             fill="#A8CEDD"
-             transform="rotate(90 863 603)"
+            transform="rotate(90 841 552)"
           >
             VARANDA
           </text>
-          {[552, 634].map((y, i) => (
+          {[470, 600].map((y, i) => (
             <g key={y}>
-              <path d={`M847 ${y + 14}h24l-4 21h-16Z`} fill="#776756" />
-              <circle cx={859} cy={y + 8} r={i === 1 ? 14 : 12} fill="#266044" />
-              <circle cx={851} cy={y + 2} r={7} fill="#3E835A" />
-              <circle cx={867} cy={y} r={8} fill="#4B9265" />
+              <path d={`M829 ${y + 14}h24l-4 21h-16Z`} fill="#776756" />
+              <circle cx={841} cy={y + 8} r={i === 1 ? 14 : 12} fill="#266044" />
+              <circle cx={833} cy={y + 2} r={7} fill="#3E835A" />
+              <circle cx={849} cy={y} r={8} fill="#4B9265" />
             </g>
           ))}
 
