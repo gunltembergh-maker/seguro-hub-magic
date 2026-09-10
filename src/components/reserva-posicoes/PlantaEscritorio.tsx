@@ -163,7 +163,7 @@ export function PlantaEscritorio({
             <linearGradient id="madeira" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#C08A4B" />
               <stop offset="55%" stopColor="#A9723A" />
-              <stop offset="100%" stopColor="#8B5A２8".replace("２", "2")} />
+              <stop offset="100%" stopColor="#8B5A28" />
             </linearGradient>
             <linearGradient id="madeiraTopo" x1="0" y1="0" x2="1" y2="0">
               <stop offset="0%" stopColor="#E4B67C" stopOpacity="0.7" />
