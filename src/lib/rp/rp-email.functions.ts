@@ -53,6 +53,7 @@ export const enviarEmailReserva = createServerFn({ method: "POST" })
       const enviarUsuario = cfg.get("rp_enviar_email_usuario") !== false;
       const emailsRh = Array.isArray(cfg.get("rp_emails_rh")) ? (cfg.get("rp_emails_rh") as string[]) : [];
       const tolerancia = String(cfg.get("rp_tolerancia_checkin_min") ?? 15);
+      const checkinAntes = String(cfg.get("rp_checkin_liberado_antes_min") ?? 30);
 
       const vars = {
         nome: data.reserva.nome ?? "",
