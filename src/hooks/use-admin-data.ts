@@ -44,6 +44,7 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
     title: "Menu Principal",
     items: [
       { key: "menu_inicio", label: "Hub (Início)", desc: "Tela inicial com blocos e atualizações" },
+      { key: "menu_reserva_posicoes", label: "Reserva de Posições", desc: "Mapa do escritório, reserva por horário e minhas reservas" },
     ],
   },
   {
