@@ -99,7 +99,7 @@ export function MinhasReservas() {
 
   type CheckinModal =
     | { open: true; type: "success"; reserva: RpMinhaReserva; hora: string }
-    | { open: true; type: "error"; message: string; rede: boolean }
+    | { open: true; type: "error"; message: string; rede: boolean; ip?: string | null }
     | { open: false };
   const [checkinModal, setCheckinModal] = useState<CheckinModal>({ open: false });
 
@@ -160,6 +160,7 @@ export function MinhasReservas() {
           type: "error",
           message: res.erro ?? "Não foi possível confirmar o check-in.",
           rede,
+          ip: res.ip ?? null,
         });
         return;
       }
@@ -490,6 +491,12 @@ export function MinhasReservas() {
                 >
                   Entendi
                 </Button>
+
+                {checkinModal.ip && (
+                  <p className="text-xs text-muted-foreground">
+                    IP detectado: <span className="font-mono">{checkinModal.ip}</span>
+                  </p>
+                )}
               </div>
             </>
           )}

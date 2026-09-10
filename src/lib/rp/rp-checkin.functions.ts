@@ -5,16 +5,84 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const InputSchema = z.object({ reserva_id: z.string().uuid() });
 
-/** IP público real do cliente, sempre lido dos headers da requisição (nunca do cliente). */
-function ipDoCliente(): string | null {
+/** Remove prefixo IPv4 mapeado, colchetes de IPv6 e porta anexada. */
+function normalizarIp(bruto: string): string {
+  let ip = bruto.trim();
+  if (!ip) return "";
+  // [2001:db8::1]:443
+  const m = ip.match(/^\[(.+)\](?::\d+)?$/);
+  if (m?.[1]) ip = m[1];
+  // IPv4 com porta (189.69.2.78:51234) — IPv6 puro tem vários ":"
+  if ((ip.match(/:/g)?.length ?? 0) === 1 && ip.includes(".")) ip = ip.split(":")[0] ?? ip;
+  // ::ffff:189.69.2.78
+  const mapped = ip.match(/^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/i);
+  if (mapped?.[1]) ip = mapped[1];
+  return ip.trim().toLowerCase();
+}
+
+/**
+ * Todos os IPs que a requisição carrega, em ordem de confiabilidade.
+ * O primeiro item de x-forwarded-for é o cliente real; os demais são proxies.
+ */
+function ipsDaRequisicao() {
   const h = getRequest()?.headers;
-  if (!h) return null;
-  const xff = h.get("x-forwarded-for");
-  if (xff) {
-    const primeiro = xff.split(",")[0]?.trim();
-    if (primeiro) return primeiro;
+  const brutos: Record<string, string> = {};
+  const nomes = [
+    "cf-connecting-ip",
+    "true-client-ip",
+    "x-real-ip",
+    "x-client-ip",
+    "x-forwarded-for",
+    "forwarded",
+    "x-vercel-forwarded-for",
+    "fly-client-ip",
+  ];
+  for (const n of nomes) {
+    const v = h?.get(n);
+    if (v) brutos[n] = v;
   }
-  return h.get("cf-connecting-ip") ?? h.get("x-real-ip") ?? null;
+
+  const candidatos: string[] = [];
+  const push = (v?: string | null) => {
+    if (!v) return;
+    for (const parte of v.split(",")) {
+      const ip = normalizarIp(parte.replace(/^for=/i, "").replace(/"/g, ""));
+      if (ip && !candidatos.includes(ip)) candidatos.push(ip);
+    }
+  };
+
+  // x-forwarded-for primeiro item = cliente real
+  push(brutos["x-forwarded-for"]);
+  push(brutos["cf-connecting-ip"]);
+  push(brutos["true-client-ip"]);
+  push(brutos["x-real-ip"]);
+  push(brutos["x-client-ip"]);
+  push(brutos["x-vercel-forwarded-for"]);
+  push(brutos["fly-client-ip"]);
+  push(brutos["forwarded"]);
+
+  return { brutos, candidatos, principal: candidatos[0] ?? null };
+}
+
+/** Aceita array JSON, string separada por vírgula/quebra de linha ou JSON em texto. */
+function listaDeIps(value: unknown): string[] {
+  let v = value;
+  if (typeof v === "string") {
+    const t = v.trim();
+    if (t.startsWith("[")) {
+      try {
+        v = JSON.parse(t);
+      } catch {
+        /* mantém string */
+      }
+    }
+  }
+  const cru = Array.isArray(v)
+    ? v
+    : typeof v === "string"
+      ? v.split(/[,;\n]/)
+      : [];
+  return cru.map((p) => normalizarIp(String(p))).filter(Boolean);
 }
 
 /**
@@ -27,34 +95,67 @@ export const fazerCheckin = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { lavoroAdmin } = await import("@/integrations/supabase/lavoro-admin.server");
 
-    const ip = ipDoCliente();
-    if (!ip) {
-      return { ok: false as const, erro: "Não foi possível identificar sua conexão. Tente novamente." };
+    const { brutos, candidatos, principal } = ipsDaRequisicao();
+    console.log("[rp-checkin] headers de IP:", JSON.stringify(brutos), "candidatos:", candidatos);
+
+    const registrarNegado = async (motivo: string) => {
+      try {
+        await lavoroAdmin.from("user_activity_log").insert({
+          user_id: context.userId,
+          acao: "rp_checkin_negado",
+          detalhes: {
+            reserva_id: data.reserva_id,
+            motivo,
+            ip_detectado: principal,
+            ips_candidatos: candidatos,
+            headers: brutos,
+          },
+        });
+      } catch {
+        /* log não pode quebrar o check-in */
+      }
+    };
+
+    if (!principal) {
+      await registrarNegado("ip_nao_identificado");
+      return {
+        ok: false as const,
+        erro: "Não foi possível identificar sua conexão. Tente novamente.",
+        ip: null as string | null,
+      };
     }
 
+    // Sempre lido do banco a cada tentativa (sem cache de módulo/build).
     const { data: cfg } = await lavoroAdmin
       .from("hub_admin_settings")
       .select("value")
       .eq("key", "rp_ips_escritorio")
       .maybeSingle();
 
-    const permitidos = Array.isArray(cfg?.value) ? (cfg.value as string[]) : [];
-    if (!permitidos.map((p) => String(p).trim()).includes(ip)) {
+    const permitidos = listaDeIps(cfg?.value);
+    const autorizado = candidatos.some((c) => permitidos.includes(c));
+
+    if (!autorizado) {
+      await registrarNegado("ip_fora_da_lista");
       return {
         ok: false as const,
         erro: "Check-in disponível apenas conectado ao Wi-Fi do escritório.",
+        ip: principal,
       };
     }
+
+    const ipAutorizado = candidatos.find((c) => permitidos.includes(c)) ?? principal;
 
     const { data: resultado, error } = await lavoroAdmin.rpc("rp_registrar_checkin", {
       p_reserva_id: data.reserva_id,
       p_user_id: context.userId,
-      p_ip: ip,
+      p_ip: ipAutorizado,
     });
 
     if (error) {
-      return { ok: false as const, erro: error.message };
+      await registrarNegado(`rpc: ${error.message}`);
+      return { ok: false as const, erro: error.message, ip: principal };
     }
 
-    return { ok: true as const, resultado };
+    return { ok: true as const, resultado, ip: principal };
   });
