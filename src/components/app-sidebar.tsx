@@ -454,6 +454,24 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
+        {rhChildren.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>RH</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <CollapsibleNavItem
+                  item={rhCollapsible}
+                  isActiveParent={false}
+                  hasActiveChild={hasActiveRhChild}
+                  isActiveChild={isActive}
+                  collapsed={collapsed}
+                  onChildNavigate={collapseOnNavigate}
+                />
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
         {(adminItems.length > 0 || emailChildren.length > 0) && (
           <SidebarGroup>
             <SidebarGroupLabel>Administração</SidebarGroupLabel>
