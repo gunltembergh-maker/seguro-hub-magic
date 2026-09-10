@@ -187,7 +187,7 @@ export function PlantaEscritorio({
   const mesaH = 86;
 
   return (
-    <div className="flex-1 overflow-x-auto overflow-y-hidden">
+    <div className="flex-1 overflow-x-auto overflow-y-hidden rounded-2xl drop-shadow-2xl">
       <div className="flex h-full min-w-[680px] items-center justify-center">
         <svg
           viewBox={`0 0 ${W} ${H}`}
