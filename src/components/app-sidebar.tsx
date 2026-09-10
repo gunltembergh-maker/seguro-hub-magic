@@ -84,6 +84,20 @@ const areasAll: AreaItem[] = [
   { title: "Operacional", url: "/operacional", icon: Cog, perm: "menu_area_operacional" },
   { title: "Middle", url: "/middle", icon: Layers, perm: "menu_area_middle" },
   { title: "Facilities", url: "/facilities", icon: Wrench, perm: "menu_area_facilities" },
+  {
+    title: "RH",
+    icon: UserSquare2,
+    tooltip: "RH",
+    perm: "menu_rh_controle_posicoes",
+    children: [
+      {
+        title: "Controle de Posições",
+        url: "/rh/controle-posicoes",
+        icon: ClipboardList,
+        perms: ["menu_rh_controle_posicoes"],
+      },
+    ],
+  },
 ];
 
 type ChildItem = { title: string; url: string; icon: LucideIcon; perms?: string[] };
