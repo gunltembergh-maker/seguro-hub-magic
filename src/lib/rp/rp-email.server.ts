@@ -14,7 +14,10 @@ export interface ReservaEmailDados {
   hora_fim: string;
   tolerancia_min: string;
   checkin_antes_min?: string;
+  /** Justificativa do cancelamento feito por RH/Admin. */
+  motivo?: string;
 }
+
 
 export function aplicarVariaveis(texto: string, dados: ReservaEmailDados): string {
   return Object.entries(dados).reduce(
