@@ -490,6 +490,12 @@ export function MinhasReservas() {
                 >
                   Entendi
                 </Button>
+
+                {checkinModal.ip && (
+                  <p className="text-xs text-muted-foreground">
+                    IP detectado: <span className="font-mono">{checkinModal.ip}</span>
+                  </p>
+                )}
               </div>
             </>
           )}
