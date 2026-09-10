@@ -43,6 +43,8 @@ import {
 } from "@/lib/rp/rp-tipos";
 import { enviarEmailReserva } from "@/lib/rp/rp-email.functions";
 import { CancelarComMotivoDialog } from "@/components/reserva-posicoes/CancelarComMotivoDialog";
+import { cancelarReservaComMotivo } from "@/lib/rp/rp-cancelar";
+
 
 
 export const Route = createFileRoute("/_authenticated/admin/reservas")({
@@ -292,6 +294,8 @@ function AbaReservas() {
   const [posicao, setPosicao] = useState("__all__");
   const [status, setStatus] = useState("__all__");
   const [cancelandoId, setCancelandoId] = useState<string | null>(null);
+  const [alvo, setAlvo] = useState<(ReservaRow & { nome: string }) | null>(null);
+
 
   const { data: posicoes } = useQuery({
     queryKey: ["rp-admin-posicoes-simples"],
