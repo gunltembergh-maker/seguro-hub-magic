@@ -340,7 +340,7 @@ export function PlantaEscritorio({
           {/* divisória/canaleta da ilha central, entre as duas fileiras */}
           <rect x={frenteX} y={466} width={mesaW * 3 + gapX * 2} height={10} rx={4} fill="var(--color-office-frame)" />
           {[frenteX + 92, frenteX + 288, frenteX + 484].map((x) => (
-            <g key={y}>
+            <g key={x}>
               <circle cx={x} cy={471} r={12} fill="#202923" />
               <circle cx={x} cy={468} r={7} fill="var(--color-office-plant)" />
             </g>
