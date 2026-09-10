@@ -474,7 +474,7 @@ function AbaReservas() {
                     <Button
                       size="sm"
                       variant="destructive"
-                      onClick={() => cancelar(r.id)}
+                      onClick={() => setAlvo(r)}
                       disabled={cancelandoId === r.id}
                     >
                       {cancelandoId === r.id && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
@@ -487,7 +487,20 @@ function AbaReservas() {
           </TableBody>
         </Table>
       )}
+
+      <CancelarComMotivoDialog
+        aberto={!!alvo}
+        processando={!!cancelandoId}
+        descricao={
+          alvo
+            ? `${alvo.nome} · posição ${alvo.rp_posicoes?.numero ?? ""} em ${dataBR(alvo.data)}, das ${hhmm(alvo.hora_inicio)} às ${hhmm(alvo.hora_fim)}.`
+            : ""
+        }
+        onFechar={() => setAlvo(null)}
+        onConfirmar={cancelar}
+      />
     </div>
+
   );
 }
 
