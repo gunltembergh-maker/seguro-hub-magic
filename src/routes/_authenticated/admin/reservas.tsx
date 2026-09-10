@@ -42,6 +42,8 @@ import {
   type RpReservaRetorno,
 } from "@/lib/rp/rp-tipos";
 import { enviarEmailReserva } from "@/lib/rp/rp-email.functions";
+import { CancelarComMotivoDialog } from "@/components/reserva-posicoes/CancelarComMotivoDialog";
+
 
 export const Route = createFileRoute("/_authenticated/admin/reservas")({
   head: () => ({
