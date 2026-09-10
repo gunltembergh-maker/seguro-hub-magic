@@ -425,7 +425,7 @@ export function PlantaEscritorio({
 export function LegendaPlanta() {
   const itens: { estado: EstadoPosicao; label: string }[] = [
     { estado: "livre", label: "Livre agora" },
-    { estado: "parcial", label: "Parcialmente reservada" },
+    { estado: "parcial", label: "Reservada por outro usuário" },
     { estado: "minha", label: "Tenho reserva" },
     { estado: "fixa", label: "Fixa" },
     { estado: "inativa", label: "Inativa" },
