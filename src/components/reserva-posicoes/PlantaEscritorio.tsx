@@ -15,7 +15,7 @@ export function estadoDaPosicao(pos: RpPosicaoGrade): EstadoPosicao {
 /** Cor do indicador de estado (usada na planta e na legenda). */
 const COR_ESTADO: Record<EstadoPosicao, string> = {
   livre: "#10B981",
-  parcial: "#F59E0B",
+  parcial: "#EF4444",
   minha: "#00BAF2",
   fixa: "#94A3B8",
   inativa: "#CBD5E1",
