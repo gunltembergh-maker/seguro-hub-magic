@@ -51,7 +51,7 @@ export function ComoFunciona({
             </span>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-base font-semibold text-primary">{p.titulo}</span>
+                <span className="text-base font-semibold text-foreground">{p.titulo}</span>
               </div>
               <p className="mt-0.5 text-[15px] leading-relaxed text-foreground">{p.texto}</p>
             </div>

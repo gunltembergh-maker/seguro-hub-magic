@@ -187,9 +187,15 @@ export function PlantaEscritorio({
   const mesaH = 86;
 
   return (
-    <div className="overflow-x-auto">
-      <div className="min-w-[680px]">
-        <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-label="Planta do escritório">
+    <div className="flex-1 overflow-x-auto overflow-y-hidden">
+      <div className="flex h-full min-w-[680px] items-center justify-center">
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          className="h-full w-full"
+          preserveAspectRatio="xMidYMid meet"
+          role="img"
+          aria-label="Planta do escritório"
+        >
           <defs>
             <linearGradient id="madeira" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="var(--color-office-wood-light)" />
