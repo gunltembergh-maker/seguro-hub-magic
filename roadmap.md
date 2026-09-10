@@ -1,2 +1,1 @@
-
-- [x] Newsletter Receita: abrir Benefícios do mês por tipo de pagamento (emitido/competência, caixa previsto e caixa recebido) — somente no e-mail
+- [ ] Tornar a planta da Reserva de Posições fiel à disposição física mostrada na foto, sem alterar comportamento.
