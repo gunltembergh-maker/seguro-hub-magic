@@ -62,6 +62,7 @@ export const enviarEmailReserva = createServerFn({ method: "POST" })
         hora_inicio: hhmm(data.reserva.hora_inicio),
         hora_fim: hhmm(data.reserva.hora_fim),
         tolerancia_min: tolerancia,
+        checkin_antes_min: checkinAntes,
       };
 
       const assunto = aplicarVariaveis(tpl.assunto, vars);
