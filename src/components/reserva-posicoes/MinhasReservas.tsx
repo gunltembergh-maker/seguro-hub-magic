@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CalendarIcon, Info, Loader2, QrCode } from "lucide-react";
+import { AlertTriangle, CalendarIcon, CheckCircle2, Info, Loader2, QrCode, Wifi } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -97,6 +97,12 @@ export function MinhasReservas() {
   const [checkinEm, setCheckinEm] = useState<string | null>(null);
   const hojeIso = isoDeData(new Date());
 
+  type CheckinModal =
+    | { open: true; type: "success"; reserva: RpMinhaReserva; hora: string }
+    | { open: true; type: "error"; message: string; rede: boolean }
+    | { open: false };
+  const [checkinModal, setCheckinModal] = useState<CheckinModal>({ open: false });
+
   // Motivos de cancelamento (quando o RH/Admin cancelou a reserva do colaborador).
   const { data: motivos } = useQuery({
     queryKey: ["rp-motivos-cancelamento"],
@@ -148,14 +154,24 @@ export function MinhasReservas() {
     try {
       const res = await fazerCheckin({ data: { reserva_id: r.id } });
       if (!res.ok) {
-        toast.error(res.erro);
+        const rede = /wifi|rede|escrit[oó]rio|ip/i.test(res.erro ?? "");
+        setCheckinModal({
+          open: true,
+          type: "error",
+          message: res.erro ?? "Não foi possível confirmar o check-in.",
+          rede,
+        });
         return;
       }
       await qc.invalidateQueries({ queryKey: ["rp-minhas-reservas"] });
       await qc.invalidateQueries({ queryKey: ["rp-grade-dia"] });
+      const hora = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+      setCheckinModal({ open: true, type: "success", reserva: r, hora });
       toast.success("Check-in confirmado, boa jornada!");
     } catch (e) {
-      toast.error(mensagemErro(e));
+      const msg = mensagemErro(e);
+      const rede = /wifi|rede|escrit[oó]rio|ip/i.test(msg);
+      setCheckinModal({ open: true, type: "error", message: msg, rede });
     } finally {
       setCheckinEm(null);
     }
@@ -406,6 +422,79 @@ export function MinhasReservas() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog
+        open={checkinModal.open}
+        onOpenChange={(o) => {
+          if (!o) setCheckinModal({ open: false });
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          {checkinModal.open && checkinModal.type === "success" && (
+            <>
+              <div className="flex flex-col items-center gap-4 py-2 text-center">
+                <CheckCircle2 className="h-14 w-14 text-green-500" aria-hidden="true" />
+                <DialogHeader className="gap-2">
+                  <DialogTitle className="text-xl font-semibold">Check-in confirmado!</DialogTitle>
+                  <DialogDescription className="text-base text-foreground">
+                    Presença registrada na Posição {checkinModal.reserva.posicao_numero} às{" "}
+                    {checkinModal.hora}. Boa jornada!
+                  </DialogDescription>
+                </DialogHeader>
+                <Button
+                  onClick={() => setCheckinModal({ open: false })}
+                  className="min-w-[8rem]"
+                >
+                  Fechar
+                </Button>
+              </div>
+            </>
+          )}
+          {checkinModal.open && checkinModal.type === "error" && (
+            <>
+              <div className="flex flex-col items-center gap-4 py-2 text-center">
+                <AlertTriangle className="h-14 w-14 text-destructive" aria-hidden="true" />
+                <DialogHeader className="gap-2">
+                  <DialogTitle className="text-xl font-semibold">Check-in não realizado</DialogTitle>
+                  <DialogDescription className="text-base text-foreground">
+                    {checkinModal.message}
+                  </DialogDescription>
+                </DialogHeader>
+
+                {checkinModal.rede && (
+                  <div className="w-full rounded-lg bg-amber-50 p-4 text-left text-foreground dark:bg-amber-950/30">
+                    <p className="mb-2 flex items-center gap-2 font-semibold">
+                      <Wifi className="h-4 w-4" /> Siga os passos:
+                    </p>
+                    <ol className="list-decimal space-y-1.5 pl-5 text-[15px]">
+                      <li>Conecte-se ao Wi-Fi do escritório (Zin Group).</li>
+                      <li>Volte ao Hub e clique novamente em Fazer check-in.</li>
+                    </ol>
+                  </div>
+                )}
+
+                <p className="text-sm text-foreground">
+                  Problemas com o check-in? Envie um print para{" "}
+                  <a
+                    href="mailto:operacoes@lavoroseguros.com.br"
+                    className="font-medium underline hover:text-primary"
+                  >
+                    operacoes@lavoroseguros.com.br
+                  </a>
+                </p>
+
+                <Button
+                  onClick={() => setCheckinModal({ open: false })}
+                  variant="outline"
+                  className="min-w-[8rem]"
+                >
+                  Entendi
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={!!editando}
