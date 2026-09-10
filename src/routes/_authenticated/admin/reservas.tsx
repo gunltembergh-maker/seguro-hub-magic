@@ -42,6 +42,7 @@ import {
 } from "@/lib/rp/rp-tipos";
 import { CancelarComMotivoDialog } from "@/components/reserva-posicoes/CancelarComMotivoDialog";
 import { cancelarReservaComMotivo } from "@/lib/rp/rp-cancelar";
+import { entradaIpValida, normalizarEntradaIp } from "@/lib/rp/ip-match";
 
 
 
