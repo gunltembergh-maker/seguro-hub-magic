@@ -27,8 +27,7 @@ export function ComoFunciona({
     },
     {
       titulo: "Check-in ao chegar",
-      texto: `No dia, abra o Hub e clique em Fazer check-in na sua reserva, disponível a partir de ${antes} minutos antes do início.`,
-      emBreve: true,
+      texto: `No dia, conecte-se ao Wi-Fi do escritório, abra o Hub e clique em Fazer check-in na sua reserva, disponível a partir de ${antes} minutos antes do início.`,
     },
     {
       titulo: "Atenção ao prazo",
