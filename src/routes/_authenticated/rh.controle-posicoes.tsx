@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   CalendarCheck,
@@ -138,6 +138,26 @@ function ControlePosicoesPage() {
   const [posicao, setPosicao] = useState<string>("todas");
   const [status, setStatus] = useState<string>("todos");
   const [exportando, setExportando] = useState(false);
+  const qc = useQueryClient();
+  const [alvo, setAlvo] = useState<ReservaControle | null>(null);
+  const [cancelandoId, setCancelandoId] = useState<string | null>(null);
+
+  const cancelarReserva = async (motivo: string) => {
+    if (!alvo) return;
+    setCancelandoId(alvo.reserva_id);
+    try {
+      await cancelarReservaComMotivo(alvo.reserva_id, motivo);
+      await qc.invalidateQueries({ queryKey: ["rh-controle-reservas"] });
+      await qc.invalidateQueries({ queryKey: ["rh-controle-ranking"] });
+      setAlvo(null);
+      toast.success("Reserva cancelada.");
+    } catch (e) {
+      toast.error(mensagemErro(e));
+    } finally {
+      setCancelandoId(null);
+    }
+  };
+
 
   // Processa e notifica ausências pendentes ao abrir a tela (idempotente no servidor).
   useEffect(() => {
