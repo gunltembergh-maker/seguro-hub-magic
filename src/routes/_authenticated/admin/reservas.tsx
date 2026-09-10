@@ -739,12 +739,18 @@ function AbaParametros() {
           {form.ips.length === 0 && <span className="text-sm text-slate-500">Nenhum IP cadastrado.</span>}
         </div>
         <div className="flex gap-2">
-          <Input value={novoIp} onChange={(e) => setNovoIp(e.target.value)} placeholder="200.100.50.10" />
+          <Input
+            value={novoIp}
+            onChange={(e) => setNovoIp(e.target.value)}
+            placeholder="189.68.252.22, 189.68.252.0/24 ou 2804:1b3:aa42:c7c::/64"
+          />
           <Button
             variant="outline"
             onClick={() => {
-              const v = novoIp.trim();
+              const v = normalizarEntradaIp(novoIp);
               if (!v) return;
+              if (!entradaIpValida(v))
+                return toast.error("Informe um IPv4, IPv6 ou faixa CIDR válida.");
               if (form.ips.includes(v)) return toast.error("IP já cadastrado.");
               setForm({ ...form, ips: [...form.ips, v] });
               setNovoIp("");
