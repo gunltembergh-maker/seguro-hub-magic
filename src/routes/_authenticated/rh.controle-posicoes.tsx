@@ -429,14 +429,14 @@ function ControlePosicoesPage() {
                 <tbody>
                   {carregandoReservas && (
                     <tr>
-                      <td colSpan={8} className="px-3 py-6 text-center text-slate-500">
+                      <td colSpan={9} className="px-3 py-6 text-center text-slate-500">
                         Carregando…
                       </td>
                     </tr>
                   )}
                   {!carregandoReservas && linhas.length === 0 && (
                     <tr>
-                      <td colSpan={8} className="px-3 py-6 text-center text-slate-500">
+                      <td colSpan={9} className="px-3 py-6 text-center text-slate-500">
                         Nenhuma reserva no período.
                       </td>
                     </tr>
