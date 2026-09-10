@@ -36,32 +36,30 @@ export function ComoFunciona({
 
   return (
     <aside className="rounded-xl border border-border bg-card p-4">
-      <h3 className="font-display text-base font-semibold text-foreground">Como funciona</h3>
+      <h3 className="text-lg font-semibold text-foreground">Como funciona</h3>
 
-      <div className="mt-3 rounded-lg bg-muted/60 px-3 py-2 text-sm">
-        <span className="font-semibold text-foreground">
-          {livres} de {total} posições
-        </span>{" "}
-        <span className="text-muted-foreground">com horários livres no dia selecionado</span>
+      <div className="mt-3 rounded-lg bg-muted/60 px-3 py-2 text-[15px]">
+        <span className="font-bold text-foreground">{livres} de {total}</span>{" "}
+        <span className="text-foreground">posições com horários livres no dia selecionado</span>
       </div>
 
       <ol className="mt-4 space-y-4">
         {passos.map((p, i) => (
           <li key={p.titulo} className="flex gap-3">
-            <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#14405C] text-xs font-bold text-white">
+            <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-base font-bold text-primary-foreground">
               {i + 1}
             </span>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-semibold text-foreground">{p.titulo}</span>
+                <span className="text-base font-semibold text-primary">{p.titulo}</span>
               </div>
-              <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{p.texto}</p>
+              <p className="mt-0.5 text-[15px] leading-relaxed text-foreground">{p.texto}</p>
             </div>
           </li>
         ))}
       </ol>
 
-      <p className="mt-4 border-t border-border pt-3 text-[11px] text-muted-foreground">
+      <p className="mt-4 border-t border-border pt-3 text-[13px] leading-relaxed text-foreground/90">
         Precisa cancelar? Vá em Minhas reservas e cancele antes do horário de início.
       </p>
     </aside>
