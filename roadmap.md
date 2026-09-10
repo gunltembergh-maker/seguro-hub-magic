@@ -1,1 +1,1 @@
-- [ ] Tornar a planta da Reserva de Posições fiel à disposição física mostrada na foto, sem alterar comportamento.
+- [x] Tornar a planta da Reserva de Posições fiel à disposição física mostrada na foto, sem alterar comportamento.
