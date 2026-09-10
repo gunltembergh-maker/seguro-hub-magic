@@ -172,7 +172,7 @@ export function PlantaEscritorio({
   const frente = posicoes.filter((p) => p.bloco !== "fundo").sort((a, b) => a.numero - b.numero);
 
   const W = 900;
-  const H = 720;
+  const H = 560;
 
   // Bancada do fundo: 3 mesas contínuas encostadas na janela.
   const bancadaX = 190;
@@ -257,15 +257,15 @@ export function PlantaEscritorio({
           </g>
 
           {/* parede de vidro preto (painel/TV) */}
-          <rect x={26} y={120} width={26} height={536} rx={8} className="fill-[#111418]" />
-          <rect x={31} y={190} width={16} height={230} rx={5} className="fill-[#30343A] dark:fill-[#090B0E]" />
+          <rect x={26} y={120} width={26} height={400} rx={8} className="fill-[#111418]" />
+          <rect x={31} y={170} width={16} height={200} rx={5} className="fill-[#30343A] dark:fill-[#090B0E]" />
           <text
             x={39}
-            y={520}
+            y={450}
             textAnchor="middle"
             fontSize={11}
             fill="#7C8794"
-            transform="rotate(-90 39 520)"
+            transform="rotate(-90 39 450)"
           >
             PAINEL DE VIDRO
           </text>
@@ -297,32 +297,32 @@ export function PlantaEscritorio({
           ))}
 
           {/* abertura envidraçada para a varanda a partir da metade da posição 9 */}
-          <rect x={800} y={421} width={16} height={262} rx={7} fill="url(#vidroVaranda)" />
-          {Array.from({ length: 4 }).map((_, i) => (
+          <rect x={800} y={421} width={16} height={112} rx={7} fill="url(#vidroVaranda)" />
+          {Array.from({ length: 3 }).map((_, i) => (
             <line
               key={i}
               x1={800}
-              y1={421 + (262 / 4) * (i + 1)}
+              y1={421 + (112 / 3) * (i + 1)}
               x2={816}
-              y2={421 + (262 / 4) * (i + 1)}
+              y2={421 + (112 / 3) * (i + 1)}
               stroke="#D9EFF9"
               strokeWidth={1.5}
               opacity={0.6}
             />
           ))}
-          <rect x={822} y={421} width={38} height={262} rx={12} fill="#A8BAC0" opacity={0.16} />
+          <rect x={822} y={421} width={38} height={112} rx={12} fill="#A8BAC0" opacity={0.16} />
           <text
             x={841}
-            y={552}
+            y={478}
             textAnchor="middle"
             fontSize={11}
             letterSpacing={3}
             fill="#A8CEDD"
-            transform="rotate(90 841 552)"
+            transform="rotate(90 841 478)"
           >
             VARANDA
           </text>
-          {[470, 600].map((y, i) => (
+          {[432].map((y, i) => (
             <g key={y}>
               <path d={`M829 ${y + 14}h24l-4 21h-16Z`} fill="#776756" />
               <circle cx={841} cy={y + 8} r={i === 1 ? 14 : 12} fill="#266044" />
@@ -352,16 +352,18 @@ export function PlantaEscritorio({
               onSelecionar={onSelecionar}
             />
           ))}
-          <text x={bancadaX - 10} y={76} fontSize={12} letterSpacing={2} fill="#9AA5B1">
+          <text
+            x={100}
+            y={135}
+            textAnchor="middle"
+            fontSize={11}
+            letterSpacing={2}
+            fill="#9AA5B1"
+            transform="rotate(-90 100 135)"
+          >
             BLOCO FUNDO
           </text>
 
-
-          {/* plantas decorativas */}
-          <circle cx={142} cy={260} r={16} className="fill-emerald-700" />
-          <circle cx={142} cy={260} r={9} className="fill-emerald-500" opacity={0.8} />
-          <circle cx={748} cy={580} r={14} className="fill-emerald-700" />
-          <circle cx={748} cy={580} r={8} className="fill-emerald-500" opacity={0.8} />
 
           {/* base contínua do bloco frontal */}
           <rect
@@ -387,7 +389,15 @@ export function PlantaEscritorio({
           ))}
 
           {/* bloco da frente */}
-          <text x={frenteX - 20} y={270} fontSize={12} letterSpacing={2} fill="#9AA5B1">
+          <text
+            x={100}
+            y={380}
+            textAnchor="middle"
+            fontSize={11}
+            letterSpacing={2}
+            fill="#9AA5B1"
+            transform="rotate(-90 100 380)"
+          >
             BLOCO FRENTE
           </text>
           {frente.map((p, i) => {
