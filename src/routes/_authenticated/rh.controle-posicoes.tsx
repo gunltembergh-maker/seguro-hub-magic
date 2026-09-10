@@ -422,6 +422,8 @@ function ControlePosicoesPage() {
                     <th className="px-3 py-2 text-center">Compareceu</th>
                     <th className="px-3 py-2 text-center">Reservado em</th>
                     <th className="px-3 py-2 text-center">Check-in</th>
+                    <th className="px-3 py-2 text-right">Ações</th>
+
                   </tr>
                 </thead>
                 <tbody>
@@ -448,19 +450,36 @@ function ControlePosicoesPage() {
                         {hhmm(r.hora_inicio)} às {hhmm(r.hora_fim)}
                       </td>
                       <td className="px-3 py-2 text-center">
-                        <Badge
-                          variant="outline"
-                          className={
-                            r.status === "cancelada"
-                              ? "border-slate-300 text-slate-600"
-                              : r.status === "expirada"
-                                ? "border-red-300 text-red-600"
-                                : "border-cyan-400 text-cyan-700"
-                          }
-                        >
-                          {STATUS_LABEL[r.status] ?? r.status}
-                        </Badge>
+                        <span className="inline-flex items-center gap-1">
+                          <Badge
+                            variant="outline"
+                            className={
+                              r.status === "cancelada"
+                                ? "border-slate-300 text-slate-600"
+                                : r.status === "expirada"
+                                  ? "border-red-300 text-red-600"
+                                  : "border-cyan-400 text-cyan-700"
+                            }
+                          >
+                            {STATUS_LABEL[r.status] ?? r.status}
+                          </Badge>
+                          {r.status === "cancelada" && r.motivo_cancelamento && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button type="button" aria-label="Ver motivo do cancelamento">
+                                    <Info className="h-4 w-4 text-slate-500" />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  {r.motivo_cancelamento}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </span>
                       </td>
+
                       <td className="px-3 py-2 text-center">
                         {r.compareceu ? (
                           <span className="inline-flex items-center gap-1 text-green-600">
