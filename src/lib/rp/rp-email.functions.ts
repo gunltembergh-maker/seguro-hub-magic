@@ -7,6 +7,12 @@ const InputSchema = z.object({
   tipo: z.enum(["confirmacao", "cancelamento"]),
   /** Cancelamento feito por administrador: o e-mail do chamador não é o do dono da reserva. */
   apenas_rh: z.boolean().optional(),
+  /** Cancelamento feito por RH/Admin sobre a reserva de outra pessoa. */
+  por_terceiro: z.boolean().optional(),
+  /** Dono da reserva (usado quando o cancelamento veio do RH/Admin). */
+  dono_user_id: z.string().optional().nullable(),
+  /** Justificativa obrigatória do cancelamento por terceiro. */
+  motivo: z.string().optional().nullable(),
   reserva: z.object({
     id: z.string(),
     nome: z.string().optional().nullable(),
@@ -16,6 +22,7 @@ const InputSchema = z.object({
     hora_fim: z.string(),
   }),
 });
+
 
 
 /**
