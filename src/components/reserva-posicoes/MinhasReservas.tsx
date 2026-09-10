@@ -60,6 +60,8 @@ import {
   type RpReservaRetorno,
 } from "@/lib/rp/rp-tipos";
 import { enviarEmailReserva } from "@/lib/rp/rp-email.functions";
+import { fazerCheckin } from "@/lib/rp/rp-checkin.functions";
+import { processarAusencias } from "@/lib/rp/rp-ausencias.functions";
 
 /** Converte a data da reserva (ISO ou DD/MM/AAAA) + hora em um Date local. */
 const dataHoraLocal = (data: string, hora: string) => {
@@ -90,7 +92,56 @@ export function MinhasReservas() {
 
   const [alvo, setAlvo] = useState<RpMinhaReserva | null>(null);
   const [cancelando, setCancelando] = useState(false);
+  const [checkinEm, setCheckinEm] = useState<string | null>(null);
   const hojeIso = isoDeData(new Date());
+
+  // Dispara o processamento de ausências ao abrir a tela (idempotente no servidor).
+  useEffect(() => {
+    processarAusencias({})
+      .then((r) => {
+        if (r?.enviados) qc.invalidateQueries({ queryKey: ["rp-minhas-reservas"] });
+      })
+      .catch(() => undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const antesMin = params?.rp_checkin_liberado_antes_min ?? 30;
+  const toleranciaMin = params?.rp_tolerancia_checkin_min ?? 15;
+
+  /** Janela de check-in: de X min antes do início até Y min após o início. */
+  const janelaCheckin = (r: RpMinhaReserva) => {
+    const inicio = dataHoraLocal(r.data, r.hora_inicio).getTime();
+    const agora = Date.now();
+    if (agora < inicio - antesMin * 60_000)
+      return {
+        aberta: false,
+        motivo: `O check-in abre ${antesMin} minutos antes do início da reserva.`,
+      };
+    if (agora > inicio + toleranciaMin * 60_000)
+      return {
+        aberta: false,
+        motivo: `O prazo de check-in (${toleranciaMin} minutos após o início) já passou.`,
+      };
+    return { aberta: true, motivo: "Conecte-se ao Wi-Fi do escritório para confirmar sua presença." };
+  };
+
+  const fazerCheckinReserva = async (r: RpMinhaReserva) => {
+    setCheckinEm(r.id);
+    try {
+      const res = await fazerCheckin({ data: { reserva_id: r.id } });
+      if (!res.ok) {
+        toast.error(res.erro);
+        return;
+      }
+      await qc.invalidateQueries({ queryKey: ["rp-minhas-reservas"] });
+      await qc.invalidateQueries({ queryKey: ["rp-grade-dia"] });
+      toast.success("Check-in confirmado, boa jornada!");
+    } catch (e) {
+      toast.error(mensagemErro(e));
+    } finally {
+      setCheckinEm(null);
+    }
+  };
 
   // ---- alteração de reserva ----
   const [editando, setEditando] = useState<RpMinhaReserva | null>(null);
