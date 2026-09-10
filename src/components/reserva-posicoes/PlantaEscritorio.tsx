@@ -297,32 +297,32 @@ export function PlantaEscritorio({
           ))}
 
           {/* abertura envidraçada para a varanda a partir da metade da posição 9 */}
-          <rect x={800} y={421} width={16} height={262} rx={7} fill="url(#vidroVaranda)" />
-          {Array.from({ length: 4 }).map((_, i) => (
+          <rect x={800} y={421} width={16} height={112} rx={7} fill="url(#vidroVaranda)" />
+          {Array.from({ length: 3 }).map((_, i) => (
             <line
               key={i}
               x1={800}
-              y1={421 + (262 / 4) * (i + 1)}
+              y1={421 + (112 / 3) * (i + 1)}
               x2={816}
-              y2={421 + (262 / 4) * (i + 1)}
+              y2={421 + (112 / 3) * (i + 1)}
               stroke="#D9EFF9"
               strokeWidth={1.5}
               opacity={0.6}
             />
           ))}
-          <rect x={822} y={421} width={38} height={262} rx={12} fill="#A8BAC0" opacity={0.16} />
+          <rect x={822} y={421} width={38} height={112} rx={12} fill="#A8BAC0" opacity={0.16} />
           <text
             x={841}
-            y={552}
+            y={478}
             textAnchor="middle"
             fontSize={11}
             letterSpacing={3}
             fill="#A8CEDD"
-            transform="rotate(90 841 552)"
+            transform="rotate(90 841 478)"
           >
             VARANDA
           </text>
-          {[470, 600].map((y, i) => (
+          {[432].map((y, i) => (
             <g key={y}>
               <path d={`M829 ${y + 14}h24l-4 21h-16Z`} fill="#776756" />
               <circle cx={841} cy={y + 8} r={i === 1 ? 14 : 12} fill="#266044" />
