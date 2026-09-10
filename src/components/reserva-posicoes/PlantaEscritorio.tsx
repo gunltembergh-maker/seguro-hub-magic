@@ -180,9 +180,9 @@ export function PlantaEscritorio({
   const mesaFundoW = bancadaW / 3;
 
   // Bloco da frente: uma ilha com duas fileiras de 3 posições, como no escritório.
-  const frenteX = 150;
+  const frenteX = 196;
   const mesaW = 188;
-  const gapX = 8;
+  const gapX = 12;
   const linhaY = [332, 490];
 
   return (
@@ -269,47 +269,59 @@ export function PlantaEscritorio({
             PAINEL DE VIDRO
           </text>
 
-          {/* trecho de parede com quadros, antes do vidro lateral */}
-          <rect x={796} y={88} width={38} height={150} rx={5} fill="var(--color-office-wall)" opacity={0.95} />
-          {[104, 164].map((y) => (
+          {/* janela lateral ao lado da posição 3, também com vista da cidade */}
+          <rect x={804} y={82} width={30} height={154} rx={6} fill="url(#vidroVaranda)" />
+          {[108, 146, 184].map((y) => (
+            <line key={y} x1={804} y1={y} x2={834} y2={y} stroke="#D9EFF9" strokeWidth={1.5} opacity={0.7} />
+          ))}
+          <g fill="#14405C" opacity={0.28}>
+            <path d="M808 225v-45h8v45m3 0v-68h10v68" />
+          </g>
+          <text x={821} y={159} textAnchor="middle" fontSize={9} letterSpacing={2} fill="#D9EFF9" transform="rotate(90 821 159)">
+            VISTA DA CIDADE
+          </text>
+
+          {/* parede junto à posição 6 e meia parede junto à posição 9 */}
+          <rect x={804} y={276} width={30} height={250} rx={5} fill="var(--color-office-wall)" opacity={0.98} />
+          {[310, 370].map((y) => (
             <g key={y}>
-              <rect x={810} y={y} width={20} height={42} rx={2} fill="#151719" />
-              <rect x={813} y={y + 3} width={14} height={36} rx={1} fill="#B8B09F" />
+              <rect x={809} y={y} width={20} height={42} rx={2} fill="#151719" />
+              <rect x={812} y={y + 3} width={14} height={36} rx={1} fill="#B8B09F" />
               <path
-                d={`M820 ${y + 33}c-7-8-5-17 0-20 6 4 7 12 0 20Zm0-11c5-7 9-6 10-3-1 5-4 8-10 10Z`}
+                d={`M819 ${y + 33}c-7-8-5-17 0-20 6 4 7 12 0 20Zm0-11c5-7 9-6 10-3-1 5-4 8-10 10Z`}
                 fill="#34483D"
                 opacity={0.9}
               />
             </g>
           ))}
 
-          {/* vidro lateral e varanda */}
-          <rect x={818} y={252} width={16} height={430} rx={7} fill="url(#vidroVaranda)" />
-          {Array.from({ length: 6 }).map((_, i) => (
+          {/* abertura envidraçada para a varanda começa na metade da posição 9 */}
+          <rect x={818} y={526} width={16} height={156} rx={7} fill="url(#vidroVaranda)" />
+          {Array.from({ length: 3 }).map((_, i) => (
             <line
               key={i}
               x1={818}
-              y1={252 + (430 / 6) * (i + 1)}
+              y1={526 + (156 / 3) * (i + 1)}
               x2={834}
-              y2={252 + (430 / 6) * (i + 1)}
+              y2={526 + (156 / 3) * (i + 1)}
               stroke="#D9EFF9"
               strokeWidth={1.5}
               opacity={0.6}
             />
           ))}
-          <rect x={840} y={252} width={38} height={430} rx={12} fill="#A8BAC0" opacity={0.16} />
+          <rect x={840} y={526} width={38} height={156} rx={12} fill="#A8BAC0" opacity={0.16} />
           <text
             x={863}
-             y={468}
+             y={603}
             textAnchor="middle"
             fontSize={11}
             letterSpacing={3}
             fill="#A8CEDD"
-             transform="rotate(90 863 468)"
+             transform="rotate(90 863 603)"
           >
             VARANDA
           </text>
-          {[304, 464, 624].map((y, i) => (
+          {[552, 634].map((y, i) => (
             <g key={y}>
               <path d={`M847 ${y + 14}h24l-4 21h-16Z`} fill="#776756" />
               <circle cx={859} cy={y + 8} r={i === 1 ? 14 : 12} fill="#266044" />
