@@ -51,8 +51,18 @@ export interface RpReservaRetorno {
 
 export const hhmm = (h?: string | null) => (h ?? "").slice(0, 5);
 
-export const dataBR = (iso?: string | null) =>
-  iso ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}` : "";
+/**
+ * Sempre devolve DD/MM/AAAA. Aceita ISO (AAAA-MM-DD) ou um valor que já venha
+ * formatado em DD/MM/AAAA (caso das RPCs de reserva) — nesse caso não reformata.
+ */
+export const dataBR = (valor?: string | null) => {
+  const v = (valor ?? "").trim();
+  if (!v) return "";
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(v)) return v;
+  const iso = v.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[3]}/${iso[2]}/${iso[1]}`;
+  return v;
+};
 
 export const isoDeData = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
