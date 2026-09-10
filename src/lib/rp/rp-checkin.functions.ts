@@ -119,9 +119,9 @@ export const fazerCheckin = createServerFn({ method: "POST" })
       .maybeSingle();
 
     const permitidos = listaDeIps(cfg?.value);
-    const autorizado = candidatos.some((c) => permitidos.includes(c));
+    const casado = candidatos.find((c) => ipAutorizado(c, permitidos)) ?? null;
 
-    if (!autorizado) {
+    if (!casado) {
       await registrarNegado("ip_fora_da_lista");
       return {
         ok: false as const,
