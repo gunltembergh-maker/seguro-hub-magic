@@ -64,7 +64,9 @@ interface ReservaControle {
   compareceu: boolean;
   checkin_em: string | null;
   reservado_em: string | null;
+  motivo_cancelamento?: string | null;
 }
+
 
 interface RankingControle {
   colaborador: string | null;
