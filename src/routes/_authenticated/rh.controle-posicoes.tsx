@@ -493,6 +493,22 @@ function ControlePosicoesPage() {
                       </td>
                       <td className="px-3 py-2 text-center text-slate-600">{dataHoraBR(r.reservado_em) || "—"}</td>
                       <td className="px-3 py-2 text-center text-slate-600">{dataHoraBR(r.checkin_em) || "—"}</td>
+                      <td className="px-3 py-2 text-right">
+                        {["reservada", "confirmada"].includes(r.status) && (
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => setAlvo(r)}
+                            disabled={cancelandoId === r.reserva_id}
+                          >
+                            {cancelandoId === r.reserva_id && (
+                              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                            )}
+                            Cancelar
+                          </Button>
+                        )}
+                      </td>
+
                     </tr>
                   ))}
                 </tbody>
