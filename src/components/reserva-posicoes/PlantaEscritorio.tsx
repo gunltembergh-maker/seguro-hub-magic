@@ -179,11 +179,12 @@ export function PlantaEscritorio({
   const bancadaW = 600;
   const mesaFundoW = bancadaW / 3;
 
-  // Bloco da frente: uma ilha com duas fileiras de 3 posições, como no escritório.
+  // Bloco da frente: uma fileira única de 3 colunas; cada coluna tem duas mesas frente a frente.
   const frenteX = 196;
   const mesaW = 188;
   const gapX = 12;
-  const linhaY = [332, 490];
+  const frenteYBase = 292;
+  const mesaH = 86;
 
   return (
     <div className="overflow-x-auto">
@@ -355,14 +356,6 @@ export function PlantaEscritorio({
             BLOCO FUNDO
           </text>
 
-          {/* divisória/canaleta da ilha central, entre as duas fileiras */}
-          <rect x={frenteX} y={466} width={mesaW * 3 + gapX * 2} height={10} rx={4} fill="var(--color-office-frame)" />
-          {[frenteX + 92, frenteX + 288, frenteX + 484].map((x) => (
-            <g key={x}>
-              <circle cx={x} cy={471} r={12} fill="#202923" />
-              <circle cx={x} cy={468} r={7} fill="var(--color-office-plant)" />
-            </g>
-          ))}
 
           {/* plantas decorativas */}
           <circle cx={142} cy={260} r={16} className="fill-emerald-700" />
@@ -370,22 +363,45 @@ export function PlantaEscritorio({
           <circle cx={748} cy={580} r={14} className="fill-emerald-700" />
           <circle cx={748} cy={580} r={8} className="fill-emerald-500" opacity={0.8} />
 
+          {/* base contínua do bloco frontal */}
+          <rect
+            x={frenteX - 10}
+            y={frenteYBase - 8}
+            width={mesaW * 3 + gapX * 2 + 20}
+            height={mesaH * 2 + 16}
+            rx={14}
+            className="fill-black/20"
+          />
+
+          {/* divisórias verticais finas entre colunas */}
+          {[1, 2].map((col) => (
+            <rect
+              key={col}
+              x={frenteX + col * (mesaW + gapX) - gapX / 2}
+              y={frenteYBase - 8}
+              width={gapX}
+              height={mesaH * 2 + 16}
+              rx={2}
+              className="fill-black/30"
+            />
+          ))}
+
           {/* bloco da frente */}
-          <text x={frenteX - 20} y={304} fontSize={12} letterSpacing={2} fill="#9AA5B1">
+          <text x={frenteX - 20} y={270} fontSize={12} letterSpacing={2} fill="#9AA5B1">
             BLOCO FRENTE
           </text>
           {frente.map((p, i) => {
-            const linha = Math.floor(i / 3);
             const col = i % 3;
+            const ehInferior = i >= 3;
             return (
               <Mesa
                 key={p.id}
                 pos={p}
                 x={frenteX + col * (mesaW + gapX)}
-                y={linhaY[linha] ?? 488}
+                y={frenteYBase + (ehInferior ? mesaH : 0)}
                 w={mesaW}
-                h={86}
-                cadeira={linha === 0 ? "cima" : "baixo"}
+                h={mesaH}
+                cadeira={ehInferior ? "baixo" : "cima"}
                 onSelecionar={onSelecionar}
               />
             );
