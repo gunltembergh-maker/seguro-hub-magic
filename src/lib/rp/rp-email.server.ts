@@ -13,6 +13,7 @@ export interface ReservaEmailDados {
   hora_inicio: string;
   hora_fim: string;
   tolerancia_min: string;
+  checkin_antes_min?: string;
 }
 
 export function aplicarVariaveis(texto: string, dados: ReservaEmailDados): string {
