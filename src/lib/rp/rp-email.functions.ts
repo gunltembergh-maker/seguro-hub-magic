@@ -37,11 +37,16 @@ export const enviarEmailReserva = createServerFn({ method: "POST" })
       const { lavoroAdmin } = await import("@/integrations/supabase/lavoro-admin.server");
       const { enviarHtml, aplicarVariaveis } = await import("./rp-email.server");
 
+      // Cancelamento feito por RH/Admin usa o modelo próprio, com a justificativa.
+      const porTerceiro = data.tipo === "cancelamento" && data.por_terceiro === true;
+      const tipoColab = porTerceiro ? "cancelamento_admin" : data.tipo;
+      const tipoRh = `rh_${data.tipo}`;
+
       const [{ data: tpls }, { data: settings }] = await Promise.all([
         lavoroAdmin
           .from("rp_email_templates")
           .select("tipo, assunto, corpo_html, ativo")
-          .in("tipo", [data.tipo, `rh_${data.tipo}`]),
+          .in("tipo", [tipoColab, tipoRh]),
         lavoroAdmin
           .from("hub_admin_settings")
           .select("key, value")
@@ -54,8 +59,8 @@ export const enviarEmailReserva = createServerFn({ method: "POST" })
       ]);
 
       const lista = tpls ?? [];
-      const tplColab = lista.find((t: any) => t.tipo === data.tipo);
-      const tplRh = lista.find((t: any) => t.tipo === `rh_${data.tipo}`);
+      const tplColab = lista.find((t: any) => t.tipo === tipoColab);
+      const tplRh = lista.find((t: any) => t.tipo === tipoRh);
       if ((!tplColab || tplColab.ativo === false) && (!tplRh || tplRh.ativo === false)) {
         return { ok: false, motivo: "template_inativo" };
       }
@@ -67,14 +72,28 @@ export const enviarEmailReserva = createServerFn({ method: "POST" })
       const tolerancia = String(cfg.get("rp_tolerancia_checkin_min") ?? 15);
       const checkinAntes = String(cfg.get("rp_checkin_liberado_antes_min") ?? 30);
 
+      // Quando o cancelamento vem do RH/Admin, o destinatário é o dono da reserva.
+      let emailDono: string | undefined;
+      let nomeDono: string | undefined;
+      if (porTerceiro && data.dono_user_id) {
+        const { data: perfil } = await lavoroAdmin
+          .from("profiles")
+          .select("email, nome")
+          .eq("user_id", data.dono_user_id)
+          .maybeSingle();
+        emailDono = (perfil as any)?.email ?? undefined;
+        nomeDono = (perfil as any)?.nome ?? undefined;
+      }
+
       const vars = {
-        nome: data.reserva.nome ?? "",
+        nome: nomeDono ?? data.reserva.nome ?? "",
         posicao: String(data.reserva.posicao_numero),
         data: dataBR(data.reserva.data),
         hora_inicio: hhmm(data.reserva.hora_inicio),
         hora_fim: hhmm(data.reserva.hora_fim),
         tolerancia_min: tolerancia,
         checkin_antes_min: checkinAntes,
+        motivo: data.motivo ?? "",
       };
 
       // Envios: colaborador recebe o template padrão; o RH recebe o template rh_*.
@@ -82,12 +101,15 @@ export const enviarEmailReserva = createServerFn({ method: "POST" })
       const envios: Envio[] = [];
       const vistos = new Set<string>();
 
-      const emailUsuario = (context.claims?.email as string | undefined) ?? undefined;
-      if (!data.apenas_rh && enviarUsuario && emailUsuario && tplColab && tplColab.ativo !== false) {
-        vistos.add(emailUsuario.toLowerCase());
+      const emailColab = porTerceiro
+        ? emailDono
+        : ((context.claims?.email as string | undefined) ?? undefined);
+      const podeColab = porTerceiro ? true : !data.apenas_rh;
+      if (podeColab && enviarUsuario && emailColab && tplColab && tplColab.ativo !== false) {
+        vistos.add(emailColab.toLowerCase());
         envios.push({
-          to: emailUsuario,
-          tipoTpl: data.tipo,
+          to: emailColab,
+          tipoTpl: tipoColab,
           assunto: aplicarVariaveis(tplColab.assunto, vars),
           html: aplicarVariaveis(tplColab.corpo_html, vars),
         });
@@ -99,9 +121,10 @@ export const enviarEmailReserva = createServerFn({ method: "POST" })
         for (const e of emailsRh.filter(Boolean)) {
           if (vistos.has(e.toLowerCase())) continue;
           vistos.add(e.toLowerCase());
-          envios.push({ to: e, tipoTpl: `rh_${data.tipo}`, assunto: assuntoRh, html: htmlRh });
+          envios.push({ to: e, tipoTpl: tipoRh, assunto: assuntoRh, html: htmlRh });
         }
       }
+
 
       const resultados = await Promise.all(
         envios.map((e, i) =>
