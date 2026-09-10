@@ -728,7 +728,15 @@ function AbaParametros() {
 
 /* --------------------------- Modelos de e-mail ---------------------------- */
 
-const VARIAVEIS = ["nome", "posicao", "data", "hora_inicio", "hora_fim", "tolerancia_min"];
+const VARIAVEIS = [
+  "nome",
+  "posicao",
+  "data",
+  "hora_inicio",
+  "hora_fim",
+  "tolerancia_min",
+  "checkin_antes_min",
+];
 const EXEMPLO: Record<string, string> = {
   nome: "Alessandro Oliveira",
   posicao: "4",
@@ -736,6 +744,7 @@ const EXEMPLO: Record<string, string> = {
   hora_inicio: "09:00",
   hora_fim: "18:00",
   tolerancia_min: "15",
+  checkin_antes_min: "30",
 };
 const TIPO_LABEL: Record<string, string> = {
   confirmacao: "Confirmação de reserva",
