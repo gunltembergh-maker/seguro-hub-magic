@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/select";
 import { exportarXlsx, type ColunaExport } from "@/lib/export-xlsx";
 import { dataBR, hhmm, isoDeData } from "@/lib/rp/rp-tipos";
+import { processarAusencias } from "@/lib/rp/rp-ausencias.functions";
 
 export const Route = createFileRoute("/_authenticated/rh/controle-posicoes")({
   head: () => ({
