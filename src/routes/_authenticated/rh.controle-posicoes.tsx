@@ -566,7 +566,20 @@ function ControlePosicoesPage() {
             </div>
           </TabsContent>
         </Tabs>
+
+        <CancelarComMotivoDialog
+          aberto={!!alvo}
+          processando={!!cancelandoId}
+          descricao={
+            alvo
+              ? `${alvo.colaborador ?? "Colaborador"} · posição ${alvo.posicao_numero} em ${dataBR(alvo.data ?? alvo.data_iso)}, das ${hhmm(alvo.hora_inicio)} às ${hhmm(alvo.hora_fim)}.`
+              : ""
+          }
+          onFechar={() => setAlvo(null)}
+          onConfirmar={cancelarReserva}
+        />
       </div>
+
     </div>
   );
 }
