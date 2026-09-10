@@ -70,22 +70,40 @@ export const enviarEmailReserva = createServerFn({ method: "POST" })
         checkin_antes_min: checkinAntes,
       };
 
-      const assunto = aplicarVariaveis(tpl.assunto, vars);
-      const html = aplicarVariaveis(tpl.corpo_html, vars);
+      // Envios: colaborador recebe o template padrão; o RH recebe o template rh_*.
+      type Envio = { to: string; tipoTpl: string; assunto: string; html: string };
+      const envios: Envio[] = [];
+      const vistos = new Set<string>();
 
-      const destinatarios = new Set<string>();
       const emailUsuario = (context.claims?.email as string | undefined) ?? undefined;
-      if (!data.apenas_rh && enviarUsuario && emailUsuario) destinatarios.add(emailUsuario);
-      emailsRh.filter(Boolean).forEach((e) => destinatarios.add(e));
+      if (!data.apenas_rh && enviarUsuario && emailUsuario && tplColab && tplColab.ativo !== false) {
+        vistos.add(emailUsuario.toLowerCase());
+        envios.push({
+          to: emailUsuario,
+          tipoTpl: data.tipo,
+          assunto: aplicarVariaveis(tplColab.assunto, vars),
+          html: aplicarVariaveis(tplColab.corpo_html, vars),
+        });
+      }
+
+      if (tplRh && tplRh.ativo !== false) {
+        const assuntoRh = aplicarVariaveis(tplRh.assunto, vars);
+        const htmlRh = aplicarVariaveis(tplRh.corpo_html, vars);
+        for (const e of emailsRh.filter(Boolean)) {
+          if (vistos.has(e.toLowerCase())) continue;
+          vistos.add(e.toLowerCase());
+          envios.push({ to: e, tipoTpl: `rh_${data.tipo}`, assunto: assuntoRh, html: htmlRh });
+        }
+      }
 
       const resultados = await Promise.all(
-        [...destinatarios].map((to, i) =>
+        envios.map((e, i) =>
           enviarHtml({
-            to,
-            subject: assunto,
-            html,
-            templateName: `rp-${data.tipo}`,
-            idempotencyKey: `rp-${data.tipo}-${data.reserva.id}-${i}`,
+            to: e.to,
+            subject: e.assunto,
+            html: e.html,
+            templateName: `rp-${e.tipoTpl}`,
+            idempotencyKey: `rp-${e.tipoTpl}-${data.reserva.id}-${i}`,
           }),
         ),
       );
