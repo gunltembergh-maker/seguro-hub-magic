@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { dataBR, hhmm } from "./rp-tipos";
 
 const InputSchema = z.object({
   tipo: z.enum(["confirmacao", "cancelamento"]),
