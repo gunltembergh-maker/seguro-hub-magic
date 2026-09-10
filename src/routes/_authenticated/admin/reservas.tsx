@@ -336,22 +336,21 @@ function AbaReservas() {
       .filter((r) => !termo || r.nome.toLowerCase().includes(termo));
   }, [reservas, nomes, colaborador]);
 
-  const cancelar = async (id: string) => {
-    setCancelandoId(id);
+  const cancelar = async (motivo: string) => {
+    if (!alvo) return;
+    setCancelandoId(alvo.id);
     try {
-      const { data, error } = await supabase.rpc("rpc_rp_cancelar_reserva", { p_reserva_id: id });
-      if (error) throw error;
+      await cancelarReservaComMotivo(alvo.id, motivo);
       await qc.invalidateQueries({ queryKey: ["rp-admin-reservas"] });
+      setAlvo(null);
       toast.success("Reserva cancelada.");
-      enviarEmailReserva({
-        data: { tipo: "cancelamento", apenas_rh: true, reserva: data as unknown as RpReservaRetorno },
-      }).catch((e) => console.error("[rp] e-mail de cancelamento falhou", e));
     } catch (e) {
       toast.error(mensagemErro(e));
     } finally {
       setCancelandoId(null);
     }
   };
+
 
   const exportarCsv = () => {
     const cabecalho = ["Data", "Posição", "Apelido", "Colaborador", "Início", "Fim", "Status"];
