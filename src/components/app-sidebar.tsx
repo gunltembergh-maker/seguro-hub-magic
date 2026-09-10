@@ -23,6 +23,7 @@ import {
   ChevronRight,
   Activity,
   CalendarClock,
+  CalendarCheck,
   type LucideIcon,
 } from "lucide-react";
 
@@ -50,6 +51,8 @@ import {
 const primary = [
   { title: "Início", url: "/inicio", icon: Home },
 ];
+
+const RESERVA_ITEM = { title: "Reserva de Posições", url: "/reserva-posicoes", icon: CalendarCheck };
 
 const areasAll: AreaItem[] = [
   {
@@ -270,6 +273,8 @@ export function AppSidebar() {
       show: isAdmin || hasPermission(meuPerfil, "menu_admin_importar") || hasPermission(meuPerfil, "menu_importar_gerencial") || hasPermission(meuPerfil, "menu_importar_caixa") },
     { title: "Relatório de Uso", url: "/admin/uso", icon: Activity,
       show: isAdmin || hasPermission(meuPerfil, "menu_admin_uso") },
+    { title: "Reserva de Posições", url: "/admin/reservas", icon: CalendarCheck,
+      show: isAdmin || hasPermission(meuPerfil, "menu_admin_reservas") },
     { title: "Configurações", url: "/admin/configuracoes", icon: Settings,
       show: isAdmin || hasPermission(meuPerfil, "menu_admin_configuracoes") },
   ].filter((i) => i.show);
@@ -337,6 +342,20 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              {(isAdmin || hasPermission(meuPerfil, "menu_reserva_posicoes")) && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(RESERVA_ITEM.url)}
+                    tooltip={RESERVA_ITEM.title}
+                  >
+                    <Link to={RESERVA_ITEM.url}>
+                      <RESERVA_ITEM.icon />
+                      <span>{RESERVA_ITEM.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
