@@ -35,6 +35,8 @@ import {
   type RpReservaRetorno,
 } from "@/lib/rp/rp-tipos";
 import { enviarEmailReserva } from "@/lib/rp/rp-email.functions";
+import { PlantaEscritorio, LegendaPlanta, estadoDaPosicao } from "./PlantaEscritorio";
+import { ComoFunciona } from "./ComoFunciona";
 
 function PosicaoCard({
   pos,
@@ -144,8 +146,10 @@ export function MapaDia() {
     setDia(d);
   };
 
-  const fundo = (grade ?? []).filter((p) => p.bloco === "fundo").sort((a, b) => a.numero - b.numero);
-  const frente = (grade ?? []).filter((p) => p.bloco !== "fundo").sort((a, b) => a.numero - b.numero);
+  const livres = (grade ?? []).filter((p) => {
+    const e = estadoDaPosicao(p);
+    return e === "livre" || e === "parcial" || e === "minha";
+  }).length;
 
   const abrirModal = (pos: RpPosicaoGrade) => {
     setPosSel(pos);
@@ -225,48 +229,16 @@ export function MapaDia() {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-6 text-slate-600">
+        <div className="flex items-center gap-2 rounded-xl border border-border bg-card p-6 text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" /> Carregando o mapa do dia…
         </div>
       ) : (
-        <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-4">
-          <section>
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Fundo</h3>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              {fundo.map((p) => (
-                <PosicaoCard key={p.id} pos={p} onSelecionar={abrirModal} />
-              ))}
-            </div>
-          </section>
-
-          <div className="h-px bg-slate-200" />
-
-          <section>
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Frente</h3>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              {frente.map((p) => (
-                <PosicaoCard key={p.id} pos={p} onSelecionar={abrirModal} />
-              ))}
-            </div>
-          </section>
-
-          <div className="flex flex-wrap gap-4 pt-2 text-[11px] text-slate-600">
-            <span className="flex items-center gap-1">
-              <i className="h-3 w-3 rounded border border-emerald-200 bg-emerald-50" /> Livre
-            </span>
-            <span className="flex items-center gap-1">
-              <i className="h-3 w-3 rounded border border-slate-200 bg-white" /> Parcialmente ocupada
-            </span>
-            <span className="flex items-center gap-1">
-              <i className="h-3 w-3 rounded border border-[#00BAF2] bg-[#EEF9FF]" /> Sua reserva
-            </span>
-            <span className="flex items-center gap-1">
-              <Lock className="h-3 w-3" /> Fixa
-            </span>
-            <span className="flex items-center gap-1">
-              <i className="h-3 w-3 rounded bg-slate-200" /> Inativa
-            </span>
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="space-y-3 rounded-xl border border-border bg-card p-4">
+            <PlantaEscritorio posicoes={grade ?? []} onSelecionar={abrirModal} />
+            <LegendaPlanta />
           </div>
+          <ComoFunciona params={params} livres={livres} total={(grade ?? []).length || 9} />
         </div>
       )}
 
