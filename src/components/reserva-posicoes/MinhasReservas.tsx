@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CalendarIcon, Loader2, QrCode } from "lucide-react";
+import { CalendarIcon, Info, Loader2, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -62,6 +62,8 @@ import {
 import { enviarEmailReserva } from "@/lib/rp/rp-email.functions";
 import { fazerCheckin } from "@/lib/rp/rp-checkin.functions";
 import { processarAusencias } from "@/lib/rp/rp-ausencias.functions";
+import { cancelarReservaComMotivo } from "@/lib/rp/rp-cancelar";
+
 
 /** Converte a data da reserva (ISO ou DD/MM/AAAA) + hora em um Date local. */
 const dataHoraLocal = (data: string, hora: string) => {
@@ -94,6 +96,22 @@ export function MinhasReservas() {
   const [cancelando, setCancelando] = useState(false);
   const [checkinEm, setCheckinEm] = useState<string | null>(null);
   const hojeIso = isoDeData(new Date());
+
+  // Motivos de cancelamento (quando o RH/Admin cancelou a reserva do colaborador).
+  const { data: motivos } = useQuery({
+    queryKey: ["rp-motivos-cancelamento"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("rp_reservas")
+        .select("id, cancelamento_motivo")
+        .eq("status", "cancelada")
+        .not("cancelamento_motivo", "is", null);
+      if (error) throw error;
+      return new Map((data ?? []).map((r) => [r.id, r.cancelamento_motivo as string]));
+    },
+    staleTime: 60_000,
+  });
+
 
   // Dispara o processamento de ausências ao abrir a tela (idempotente no servidor).
   useEffect(() => {
@@ -207,26 +225,18 @@ export function MinhasReservas() {
     if (!alvo) return;
     setCancelando(true);
     try {
-      const { data, error } = await supabase.rpc("rpc_rp_cancelar_reserva", {
-        p_reserva_id: alvo.id,
-      });
-      if (error) throw error;
-      const reserva = data as unknown as RpReservaRetorno;
-
+      await cancelarReservaComMotivo(alvo.id);
       setAlvo(null);
       await qc.invalidateQueries({ queryKey: ["rp-minhas-reservas"] });
       await qc.invalidateQueries({ queryKey: ["rp-grade-dia"] });
       toast.success("Reserva cancelada.");
-
-      enviarEmailReserva({ data: { tipo: "cancelamento", reserva } }).catch((e) =>
-        console.error("[rp] e-mail de cancelamento falhou", e),
-      );
     } catch (e) {
       toast.error(mensagemErro(e));
     } finally {
       setCancelando(false);
     }
   };
+
 
   const confirmarAlteracao = async () => {
     if (!editando || !posicaoId) return;
@@ -312,10 +322,27 @@ export function MinhasReservas() {
                   {hhmm(r.hora_inicio)} às {hhmm(r.hora_fim)}
                 </TableCell>
                 <TableCell>
-                  <Badge variant="outline" className={STATUS_CLASSE[r.status] ?? ""}>
-                    {STATUS_LABEL[r.status] ?? r.status}
-                  </Badge>
+                  <span className="inline-flex items-center gap-1.5">
+                    <Badge variant="outline" className={STATUS_CLASSE[r.status] ?? ""}>
+                      {STATUS_LABEL[r.status] ?? r.status}
+                    </Badge>
+                    {r.status === "cancelada" && motivos?.get(r.id) && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button type="button" aria-label="Ver motivo do cancelamento">
+                              <Info className="h-4 w-4 text-slate-500" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            Cancelada pelo RH/Administração: {motivos.get(r.id)}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </span>
                 </TableCell>
+
                 <TableCell className="text-right">
                   <div className="flex flex-wrap justify-end gap-2">
                     {isoDaReserva(r.data) === hojeIso && r.status === "reservada" && (

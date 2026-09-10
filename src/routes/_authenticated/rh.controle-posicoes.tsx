@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   CalendarCheck,
@@ -10,7 +10,9 @@ import {
   Users,
   Download,
   Loader2,
+  Info,
 } from "lucide-react";
+
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -26,9 +28,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { exportarXlsx, type ColunaExport } from "@/lib/export-xlsx";
-import { dataBR, hhmm, isoDeData } from "@/lib/rp/rp-tipos";
+import { dataBR, hhmm, isoDeData, mensagemErro } from "@/lib/rp/rp-tipos";
 import { processarAusencias } from "@/lib/rp/rp-ausencias.functions";
+import { CancelarComMotivoDialog } from "@/components/reserva-posicoes/CancelarComMotivoDialog";
+import { cancelarReservaComMotivo } from "@/lib/rp/rp-cancelar";
+
 
 export const Route = createFileRoute("/_authenticated/rh/controle-posicoes")({
   head: () => ({
@@ -64,7 +70,9 @@ interface ReservaControle {
   compareceu: boolean;
   checkin_em: string | null;
   reservado_em: string | null;
+  motivo_cancelamento?: string | null;
 }
+
 
 interface RankingControle {
   colaborador: string | null;
@@ -130,6 +138,26 @@ function ControlePosicoesPage() {
   const [posicao, setPosicao] = useState<string>("todas");
   const [status, setStatus] = useState<string>("todos");
   const [exportando, setExportando] = useState(false);
+  const qc = useQueryClient();
+  const [alvo, setAlvo] = useState<ReservaControle | null>(null);
+  const [cancelandoId, setCancelandoId] = useState<string | null>(null);
+
+  const cancelarReserva = async (motivo: string) => {
+    if (!alvo) return;
+    setCancelandoId(alvo.reserva_id);
+    try {
+      await cancelarReservaComMotivo(alvo.reserva_id, motivo);
+      await qc.invalidateQueries({ queryKey: ["rh-controle-reservas"] });
+      await qc.invalidateQueries({ queryKey: ["rh-controle-ranking"] });
+      setAlvo(null);
+      toast.success("Reserva cancelada.");
+    } catch (e) {
+      toast.error(mensagemErro(e));
+    } finally {
+      setCancelandoId(null);
+    }
+  };
+
 
   // Processa e notifica ausências pendentes ao abrir a tela (idempotente no servidor).
   useEffect(() => {
@@ -216,6 +244,8 @@ function ControlePosicoesPage() {
         { header: "Compareceu", key: "compareceu_label", formato: "texto" },
         { header: "Reservado em", key: "reservado_em_br", formato: "texto", width: 20 },
         { header: "Check-in em", key: "checkin_em_br", formato: "texto", width: 20 },
+        { header: "Motivo do cancelamento", key: "motivo_cancelamento", formato: "texto", width: 40 },
+
       ];
       const colsRanking: ColunaExport[] = [
         { header: "Colaborador", key: "colaborador", formato: "texto", width: 32 },
@@ -236,6 +266,8 @@ function ControlePosicoesPage() {
         compareceu_label: r.compareceu ? "Sim" : "Não",
         reservado_em_br: dataHoraBR(r.reservado_em),
         checkin_em_br: dataHoraBR(r.checkin_em),
+        motivo_cancelamento: r.motivo_cancelamento ?? "",
+
       }));
       const linhasRanking = rank.map((r) => ({
         colaborador: r.colaborador ?? "",
@@ -394,19 +426,21 @@ function ControlePosicoesPage() {
                     <th className="px-3 py-2 text-center">Compareceu</th>
                     <th className="px-3 py-2 text-center">Reservado em</th>
                     <th className="px-3 py-2 text-center">Check-in</th>
+                    <th className="px-3 py-2 text-right">Ações</th>
+
                   </tr>
                 </thead>
                 <tbody>
                   {carregandoReservas && (
                     <tr>
-                      <td colSpan={8} className="px-3 py-6 text-center text-slate-500">
+                      <td colSpan={9} className="px-3 py-6 text-center text-slate-500">
                         Carregando…
                       </td>
                     </tr>
                   )}
                   {!carregandoReservas && linhas.length === 0 && (
                     <tr>
-                      <td colSpan={8} className="px-3 py-6 text-center text-slate-500">
+                      <td colSpan={9} className="px-3 py-6 text-center text-slate-500">
                         Nenhuma reserva no período.
                       </td>
                     </tr>
@@ -420,19 +454,36 @@ function ControlePosicoesPage() {
                         {hhmm(r.hora_inicio)} às {hhmm(r.hora_fim)}
                       </td>
                       <td className="px-3 py-2 text-center">
-                        <Badge
-                          variant="outline"
-                          className={
-                            r.status === "cancelada"
-                              ? "border-slate-300 text-slate-600"
-                              : r.status === "expirada"
-                                ? "border-red-300 text-red-600"
-                                : "border-cyan-400 text-cyan-700"
-                          }
-                        >
-                          {STATUS_LABEL[r.status] ?? r.status}
-                        </Badge>
+                        <span className="inline-flex items-center gap-1">
+                          <Badge
+                            variant="outline"
+                            className={
+                              r.status === "cancelada"
+                                ? "border-slate-300 text-slate-600"
+                                : r.status === "expirada"
+                                  ? "border-red-300 text-red-600"
+                                  : "border-cyan-400 text-cyan-700"
+                            }
+                          >
+                            {STATUS_LABEL[r.status] ?? r.status}
+                          </Badge>
+                          {r.status === "cancelada" && r.motivo_cancelamento && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button type="button" aria-label="Ver motivo do cancelamento">
+                                    <Info className="h-4 w-4 text-slate-500" />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  {r.motivo_cancelamento}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </span>
                       </td>
+
                       <td className="px-3 py-2 text-center">
                         {r.compareceu ? (
                           <span className="inline-flex items-center gap-1 text-green-600">
@@ -446,6 +497,22 @@ function ControlePosicoesPage() {
                       </td>
                       <td className="px-3 py-2 text-center text-slate-600">{dataHoraBR(r.reservado_em) || "—"}</td>
                       <td className="px-3 py-2 text-center text-slate-600">{dataHoraBR(r.checkin_em) || "—"}</td>
+                      <td className="px-3 py-2 text-right">
+                        {["reservada", "confirmada"].includes(r.status) && (
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => setAlvo(r)}
+                            disabled={cancelandoId === r.reserva_id}
+                          >
+                            {cancelandoId === r.reserva_id && (
+                              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                            )}
+                            Cancelar
+                          </Button>
+                        )}
+                      </td>
+
                     </tr>
                   ))}
                 </tbody>
@@ -503,7 +570,20 @@ function ControlePosicoesPage() {
             </div>
           </TabsContent>
         </Tabs>
+
+        <CancelarComMotivoDialog
+          aberto={!!alvo}
+          processando={!!cancelandoId}
+          descricao={
+            alvo
+              ? `${alvo.colaborador ?? "Colaborador"} · posição ${alvo.posicao_numero} em ${dataBR(alvo.data ?? alvo.data_iso)}, das ${hhmm(alvo.hora_inicio)} às ${hhmm(alvo.hora_fim)}.`
+              : ""
+          }
+          onFechar={() => setAlvo(null)}
+          onConfirmar={cancelarReserva}
+        />
       </div>
+
     </div>
   );
 }

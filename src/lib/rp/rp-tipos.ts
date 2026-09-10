@@ -47,7 +47,13 @@ export interface RpReservaRetorno {
   data: string;
   hora_inicio: string;
   hora_fim: string;
+  /** Dono da reserva (retornado pelo cancelamento). */
+  user_id?: string | null;
+  /** Justificativa quando o cancelamento é feito por RH/Admin. */
+  motivo?: string | null;
+  cancelado_por_terceiro?: boolean;
 }
+
 
 export const hhmm = (h?: string | null) => (h ?? "").slice(0, 5);
 

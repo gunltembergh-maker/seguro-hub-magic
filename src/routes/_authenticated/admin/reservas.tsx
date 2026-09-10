@@ -39,9 +39,11 @@ import {
   mensagemErro,
   STATUS_CLASSE,
   STATUS_LABEL,
-  type RpReservaRetorno,
 } from "@/lib/rp/rp-tipos";
-import { enviarEmailReserva } from "@/lib/rp/rp-email.functions";
+import { CancelarComMotivoDialog } from "@/components/reserva-posicoes/CancelarComMotivoDialog";
+import { cancelarReservaComMotivo } from "@/lib/rp/rp-cancelar";
+
+
 
 export const Route = createFileRoute("/_authenticated/admin/reservas")({
   head: () => ({
@@ -290,6 +292,8 @@ function AbaReservas() {
   const [posicao, setPosicao] = useState("__all__");
   const [status, setStatus] = useState("__all__");
   const [cancelandoId, setCancelandoId] = useState<string | null>(null);
+  const [alvo, setAlvo] = useState<(ReservaRow & { nome: string }) | null>(null);
+
 
   const { data: posicoes } = useQuery({
     queryKey: ["rp-admin-posicoes-simples"],
@@ -334,22 +338,21 @@ function AbaReservas() {
       .filter((r) => !termo || r.nome.toLowerCase().includes(termo));
   }, [reservas, nomes, colaborador]);
 
-  const cancelar = async (id: string) => {
-    setCancelandoId(id);
+  const cancelar = async (motivo: string) => {
+    if (!alvo) return;
+    setCancelandoId(alvo.id);
     try {
-      const { data, error } = await supabase.rpc("rpc_rp_cancelar_reserva", { p_reserva_id: id });
-      if (error) throw error;
+      await cancelarReservaComMotivo(alvo.id, motivo);
       await qc.invalidateQueries({ queryKey: ["rp-admin-reservas"] });
+      setAlvo(null);
       toast.success("Reserva cancelada.");
-      enviarEmailReserva({
-        data: { tipo: "cancelamento", apenas_rh: true, reserva: data as unknown as RpReservaRetorno },
-      }).catch((e) => console.error("[rp] e-mail de cancelamento falhou", e));
     } catch (e) {
       toast.error(mensagemErro(e));
     } finally {
       setCancelandoId(null);
     }
   };
+
 
   const exportarCsv = () => {
     const cabecalho = ["Data", "Posição", "Apelido", "Colaborador", "Início", "Fim", "Status"];
@@ -469,7 +472,7 @@ function AbaReservas() {
                     <Button
                       size="sm"
                       variant="destructive"
-                      onClick={() => cancelar(r.id)}
+                      onClick={() => setAlvo(r)}
                       disabled={cancelandoId === r.id}
                     >
                       {cancelandoId === r.id && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
@@ -482,7 +485,20 @@ function AbaReservas() {
           </TableBody>
         </Table>
       )}
+
+      <CancelarComMotivoDialog
+        aberto={!!alvo}
+        processando={!!cancelandoId}
+        descricao={
+          alvo
+            ? `${alvo.nome} · posição ${alvo.rp_posicoes?.numero ?? ""} em ${dataBR(alvo.data)}, das ${hhmm(alvo.hora_inicio)} às ${hhmm(alvo.hora_fim)}.`
+            : ""
+        }
+        onFechar={() => setAlvo(null)}
+        onConfirmar={cancelar}
+      />
     </div>
+
   );
 }
 
@@ -760,6 +776,7 @@ const VARIAVEIS = [
   "hora_fim",
   "tolerancia_min",
   "checkin_antes_min",
+  "motivo",
 ];
 const EXEMPLO: Record<string, string> = {
   nome: "Alessandro Oliveira",
@@ -769,11 +786,14 @@ const EXEMPLO: Record<string, string> = {
   hora_fim: "18:00",
   tolerancia_min: "15",
   checkin_antes_min: "30",
+  motivo: "Sala reservada para treinamento do time",
 };
 const TIPO_LABEL: Record<string, string> = {
   confirmacao: "Confirmação de reserva (colaborador)",
   cancelamento: "Cancelamento de reserva (colaborador)",
+  cancelamento_admin: "Cancelamento pelo RH/Admin (colaborador) · usa {{motivo}}",
   ausencia: "Ausência / no-show (colaborador)",
+
   rh_confirmacao: "RH · Confirmação de reserva",
   rh_cancelamento: "RH · Cancelamento de reserva",
   rh_ausencia: "RH · Ausência / no-show",
