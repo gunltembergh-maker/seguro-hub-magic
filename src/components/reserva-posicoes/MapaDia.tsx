@@ -234,9 +234,11 @@ export function MapaDia() {
         </div>
       ) : (
         <div className="grid items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
-          <div className="flex h-full flex-col rounded-xl border border-border bg-card p-4">
+          <div className="flex h-full flex-col gap-3">
             <PlantaEscritorio posicoes={grade ?? []} onSelecionar={abrirModal} />
-            <LegendaPlanta />
+            <div className="rounded-xl border border-border bg-card p-3">
+              <LegendaPlanta />
+            </div>
           </div>
           <div className="h-full">
             <ComoFunciona params={params} livres={livres} total={(grade ?? []).length || 9} />
