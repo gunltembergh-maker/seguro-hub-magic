@@ -157,7 +157,7 @@ function ControlePosicoesPage() {
     queryFn: async (): Promise<ReservaControle[]> => {
       const { data, error } = await supabase.rpc("rpc_rp_controle_reservas", filtros as never);
       if (error) throw error;
-      return ((data ?? []) as unknown as ReservaControle[]) ?? [];
+      return (data ?? []) as unknown as ReservaControle[];
     },
   });
 
@@ -166,7 +166,7 @@ function ControlePosicoesPage() {
     queryFn: async (): Promise<RankingControle[]> => {
       const { data, error } = await supabase.rpc("rpc_rp_controle_ranking", { p_de: de, p_ate: ate });
       if (error) throw error;
-      return ((data ?? []) as unknown as RankingControle[]) ?? [];
+      return (data ?? []) as unknown as RankingControle[];
     },
   });
 

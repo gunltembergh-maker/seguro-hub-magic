@@ -35,6 +35,7 @@ import { Route as ApiAbSolicitarRouteImport } from './routes/api/ab/solicitar'
 import { Route as ApiAbExecutarRouteImport } from './routes/api/ab/executar'
 import { Route as ApiAbCotaRouteImport } from './routes/api/ab/cota'
 import { Route as ApiAbBgcheckRouteImport } from './routes/api/ab/bgcheck'
+import { Route as AuthenticatedRhControlePosicoesRouteImport } from './routes/_authenticated/rh.controle-posicoes'
 import { Route as AuthenticatedJuridicoAnaliseBackgroundRouteImport } from './routes/_authenticated/juridico_.analise-background'
 import { Route as AuthenticatedGarantiaAnaliseLimiteRouteImport } from './routes/_authenticated/garantia_.analise-limite'
 import { Route as AuthenticatedGarantiaAnaliseBackgroundRouteImport } from './routes/_authenticated/garantia_.analise-background'
@@ -205,6 +206,12 @@ const ApiAbBgcheckRoute = ApiAbBgcheckRouteImport.update({
   path: '/api/ab/bgcheck',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRhControlePosicoesRoute =
+  AuthenticatedRhControlePosicoesRouteImport.update({
+    id: '/rh/controle-posicoes',
+    path: '/rh/controle-posicoes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedJuridicoAnaliseBackgroundRoute =
   AuthenticatedJuridicoAnaliseBackgroundRouteImport.update({
     id: '/juridico_/analise-background',
@@ -447,6 +454,7 @@ export interface FileRoutesByFullPath {
   '/garantia/analise-background': typeof AuthenticatedGarantiaAnaliseBackgroundRoute
   '/garantia/analise-limite': typeof AuthenticatedGarantiaAnaliseLimiteRoute
   '/juridico/analise-background': typeof AuthenticatedJuridicoAnaliseBackgroundRoute
+  '/rh/controle-posicoes': typeof AuthenticatedRhControlePosicoesRoute
   '/api/ab/bgcheck': typeof ApiAbBgcheckRoute
   '/api/ab/cota': typeof ApiAbCotaRoute
   '/api/ab/executar': typeof ApiAbExecutarRoute
@@ -508,6 +516,7 @@ export interface FileRoutesByTo {
   '/garantia/analise-background': typeof AuthenticatedGarantiaAnaliseBackgroundRoute
   '/garantia/analise-limite': typeof AuthenticatedGarantiaAnaliseLimiteRoute
   '/juridico/analise-background': typeof AuthenticatedJuridicoAnaliseBackgroundRoute
+  '/rh/controle-posicoes': typeof AuthenticatedRhControlePosicoesRoute
   '/api/ab/bgcheck': typeof ApiAbBgcheckRoute
   '/api/ab/cota': typeof ApiAbCotaRoute
   '/api/ab/executar': typeof ApiAbExecutarRoute
@@ -572,6 +581,7 @@ export interface FileRoutesById {
   '/_authenticated/garantia_/analise-background': typeof AuthenticatedGarantiaAnaliseBackgroundRoute
   '/_authenticated/garantia_/analise-limite': typeof AuthenticatedGarantiaAnaliseLimiteRoute
   '/_authenticated/juridico_/analise-background': typeof AuthenticatedJuridicoAnaliseBackgroundRoute
+  '/_authenticated/rh/controle-posicoes': typeof AuthenticatedRhControlePosicoesRoute
   '/api/ab/bgcheck': typeof ApiAbBgcheckRoute
   '/api/ab/cota': typeof ApiAbCotaRoute
   '/api/ab/executar': typeof ApiAbExecutarRoute
@@ -636,6 +646,7 @@ export interface FileRouteTypes {
     | '/garantia/analise-background'
     | '/garantia/analise-limite'
     | '/juridico/analise-background'
+    | '/rh/controle-posicoes'
     | '/api/ab/bgcheck'
     | '/api/ab/cota'
     | '/api/ab/executar'
@@ -697,6 +708,7 @@ export interface FileRouteTypes {
     | '/garantia/analise-background'
     | '/garantia/analise-limite'
     | '/juridico/analise-background'
+    | '/rh/controle-posicoes'
     | '/api/ab/bgcheck'
     | '/api/ab/cota'
     | '/api/ab/executar'
@@ -760,6 +772,7 @@ export interface FileRouteTypes {
     | '/_authenticated/garantia_/analise-background'
     | '/_authenticated/garantia_/analise-limite'
     | '/_authenticated/juridico_/analise-background'
+    | '/_authenticated/rh/controle-posicoes'
     | '/api/ab/bgcheck'
     | '/api/ab/cota'
     | '/api/ab/executar'
@@ -997,6 +1010,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/ab/bgcheck'
       preLoaderRoute: typeof ApiAbBgcheckRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/rh/controle-posicoes': {
+      id: '/_authenticated/rh/controle-posicoes'
+      path: '/rh/controle-posicoes'
+      fullPath: '/rh/controle-posicoes'
+      preLoaderRoute: typeof AuthenticatedRhControlePosicoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/juridico_/analise-background': {
       id: '/_authenticated/juridico_/analise-background'
@@ -1322,6 +1342,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedGarantiaAnaliseBackgroundRoute: typeof AuthenticatedGarantiaAnaliseBackgroundRoute
   AuthenticatedGarantiaAnaliseLimiteRoute: typeof AuthenticatedGarantiaAnaliseLimiteRoute
   AuthenticatedJuridicoAnaliseBackgroundRoute: typeof AuthenticatedJuridicoAnaliseBackgroundRoute
+  AuthenticatedRhControlePosicoesRoute: typeof AuthenticatedRhControlePosicoesRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -1352,6 +1373,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedGarantiaAnaliseLimiteRoute,
   AuthenticatedJuridicoAnaliseBackgroundRoute:
     AuthenticatedJuridicoAnaliseBackgroundRoute,
+  AuthenticatedRhControlePosicoesRoute: AuthenticatedRhControlePosicoesRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
