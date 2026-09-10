@@ -154,14 +154,24 @@ export function MinhasReservas() {
     try {
       const res = await fazerCheckin({ data: { reserva_id: r.id } });
       if (!res.ok) {
-        toast.error(res.erro);
+        const rede = /wifi|rede|escrit[oó]rio|ip/i.test(res.erro ?? "");
+        setCheckinModal({
+          open: true,
+          type: "error",
+          message: res.erro ?? "Não foi possível confirmar o check-in.",
+          rede,
+        });
         return;
       }
       await qc.invalidateQueries({ queryKey: ["rp-minhas-reservas"] });
       await qc.invalidateQueries({ queryKey: ["rp-grade-dia"] });
+      const hora = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+      setCheckinModal({ open: true, type: "success", reserva: r, hora });
       toast.success("Check-in confirmado, boa jornada!");
     } catch (e) {
-      toast.error(mensagemErro(e));
+      const msg = mensagemErro(e);
+      const rede = /wifi|rede|escrit[oó]rio|ip/i.test(msg);
+      setCheckinModal({ open: true, type: "error", message: msg, rede });
     } finally {
       setCheckinEm(null);
     }
