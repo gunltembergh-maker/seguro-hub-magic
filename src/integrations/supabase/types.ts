@@ -2582,6 +2582,7 @@ export type Database = {
           ausencia_notificada: boolean
           cancelada_em: string | null
           cancelada_por: string | null
+          cancelamento_motivo: string | null
           checkin_at: string | null
           checkin_ip: string | null
           created_at: string
@@ -2598,6 +2599,7 @@ export type Database = {
           ausencia_notificada?: boolean
           cancelada_em?: string | null
           cancelada_por?: string | null
+          cancelamento_motivo?: string | null
           checkin_at?: string | null
           checkin_ip?: string | null
           created_at?: string
@@ -2614,6 +2616,7 @@ export type Database = {
           ausencia_notificada?: boolean
           cancelada_em?: string | null
           cancelada_por?: string | null
+          cancelamento_motivo?: string | null
           checkin_at?: string | null
           checkin_ip?: string | null
           created_at?: string
@@ -4346,7 +4349,10 @@ export type Database = {
         Args: { p_id: string }
         Returns: boolean
       }
-      rpc_rp_cancelar_reserva: { Args: { p_reserva_id: string }; Returns: Json }
+      rpc_rp_cancelar_reserva: {
+        Args: { p_motivo?: string; p_reserva_id: string }
+        Returns: Json
+      }
       rpc_rp_controle_ranking: {
         Args: { p_ate: string; p_de: string }
         Returns: Json
