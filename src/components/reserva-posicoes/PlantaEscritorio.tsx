@@ -352,16 +352,18 @@ export function PlantaEscritorio({
               onSelecionar={onSelecionar}
             />
           ))}
-          <text x={bancadaX - 10} y={76} fontSize={12} letterSpacing={2} fill="#9AA5B1">
+          <text
+            x={100}
+            y={135}
+            textAnchor="middle"
+            fontSize={11}
+            letterSpacing={2}
+            fill="#9AA5B1"
+            transform="rotate(-90 100 135)"
+          >
             BLOCO FUNDO
           </text>
 
-
-          {/* plantas decorativas */}
-          <circle cx={142} cy={260} r={16} className="fill-emerald-700" />
-          <circle cx={142} cy={260} r={9} className="fill-emerald-500" opacity={0.8} />
-          <circle cx={748} cy={580} r={14} className="fill-emerald-700" />
-          <circle cx={748} cy={580} r={8} className="fill-emerald-500" opacity={0.8} />
 
           {/* base contínua do bloco frontal */}
           <rect
