@@ -97,6 +97,12 @@ export function MinhasReservas() {
   const [checkinEm, setCheckinEm] = useState<string | null>(null);
   const hojeIso = isoDeData(new Date());
 
+  type CheckinModal =
+    | { open: true; type: "success"; reserva: RpMinhaReserva; hora: string }
+    | { open: true; type: "error"; message: string; rede: boolean }
+    | { open: false };
+  const [checkinModal, setCheckinModal] = useState<CheckinModal>({ open: false });
+
   // Motivos de cancelamento (quando o RH/Admin cancelou a reserva do colaborador).
   const { data: motivos } = useQuery({
     queryKey: ["rp-motivos-cancelamento"],
