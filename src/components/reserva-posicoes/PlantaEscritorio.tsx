@@ -363,22 +363,45 @@ export function PlantaEscritorio({
           <circle cx={748} cy={580} r={14} className="fill-emerald-700" />
           <circle cx={748} cy={580} r={8} className="fill-emerald-500" opacity={0.8} />
 
+          {/* base contínua do bloco frontal */}
+          <rect
+            x={frenteX - 10}
+            y={frenteYBase - 8}
+            width={mesaW * 3 + gapX * 2 + 20}
+            height={mesaH * 2 + 16}
+            rx={14}
+            className="fill-black/20"
+          />
+
+          {/* divisórias verticais finas entre colunas */}
+          {[1, 2].map((col) => (
+            <rect
+              key={col}
+              x={frenteX + col * (mesaW + gapX) - gapX / 2}
+              y={frenteYBase - 8}
+              width={gapX}
+              height={mesaH * 2 + 16}
+              rx={2}
+              className="fill-black/30"
+            />
+          ))}
+
           {/* bloco da frente */}
-          <text x={frenteX - 20} y={304} fontSize={12} letterSpacing={2} fill="#9AA5B1">
+          <text x={frenteX - 20} y={270} fontSize={12} letterSpacing={2} fill="#9AA5B1">
             BLOCO FRENTE
           </text>
           {frente.map((p, i) => {
-            const linha = Math.floor(i / 3);
             const col = i % 3;
+            const ehInferior = i >= 3;
             return (
               <Mesa
                 key={p.id}
                 pos={p}
                 x={frenteX + col * (mesaW + gapX)}
-                y={linhaY[linha] ?? 488}
+                y={frenteYBase + (ehInferior ? mesaH : 0)}
                 w={mesaW}
-                h={86}
-                cadeira={linha === 0 ? "cima" : "baixo"}
+                h={mesaH}
+                cadeira={ehInferior ? "baixo" : "cima"}
                 onSelecionar={onSelecionar}
               />
             );
