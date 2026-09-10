@@ -431,10 +431,13 @@ export function LegendaPlanta() {
     { estado: "inativa", label: "Inativa" },
   ];
   return (
-    <div className="flex flex-wrap gap-x-5 gap-y-2 text-[11px] text-muted-foreground">
+    <div className="flex flex-wrap items-center justify-center gap-x-7 gap-y-3 pt-1 text-sm font-medium text-foreground/80">
       {itens.map((i) => (
-        <span key={i.estado} className="flex items-center gap-1.5">
-          <i className="h-3 w-3 rounded-full" style={{ background: COR_ESTADO[i.estado] }} />
+        <span key={i.estado} className="flex items-center gap-2">
+          <i
+            className="h-3.5 w-3.5 shrink-0 rounded-full ring-1 ring-black/10 dark:ring-white/20"
+            style={{ background: COR_ESTADO[i.estado] }}
+          />
           {i.label}
         </span>
       ))}
