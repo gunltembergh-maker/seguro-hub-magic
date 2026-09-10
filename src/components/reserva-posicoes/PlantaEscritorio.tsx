@@ -179,11 +179,12 @@ export function PlantaEscritorio({
   const bancadaW = 600;
   const mesaFundoW = bancadaW / 3;
 
-  // Bloco da frente: uma ilha com duas fileiras de 3 posições, como no escritório.
+  // Bloco da frente: uma fileira única de 3 colunas; cada coluna tem duas mesas frente a frente.
   const frenteX = 196;
   const mesaW = 188;
   const gapX = 12;
-  const linhaY = [332, 490];
+  const frenteYBase = 292;
+  const mesaH = 86;
 
   return (
     <div className="overflow-x-auto">
