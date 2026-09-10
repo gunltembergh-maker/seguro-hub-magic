@@ -160,6 +160,7 @@ export function MinhasReservas() {
           type: "error",
           message: res.erro ?? "Não foi possível confirmar o check-in.",
           rede,
+          ip: res.ip ?? null,
         });
         return;
       }
