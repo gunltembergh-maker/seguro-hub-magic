@@ -172,7 +172,7 @@ export function PlantaEscritorio({
   const frente = posicoes.filter((p) => p.bloco !== "fundo").sort((a, b) => a.numero - b.numero);
 
   const W = 900;
-  const H = 720;
+  const H = 560;
 
   // Bancada do fundo: 3 mesas contínuas encostadas na janela.
   const bancadaX = 190;
@@ -257,15 +257,15 @@ export function PlantaEscritorio({
           </g>
 
           {/* parede de vidro preto (painel/TV) */}
-          <rect x={26} y={120} width={26} height={536} rx={8} className="fill-[#111418]" />
-          <rect x={31} y={190} width={16} height={230} rx={5} className="fill-[#30343A] dark:fill-[#090B0E]" />
+          <rect x={26} y={120} width={26} height={400} rx={8} className="fill-[#111418]" />
+          <rect x={31} y={170} width={16} height={200} rx={5} className="fill-[#30343A] dark:fill-[#090B0E]" />
           <text
             x={39}
-            y={520}
+            y={450}
             textAnchor="middle"
             fontSize={11}
             fill="#7C8794"
-            transform="rotate(-90 39 520)"
+            transform="rotate(-90 39 450)"
           >
             PAINEL DE VIDRO
           </text>
