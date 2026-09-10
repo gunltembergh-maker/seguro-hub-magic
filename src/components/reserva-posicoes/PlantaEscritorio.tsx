@@ -97,6 +97,18 @@ function Mesa({ pos, x, y, w, h, cadeira, onSelecionar }: MesaProps) {
       <rect x={x} y={y} width={w} height={h} rx={10} fill="url(#madeira)" stroke="#3A2415" strokeWidth={2} />
       <rect x={x + 8} y={y + 8} width={w - 16} height={h - 16} rx={7} fill="url(#madeiraTopo)" opacity={0.35} />
 
+      {/* acessórios discretos sobre o tampo */}
+      <rect
+        x={x + w / 2 - 23}
+        y={y + h - 35}
+        width={46}
+        height={18}
+        rx={6}
+        fill="#17191C"
+        opacity={0.72}
+      />
+      <circle cx={x + w - 42} cy={y + h / 2 + 5} r={5} fill="#24201D" opacity={0.8} />
+
       {/* faixa de estado */}
       <rect x={x} y={y + h - 10} width={w} height={10} rx={4} fill={COR_ESTADO[estado]} opacity={0.95} />
 
@@ -142,18 +154,18 @@ export function PlantaEscritorio({
   const frente = posicoes.filter((p) => p.bloco !== "fundo").sort((a, b) => a.numero - b.numero);
 
   const W = 900;
-  const H = 620;
+  const H = 800;
 
   // Bancada do fundo: 3 mesas contínuas encostadas na janela.
-  const bancadaX = 230;
-  const bancadaW = 620;
+  const bancadaX = 190;
+  const bancadaW = 600;
   const mesaFundoW = bancadaW / 3;
 
-  // Bloco da frente: duas fileiras de 3.
-  const frenteX = 250;
-  const mesaW = 180;
-  const gapX = 30;
-  const linhaY = [330, 470];
+  // Bloco da frente: três fileiras de 2, todas voltadas para a janela.
+  const frenteX = 270;
+  const mesaW = 190;
+  const gapX = 54;
+  const linhaY = [322, 488, 654];
 
   return (
     <div className="overflow-x-auto">
@@ -174,6 +186,14 @@ export function PlantaEscritorio({
               <stop offset="0%" stopColor="#BFE6FA" />
               <stop offset="100%" stopColor="#7FB6D9" />
             </linearGradient>
+            <linearGradient id="vidroVaranda" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#78AFCF" stopOpacity={0.75} />
+              <stop offset="100%" stopColor="#BFE6FA" stopOpacity={0.4} />
+            </linearGradient>
+            <pattern id="placasCarpete" width="52" height="52" patternUnits="userSpaceOnUse">
+              <path d="M52 0H0V52" fill="none" stroke="#AAB2BB" strokeWidth={1} opacity={0.08} />
+              <path d="M0 26H52M26 0V52" fill="none" stroke="#111418" strokeWidth={0.6} opacity={0.08} />
+            </pattern>
           </defs>
 
           {/* carpete grafite */}
@@ -186,28 +206,29 @@ export function PlantaEscritorio({
             rx={14}
             className="fill-[#33383E] dark:fill-[#23272C]"
           />
+          <rect x={10} y={10} width={W - 20} height={H - 20} rx={14} fill="url(#placasCarpete)" />
 
           {/* janela panorâmica */}
-          <rect x={26} y={18} width={W - 52} height={22} rx={8} fill="url(#janela)" opacity={0.9} />
+          <rect x={26} y={18} width={W - 108} height={22} rx={8} fill="url(#janela)" opacity={0.9} />
           {Array.from({ length: 11 }).map((_, i) => (
             <line
               key={i}
-              x1={26 + ((W - 52) / 11) * (i + 1)}
+              x1={26 + ((W - 108) / 11) * (i + 1)}
               y1={18}
-              x2={26 + ((W - 52) / 11) * (i + 1)}
+              x2={26 + ((W - 108) / 11) * (i + 1)}
               y2={40}
               stroke="#33383E"
               strokeWidth={2}
               opacity={0.5}
             />
           ))}
-          <text x={W / 2} y={62} textAnchor="middle" fontSize={13} letterSpacing={3} fill="#9FC7DE">
+          <text x={410} y={62} textAnchor="middle" fontSize={13} letterSpacing={3} fill="#9FC7DE">
             JANELA · VISTA DA CIDADE
           </text>
 
           {/* parede de vidro preto (painel/TV) */}
-          <rect x={26} y={120} width={26} height={380} rx={8} className="fill-[#111418]" />
-          <rect x={31} y={170} width={16} height={200} rx={5} className="fill-[#0A0D10]" />
+          <rect x={26} y={120} width={26} height={536} rx={8} className="fill-[#111418]" />
+          <rect x={31} y={190} width={16} height={230} rx={5} className="fill-[#30343A] dark:fill-[#090B0E]" />
           <text
             x={39}
             y={520}
@@ -218,6 +239,55 @@ export function PlantaEscritorio({
           >
             PAINEL DE VIDRO
           </text>
+
+          {/* trecho de parede com quadros, antes do vidro lateral */}
+          <rect x={806} y={76} width={28} height={178} rx={7} fill="#DDD1BB" opacity={0.9} />
+          {[112, 174].map((y) => (
+            <g key={y}>
+              <rect x={810} y={y} width={20} height={42} rx={2} fill="#151719" />
+              <rect x={813} y={y + 3} width={14} height={36} rx={1} fill="#B8B09F" />
+              <path
+                d={`M820 ${y + 33}c-7-8-5-17 0-20 6 4 7 12 0 20Zm0-11c5-7 9-6 10-3-1 5-4 8-10 10Z`}
+                fill="#34483D"
+                opacity={0.9}
+              />
+            </g>
+          ))}
+
+          {/* vidro lateral e varanda */}
+          <rect x={818} y={270} width={16} height={458} rx={7} fill="url(#vidroVaranda)" />
+          {Array.from({ length: 6 }).map((_, i) => (
+            <line
+              key={i}
+              x1={818}
+              y1={270 + (458 / 6) * (i + 1)}
+              x2={834}
+              y2={270 + (458 / 6) * (i + 1)}
+              stroke="#D9EFF9"
+              strokeWidth={1.5}
+              opacity={0.6}
+            />
+          ))}
+          <rect x={840} y={270} width={38} height={458} rx={12} fill="#A8BAC0" opacity={0.16} />
+          <text
+            x={863}
+            y={500}
+            textAnchor="middle"
+            fontSize={11}
+            letterSpacing={3}
+            fill="#A8CEDD"
+            transform="rotate(90 863 500)"
+          >
+            VARANDA
+          </text>
+          {[326, 500, 672].map((y, i) => (
+            <g key={y}>
+              <path d={`M847 ${y + 14}h24l-4 21h-16Z`} fill="#776756" />
+              <circle cx={859} cy={y + 8} r={i === 1 ? 14 : 12} fill="#266044" />
+              <circle cx={851} cy={y + 2} r={7} fill="#3E835A" />
+              <circle cx={867} cy={y} r={8} fill="#4B9265" />
+            </g>
+          ))}
 
           {/* bancada contínua do fundo */}
           <rect
@@ -245,28 +315,31 @@ export function PlantaEscritorio({
           </text>
 
           {/* plantas decorativas */}
-          <circle cx={160} cy={250} r={16} className="fill-emerald-700" />
-          <circle cx={160} cy={250} r={9} className="fill-emerald-500" opacity={0.8} />
-          <circle cx={W - 70} cy={300} r={14} className="fill-emerald-700" />
-          <circle cx={W - 70} cy={300} r={8} className="fill-emerald-500" opacity={0.8} />
-          <circle cx={W - 70} cy={520} r={12} className="fill-emerald-700" />
+          <circle cx={142} cy={260} r={16} className="fill-emerald-700" />
+          <circle cx={142} cy={260} r={9} className="fill-emerald-500" opacity={0.8} />
+          <circle cx={492} cy={304} r={12} className="fill-emerald-700" />
+          <circle cx={492} cy={304} r={7} className="fill-emerald-500" opacity={0.8} />
+          <circle cx={492} cy={470} r={11} className="fill-emerald-700" />
+          <circle cx={492} cy={636} r={12} className="fill-emerald-700" />
+          <circle cx={742} cy={610} r={14} className="fill-emerald-700" />
+          <circle cx={742} cy={610} r={8} className="fill-emerald-500" opacity={0.8} />
 
           {/* bloco da frente */}
           <text x={frenteX - 20} y={300} fontSize={12} letterSpacing={2} fill="#9AA5B1">
             BLOCO FRENTE
           </text>
           {frente.map((p, i) => {
-            const linha = Math.floor(i / 3);
-            const col = i % 3;
+            const linha = Math.floor(i / 2);
+            const col = i % 2;
             return (
               <Mesa
                 key={p.id}
                 pos={p}
                 x={frenteX + col * (mesaW + gapX)}
-                y={linhaY[linha] ?? linhaY[1]!}
+                y={linhaY[linha] ?? 488}
                 w={mesaW}
-                h={86}
-                cadeira={linha === 0 ? "cima" : "baixo"}
+                h={82}
+                cadeira="baixo"
                 onSelecionar={onSelecionar}
               />
             );
