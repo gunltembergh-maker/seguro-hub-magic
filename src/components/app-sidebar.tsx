@@ -299,6 +299,20 @@ export function AppSidebar() {
   };
   const hasActiveEmailChild = emailChildren.some((c) => isActive(c.url));
 
+  // Grupo "RH" — itens desabilitados por padrão nos perfis
+  const rhChildren = [
+    { title: "Controle de Posições", url: "/rh/controle-posicoes", icon: ClipboardList,
+      show: isAdmin || hasPermission(meuPerfil, "menu_rh_controle_posicoes") },
+  ].filter((i) => i.show).map(({ title, url, icon }) => ({ title, url, icon }));
+
+  const rhCollapsible: CollapsibleItem = {
+    title: "RH",
+    icon: UserSquare2,
+    tooltip: "RH",
+    children: rhChildren,
+  };
+  const hasActiveRhChild = rhChildren.some((c) => isActive(c.url));
+
   // Item "Dashboards" agrupador com filhos recolhíveis
   const dashboardsCollapsible: CollapsibleItem = {
     title: "Dashboards",
