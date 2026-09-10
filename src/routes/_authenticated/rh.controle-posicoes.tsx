@@ -244,6 +244,8 @@ function ControlePosicoesPage() {
         { header: "Compareceu", key: "compareceu_label", formato: "texto" },
         { header: "Reservado em", key: "reservado_em_br", formato: "texto", width: 20 },
         { header: "Check-in em", key: "checkin_em_br", formato: "texto", width: 20 },
+        { header: "Motivo do cancelamento", key: "motivo_cancelamento", formato: "texto", width: 40 },
+
       ];
       const colsRanking: ColunaExport[] = [
         { header: "Colaborador", key: "colaborador", formato: "texto", width: 32 },
@@ -264,6 +266,8 @@ function ControlePosicoesPage() {
         compareceu_label: r.compareceu ? "Sim" : "Não",
         reservado_em_br: dataHoraBR(r.reservado_em),
         checkin_em_br: dataHoraBR(r.checkin_em),
+        motivo_cancelamento: r.motivo_cancelamento ?? "",
+
       }));
       const linhasRanking = rank.map((r) => ({
         colaborador: r.colaborador ?? "",
