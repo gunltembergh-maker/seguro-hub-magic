@@ -99,7 +99,7 @@ export function MinhasReservas() {
 
   type CheckinModal =
     | { open: true; type: "success"; reserva: RpMinhaReserva; hora: string }
-    | { open: true; type: "error"; message: string; rede: boolean }
+    | { open: true; type: "error"; message: string; rede: boolean; ip?: string | null }
     | { open: false };
   const [checkinModal, setCheckinModal] = useState<CheckinModal>({ open: false });
 
