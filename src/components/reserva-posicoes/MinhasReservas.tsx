@@ -267,18 +267,27 @@ export function MinhasReservas() {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex flex-wrap justify-end gap-2">
-                    {isoDaReserva(r.data) === hojeIso && (
+                    {isoDaReserva(r.data) === hojeIso && r.status === "reservada" && (
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <span>
-                              <Button size="sm" variant="outline" disabled>
-                                <QrCode className="mr-1.5 h-3.5 w-3.5" />
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={!janelaCheckin(r).aberta || checkinEm === r.id}
+                                onClick={() => fazerCheckinReserva(r)}
+                              >
+                                {checkinEm === r.id ? (
+                                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <QrCode className="mr-1.5 h-3.5 w-3.5" />
+                                )}
                                 Fazer check-in
                               </Button>
                             </span>
                           </TooltipTrigger>
-                          <TooltipContent>Disponível em breve</TooltipContent>
+                          <TooltipContent>{janelaCheckin(r).motivo}</TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
                     )}
