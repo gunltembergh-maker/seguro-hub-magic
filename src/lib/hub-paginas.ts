@@ -61,6 +61,10 @@ export const HUB_PAGINAS: GrupoPaginas[] = [
     ],
   },
   {
+    grupo: "RH",
+    paginas: [{ rota: "/rh/controle-posicoes", nome: "Controle de Posições" }],
+  },
+  {
     grupo: "Demais Ramos",
     paginas: [{ rota: "/demais-ramos", nome: "Demais Ramos" }],
   },
