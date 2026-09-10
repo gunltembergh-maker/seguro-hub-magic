@@ -97,7 +97,7 @@ export function MinhasReservas() {
 
   // Dispara o processamento de ausências ao abrir a tela (idempotente no servidor).
   useEffect(() => {
-    processarAusencias({})
+    processarAusencias()
       .then((r) => {
         if (r?.enviados) qc.invalidateQueries({ queryKey: ["rp-minhas-reservas"] });
       })
