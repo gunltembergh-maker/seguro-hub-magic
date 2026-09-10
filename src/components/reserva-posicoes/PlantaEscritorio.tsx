@@ -356,14 +356,6 @@ export function PlantaEscritorio({
             BLOCO FUNDO
           </text>
 
-          {/* divisória/canaleta da ilha central, entre as duas fileiras */}
-          <rect x={frenteX} y={466} width={mesaW * 3 + gapX * 2} height={10} rx={4} fill="var(--color-office-frame)" />
-          {[frenteX + 92, frenteX + 288, frenteX + 484].map((x) => (
-            <g key={x}>
-              <circle cx={x} cy={471} r={12} fill="#202923" />
-              <circle cx={x} cy={468} r={7} fill="var(--color-office-plant)" />
-            </g>
-          ))}
 
           {/* plantas decorativas */}
           <circle cx={142} cy={260} r={16} className="fill-emerald-700" />
