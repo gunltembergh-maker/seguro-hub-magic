@@ -24,6 +24,8 @@ import {
   Activity,
   CalendarClock,
   CalendarCheck,
+  UserSquare2,
+  ClipboardList,
   type LucideIcon,
 } from "lucide-react";
 
