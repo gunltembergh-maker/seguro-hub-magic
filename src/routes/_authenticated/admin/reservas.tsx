@@ -778,6 +778,7 @@ const VARIAVEIS = [
   "hora_fim",
   "tolerancia_min",
   "checkin_antes_min",
+  "motivo",
 ];
 const EXEMPLO: Record<string, string> = {
   nome: "Alessandro Oliveira",
@@ -787,11 +788,14 @@ const EXEMPLO: Record<string, string> = {
   hora_fim: "18:00",
   tolerancia_min: "15",
   checkin_antes_min: "30",
+  motivo: "Sala reservada para treinamento do time",
 };
 const TIPO_LABEL: Record<string, string> = {
   confirmacao: "Confirmação de reserva (colaborador)",
   cancelamento: "Cancelamento de reserva (colaborador)",
+  cancelamento_admin: "Cancelamento pelo RH/Admin (colaborador) · usa {{motivo}}",
   ausencia: "Ausência / no-show (colaborador)",
+
   rh_confirmacao: "RH · Confirmação de reserva",
   rh_cancelamento: "RH · Cancelamento de reserva",
   rh_ausencia: "RH · Ausência / no-show",
