@@ -39,9 +39,7 @@ import {
   mensagemErro,
   STATUS_CLASSE,
   STATUS_LABEL,
-  type RpReservaRetorno,
 } from "@/lib/rp/rp-tipos";
-import { enviarEmailReserva } from "@/lib/rp/rp-email.functions";
 import { CancelarComMotivoDialog } from "@/components/reserva-posicoes/CancelarComMotivoDialog";
 import { cancelarReservaComMotivo } from "@/lib/rp/rp-cancelar";
 
