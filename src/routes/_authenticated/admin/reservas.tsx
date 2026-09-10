@@ -715,8 +715,13 @@ function AbaParametros() {
 
       <div className={CARD}>
         <h3 className="mb-1 font-semibold text-[#14405C]">IPs do escritório</h3>
-        <p className="mb-3 text-sm text-slate-600">
+        <p className="mb-1 text-sm text-slate-600">
           Seu IP público agora: <strong>{ipAtual ?? "não identificado"}</strong>
+        </p>
+        <p className="mb-3 text-sm text-slate-600">
+          Cadastre o IP fixo (IPv4), ou a faixa da rede em formato CIDR. Para redes IPv6, cadastre o
+          prefixo /64 da rede do escritório. Use o IP detectado no aviso de check-in para descobrir o
+          endereço da rede.
         </p>
         <div className="mb-3 flex flex-wrap gap-2">
           {form.ips.map((ip) => (
