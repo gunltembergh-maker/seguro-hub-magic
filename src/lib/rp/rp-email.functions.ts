@@ -30,12 +30,11 @@ export const enviarEmailReserva = createServerFn({ method: "POST" })
       const { lavoroAdmin } = await import("@/integrations/supabase/lavoro-admin.server");
       const { enviarHtml, aplicarVariaveis } = await import("./rp-email.server");
 
-      const [{ data: tpl }, { data: settings }] = await Promise.all([
+      const [{ data: tpls }, { data: settings }] = await Promise.all([
         lavoroAdmin
           .from("rp_email_templates")
-          .select("assunto, corpo_html, ativo")
-          .eq("tipo", data.tipo)
-          .maybeSingle(),
+          .select("tipo, assunto, corpo_html, ativo")
+          .in("tipo", [data.tipo, `rh_${data.tipo}`]),
         lavoroAdmin
           .from("hub_admin_settings")
           .select("key, value")
