@@ -130,12 +130,10 @@ export const fazerCheckin = createServerFn({ method: "POST" })
       };
     }
 
-    const ipAutorizado = candidatos.find((c) => permitidos.includes(c)) ?? principal;
-
     const { data: resultado, error } = await lavoroAdmin.rpc("rp_registrar_checkin", {
       p_reserva_id: data.reserva_id,
       p_user_id: context.userId,
-      p_ip: ipAutorizado,
+      p_ip: casado,
     });
 
     if (error) {
