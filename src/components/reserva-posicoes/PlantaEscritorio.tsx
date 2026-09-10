@@ -15,7 +15,7 @@ export function estadoDaPosicao(pos: RpPosicaoGrade): EstadoPosicao {
 /** Cor do indicador de estado (usada na planta e na legenda). */
 const COR_ESTADO: Record<EstadoPosicao, string> = {
   livre: "#10B981",
-  parcial: "#F59E0B",
+  parcial: "#EF4444",
   minha: "#00BAF2",
   fixa: "#94A3B8",
   inativa: "#CBD5E1",
@@ -425,7 +425,7 @@ export function PlantaEscritorio({
 export function LegendaPlanta() {
   const itens: { estado: EstadoPosicao; label: string }[] = [
     { estado: "livre", label: "Livre agora" },
-    { estado: "parcial", label: "Parcialmente reservada" },
+    { estado: "parcial", label: "Reservada por outro usuário" },
     { estado: "minha", label: "Tenho reserva" },
     { estado: "fixa", label: "Fixa" },
     { estado: "inativa", label: "Inativa" },
