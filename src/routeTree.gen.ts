@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthSenhaRouteImport } from './routes/auth.senha'
+import { Route as AuthenticatedReservaPosicoesRouteImport } from './routes/_authenticated/reserva-posicoes'
 import { Route as AuthenticatedOperacionalRouteImport } from './routes/_authenticated/operacional'
 import { Route as AuthenticatedMiddleRouteImport } from './routes/_authenticated/middle'
 import { Route as AuthenticatedJuridicoRouteImport } from './routes/_authenticated/juridico'
@@ -46,6 +47,7 @@ import { Route as AuthenticatedBeneficiosClientesRouteImport } from './routes/_a
 import { Route as AuthenticatedBeneficiosCadastrosRouteImport } from './routes/_authenticated/beneficios.cadastros'
 import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authenticated/admin/usuarios'
 import { Route as AuthenticatedAdminUsoRouteImport } from './routes/_authenticated/admin/uso'
+import { Route as AuthenticatedAdminReservasRouteImport } from './routes/_authenticated/admin/reservas'
 import { Route as AuthenticatedAdminPerfisRouteImport } from './routes/_authenticated/admin/perfis'
 import { Route as AuthenticatedAdminImportarBasesRouteImport } from './routes/_authenticated/admin/importar-bases'
 import { Route as AuthenticatedAdminEmailsRouteImport } from './routes/_authenticated/admin/emails'
@@ -93,6 +95,12 @@ const AuthSenhaRoute = AuthSenhaRouteImport.update({
   path: '/senha',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthenticatedReservaPosicoesRoute =
+  AuthenticatedReservaPosicoesRouteImport.update({
+    id: '/reserva-posicoes',
+    path: '/reserva-posicoes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedOperacionalRoute =
   AuthenticatedOperacionalRouteImport.update({
     id: '/operacional',
@@ -268,6 +276,12 @@ const AuthenticatedAdminUsoRoute = AuthenticatedAdminUsoRouteImport.update({
   path: '/uso',
   getParentRoute: () => AuthenticatedAdminRouteRoute,
 } as any)
+const AuthenticatedAdminReservasRoute =
+  AuthenticatedAdminReservasRouteImport.update({
+    id: '/reservas',
+    path: '/reservas',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminPerfisRoute =
   AuthenticatedAdminPerfisRouteImport.update({
     id: '/perfis',
@@ -413,12 +427,14 @@ export interface FileRoutesByFullPath {
   '/juridico': typeof AuthenticatedJuridicoRoute
   '/middle': typeof AuthenticatedMiddleRoute
   '/operacional': typeof AuthenticatedOperacionalRoute
+  '/reserva-posicoes': typeof AuthenticatedReservaPosicoesRoute
   '/auth/senha': typeof AuthSenhaRoute
   '/admin/comunicados': typeof AuthenticatedAdminComunicadosRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/admin/importar-bases': typeof AuthenticatedAdminImportarBasesRoute
   '/admin/perfis': typeof AuthenticatedAdminPerfisRoute
+  '/admin/reservas': typeof AuthenticatedAdminReservasRoute
   '/admin/uso': typeof AuthenticatedAdminUsoRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/beneficios/cadastros': typeof AuthenticatedBeneficiosCadastrosRoute
@@ -472,12 +488,14 @@ export interface FileRoutesByTo {
   '/juridico': typeof AuthenticatedJuridicoRoute
   '/middle': typeof AuthenticatedMiddleRoute
   '/operacional': typeof AuthenticatedOperacionalRoute
+  '/reserva-posicoes': typeof AuthenticatedReservaPosicoesRoute
   '/auth/senha': typeof AuthSenhaRoute
   '/admin/comunicados': typeof AuthenticatedAdminComunicadosRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/admin/importar-bases': typeof AuthenticatedAdminImportarBasesRoute
   '/admin/perfis': typeof AuthenticatedAdminPerfisRoute
+  '/admin/reservas': typeof AuthenticatedAdminReservasRoute
   '/admin/uso': typeof AuthenticatedAdminUsoRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/beneficios/cadastros': typeof AuthenticatedBeneficiosCadastrosRoute
@@ -534,12 +552,14 @@ export interface FileRoutesById {
   '/_authenticated/juridico': typeof AuthenticatedJuridicoRoute
   '/_authenticated/middle': typeof AuthenticatedMiddleRoute
   '/_authenticated/operacional': typeof AuthenticatedOperacionalRoute
+  '/_authenticated/reserva-posicoes': typeof AuthenticatedReservaPosicoesRoute
   '/auth/senha': typeof AuthSenhaRoute
   '/_authenticated/admin/comunicados': typeof AuthenticatedAdminComunicadosRoute
   '/_authenticated/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/_authenticated/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/_authenticated/admin/importar-bases': typeof AuthenticatedAdminImportarBasesRoute
   '/_authenticated/admin/perfis': typeof AuthenticatedAdminPerfisRoute
+  '/_authenticated/admin/reservas': typeof AuthenticatedAdminReservasRoute
   '/_authenticated/admin/uso': typeof AuthenticatedAdminUsoRoute
   '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/_authenticated/beneficios/cadastros': typeof AuthenticatedBeneficiosCadastrosRoute
@@ -596,12 +616,14 @@ export interface FileRouteTypes {
     | '/juridico'
     | '/middle'
     | '/operacional'
+    | '/reserva-posicoes'
     | '/auth/senha'
     | '/admin/comunicados'
     | '/admin/configuracoes'
     | '/admin/emails'
     | '/admin/importar-bases'
     | '/admin/perfis'
+    | '/admin/reservas'
     | '/admin/uso'
     | '/admin/usuarios'
     | '/beneficios/cadastros'
@@ -655,12 +677,14 @@ export interface FileRouteTypes {
     | '/juridico'
     | '/middle'
     | '/operacional'
+    | '/reserva-posicoes'
     | '/auth/senha'
     | '/admin/comunicados'
     | '/admin/configuracoes'
     | '/admin/emails'
     | '/admin/importar-bases'
     | '/admin/perfis'
+    | '/admin/reservas'
     | '/admin/uso'
     | '/admin/usuarios'
     | '/beneficios/cadastros'
@@ -716,12 +740,14 @@ export interface FileRouteTypes {
     | '/_authenticated/juridico'
     | '/_authenticated/middle'
     | '/_authenticated/operacional'
+    | '/_authenticated/reserva-posicoes'
     | '/auth/senha'
     | '/_authenticated/admin/comunicados'
     | '/_authenticated/admin/configuracoes'
     | '/_authenticated/admin/emails'
     | '/_authenticated/admin/importar-bases'
     | '/_authenticated/admin/perfis'
+    | '/_authenticated/admin/reservas'
     | '/_authenticated/admin/uso'
     | '/_authenticated/admin/usuarios'
     | '/_authenticated/beneficios/cadastros'
@@ -824,6 +850,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/senha'
       preLoaderRoute: typeof AuthSenhaRouteImport
       parentRoute: typeof AuthRoute
+    }
+    '/_authenticated/reserva-posicoes': {
+      id: '/_authenticated/reserva-posicoes'
+      path: '/reserva-posicoes'
+      fullPath: '/reserva-posicoes'
+      preLoaderRoute: typeof AuthenticatedReservaPosicoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/operacional': {
       id: '/_authenticated/operacional'
@@ -1049,6 +1082,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminUsoRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/reservas': {
+      id: '/_authenticated/admin/reservas'
+      path: '/reservas'
+      fullPath: '/admin/reservas'
+      preLoaderRoute: typeof AuthenticatedAdminReservasRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/perfis': {
       id: '/_authenticated/admin/perfis'
       path: '/perfis'
@@ -1212,6 +1252,7 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminEmailsRoute: typeof AuthenticatedAdminEmailsRoute
   AuthenticatedAdminImportarBasesRoute: typeof AuthenticatedAdminImportarBasesRoute
   AuthenticatedAdminPerfisRoute: typeof AuthenticatedAdminPerfisRoute
+  AuthenticatedAdminReservasRoute: typeof AuthenticatedAdminReservasRoute
   AuthenticatedAdminUsoRoute: typeof AuthenticatedAdminUsoRoute
   AuthenticatedAdminUsuariosRoute: typeof AuthenticatedAdminUsuariosRoute
   AuthenticatedAdminEmailsLogRoute: typeof AuthenticatedAdminEmailsLogRoute
@@ -1225,6 +1266,7 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminEmailsRoute: AuthenticatedAdminEmailsRoute,
     AuthenticatedAdminImportarBasesRoute: AuthenticatedAdminImportarBasesRoute,
     AuthenticatedAdminPerfisRoute: AuthenticatedAdminPerfisRoute,
+    AuthenticatedAdminReservasRoute: AuthenticatedAdminReservasRoute,
     AuthenticatedAdminUsoRoute: AuthenticatedAdminUsoRoute,
     AuthenticatedAdminUsuariosRoute: AuthenticatedAdminUsuariosRoute,
     AuthenticatedAdminEmailsLogRoute: AuthenticatedAdminEmailsLogRoute,
@@ -1271,6 +1313,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedJuridicoRoute: typeof AuthenticatedJuridicoRoute
   AuthenticatedMiddleRoute: typeof AuthenticatedMiddleRoute
   AuthenticatedOperacionalRoute: typeof AuthenticatedOperacionalRoute
+  AuthenticatedReservaPosicoesRoute: typeof AuthenticatedReservaPosicoesRoute
   AuthenticatedDashboardReceitaRoute: typeof AuthenticatedDashboardReceitaRoute
   AuthenticatedDashboardReceitaCaixaRoute: typeof AuthenticatedDashboardReceitaCaixaRoute
   AuthenticatedDashboardReceitaExecutivoRoute: typeof AuthenticatedDashboardReceitaExecutivoRoute
@@ -1293,6 +1336,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedJuridicoRoute: AuthenticatedJuridicoRoute,
   AuthenticatedMiddleRoute: AuthenticatedMiddleRoute,
   AuthenticatedOperacionalRoute: AuthenticatedOperacionalRoute,
+  AuthenticatedReservaPosicoesRoute: AuthenticatedReservaPosicoesRoute,
   AuthenticatedDashboardReceitaRoute: AuthenticatedDashboardReceitaRoute,
   AuthenticatedDashboardReceitaCaixaRoute:
     AuthenticatedDashboardReceitaCaixaRoute,

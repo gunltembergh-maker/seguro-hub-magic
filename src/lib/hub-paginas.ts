@@ -19,6 +19,7 @@ export const HUB_PAGINAS: GrupoPaginas[] = [
     paginas: [
       { rota: "/inicio", nome: "Início" },
       { rota: "/hub", nome: "Hub (visão geral)" },
+      { rota: "/reserva-posicoes", nome: "Reserva de Posições" },
     ],
   },
   {
@@ -80,6 +81,7 @@ export const HUB_PAGINAS: GrupoPaginas[] = [
       { rota: "/admin/comunicados", nome: "Comunicados" },
       { rota: "/admin/importar-bases", nome: "Importar Bases" },
       { rota: "/admin/uso", nome: "Relatório de Uso" },
+      { rota: "/admin/reservas", nome: "Reserva de Posições (admin)" },
       { rota: "/admin/configuracoes", nome: "Configurações" },
       { rota: "/admin/emails", nome: "E-mails · Envio e testes" },
       { rota: "/admin/emails/schedules", nome: "E-mails · Agendamentos" },

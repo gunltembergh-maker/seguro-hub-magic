@@ -2508,6 +2508,131 @@ export type Database = {
         }
         Relationships: []
       }
+      rp_email_templates: {
+        Row: {
+          assunto: string
+          ativo: boolean
+          corpo_html: string
+          id: string
+          tipo: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          assunto: string
+          ativo?: boolean
+          corpo_html: string
+          id?: string
+          tipo: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          assunto?: string
+          ativo?: boolean
+          corpo_html?: string
+          id?: string
+          tipo?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      rp_posicoes: {
+        Row: {
+          apelido: string | null
+          ativa: boolean
+          bloco: string
+          created_at: string
+          fixa: boolean
+          fixa_observacao: string | null
+          fixa_user_id: string | null
+          id: string
+          numero: number
+          updated_at: string
+        }
+        Insert: {
+          apelido?: string | null
+          ativa?: boolean
+          bloco: string
+          created_at?: string
+          fixa?: boolean
+          fixa_observacao?: string | null
+          fixa_user_id?: string | null
+          id?: string
+          numero: number
+          updated_at?: string
+        }
+        Update: {
+          apelido?: string | null
+          ativa?: boolean
+          bloco?: string
+          created_at?: string
+          fixa?: boolean
+          fixa_observacao?: string | null
+          fixa_user_id?: string | null
+          id?: string
+          numero?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      rp_reservas: {
+        Row: {
+          cancelada_em: string | null
+          cancelada_por: string | null
+          checkin_at: string | null
+          checkin_ip: string | null
+          created_at: string
+          data: string
+          hora_fim: string
+          hora_inicio: string
+          id: string
+          periodo: unknown
+          posicao_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          cancelada_em?: string | null
+          cancelada_por?: string | null
+          checkin_at?: string | null
+          checkin_ip?: string | null
+          created_at?: string
+          data: string
+          hora_fim: string
+          hora_inicio: string
+          id?: string
+          periodo?: unknown
+          posicao_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          cancelada_em?: string | null
+          cancelada_por?: string | null
+          checkin_at?: string | null
+          checkin_ip?: string | null
+          created_at?: string
+          data?: string
+          hora_fim?: string
+          hora_inicio?: string
+          id?: string
+          periodo?: unknown
+          posicao_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rp_reservas_posicao_id_fkey"
+            columns: ["posicao_id"]
+            isOneToOne: false
+            referencedRelation: "rp_posicoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seguradoras: {
         Row: {
           ativo: boolean
@@ -4212,6 +4337,19 @@ export type Database = {
         Args: { p_id: string }
         Returns: boolean
       }
+      rpc_rp_cancelar_reserva: { Args: { p_reserva_id: string }; Returns: Json }
+      rpc_rp_criar_reserva: {
+        Args: {
+          p_data: string
+          p_hora_fim: string
+          p_hora_inicio: string
+          p_posicao_id: string
+        }
+        Returns: Json
+      }
+      rpc_rp_grade_dia: { Args: { p_data: string }; Returns: Json }
+      rpc_rp_minhas_reservas: { Args: never; Returns: Json }
+      rpc_rp_parametros: { Args: never; Returns: Json }
       rpc_set_meta_anual: {
         Args: { _ano: number; _valor: number }
         Returns: undefined
