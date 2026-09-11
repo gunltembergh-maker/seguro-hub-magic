@@ -23,14 +23,14 @@ export function AreaPage({ icon: Icon, title, subtitle, description, sections = 
           <div>
             <Badge
               variant="outline"
-              className="border-white/30 bg-white/10 text-white hover:bg-white/15"
+              className="border-primary/30 bg-primary/5 text-primary hover:bg-primary/10"
             >
               Área
             </Badge>
-            <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-white md:text-4xl">
+            <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
               {title}
             </h1>
-            <p className="mt-1 max-w-2xl text-white/70">{subtitle}</p>
+            <p className="mt-1 max-w-2xl text-muted-foreground">{subtitle}</p>
           </div>
         </div>
 
@@ -65,7 +65,7 @@ export function AreaPage({ icon: Icon, title, subtitle, description, sections = 
           </div>
         )}
 
-        <div className="mt-10 rounded-xl border border-dashed border-white/25 bg-white/5 p-6 text-center text-sm text-white/70">
+        <div className="mt-10 rounded-xl border border-dashed border-border bg-muted/40 p-6 text-center text-sm text-muted-foreground">
           Esta área está pronta para receber conteúdo, integrações e ferramentas específicas do time.
         </div>
       </div>

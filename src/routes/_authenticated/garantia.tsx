@@ -21,11 +21,11 @@ function GarantiaPage() {
         ]}
       />
 
-      <div className="px-6 pb-10 md:px-8 lg:px-10" style={{ background: "#13405C" }}>
+      <div className="bg-background px-6 pb-10 md:px-8 lg:px-10">
         <div className="mx-auto max-w-7xl">
           <Link
             to="/garantia/analise-limite"
-            className="group flex items-center gap-4 rounded-xl border border-white/15 bg-white/5 p-5 transition-colors hover:bg-white/10"
+            className="group flex items-center gap-4 rounded-xl border border-border bg-card p-5 shadow-sm transition-colors hover:bg-accent/50"
           >
             <div
               className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-white"
@@ -34,13 +34,13 @@ function GarantiaPage() {
               <FileSearch className="h-5 w-5" />
             </div>
             <div className="flex-1">
-              <p className="font-display text-base font-semibold text-white">Análise de Limite</p>
-              <p className="text-sm text-white/70">
+              <p className="font-display text-base font-semibold text-card-foreground">Análise de Limite</p>
+              <p className="text-sm text-muted-foreground">
                 Auditoria da minuta/apólice contra os modelos padrão ANP, com aderência por cláusula e
                 classificação de risco.
               </p>
             </div>
-            <ArrowRight className="h-5 w-5 text-white/60 transition-transform group-hover:translate-x-1" />
+            <ArrowRight className="h-5 w-5 text-primary transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
       </div>

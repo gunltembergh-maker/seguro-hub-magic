@@ -121,12 +121,12 @@ function Cartao({
   cor: string;
 }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+    <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium uppercase tracking-wide text-white/60">{titulo}</span>
+        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{titulo}</span>
         <Icone className="h-4 w-4" style={{ color: cor }} />
       </div>
-      <p className="mt-2 font-display text-2xl font-bold text-white">{valor}</p>
+      <p className="mt-2 font-display text-2xl font-bold text-card-foreground">{valor}</p>
     </div>
   );
 }
@@ -311,17 +311,14 @@ function ControlePosicoesPage() {
   };
 
   return (
-    <div
-      className="min-h-screen px-6 pb-10 pt-6 md:px-8 md:pt-8 lg:px-10 lg:pt-10"
-      style={{ background: "#13405C" }}
-    >
+    <div className="min-h-screen bg-background px-6 pb-10 pt-6 md:px-8 md:pt-8 lg:px-10 lg:pt-10">
       <div className="mx-auto max-w-7xl">
         <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="font-display text-3xl font-bold tracking-tight text-white md:text-4xl">
+            <h1 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
               Controle de Posições
             </h1>
-            <p className="mt-1 text-white/70">
+            <p className="mt-1 text-muted-foreground">
               Reservas, comparecimentos e ranking de uso do escritório de SP
             </p>
           </div>
@@ -332,17 +329,17 @@ function ControlePosicoesPage() {
         </div>
 
         {/* Filtros */}
-        <div className="mb-6 grid gap-3 rounded-xl border border-white/10 bg-white/5 p-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="mb-6 grid gap-3 rounded-xl border border-border bg-card p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-5">
           <div className="space-y-1.5">
-            <Label className="text-white/70">De</Label>
+            <Label className="text-card-foreground">De</Label>
             <Input type="date" value={de} onChange={(e) => setDe(e.target.value)} className="bg-white text-slate-900" />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-white/70">Até</Label>
+            <Label className="text-card-foreground">Até</Label>
             <Input type="date" value={ate} onChange={(e) => setAte(e.target.value)} className="bg-white text-slate-900" />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-white/70">Colaborador</Label>
+            <Label className="text-card-foreground">Colaborador</Label>
             <Select value={userId} onValueChange={setUserId}>
               <SelectTrigger className="bg-white text-slate-900">
                 <SelectValue placeholder="Todos" />
@@ -358,7 +355,7 @@ function ControlePosicoesPage() {
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-white/70">Posição</Label>
+            <Label className="text-card-foreground">Posição</Label>
             <Select value={posicao} onValueChange={setPosicao}>
               <SelectTrigger className="bg-white text-slate-900">
                 <SelectValue placeholder="Todas" />
@@ -374,7 +371,7 @@ function ControlePosicoesPage() {
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-white/70">Status</Label>
+            <Label className="text-card-foreground">Status</Label>
             <Select value={status} onValueChange={setStatus}>
               <SelectTrigger className="bg-white text-slate-900">
                 <SelectValue placeholder="Todos" />
@@ -401,7 +398,7 @@ function ControlePosicoesPage() {
         </div>
 
         {semPermissao && !carregandoReservas && linhas.length === 0 && (
-          <p className="mb-4 rounded-lg border border-white/10 bg-white/5 p-4 text-sm text-white/70">
+          <p className="mb-4 rounded-lg border border-border bg-muted/40 p-4 text-sm text-muted-foreground">
             Nenhuma reserva encontrada para o período. Se você acredita que deveria ver dados aqui,
             fale com o administrador do Hub.
           </p>
@@ -414,7 +411,7 @@ function ControlePosicoesPage() {
           </TabsList>
 
           <TabsContent value="reservas" className="mt-4">
-            <div className="overflow-x-auto rounded-xl border border-white/10 bg-white">
+            <div className="overflow-x-auto rounded-xl border border-border bg-card">
               <table className="w-full text-sm">
                 <thead className="bg-slate-100 text-slate-700">
                   <tr>
@@ -521,7 +518,7 @@ function ControlePosicoesPage() {
           </TabsContent>
 
           <TabsContent value="ranking" className="mt-4">
-            <div className="overflow-x-auto rounded-xl border border-white/10 bg-white">
+            <div className="overflow-x-auto rounded-xl border border-border bg-card">
               <table className="w-full text-sm">
                 <thead className="bg-slate-100 text-slate-700">
                   <tr>

@@ -381,10 +381,10 @@ function DashboardReceitaLavoro() {
 
   if (escopo.semAcesso) {
     return (
-      <div className="min-h-screen p-6" style={{ background: "#13405C" }}>
-        <div className="rounded-lg border border-white/20 bg-white/10 p-8 text-center text-white">
+      <div className="min-h-screen bg-background p-6">
+        <div className="rounded-lg border border-border bg-card p-8 text-center text-card-foreground shadow-sm">
           <p className="text-sm">{SEM_ACESSO_RECEITA_MSG}</p>
-          <p className="mt-1 text-xs text-white/70">
+          <p className="mt-1 text-xs text-muted-foreground">
             Solicite ao administrador a liberação do(s) seu(s) time(s) de receita.
           </p>
         </div>
@@ -394,10 +394,10 @@ function DashboardReceitaLavoro() {
 
   return (
 
-    <div className="min-h-screen p-6" style={{ background: "#13405C" }}>
+    <div className="min-h-screen bg-background p-6">
       <style>{`
         .lavoro-receita { font-family: 'Source Sans 3', system-ui, sans-serif; color: #13405C; }
-        .lavoro-receita .title-serif { font-family: 'Inter', system-ui, sans-serif; font-weight: 400; color: #FFFFFF; }
+        .lavoro-receita .title-serif { font-family: 'Inter', system-ui, sans-serif; font-weight: 600; color: #13405C; }
       `}</style>
       <div className="lavoro-receita">
         {/* Header */}
@@ -406,11 +406,11 @@ function DashboardReceitaLavoro() {
             <h1 className="title-serif" style={{ fontSize: 32, letterSpacing: "-0.5px", margin: 0 }}>
               Receita Lavoro Seguros
             </h1>
-            <ChevronRight className="h-4 w-4 text-[#FFFFFF]/40" />
-            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-md bg-white/10 backdrop-blur-sm border border-white/15">
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            <div className="flex items-center gap-2 rounded-md border border-border bg-card px-3.5 py-1.5 shadow-sm">
               <Calendar className="h-3.5 w-3.5 text-[#338B85]" />
               <Select value={String(ano)} onValueChange={(v) => setAno(Number(v))}>
-                <SelectTrigger className="bg-transparent border-0 h-6 w-[90px] focus:ring-0 p-0 text-[#FFFFFF]">
+                <SelectTrigger className="h-6 w-[90px] border-0 bg-transparent p-0 text-foreground focus:ring-0">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -418,9 +418,9 @@ function DashboardReceitaLavoro() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-md bg-white/10 backdrop-blur-sm border border-white/15">
+            <div className="flex items-center gap-2 rounded-md border border-border bg-card px-3.5 py-1.5 shadow-sm">
               <Select value={String(mesRef)} onValueChange={(v) => setMesRef(Number(v))}>
-                <SelectTrigger className="bg-transparent border-0 h-6 w-[80px] focus:ring-0 p-0 text-[#FFFFFF]">
+                <SelectTrigger className="h-6 w-[80px] border-0 bg-transparent p-0 text-foreground focus:ring-0">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -428,7 +428,7 @@ function DashboardReceitaLavoro() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex rounded-md overflow-hidden border border-white/15">
+            <div className="flex overflow-hidden rounded-md border border-border bg-card">
               {([
                 { k: "MTD", label: "Mês" },
                 { k: "SEMESTRE", label: "Semestre" },
@@ -438,7 +438,7 @@ function DashboardReceitaLavoro() {
                   key={k}
                   onClick={() => setPeriodo(k as Periodo)}
                   className={`px-3 py-1 text-xs font-semibold ${
-                    periodo === k ? "bg-[#338B85] text-[#13405C]" : "bg-white/10 text-[#FFFFFF]"
+                    periodo === k ? "bg-primary text-primary-foreground" : "bg-card text-card-foreground hover:bg-accent"
                   }`}
                 >
                   {label}
@@ -448,13 +448,13 @@ function DashboardReceitaLavoro() {
           </div>
           <div className="flex items-center gap-3">
             <SendNewsletterButton modulo="receita_lavoro" ano={ano} mes={mesRef} />
-            <span className="text-xs flex items-center gap-1 text-[#FFFFFF]/80">
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
               <Clock className="h-3 w-3 text-[#338B85]" />
               Dados atualizados em: {fmtTs(ultimaAtQ.data)}
             </span>
             <Button
               variant="outline" size="sm"
-              className="h-6 text-xs gap-1 border-[#FFFFFF]/30 text-[#FFFFFF] bg-transparent hover:bg-white/10 hover:text-[#FFFFFF]"
+              className="h-6 gap-1 border-border bg-card text-xs text-card-foreground hover:bg-accent hover:text-accent-foreground"
               onClick={handleRefresh} disabled={isRefreshing}
             >
               <RefreshCw className={`h-3 w-3 ${isRefreshing ? "animate-spin" : ""}`} />
@@ -464,7 +464,7 @@ function DashboardReceitaLavoro() {
         </div>
 
         {escopo.restrito && (
-          <p className="mb-3 rounded-md border border-white/20 bg-white/10 px-3 py-2 text-xs text-white/90">
+          <p className="mb-3 rounded-md border border-border bg-accent/50 px-3 py-2 text-xs text-accent-foreground">
             {escopo.frase}
           </p>
         )}
@@ -652,7 +652,7 @@ function DashboardReceitaLavoro() {
         {/* Detalhamento operacional */}
         <Collapsible open={detOpen} onOpenChange={setDetOpen}>
           <CollapsibleTrigger asChild>
-            <button className="w-full flex items-center justify-between px-4 py-2.5 rounded-md bg-white/10 border border-white/15 text-[#FFFFFF] text-sm font-semibold hover:bg-white/15 transition-colors">
+            <button className="flex w-full items-center justify-between rounded-md border border-border bg-card px-4 py-2.5 text-sm font-semibold text-card-foreground transition-colors hover:bg-accent">
               <span>Ver detalhamento operacional completo</span>
               <ChevronDown className={`h-4 w-4 transition-transform ${detOpen ? "rotate-180" : ""}`} />
             </button>
