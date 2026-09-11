@@ -145,7 +145,8 @@
  * O escopo evita qualquer alteração visual na tela de login e não alcança
  * o conteúdo independente incorporado pela operação de Garantia.
  */
-.hub-theme {
+.hub-theme,
+:root:has(.hub-theme) {
   --brand-navy: #13405c;
   --brand-teal: #338b85;
   --brand-white: #ffffff;
