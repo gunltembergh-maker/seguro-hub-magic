@@ -14,8 +14,10 @@ export interface ReservaEmailDados {
   hora_fim: string;
   tolerancia_min: string;
   checkin_antes_min?: string;
-  /** Justificativa do cancelamento feito por RH/Admin. */
+  /** Justificativa do cancelamento feito com motivo. */
   motivo?: string;
+  /** Bloco HTML "Motivo informado: ..." do template rh_cancelamento (vazio sem motivo). */
+  linha_motivo?: string;
 }
 
 

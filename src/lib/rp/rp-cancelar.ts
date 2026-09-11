@@ -18,10 +18,13 @@ export async function cancelarReservaComMotivo(
   if (error) throw error;
   const reserva = data as unknown as RpReservaRetorno;
 
+  // A escolha do template é pelo tem_motivo: qualquer cancelamento com
+  // justificativa (telas administrativas) usa 'cancelamento_admin' para o dono,
+  // inclusive quando o admin cancela uma reserva dele mesmo.
   enviarEmailReserva({
     data: {
       tipo: "cancelamento",
-      por_terceiro: reserva.cancelado_por_terceiro === true,
+      por_terceiro: reserva.tem_motivo === true,
       dono_user_id: reserva.user_id ?? null,
       motivo: reserva.motivo ?? motivo ?? null,
       reserva,
