@@ -411,7 +411,7 @@ function ControlePosicoesPage() {
           </TabsList>
 
           <TabsContent value="reservas" className="mt-4">
-            <div className="overflow-x-auto rounded-xl border border-white/10 bg-white">
+            <div className="overflow-x-auto rounded-xl border border-border bg-card">
               <table className="w-full text-sm">
                 <thead className="bg-slate-100 text-slate-700">
                   <tr>
@@ -518,7 +518,7 @@ function ControlePosicoesPage() {
           </TabsContent>
 
           <TabsContent value="ranking" className="mt-4">
-            <div className="overflow-x-auto rounded-xl border border-white/10 bg-white">
+            <div className="overflow-x-auto rounded-xl border border-border bg-card">
               <table className="w-full text-sm">
                 <thead className="bg-slate-100 text-slate-700">
                   <tr>
