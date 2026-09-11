@@ -10,16 +10,13 @@ interface AreaPageProps {
   sections?: { title: string; description: string }[];
 }
 
-const NAVY = "#256B66";
-
 export function AreaPage({ icon: Icon, title, subtitle, description, sections = [] }: AreaPageProps) {
   return (
     <div className="min-h-screen bg-background p-6 md:p-8 lg:p-10">
       <div className="mx-auto max-w-7xl">
         <div className="flex items-start gap-4">
           <div
-            className="grid h-14 w-14 place-items-center rounded-xl text-white shadow-lg"
-            style={{ background: "#4FB3AB" }}
+            className="grid h-14 w-14 place-items-center rounded-xl bg-primary text-primary-foreground shadow-lg"
           >
             <Icon className="h-6 w-6" />
           </div>
@@ -39,12 +36,12 @@ export function AreaPage({ icon: Icon, title, subtitle, description, sections = 
 
         <Card className="mt-8 border-gray-200 bg-white shadow-sm">
           <CardHeader>
-            <CardTitle className="font-display text-lg" style={{ color: NAVY }}>
+            <CardTitle className="font-display text-lg text-card-foreground">
               Sobre esta área
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm leading-relaxed text-gray-600">{description}</p>
+            <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>
           </CardContent>
         </Card>
 
@@ -56,12 +53,12 @@ export function AreaPage({ icon: Icon, title, subtitle, description, sections = 
                 className="border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md"
               >
                 <CardHeader>
-                  <CardTitle className="font-display text-base" style={{ color: NAVY }}>
+                  <CardTitle className="font-display text-base text-card-foreground">
                     {s.title}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-gray-600">{s.description}</p>
+                  <p className="text-sm text-muted-foreground">{s.description}</p>
                 </CardContent>
               </Card>
             ))}

@@ -98,7 +98,7 @@ function AuthenticatedShell() {
   const { isImpersonating, viewAsProfile } = useViewAs();
   return (
     <SidebarProvider defaultOpen={false}>
-      <div className="flex min-h-screen w-full bg-sidebar">
+      <div className="hub-theme flex min-h-screen w-full bg-sidebar">
         <AppSidebar />
         <SidebarInset className="flex flex-1 flex-col">
           {isImpersonating && viewAsProfile && (
