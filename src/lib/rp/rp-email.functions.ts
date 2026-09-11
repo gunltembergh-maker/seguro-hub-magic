@@ -94,6 +94,10 @@ export const enviarEmailReserva = createServerFn({ method: "POST" })
         tolerancia_min: tolerancia,
         checkin_antes_min: checkinAntes,
         motivo: data.motivo ?? "",
+        // Linha extra do template rh_cancelamento: some quando não há justificativa.
+        linha_motivo: data.motivo
+          ? `<p style="margin:12px 0 0;font-size:14px;line-height:1.5;color:#334155;">Motivo informado: <strong>${data.motivo}</strong></p>`
+          : "",
       };
 
       // Envios: colaborador recebe o template padrão; o RH recebe o template rh_*.

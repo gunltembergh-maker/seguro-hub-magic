@@ -49,9 +49,13 @@ export interface RpReservaRetorno {
   hora_fim: string;
   /** Dono da reserva (retornado pelo cancelamento). */
   user_id?: string | null;
-  /** Justificativa quando o cancelamento é feito por RH/Admin. */
+  /** Justificativa quando o cancelamento é feito com motivo (telas administrativas). */
   motivo?: string | null;
   cancelado_por_terceiro?: boolean;
+  /** true quando o cancelamento foi feito com justificativa (admin/RH). */
+  tem_motivo?: boolean;
+  /** Nome de quem cancelou (retornado pela RPC). */
+  cancelado_por_nome?: string | null;
 }
 
 
