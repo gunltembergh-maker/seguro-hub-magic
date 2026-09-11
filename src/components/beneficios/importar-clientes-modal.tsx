@@ -173,7 +173,7 @@ export function ImportarClientesModal({
     <Dialog open={open} onOpenChange={(v) => { if (!v) reset(); onOpenChange(v); }}>
       <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="font-display text-2xl" style={{ color: "#14405C" }}>
+          <DialogTitle className="font-display text-2xl" style={{ color: "#13405C" }}>
             Importar clientes e contratos em massa
           </DialogTitle>
           <DialogDescription>
@@ -183,7 +183,7 @@ export function ImportarClientesModal({
 
         <div className="mb-2 flex gap-2">
           {[1, 2, 3].map((p) => (
-            <div key={p} className="h-1.5 flex-1 rounded-full" style={{ background: p <= passo ? "#00BAF2" : "#D9E1E8" }} />
+            <div key={p} className="h-1.5 flex-1 rounded-full" style={{ background: p <= passo ? "#338B85" : "#D9E1E8" }} />
           ))}
         </div>
 
@@ -224,7 +224,7 @@ export function ImportarClientesModal({
                 <tbody>
                   {linhas.slice(0, 8).map((l, i) => (
                     <tr key={i} className="border-t border-gray-100">
-                      <td className="p-3 font-semibold" style={{ color: "#14405C" }}>{l.nome || "—"}</td>
+                      <td className="p-3 font-semibold" style={{ color: "#13405C" }}>{l.nome || "—"}</td>
                       <td className="p-3 text-gray-500">{l.documento || "—"}</td>
                       <td className="p-3">{l.seguradora || "—"}</td>
                       <td className="p-3">{l.vigencia_fim || "—"}</td>
@@ -242,12 +242,12 @@ export function ImportarClientesModal({
         <DialogFooter>
           {passo >= 2 && <Button variant="outline" onClick={() => setPasso(1)}>Voltar</Button>}
           {passo === 2 && (
-            <Button onClick={() => setPasso(3)} style={{ background: "#00BAF2" }} className="text-white">
+            <Button onClick={() => setPasso(3)} style={{ background: "#338B85" }} className="text-white">
               Revisar e confirmar
             </Button>
           )}
           {passo === 3 && (
-            <Button onClick={confirmar} disabled={salvando} style={{ background: "#00BAF2" }} className="text-white">
+            <Button onClick={confirmar} disabled={salvando} style={{ background: "#338B85" }} className="text-white">
               {salvando ? "Importando…" : "Confirmar importação"}
             </Button>
           )}
@@ -257,7 +257,7 @@ export function ImportarClientesModal({
   );
 }
 
-function Kpi({ valor, label, cor = "#14405C" }: { valor: number; label: string; cor?: string }) {
+function Kpi({ valor, label, cor = "#13405C" }: { valor: number; label: string; cor?: string }) {
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-4">
       <p className="font-display text-2xl font-bold" style={{ color: cor }}>{valor}</p>

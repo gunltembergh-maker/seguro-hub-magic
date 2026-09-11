@@ -31,8 +31,8 @@ const BRL_COMPACT = (v: number | null | undefined) => {
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
 const COLORS = [
-  "#14405C", "#14405C", "#1B5680", "#4B6D88", "#8AAFC9", "#00BAF2",
-  "#8AAFC9", "#8AAFC9", "#B8D0E0", "#D4E1E6",
+  "#13405C", "#338B85", "#285F6D", "#4F788B", "#5D9B96", "#76B5AF",
+  "#42778A", "#6B929F", "#91B7BF", "#C5D9DD",
 ];
 
 type RawCaixa = {
@@ -176,7 +176,7 @@ function ReceitaCaixaPage() {
   };
 
   return (
-    <div className="min-h-screen p-4 lg:p-6 space-y-4" style={{ background: "#14405C" }}>
+    <div className="min-h-screen space-y-4 bg-background p-4 lg:p-6">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
@@ -250,7 +250,7 @@ function ReceitaCaixaPage() {
               <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => BRL_COMPACT(v)} />
               <Tooltip formatter={(v: number) => BRL(v)} />
-              <Line type="monotone" dataKey="valor" stroke="#14405C" strokeWidth={2} dot={{ r: 3 }} />
+              <Line type="monotone" dataKey="valor" stroke="#338B85" strokeWidth={2} dot={{ r: 3 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -270,7 +270,7 @@ function ReceitaCaixaPage() {
                 <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => BRL_COMPACT(v)} />
                 <YAxis type="category" dataKey="categoria" width={140} tick={{ fontSize: 11 }} />
                 <Tooltip formatter={(v: number) => BRL(v)} />
-                <Bar dataKey="valor" fill="#14405C" />
+                <Bar dataKey="valor" fill="#338B85" />
               </BarChart>
             </ResponsiveContainer>
           </div>

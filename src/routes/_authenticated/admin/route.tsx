@@ -6,7 +6,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 
 function AdminLayout() {
   return (
-    <div className="min-h-screen text-white" style={{ background: "#14405C" }}>
+    <div className="min-h-screen text-white" style={{ background: "#13405C" }}>
       <Outlet />
     </div>
   );

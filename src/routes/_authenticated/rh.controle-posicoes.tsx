@@ -313,7 +313,7 @@ function ControlePosicoesPage() {
   return (
     <div
       className="min-h-screen px-6 pb-10 pt-6 md:px-8 md:pt-8 lg:px-10 lg:pt-10"
-      style={{ background: "#14405C" }}
+      style={{ background: "#13405C" }}
     >
       <div className="mx-auto max-w-7xl">
         <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
@@ -393,11 +393,11 @@ function ControlePosicoesPage() {
 
         {/* Resumo */}
         <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          <Cartao titulo="Reservas" valor={resumo.total} icone={CalendarCheck} cor="#00BAF2" />
+          <Cartao titulo="Reservas" valor={resumo.total} icone={CalendarCheck} cor="#338B85" />
           <Cartao titulo="Comparecimentos" valor={resumo.comparecimentos} icone={CheckCircle2} cor="#22C55E" />
           <Cartao titulo="Ausências" valor={resumo.ausencias} icone={XCircle} cor="#EF4444" />
-          <Cartao titulo="Cancelamentos" valor={resumo.cancelamentos} icone={Ban} cor="#8AAFC9" />
-          <Cartao titulo="Posições ativas hoje" valor={resumo.hoje} icone={Users} cor="#00BAF2" />
+          <Cartao titulo="Cancelamentos" valor={resumo.cancelamentos} icone={Ban} cor="#6B9AAA" />
+          <Cartao titulo="Posições ativas hoje" valor={resumo.hoje} icone={Users} cor="#338B85" />
         </div>
 
         {semPermissao && !carregandoReservas && linhas.length === 0 && (

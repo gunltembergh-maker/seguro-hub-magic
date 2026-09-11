@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_authenticated/financeiro_/fluxo-diario")
 
 function FluxoDiarioPage() {
   return (
-    <div className="px-6 pb-10 md:px-8 lg:px-10 min-h-screen pt-6 md:pt-8 lg:pt-10" style={{ background: "#14405C" }}>
+    <div className="px-6 pb-10 md:px-8 lg:px-10 min-h-screen pt-6 md:pt-8 lg:pt-10" style={{ background: "#13405C" }}>
       <div className="mx-auto max-w-7xl">
         <div className="mb-6">
           <h1 className="font-display text-3xl font-bold tracking-tight text-white md:text-4xl">

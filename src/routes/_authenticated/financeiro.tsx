@@ -3,8 +3,6 @@ import { Landmark, CalendarClock, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-const NAVY = "#14405C";
-
 export const Route = createFileRoute("/_authenticated/financeiro")({
   head: () => ({
     meta: [
@@ -26,13 +24,12 @@ const outrasSecoes = [
 
 function FinanceiroPage() {
   return (
-    <div className="min-h-screen p-6 md:p-8 lg:p-10" style={{ background: NAVY }}>
+    <div className="min-h-screen bg-background p-6 md:p-8 lg:p-10">
       <div className="mx-auto max-w-7xl">
         {/* Header */}
         <div className="flex items-start gap-4">
           <div
-            className="grid h-14 w-14 place-items-center rounded-xl text-white shadow-lg"
-            style={{ background: "#00BAF2" }}
+            className="grid h-14 w-14 place-items-center rounded-xl bg-primary text-primary-foreground shadow-lg"
           >
             <Landmark className="h-6 w-6" />
           </div>
@@ -52,12 +49,12 @@ function FinanceiroPage() {
         {/* Sobre */}
         <Card className="mt-8 border-gray-200 bg-white shadow-sm">
           <CardHeader>
-            <CardTitle className="font-display text-lg" style={{ color: NAVY }}>
+            <CardTitle className="font-display text-lg text-card-foreground">
               Sobre esta área
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm leading-relaxed text-gray-600">
+            <p className="text-sm leading-relaxed text-muted-foreground">
               Centralize aqui indicadores financeiros, fluxos de aprovação, relatórios de comissionamento
               e prazos do fechamento contábil da Lavoro Seguros.
             </p>
@@ -70,10 +67,7 @@ function FinanceiroPage() {
             to="/financeiro/fluxo-diario"
             className="group flex items-center gap-4 rounded-xl border border-white/15 bg-white/5 p-5 transition-colors hover:bg-white/10"
           >
-            <div
-              className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-white"
-              style={{ background: "#00BAF2" }}
-            >
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
               <CalendarClock className="h-5 w-5" />
             </div>
             <div className="flex-1">
@@ -91,12 +85,12 @@ function FinanceiroPage() {
           {outrasSecoes.map((s) => (
             <Card key={s.title} className="border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md">
               <CardHeader>
-                <CardTitle className="font-display text-base" style={{ color: NAVY }}>
+                <CardTitle className="font-display text-base text-card-foreground">
                   {s.title}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-gray-600">{s.description}</p>
+                <p className="text-sm text-muted-foreground">{s.description}</p>
               </CardContent>
             </Card>
           ))}

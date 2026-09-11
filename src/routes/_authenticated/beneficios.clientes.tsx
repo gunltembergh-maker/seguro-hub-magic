@@ -27,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/beneficios/clientes")({
   component: ClientesPage,
 });
 
-const NAVY = "#14405C";
+const NAVY = "#13405C";
 
 function ClientesPage() {
   const [busca, setBusca] = useState("");
@@ -85,7 +85,7 @@ function ClientesPage() {
       acoes={
         <>
           <Button variant="outline" onClick={() => setNovo(true)}>+ Novo Cliente</Button>
-          <Button onClick={() => setImportar(true)} style={{ background: "#00BAF2" }} className="text-white">
+          <Button onClick={() => setImportar(true)} style={{ background: "#338B85" }} className="text-white">
             ↑ Importar em massa
           </Button>
         </>
@@ -147,7 +147,7 @@ function ClientesPage() {
                   <td className="p-4">{agreg?.proxima ?? "—"}</td>
                   <td className="p-4 text-right">
                     {contratoId ? (
-                      <Link to="/beneficios/contratos/$id" params={{ id: contratoId }} className="text-[#00BAF2] hover:underline">
+                      <Link to="/beneficios/contratos/$id" params={{ id: contratoId }} className="text-[#338B85] hover:underline">
                         Ver ficha
                       </Link>
                     ) : (
@@ -174,7 +174,7 @@ function ClientesPage() {
   );
 }
 
-function Kpi({ label, valor, cor = "#14405C" }: { label: string; valor: number; cor?: string }) {
+function Kpi({ label, valor, cor = "#13405C" }: { label: string; valor: number; cor?: string }) {
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-5">
       <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">{label}</p>

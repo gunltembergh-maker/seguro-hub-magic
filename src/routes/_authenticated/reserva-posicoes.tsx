@@ -29,11 +29,11 @@ function ReservaPosicoesPage() {
   return (
     <div
       className="min-h-screen px-6 pb-10 pt-6 md:px-8 md:pt-8 lg:px-10 lg:pt-10"
-      style={{ background: "#14405C" }}
+      style={{ background: "#13405C" }}
     >
       <div className="mx-auto max-w-6xl">
         <div className="mb-6 flex items-center gap-3">
-          <CalendarClock className="h-8 w-8 text-[#00BAF2]" />
+          <CalendarClock className="h-8 w-8 text-[#338B85]" />
           <div>
             <h1 className="font-display text-3xl font-bold tracking-tight text-white md:text-4xl">
               Reserva de Posições

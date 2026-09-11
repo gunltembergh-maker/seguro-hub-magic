@@ -61,6 +61,9 @@
   --color-office-glass: var(--office-glass);
   --color-office-wall: var(--office-wall);
   --color-office-plant: var(--office-plant);
+  --color-brand-navy: var(--brand-navy);
+  --color-brand-teal: var(--brand-teal);
+  --color-brand-white: var(--brand-white);
 }
 
 /*
@@ -136,6 +139,78 @@
   --shadow-elegant: 0 10px 30px -12px rgba(16, 50, 47, 0.28);
   --shadow-card: 0 1px 2px rgba(16, 50, 47, 0.05), 0 8px 24px -12px rgba(16, 50, 47, 0.16);
 }
+
+/*
+ * Identidade das telas internas do Hub.
+ * O escopo evita qualquer alteração visual na tela de login e não alcança
+ * o conteúdo independente incorporado pela operação de Garantia.
+ */
+.hub-theme,
+:root:has(.hub-theme) {
+  --brand-navy: #13405c;
+  --brand-teal: #338b85;
+  --brand-white: #ffffff;
+
+  --background: #13405c;
+  --foreground: #ffffff;
+  --card: #ffffff;
+  --card-foreground: #12384f;
+  --popover: #ffffff;
+  --popover-foreground: #12384f;
+  --primary: #338b85;
+  --primary-foreground: #ffffff;
+  --primary-glow: #86d0ca;
+  --secondary: #edf5f4;
+  --secondary-foreground: #13405c;
+  --muted: #f2f6f7;
+  --muted-foreground: #557284;
+  --accent: #dcecea;
+  --accent-foreground: #13405c;
+  --border: #d7e3e7;
+  --input: #d7e3e7;
+  --ring: #338b85;
+  --chart-1: #13405c;
+  --chart-2: #338b85;
+  --chart-3: #5e91a5;
+  --chart-4: #73aaa5;
+  --chart-5: #a8c9d3;
+  --sidebar: #13405c;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #338b85;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #338b85;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #356078;
+  --sidebar-ring: #75bdb7;
+  --gradient-hero: linear-gradient(135deg, #13405c 0%, #285f6d 58%, #338b85 100%);
+  --gradient-accent: linear-gradient(135deg, #338b85 0%, #246b68 100%);
+  --shadow-elegant: 0 10px 30px -12px rgba(7, 35, 51, 0.32);
+  --shadow-card: 0 1px 2px rgba(7, 35, 51, 0.08), 0 8px 24px -12px rgba(7, 35, 51, 0.22);
+}
+
+/* Normaliza a identidade antiga ainda presente em telas legadas do Hub. */
+.hub-theme .bg-\[\#14405C\] { background-color: #13405c !important; }
+.hub-theme .bg-\[\#00BAF2\] { background-color: #338b85 !important; }
+.hub-theme .text-\[\#14405C\] { color: #13405c !important; }
+.hub-theme .text-\[\#00BAF2\] { color: #338b85 !important; }
+.hub-theme .border-\[\#14405C\] { border-color: #13405c !important; }
+.hub-theme .border-\[\#00BAF2\] { border-color: #338b85 !important; }
+.hub-theme [style*="background: rgb(20, 64, 92)"],
+.hub-theme [style*="background: #14405C"] { background: #13405c !important; }
+.hub-theme [style*="background-color: rgb(20, 64, 92)"],
+.hub-theme [style*="background-color: #14405C"] { background-color: #13405c !important; }
+.hub-theme [style*="background: rgb(0, 186, 242)"],
+.hub-theme [style*="background: #00BAF2"] { background: #338b85 !important; }
+.hub-theme [style*="background-color: rgb(0, 186, 242)"],
+.hub-theme [style*="background-color: #00BAF2"] { background-color: #338b85 !important; }
+.hub-theme [style*="color: rgb(20, 64, 92)"],
+.hub-theme [style*="color: #14405C"] { color: #13405c !important; }
+.hub-theme [style*="color: rgb(0, 186, 242)"],
+.hub-theme [style*="color: #00BAF2"] { color: #338b85 !important; }
+.hub-theme [fill="#14405C"] { fill: #13405c !important; }
+.hub-theme [fill="#00BAF2"] { fill: #338b85 !important; }
+.hub-theme [stroke="#14405C"] { stroke: #13405c !important; }
+.hub-theme [stroke="#00BAF2"] { stroke: #338b85 !important; }
 
 .dark {
   --background: oklch(0.16 0.05 265);

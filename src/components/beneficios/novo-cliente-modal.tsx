@@ -71,7 +71,7 @@ export function NovoClienteModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="font-display text-2xl" style={{ color: "#14405C" }}>
+          <DialogTitle className="font-display text-2xl" style={{ color: "#13405C" }}>
             Novo cliente
           </DialogTitle>
           <DialogDescription>
@@ -91,8 +91,8 @@ export function NovoClienteModal({
                   className={cn(
                     "rounded-md border px-4 py-2 text-sm font-semibold transition-colors",
                     tipo === t
-                      ? "border-[#14405C] bg-[#14405C] text-white"
-                      : "border-gray-300 text-gray-700 hover:border-[#00BAF2]",
+                      ? "border-[#13405C] bg-[#13405C] text-white"
+                      : "border-gray-300 text-gray-700 hover:border-[#338B85]",
                   )}
                 >
                   {t === "PJ" ? "Pessoa Jurídica" : "Pessoa Física"}
@@ -187,7 +187,7 @@ export function NovoClienteModal({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={salvar} disabled={criar.isPending} style={{ background: "#00BAF2" }} className="text-white">
+          <Button onClick={salvar} disabled={criar.isPending} style={{ background: "#338B85" }} className="text-white">
             Salvar cliente
           </Button>
         </DialogFooter>

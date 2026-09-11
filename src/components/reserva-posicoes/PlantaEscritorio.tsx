@@ -16,7 +16,7 @@ export function estadoDaPosicao(pos: RpPosicaoGrade): EstadoPosicao {
 const COR_ESTADO: Record<EstadoPosicao, string> = {
   livre: "#10B981",
   parcial: "#EF4444",
-  minha: "#00BAF2",
+  minha: "#338B85",
   fixa: "#94A3B8",
   inativa: "#CBD5E1",
 };
@@ -64,7 +64,7 @@ function Mesa({ pos, x, y, w, h, cadeira, onSelecionar }: MesaProps) {
       className={cn(
         "origin-center transition-[transform,filter] duration-150",
         clicavel
-          ? "cursor-pointer hover:-translate-y-[3px] hover:[filter:drop-shadow(0_8px_10px_rgba(0,0,0,0.35))] focus:outline-none focus-visible:[filter:drop-shadow(0_0_0_3px_#00BAF2)]"
+          ? "cursor-pointer hover:-translate-y-[3px] hover:[filter:drop-shadow(0_8px_10px_rgba(0,0,0,0.35))] focus:outline-none focus-visible:[filter:drop-shadow(0_0_0_3px_#338B85)]"
           : "cursor-not-allowed opacity-80",
       )}
     >
@@ -258,7 +258,7 @@ export function PlantaEscritorio({
             JANELA · VISTA DA CIDADE
           </text>
           {/* silhueta sutil de São Paulo além do vidro */}
-          <g fill="#14405C" opacity={0.28}>
+          <g fill="#13405C" opacity={0.28}>
             <path d="M398 60V42h26v18M432 60V32h31v28M471 60V22h38v38M517 60V39h25v21M550 60V28h39v32M597 60V43h26v17M631 60V34h34v26M674 60V39h30v21M713 60V27h42v33" />
           </g>
 
@@ -281,7 +281,7 @@ export function PlantaEscritorio({
           {[108, 146, 184].map((y) => (
             <line key={y} x1={804} y1={y} x2={834} y2={y} stroke="#D9EFF9" strokeWidth={1.5} opacity={0.7} />
           ))}
-          <g fill="#14405C" opacity={0.28}>
+          <g fill="#13405C" opacity={0.28}>
             <path d="M808 225v-45h8v45m3 0v-68h10v68" />
           </g>
           <text x={821} y={159} textAnchor="middle" fontSize={9} letterSpacing={2} fill="#D9EFF9" transform="rotate(90 821 159)">

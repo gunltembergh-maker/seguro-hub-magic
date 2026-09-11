@@ -42,7 +42,7 @@ export function PopupCard({
     <div className="w-full max-w-[480px] rounded-xl overflow-hidden shadow-2xl bg-white">
       <div
         className="p-6 flex flex-col items-center gap-2"
-        style={{ backgroundColor: "#14405C" }}
+        style={{ backgroundColor: "#13405C" }}
       >
         {logoSrc && (
           <img
@@ -62,7 +62,7 @@ export function PopupCard({
       </div>
 
       <div className="bg-white px-6 py-5 text-center">
-        <h2 className="font-display font-bold text-lg leading-tight text-[#14405C]">
+        <h2 className="font-display font-bold text-lg leading-tight text-[#13405C]">
           {titulo || "Título do comunicado"}
         </h2>
         <p className="text-slate-500 text-sm mt-3 whitespace-pre-line leading-relaxed">
@@ -84,7 +84,7 @@ export function PopupCard({
           onClick={onDismissTemporary}
           size="sm"
           className="text-sm font-medium text-white hover:opacity-90"
-          style={{ backgroundColor: "#14405C" }}
+          style={{ backgroundColor: "#13405C" }}
         >
           {botao_label || "Entendido!"}
         </Button>
