@@ -79,21 +79,18 @@ export function MuralNoticias() {
     : "—";
 
   return (
-    <div
-      className="rounded-lg bg-white p-5 shadow-sm"
-      style={{ border: "1px solid rgba(20,64,92,0.15)" }}
-    >
+    <div className="rounded-lg border border-border bg-card p-5 text-card-foreground shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="flex items-center gap-2 font-display text-base font-semibold text-[#14405C]">
-          <Newspaper className="h-4 w-4 text-[#00BAF2]" />
+        <h3 className="flex items-center gap-2 font-display text-base font-semibold text-card-foreground">
+          <Newspaper className="h-4 w-4 text-primary" />
           Mural de Notícias
         </h3>
-        <div className="flex items-center gap-3 text-xs text-[#4B6D88]">
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <span>Atualizado às {stamp}</span>
           <button
             type="button"
             onClick={() => refetch()}
-            className="inline-flex items-center gap-1 rounded-md border border-[#14405C]/15 px-2 py-1 text-[#14405C] transition-colors hover:bg-[#14405C]/5 disabled:opacity-50"
+            className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-card-foreground transition-colors hover:bg-accent disabled:opacity-50"
             disabled={isFetching}
           >
             <RefreshCw className={cn("h-3 w-3", isFetching && "animate-spin")} />
@@ -101,7 +98,7 @@ export function MuralNoticias() {
           </button>
         </div>
       </div>
-      <p className="mt-0.5 text-xs text-[#4B6D88]">
+      <p className="mt-0.5 text-xs text-muted-foreground">
         Mercado de Seguros, Garantia, Saúde e SUSEP · atualiza a cada 1 hora
       </p>
 
@@ -115,7 +112,7 @@ export function MuralNoticias() {
         )}
 
         {!isLoading && lista.length === 0 && (
-          <div className="rounded-lg border border-dashed border-[#14405C]/20 bg-[#F8FAFC] p-6 text-center text-sm text-[#4B6D88]">
+          <div className="rounded-lg border border-dashed border-border bg-muted p-6 text-center text-sm text-muted-foreground">
             Nenhuma notícia disponível no momento.
           </div>
         )}
@@ -127,23 +124,23 @@ export function MuralNoticias() {
               href={n.link}
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex items-start justify-between gap-4 rounded-md border border-[#14405C]/10 bg-[#F8FAFC] p-3 transition-all hover:border-[#00BAF2]/40 hover:bg-white hover:shadow-sm"
+              className="group flex items-start justify-between gap-4 rounded-md border border-border bg-muted p-3 transition-all hover:border-primary/50 hover:bg-card hover:shadow-sm"
             >
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-[#14405C]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#14405C]">
+                  <span className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent-foreground">
                     {CATEGORIA_LABEL[n.categoria]}
                   </span>
-                  <span className="text-[11px] font-medium text-[#4B6D88]">{n.fonte}</span>
-                  <span className="text-[11px] font-numeric text-[#8AAFC9]">
+                  <span className="text-[11px] font-medium text-muted-foreground">{n.fonte}</span>
+                  <span className="font-numeric text-[11px] text-muted-foreground">
                     · {tempoRelativo(n.publicado_em)}
                   </span>
                 </div>
-                <p className="mt-1 line-clamp-2 text-sm font-medium text-[#0E2E43] group-hover:text-[#14405C]">
+                <p className="mt-1 line-clamp-2 text-sm font-medium text-card-foreground group-hover:text-primary">
                   {n.titulo}
                 </p>
               </div>
-              <ExternalLink className="mt-1 h-4 w-4 shrink-0 text-[#8AAFC9] transition-colors group-hover:text-[#00BAF2]" />
+              <ExternalLink className="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
             </a>
           ))}
       </div>

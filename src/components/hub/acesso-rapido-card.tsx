@@ -56,9 +56,9 @@ export function AcessoRapidoCard({ role, permissoes }: Props) {
   ];
 
   return (
-    <div className="rounded-lg bg-white p-5 shadow-sm" style={{ border: "1px solid rgba(20,64,92,0.15)" }}>
-      <h3 className="font-display text-base font-semibold text-[#14405C]">Acesso Rápido</h3>
-      <p className="mt-0.5 text-xs text-[#4B6D88]">Atalhos filtrados pelas suas permissões.</p>
+    <div className="rounded-lg border border-border bg-card p-5 text-card-foreground shadow-sm">
+      <h3 className="font-display text-base font-semibold text-card-foreground">Acesso Rápido</h3>
+      <p className="mt-0.5 text-xs text-muted-foreground">Atalhos filtrados pelas suas permissões.</p>
 
       <div className="mt-4 space-y-4">
         {grupos.map((g) => {
@@ -66,15 +66,15 @@ export function AcessoRapidoCard({ role, permissoes }: Props) {
           if (visiveis.length === 0) return null;
           return (
             <div key={g.titulo}>
-              <div className="mb-1.5 text-[10px] uppercase tracking-wider text-[#4B6D88]/80">{g.titulo}</div>
+              <div className="mb-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">{g.titulo}</div>
               <div className="grid grid-cols-2 gap-1.5">
                 {visiveis.map((i) => (
                   <Link
                     key={i.href}
                     to={i.href as any}
-                    className="group flex items-center gap-2 rounded-md border border-transparent bg-[#F8FAFC] px-2.5 py-2 text-[13px] font-medium text-[#0E2E43] transition-colors hover:border-[#14405C]/20 hover:bg-[#14405C]/5"
+                    className="group flex items-center gap-2 rounded-md border border-transparent bg-muted px-2.5 py-2 text-[13px] font-medium text-card-foreground transition-colors hover:border-primary/30 hover:bg-accent"
                   >
-                    <i.icon className="h-3.5 w-3.5 text-[#14405C]" />
+                    <i.icon className="h-3.5 w-3.5 text-primary" />
                     <span className="flex-1 truncate">{i.label}</span>
                     <ArrowRight className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
                   </Link>

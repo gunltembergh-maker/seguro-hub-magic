@@ -67,10 +67,7 @@ function FinanceiroPage() {
             to="/financeiro/fluxo-diario"
             className="group flex items-center gap-4 rounded-xl border border-white/15 bg-white/5 p-5 transition-colors hover:bg-white/10"
           >
-            <div
-              className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-white"
-               className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground"
-            >
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
               <CalendarClock className="h-5 w-5" />
             </div>
             <div className="flex-1">

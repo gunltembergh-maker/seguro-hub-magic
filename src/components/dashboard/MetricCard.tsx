@@ -15,26 +15,26 @@ interface MetricCardProps {
 
 export function MetricCard({ title, value, subtitle, icon: Icon, loading, className, headerRight, breakdown }: MetricCardProps) {
   return (
-    <div className={`bg-white border border-gray-200 rounded-lg shadow-sm px-4 py-3 ${className ?? ""}`}>
+    <div className={`rounded-lg border border-border bg-card px-4 py-3 text-card-foreground shadow-sm ${className ?? ""}`}>
       <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "#6B7280" }}>{title}</p>
+        <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{title}</p>
         <div className="flex items-center gap-2 flex-shrink-0">
           {headerRight}
-          {Icon && <Icon className="h-3.5 w-3.5" style={{ color: "#9CA3AF" }} />}
+          {Icon && <Icon className="h-3.5 w-3.5 text-primary" />}
         </div>
       </div>
       {loading ? (
         <Skeleton className="h-7 w-20 mt-1" />
       ) : (
-        <p className="text-xl font-bold mt-0.5" style={{ color: "#14405C" }}>{value}</p>
+        <p className="mt-0.5 text-xl font-bold text-card-foreground">{value}</p>
       )}
-      {subtitle && <p className="text-[10px] mt-0.5" style={{ color: "#9CA3AF" }}>{subtitle}</p>}
+      {subtitle && <p className="mt-0.5 text-[10px] text-muted-foreground">{subtitle}</p>}
       {breakdown && breakdown.length > 0 && !loading && (
-        <div className="mt-2 pt-1.5 space-y-0.5 border-t border-gray-200">
+        <div className="mt-2 space-y-0.5 border-t border-border pt-1.5">
           {breakdown.map((b) => (
             <div key={b.label} className="flex items-center justify-between gap-2">
-              <span className="text-[9.5px] font-bold uppercase tracking-wide" style={{ color: "#6B7280" }}>{b.label}</span>
-              <span className="text-[11.5px] font-semibold" style={{ color: "#14405C" }}>{b.value}</span>
+              <span className="text-[9.5px] font-bold uppercase tracking-wide text-muted-foreground">{b.label}</span>
+              <span className="text-[11.5px] font-semibold text-card-foreground">{b.value}</span>
             </div>
           ))}
         </div>
