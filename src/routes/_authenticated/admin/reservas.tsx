@@ -810,7 +810,7 @@ const TIPO_LABEL: Record<string, string> = {
   ausencia: "Ausência / no-show (colaborador)",
 
   rh_confirmacao: "RH · Confirmação de reserva",
-  rh_cancelamento: "RH · Cancelamento de reserva",
+  rh_cancelamento: "RH · Cancelamento de reserva · linha do motivo via {{linha_motivo}} (só aparece com justificativa)",
   rh_ausencia: "RH · Ausência / no-show",
 };
 
