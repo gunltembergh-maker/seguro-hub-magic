@@ -244,7 +244,7 @@ function AdminComunicadosPage() {
         p_destinatarios:
           form.destinatario_mode === "especifico" ? form.destinatarios : undefined,
         p_paginas: form.paginas.includes("__all__") ? undefined : form.paginas,
-        p_cor_fundo: "#14405C",
+        p_cor_fundo: "#13405C",
         p_botao_label: "Entendido!",
         p_logo_url: logoValue ?? undefined,
         p_mostrar_nome_hub: form.mostrar_nome_hub,
@@ -678,7 +678,7 @@ function AdminComunicadosPage() {
             <Button
               onClick={handleSave}
               disabled={saving}
-              style={{ backgroundColor: "#14405C" }}
+              style={{ backgroundColor: "#13405C" }}
               className="text-white hover:opacity-90"
             >
               {saving ? "Publicando…" : "Publicar Comunicado"}

@@ -21,7 +21,7 @@ function GarantiaPage() {
         ]}
       />
 
-      <div className="px-6 pb-10 md:px-8 lg:px-10" style={{ background: "#14405C" }}>
+      <div className="px-6 pb-10 md:px-8 lg:px-10" style={{ background: "#13405C" }}>
         <div className="mx-auto max-w-7xl">
           <Link
             to="/garantia/analise-limite"
@@ -29,7 +29,7 @@ function GarantiaPage() {
           >
             <div
               className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-white"
-              style={{ background: "#00BAF2" }}
+              style={{ background: "#338B85" }}
             >
               <FileSearch className="h-5 w-5" />
             </div>

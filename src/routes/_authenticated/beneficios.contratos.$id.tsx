@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_authenticated/beneficios/contratos/$id")
   component: ContratoPage,
 });
 
-const NAVY = "#14405C";
+const NAVY = "#13405C";
 const BRL = (v: number | null) =>
   v == null ? "—" : v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const dataBR = (d: string | null) => (d ? d.split("-").reverse().join("/") : "—");
@@ -56,7 +56,7 @@ function ContratoPage() {
       trilha={["Clientes", c.clientes?.nome_razao_social ?? ""]}
       mostrarAbas={false}
       acoes={
-        <Button disabled title="Em breve — o Ciclo de renovação ainda será liberado" style={{ background: "#00BAF2" }} className="text-white">
+        <Button disabled title="Em breve — o Ciclo de renovação ainda será liberado" style={{ background: "#338B85" }} className="text-white">
           Iniciar renovação (em breve)
         </Button>
       }

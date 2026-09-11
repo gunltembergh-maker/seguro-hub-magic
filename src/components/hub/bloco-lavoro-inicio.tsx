@@ -4,11 +4,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { LavoroResumo } from "@/hooks/use-inicio-data";
 
 const L = {
-  navy: "#14405C",
+  navy: "#13405C",
   navyDark: "#0E2E43",
-  blue: "#00BAF2",
+  blue: "#338B85",
   bgCard: "#FFFFFF",
-  border: "rgba(20,64,92,0.15)",
+  border: "rgba(19,64,92,0.15)",
   textMuted: "#4B6D88",
   amber: "#D97706",
   amberBg: "#FEF3C7",
@@ -60,7 +60,7 @@ export function BlocoLavoroInicio({ resumo, isLoading, canSee }: Props) {
         </h2>
         <span
           className="ml-auto text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full"
-          style={{ background: "rgba(0,186,242,0.18)", color: L.blue, fontWeight: 600 }}
+          style={{ background: "rgba(51,139,133,0.18)", color: L.blue, fontWeight: 600 }}
         >
           Este mês
         </span>
@@ -83,7 +83,7 @@ export function BlocoLavoroInicio({ resumo, isLoading, canSee }: Props) {
               {isLoading ? "—" : fmtPct(resumo?.atingimento_caixa_mes)}
             </span>
           </div>
-          <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: "rgba(20,64,92,0.08)" }}>
+          <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: "rgba(19,64,92,0.08)" }}>
             <div className="h-full transition-all" style={{ width: `${pctBarra * 100}%`, background: barraColor }} />
           </div>
         </div>

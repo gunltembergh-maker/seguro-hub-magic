@@ -28,7 +28,7 @@ export const Route = createFileRoute("/_authenticated/beneficios/cadastros")({
   component: CadastrosPage,
 });
 
-const NAVY = "#14405C";
+const NAVY = "#13405C";
 
 function CadastrosPage() {
   const [aba, setAba] = useState<TabelaRef>("seguradoras");
@@ -39,7 +39,7 @@ function CadastrosPage() {
       titulo="Cadastros de referência"
       trilha={["Cadastros"]}
       acoes={
-        <Button onClick={() => setEditando({ nome: "", ativo: true })} style={{ background: "#00BAF2" }} className="text-white">
+        <Button onClick={() => setEditando({ nome: "", ativo: true })} style={{ background: "#338B85" }} className="text-white">
           + Novo registro
         </Button>
       }
@@ -89,7 +89,7 @@ function Tabela({
                 <Badge variant={r.ativo ? "secondary" : "outline"}>{r.ativo ? "Ativa" : "Inativa"}</Badge>
               </td>
               <td className="p-4 text-right">
-                <button className="text-[#00BAF2] hover:underline" onClick={() => onEditar(r)}>Editar</button>
+                <button className="text-[#338B85] hover:underline" onClick={() => onEditar(r)}>Editar</button>
               </td>
             </tr>
           ))}
@@ -154,7 +154,7 @@ function EditorModal({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => { setCarregado(null); onClose(); }}>Cancelar</Button>
-          <Button onClick={submit} disabled={salvar.isPending} style={{ background: "#00BAF2" }} className="text-white">
+          <Button onClick={submit} disabled={salvar.isPending} style={{ background: "#338B85" }} className="text-white">
             Salvar
           </Button>
         </DialogFooter>

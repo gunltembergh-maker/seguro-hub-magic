@@ -58,13 +58,13 @@ function PosicaoCard({
         "flex min-h-[132px] flex-col rounded-xl border p-3 text-left transition",
         indisponivel
           ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-500"
-          : "cursor-pointer border-slate-200 bg-white hover:border-[#00BAF2] hover:shadow-md",
-        temMinha && "border-[#00BAF2] bg-[#EEF9FF] ring-2 ring-[#00BAF2]/40",
+          : "cursor-pointer border-slate-200 bg-white hover:border-[#338B85] hover:shadow-md",
+        temMinha && "border-[#338B85] bg-[#EEF9FF] ring-2 ring-[#338B85]/40",
         !indisponivel && ativas.length === 0 && "border-emerald-200 bg-emerald-50/60",
       )}
     >
       <div className="flex items-center justify-between">
-        <span className="font-display text-2xl font-bold text-[#14405C]">{pos.numero}</span>
+        <span className="font-display text-2xl font-bold text-[#13405C]">{pos.numero}</span>
         {pos.fixa && <Lock className="h-4 w-4 text-slate-500" />}
       </div>
       {pos.apelido && <span className="text-xs text-slate-600">{pos.apelido}</span>}
@@ -86,7 +86,7 @@ function PosicaoCard({
               key={r.id}
               className={cn(
                 "flex items-center justify-between gap-2 rounded bg-slate-100 px-1.5 py-0.5",
-                r.minha && "bg-[#00BAF2]/20 font-medium text-[#14405C]",
+                r.minha && "bg-[#338B85]/20 font-medium text-[#13405C]",
               )}
             >
               <span>

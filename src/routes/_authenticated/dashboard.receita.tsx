@@ -96,7 +96,7 @@ function BigStatCard({
       {loading ? (
         <div className="h-10 mt-2 w-40 bg-gray-100 rounded animate-pulse" />
       ) : (
-        <p className="text-3xl font-bold mt-2" style={{ color: "#14405C" }}>{value}</p>
+        <p className="text-3xl font-bold mt-2" style={{ color: "#13405C" }}>{value}</p>
       )}
       {breakdown && (
         <div className="mt-3 grid grid-cols-3 gap-2 border-t border-gray-100 pt-2">
@@ -106,7 +106,7 @@ function BigStatCard({
               {loading ? (
                 <div className="h-4 mt-1 w-16 bg-gray-100 rounded animate-pulse" />
               ) : (
-                <p className="text-sm font-semibold" style={{ color: "#14405C" }}>{b.value}</p>
+                <p className="text-sm font-semibold" style={{ color: "#13405C" }}>{b.value}</p>
               )}
             </div>
           ))}
@@ -377,11 +377,11 @@ function DashboardReceitaLavoro() {
     };
   }, [comparativoQ.data]);
 
-  const CORES_LINHAS = ["#14405C", "#4B6D88", "#00BAF2", "#8AAFC9"];
+  const CORES_LINHAS = ["#13405C", "#4B6D88", "#338B85", "#6B9AAA"];
 
   if (escopo.semAcesso) {
     return (
-      <div className="min-h-screen p-6" style={{ background: "#14405C" }}>
+      <div className="min-h-screen p-6" style={{ background: "#13405C" }}>
         <div className="rounded-lg border border-white/20 bg-white/10 p-8 text-center text-white">
           <p className="text-sm">{SEM_ACESSO_RECEITA_MSG}</p>
           <p className="mt-1 text-xs text-white/70">
@@ -394,9 +394,9 @@ function DashboardReceitaLavoro() {
 
   return (
 
-    <div className="min-h-screen p-6" style={{ background: "#14405C" }}>
+    <div className="min-h-screen p-6" style={{ background: "#13405C" }}>
       <style>{`
-        .lavoro-receita { font-family: 'Source Sans 3', system-ui, sans-serif; color: #14405C; }
+        .lavoro-receita { font-family: 'Source Sans 3', system-ui, sans-serif; color: #13405C; }
         .lavoro-receita .title-serif { font-family: 'Inter', system-ui, sans-serif; font-weight: 400; color: #FFFFFF; }
       `}</style>
       <div className="lavoro-receita">
@@ -408,7 +408,7 @@ function DashboardReceitaLavoro() {
             </h1>
             <ChevronRight className="h-4 w-4 text-[#FFFFFF]/40" />
             <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-md bg-white/10 backdrop-blur-sm border border-white/15">
-              <Calendar className="h-3.5 w-3.5 text-[#00BAF2]" />
+              <Calendar className="h-3.5 w-3.5 text-[#338B85]" />
               <Select value={String(ano)} onValueChange={(v) => setAno(Number(v))}>
                 <SelectTrigger className="bg-transparent border-0 h-6 w-[90px] focus:ring-0 p-0 text-[#FFFFFF]">
                   <SelectValue />
@@ -438,7 +438,7 @@ function DashboardReceitaLavoro() {
                   key={k}
                   onClick={() => setPeriodo(k as Periodo)}
                   className={`px-3 py-1 text-xs font-semibold ${
-                    periodo === k ? "bg-[#00BAF2] text-[#14405C]" : "bg-white/10 text-[#FFFFFF]"
+                    periodo === k ? "bg-[#338B85] text-[#13405C]" : "bg-white/10 text-[#FFFFFF]"
                   }`}
                 >
                   {label}
@@ -449,7 +449,7 @@ function DashboardReceitaLavoro() {
           <div className="flex items-center gap-3">
             <SendNewsletterButton modulo="receita_lavoro" ano={ano} mes={mesRef} />
             <span className="text-xs flex items-center gap-1 text-[#FFFFFF]/80">
-              <Clock className="h-3 w-3 text-[#00BAF2]" />
+              <Clock className="h-3 w-3 text-[#338B85]" />
               Dados atualizados em: {fmtTs(ultimaAtQ.data)}
             </span>
             <Button
@@ -474,7 +474,7 @@ function DashboardReceitaLavoro() {
           <BigStatCard
             title={`A receber em ${periodoLabel}${escopo.sufixo}`}
             subtitle="Previsto Caixa (parcelas emitidas por data de pagamento)"
-            value={BRL(kpis?.previsto_caixa)} accent="#8AAFC9" loading={kpisQ.isLoading}
+            value={BRL(kpis?.previsto_caixa)} accent="#6B9AAA" loading={kpisQ.isLoading}
             breakdown={escopo.filtrar([
               { label: "Garantia", value: BRL(kpis?.previsto_garantia) },
               { label: "Benefícios", value: BRL(kpis?.previsto_beneficios) },
@@ -484,7 +484,7 @@ function DashboardReceitaLavoro() {
           <BigStatCard
             title={`Receita Caixa em ${periodoLabel}`}
             subtitle="Receita Caixa (efetivamente recebido)"
-            value={BRL(kpis?.receita_caixa)} accent="#14405C" loading={kpisQ.isLoading}
+            value={BRL(kpis?.receita_caixa)} accent="#13405C" loading={kpisQ.isLoading}
             breakdown={escopo.filtrar([
               { label: "Garantia", value: BRL(kpis?.caixa_garantia) },
               { label: "Benefícios", value: BRL(kpis?.caixa_beneficios) },
@@ -562,12 +562,12 @@ function DashboardReceitaLavoro() {
                   <YAxis hide />
                   <Tooltip formatter={(v: any) => BRL(Number(v))} />
                   <Legend wrapperStyle={{ fontSize: 12, color: "#0F172A", fontWeight: 600 }} />
-                  <Bar dataKey={String(ano - 1)} fill="#00BAF2">
+                  <Bar dataKey={String(ano - 1)} fill="#338B85">
                     <LabelList dataKey={String(ano - 1)} position="top"
                       formatter={(v: any) => (Number(v) > 0 ? BRL_COMPACT(Number(v)) : "")}
                       style={{ fontSize: 13, fill: "#0F172A", fontWeight: 700 }} />
                   </Bar>
-                  <Bar dataKey={String(ano)} fill="#14405C">
+                  <Bar dataKey={String(ano)} fill="#13405C">
                     <LabelList dataKey={String(ano)} position="top"
                       formatter={(v: any) => (Number(v) > 0 ? BRL_COMPACT(Number(v)) : "")}
                       style={{ fontSize: 13, fill: "#0F172A", fontWeight: 700 }} />
@@ -586,12 +586,12 @@ function DashboardReceitaLavoro() {
                   <YAxis hide />
                   <Tooltip formatter={(v: any) => BRL(Number(v))} />
                   <Legend wrapperStyle={{ fontSize: 12, color: "#0F172A", fontWeight: 600 }} />
-                  <Bar dataKey={String(ano - 1)} fill="#8AAFC9">
+                  <Bar dataKey={String(ano - 1)} fill="#6B9AAA">
                     <LabelList dataKey={String(ano - 1)} position="top"
                       formatter={(v: any) => (Number(v) > 0 ? BRL_COMPACT(Number(v)) : "")}
                       style={{ fontSize: 13, fill: "#0F172A", fontWeight: 700 }} />
                   </Bar>
-                  <Bar dataKey={String(ano)} fill="#14405C">
+                  <Bar dataKey={String(ano)} fill="#13405C">
                     <LabelList dataKey={String(ano)} position="top"
                       formatter={(v: any) => (Number(v) > 0 ? BRL_COMPACT(Number(v)) : "")}
                       style={{ fontSize: 13, fill: "#0F172A", fontWeight: 700 }} />
@@ -689,9 +689,9 @@ function DashboardReceitaLavoro() {
                     <YAxis tick={{ fontSize: 11 }} tickFormatter={BRL_COMPACT} width={80} />
                     <Tooltip formatter={(v: any) => BRL(Number(v))} />
                     <Legend wrapperStyle={{ fontSize: 11 }} />
-                    <Bar dataKey="Competência" fill="#14405C" />
-                    <Bar dataKey="Caixa" fill="#00BAF2" />
-                    <Line type="monotone" dataKey="Meta" stroke="#8AAFC9" strokeWidth={2} dot={{ r: 3 }} />
+                    <Bar dataKey="Competência" fill="#13405C" />
+                    <Bar dataKey="Caixa" fill="#338B85" />
+                    <Line type="monotone" dataKey="Meta" stroke="#6B9AAA" strokeWidth={2} dot={{ r: 3 }} />
                   </ComposedChart>
                 </ResponsiveContainer>
               </div>
@@ -745,7 +745,7 @@ function DashboardReceitaLavoro() {
                       <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={BRL_COMPACT} />
                       <YAxis dataKey="tipo_de_ramo" type="category" tick={{ fontSize: 11 }} width={120} />
                       <Tooltip formatter={(v: any) => BRL(Number(v))} />
-                      <Bar dataKey="receita" fill="#14405C" />
+                      <Bar dataKey="receita" fill="#13405C" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -759,7 +759,7 @@ function DashboardReceitaLavoro() {
                       <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={BRL_COMPACT} />
                       <YAxis dataKey="ramo" type="category" tick={{ fontSize: 11 }} width={140} />
                       <Tooltip formatter={(v: any) => BRL(Number(v))} />
-                      <Bar dataKey="receita" fill="#00BAF2" />
+                      <Bar dataKey="receita" fill="#338B85" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>

@@ -621,7 +621,7 @@ function AbaParametros() {
   return (
     <div className="space-y-4">
       <div className={CARD}>
-        <h3 className="mb-3 font-semibold text-[#14405C]">Regras de reserva</h3>
+        <h3 className="mb-3 font-semibold text-[#13405C]">Regras de reserva</h3>
         <div className="grid gap-3 md:grid-cols-3">
           <div className="space-y-1.5">
             <Label>Janela de antecedência (dias)</Label>
@@ -677,7 +677,7 @@ function AbaParametros() {
       </div>
 
       <div className={CARD}>
-        <h3 className="mb-3 font-semibold text-[#14405C]">E-mails do RH</h3>
+        <h3 className="mb-3 font-semibold text-[#13405C]">E-mails do RH</h3>
         <div className="mb-3 flex flex-wrap gap-2">
           {form.emailsRh.map((e) => (
             <Badge key={e} variant="outline" className="gap-1 py-1">
@@ -715,7 +715,7 @@ function AbaParametros() {
       </div>
 
       <div className={CARD}>
-        <h3 className="mb-1 font-semibold text-[#14405C]">IPs do escritório</h3>
+        <h3 className="mb-1 font-semibold text-[#13405C]">IPs do escritório</h3>
         <p className="mb-1 text-sm text-slate-600">
           Seu IP público agora: <strong>{ipAtual ?? "não identificado"}</strong>
         </p>
@@ -857,7 +857,7 @@ function ModelosEmail() {
 
   return (
     <div className={CARD}>
-      <h3 className="mb-1 font-semibold text-[#14405C]">Modelos de e-mail</h3>
+      <h3 className="mb-1 font-semibold text-[#13405C]">Modelos de e-mail</h3>
       <p className="mb-4 text-sm text-slate-600">
         Variáveis disponíveis: {VARIAVEIS.map((v) => `{{${v}}}`).join(", ")}
       </p>

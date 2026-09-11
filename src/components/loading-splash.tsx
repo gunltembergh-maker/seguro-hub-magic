@@ -4,10 +4,10 @@ import fundo1 from "@/assets/fundo-1.png.asset.json";
 export function LoadingSplash() {
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#14405C] bg-cover bg-center"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#13405C] bg-cover bg-center"
       style={{ backgroundImage: `url(${fundo1.url})` }}
     >
-      <div className="absolute inset-0 bg-[#14405C]/40" />
+      <div className="absolute inset-0 bg-[#13405C]/40" />
       <div className="relative flex flex-col items-center gap-8">
         <img
           src={logoBranca.url}

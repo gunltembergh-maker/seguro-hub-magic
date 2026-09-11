@@ -576,7 +576,7 @@ export function RepasseParceiro() {
               Mês
               <span
                 className="rounded-full px-2 py-0.5 text-[10px] font-semibold normal-case tracking-normal"
-                style={{ background: "rgba(0,186,242,0.18)", color: CYAN }}
+                style={{ background: "rgba(51,139,133,0.18)", color: CYAN }}
               >
                 padrão: corrente
               </span>
@@ -877,7 +877,7 @@ export function RepasseParceiro() {
             <div>
               <span
                 className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest"
-                style={{ background: "rgba(0,186,242,0.18)", color: CYAN }}
+                style={{ background: "rgba(51,139,133,0.18)", color: CYAN }}
               >
                 Previsão, não é provisão
               </span>

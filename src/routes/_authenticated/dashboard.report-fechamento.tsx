@@ -27,9 +27,9 @@ export const Route = createFileRoute("/_authenticated/dashboard/report-fechament
 });
 
 // Paleta (Master Doc)
-const NAVY = "#14405C";
-const NAVY_DARK = "#14405C";
-const GOLD = "#00BAF2";
+const NAVY = "#13405C";
+const NAVY_DARK = "#13405C";
+const GOLD = "#338B85";
 const AZUL_MED = "#1B5680";
 const VERDE = "#2E7D32";
 const VERMELHO = "#C62828";
@@ -121,7 +121,7 @@ function KpiCard({ title, value, delta, loading, breakdown }: {
 function Callout({ ano, gran, per, comparar }: { ano: number; gran: Gran; per: number; comparar: boolean }) {
   return (
     <div className="rounded-md border px-3 py-2 text-sm"
-      style={{ background: "#E6F7FD", borderColor: GOLD, color: "#14405C" }}>
+      style={{ background: "#E6F7FD", borderColor: GOLD, color: "#13405C" }}>
       Período ativo: <strong>{periodoLabel(gran, per)} {ano}</strong>
       {comparar && <> · comparando com <strong>{periodoLabel(gran, per)} {ano - 1}</strong></>}
     </div>
@@ -212,7 +212,7 @@ function ReportFechamento() {
 
   if (escopoPagina.semAcesso) {
     return (
-      <div className="min-h-screen p-6" style={{ background: "#14405C" }}>
+      <div className="min-h-screen p-6" style={{ background: "#13405C" }}>
         <div className="rounded-lg border border-white/20 bg-white/10 p-8 text-center text-white">
           <p className="text-sm">{SEM_ACESSO_RECEITA_MSG}</p>
           <p className="mt-1 text-xs text-white/70">
@@ -224,7 +224,7 @@ function ReportFechamento() {
   }
 
   return (
-    <div className="min-h-screen p-6 space-y-4" style={{ background: "#14405C" }}>
+    <div className="min-h-screen p-6 space-y-4" style={{ background: "#13405C" }}>
 
       {/* Header + filtro */}
       <div className="flex flex-wrap items-end justify-between gap-3">

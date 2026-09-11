@@ -170,7 +170,7 @@ function ImportarBasesPage() {
     <div className="mx-auto max-w-6xl px-6 py-8">
       <div className="rounded-xl bg-white p-6 shadow-sm text-foreground">
         <header className="mb-6">
-          <h1 className="font-display text-2xl font-bold tracking-tight text-[#14405C]">Importação de Bases</h1>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-[#13405C]">Importação de Bases</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Cada nova importação vira a versão atual — cargas anteriores ficam guardadas como histórico.
           </p>
