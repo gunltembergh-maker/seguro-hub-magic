@@ -789,6 +789,7 @@ const VARIAVEIS = [
   "tolerancia_min",
   "checkin_antes_min",
   "motivo",
+  "linha_motivo",
 ];
 const EXEMPLO: Record<string, string> = {
   nome: "Alessandro Oliveira",
@@ -799,6 +800,8 @@ const EXEMPLO: Record<string, string> = {
   tolerancia_min: "15",
   checkin_antes_min: "30",
   motivo: "Sala reservada para treinamento do time",
+  linha_motivo:
+    '<p style="margin:12px 0 0;font-size:14px;line-height:1.5;color:#334155;">Motivo informado: <strong>Sala reservada para treinamento do time</strong></p>',
 };
 const TIPO_LABEL: Record<string, string> = {
   confirmacao: "Confirmação de reserva (colaborador)",
