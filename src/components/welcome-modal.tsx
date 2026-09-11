@@ -52,7 +52,7 @@ export function WelcomeModal() {
         onClick={handleClose}
       />
       <div
-        className="relative w-full max-w-[560px] overflow-hidden rounded-2xl bg-white shadow-2xl transition-all duration-300"
+        className="relative w-full max-w-[560px] overflow-hidden rounded-2xl bg-card text-card-foreground shadow-2xl transition-all duration-300"
         style={{
           opacity: animating ? 1 : 0,
           transform: animating ? "translateY(0) scale(1)" : "translateY(20px) scale(0.97)",
@@ -62,17 +62,16 @@ export function WelcomeModal() {
         <div
           className="relative px-8 pt-10 pb-16 text-center"
           style={{
-            background:
-              "linear-gradient(135deg, #14405C 0%, #1B5680 55%, #2E7BB0 100%)",
+            background: "var(--gradient-hero)",
           }}
         >
           <div
             className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full opacity-20 blur-3xl"
-            style={{ background: "#00BAF2" }}
+            className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-primary opacity-20 blur-3xl"
           />
           <div
             className="pointer-events-none absolute -left-20 bottom-0 h-56 w-56 rounded-full opacity-10 blur-2xl"
-            style={{ background: "#8AAFC9" }}
+            className="pointer-events-none absolute -left-20 bottom-0 h-56 w-56 rounded-full bg-primary-glow opacity-10 blur-2xl"
           />
           <img
             src={logoBranca.url}
@@ -85,32 +84,30 @@ export function WelcomeModal() {
         </div>
 
         {/* Card branco elevado */}
-        <div className="relative -mt-10 mx-6 rounded-xl bg-white px-6 py-6 shadow-lg ring-1 ring-slate-100">
-          <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#00BAF2" }}>
+        <div className="relative -mt-10 mx-6 rounded-xl bg-card px-6 py-6 shadow-lg ring-1 ring-border">
+          <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-primary">
             <Sparkles className="h-3.5 w-3.5" />
             Seja bem-vindo(a)
           </div>
           <h2
-            className="mt-2 font-display text-2xl font-bold leading-tight"
-            style={{ color: "#14405C" }}
+            className="mt-2 font-display text-2xl font-bold leading-tight text-card-foreground"
           >
             Olá{firstName ? `, ${firstName}` : ""}. Que bom ter você aqui.
           </h2>
-          <p className="mt-3 text-sm leading-relaxed text-slate-600">
-            Este é o <strong style={{ color: "#14405C" }}>seu espaço</strong> na
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+            Este é o <strong className="text-card-foreground">seu espaço</strong> na
             Lavoro Seguros — o lugar onde estratégia, números e pessoas se
             encontram. Aqui você acompanha a receita em tempo real, gerencia
             áreas, acessa relatórios e mantém tudo o que importa a um clique.
           </p>
-          <p className="mt-3 text-sm leading-relaxed text-slate-600">
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
             Explore, questione, decida. O Hub foi feito para caminhar com você
             — e evoluir junto.
           </p>
           <div
-            className="mt-4 flex items-start gap-2.5 rounded-lg px-3.5 py-3 text-sm"
-            style={{ background: "rgba(0,186,242,0.08)", color: "#14405C" }}
+            className="mt-4 flex items-start gap-2.5 rounded-lg bg-accent px-3.5 py-3 text-sm text-accent-foreground"
           >
-            <Sparkles className="mt-0.5 h-4 w-4 shrink-0" style={{ color: "#00BAF2" }} />
+            <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
             <span>
               <strong>A cada mês, uma novidade será lançada.</strong> Fique por
               dentro — o Hub está sempre evoluindo com você.
@@ -120,8 +117,8 @@ export function WelcomeModal() {
         </div>
 
         {/* Footer */}
-        <div className="flex flex-col-reverse items-stretch gap-3 border-t border-slate-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-500 hover:text-slate-700">
+        <div className="flex flex-col-reverse items-stretch gap-3 border-t border-border px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground hover:text-card-foreground">
             <Checkbox
               checked={dontShow}
               onCheckedChange={(v) => setDontShow(v === true)}
@@ -130,8 +127,7 @@ export function WelcomeModal() {
           </label>
           <Button
             onClick={handleClose}
-            className="gap-1.5 text-white hover:opacity-90"
-            style={{ backgroundColor: "#14405C" }}
+            className="gap-1.5 hover:opacity-90"
           >
             Vamos começar
             <ArrowRight className="h-4 w-4" />

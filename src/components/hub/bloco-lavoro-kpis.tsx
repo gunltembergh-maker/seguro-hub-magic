@@ -8,15 +8,15 @@ import { SEM_ACESSO_RECEITA_MSG } from "@/lib/receita-escopo";
 
 
 const L = {
-  navy: "#14405C",
-  navyDark: "#0E2E43",
-  blue: "#00BAF2",
+  navy: "#13405C",
+  navyDark: "#0E3046",
+  blue: "#338B85",
   amber: "#D97706",
   green: "#059669",
   red: "#DC2626",
   bgCard: "#FFFFFF",
-  border: "rgba(20,64,92,0.15)",
-  textMuted: "#4B6D88",
+  border: "rgba(19,64,92,0.16)",
+  textMuted: "#557284",
 };
 
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
