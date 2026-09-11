@@ -10,16 +10,16 @@ interface AreaPageProps {
   sections?: { title: string; description: string }[];
 }
 
-const NAVY = "#14405C";
+const NAVY = "#256B66";
 
 export function AreaPage({ icon: Icon, title, subtitle, description, sections = [] }: AreaPageProps) {
   return (
-    <div className="min-h-screen p-6 md:p-8 lg:p-10" style={{ background: NAVY }}>
+    <div className="min-h-screen bg-background p-6 md:p-8 lg:p-10">
       <div className="mx-auto max-w-7xl">
         <div className="flex items-start gap-4">
           <div
             className="grid h-14 w-14 place-items-center rounded-xl text-white shadow-lg"
-            style={{ background: "#00BAF2" }}
+            style={{ background: "#4FB3AB" }}
           >
             <Icon className="h-6 w-6" />
           </div>

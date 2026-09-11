@@ -13,7 +13,6 @@ import { ViewAsProvider, useViewAs } from "@/contexts/view-as-context";
 import { MinhaVisaoIndicator } from "@/components/minha-visao-indicator";
 import { ViewAsSelector } from "@/components/view-as-selector";
 import { PopupComunicado } from "@/components/popup-comunicado";
-import fundoHub from "@/assets/fundo-hub.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -98,7 +97,7 @@ function AuthenticatedLayout() {
 function AuthenticatedShell() {
   const { isImpersonating, viewAsProfile } = useViewAs();
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <div className="flex min-h-screen w-full bg-sidebar">
         <AppSidebar />
         <SidebarInset className="flex flex-1 flex-col">
@@ -120,11 +119,6 @@ function AuthenticatedShell() {
             <div className="relative">
               <Outlet />
             </div>
-            <div
-              className="pointer-events-none fixed inset-y-0 right-0 z-40 w-[70%] bg-cover bg-right bg-no-repeat opacity-80 mix-blend-screen [filter:brightness(1.45)_contrast(1.35)] [mask-image:linear-gradient(to_left,black_0%,black_68%,transparent_100%)]"
-              style={{ backgroundImage: `url(${fundoHub.url})` }}
-              aria-hidden="true"
-            />
           </main>
         </SidebarInset>
       </div>

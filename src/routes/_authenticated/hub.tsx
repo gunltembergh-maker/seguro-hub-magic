@@ -23,14 +23,7 @@ function HubHome() {
     effectivePermissoes.menu_dashboards === true;
 
   return (
-    <div className="relative min-h-full">
-      <div
-        className="absolute inset-0 -z-10"
-        style={{
-          background:
-            "linear-gradient(135deg, #0E2E43 0%, #14405C 55%, #1B5680 100%)",
-        }}
-      />
+    <div className="relative min-h-full bg-background">
       <div className="relative z-0 p-6 md:p-8 lg:p-10">
         <div className="mx-auto max-w-[1400px] space-y-6">
           <HeaderSaudacao
