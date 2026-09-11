@@ -108,8 +108,8 @@ function AuthenticatedShell() {
               usam suas credenciais reais — apenas a UI é filtrada.
             </div>
           )}
-          <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-card px-4 text-card-foreground">
-            <SidebarTrigger className="text-muted-foreground" />
+          <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-white/10 bg-primary px-4 text-primary-foreground">
+            <SidebarTrigger className="text-primary-foreground/80 hover:text-primary-foreground" />
             <HubHeader />
             <div className="ml-auto">
               <ViewAsSelector />
