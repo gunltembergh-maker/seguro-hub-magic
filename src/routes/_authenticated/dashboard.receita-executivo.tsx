@@ -20,7 +20,7 @@ const NAVY = "#13405C";
 const AZUL_CLARO = "#6B9AAA";
 const LARANJA = "#338B85";
 const VERDE = "#1E7F4F";
-const FUNDO = "#13405C";
+const FUNDO = "#FFFFFF";
 
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 const MESES_COMPLETOS = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];

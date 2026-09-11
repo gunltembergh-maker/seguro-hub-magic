@@ -180,11 +180,11 @@ function ReceitaCaixaPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-semibold text-white">Receita</h1>
-          <ChevronRight className="h-4 w-4 text-white/50" />
-          <span className="text-lg text-white/80">Caixa</span>
-          <ChevronRight className="h-4 w-4 text-white/50" />
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-white/10 border border-white/20 text-white">
+          <h1 className="text-2xl font-semibold text-foreground">Receita</h1>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          <span className="text-lg text-muted-foreground">Caixa</span>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          <div className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-card-foreground shadow-sm">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <Select value={String(ano)} onValueChange={(v) => setAno(Number(v))}>
               <SelectTrigger className="bg-transparent border-0 h-6 w-[90px] focus:ring-0 p-0">

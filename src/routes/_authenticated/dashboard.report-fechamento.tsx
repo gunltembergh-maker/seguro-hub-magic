@@ -212,10 +212,10 @@ function ReportFechamento() {
 
   if (escopoPagina.semAcesso) {
     return (
-      <div className="min-h-screen p-6" style={{ background: "#13405C" }}>
-        <div className="rounded-lg border border-white/20 bg-white/10 p-8 text-center text-white">
+      <div className="min-h-screen bg-background p-6">
+        <div className="rounded-lg border border-border bg-card p-8 text-center text-card-foreground shadow-sm">
           <p className="text-sm">{SEM_ACESSO_RECEITA_MSG}</p>
-          <p className="mt-1 text-xs text-white/70">
+          <p className="mt-1 text-xs text-muted-foreground">
             Solicite ao administrador a liberação do(s) seu(s) time(s) de receita.
           </p>
         </div>
@@ -224,13 +224,13 @@ function ReportFechamento() {
   }
 
   return (
-    <div className="min-h-screen p-6 space-y-4" style={{ background: "#13405C" }}>
+    <div className="min-h-screen space-y-4 bg-background p-6">
 
       {/* Header + filtro */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white">Report Fechamento</h1>
-          <p className="text-sm text-white/70">Visão consolidada da base gerencial</p>
+          <h1 className="text-2xl font-bold text-foreground">Report Fechamento</h1>
+          <p className="text-sm text-muted-foreground">Visão consolidada da base gerencial</p>
         </div>
         <div className="flex items-center gap-2">
           <SendNewsletterButton modulo="fechamento_lavoro" ano={ano} mes={gran === "MENSAL" ? periodo : new Date().getMonth() + 1} />
