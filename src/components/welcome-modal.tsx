@@ -65,14 +65,8 @@ export function WelcomeModal() {
             background: "var(--gradient-hero)",
           }}
         >
-          <div
-            className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full opacity-20 blur-3xl"
-            className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-primary opacity-20 blur-3xl"
-          />
-          <div
-            className="pointer-events-none absolute -left-20 bottom-0 h-56 w-56 rounded-full opacity-10 blur-2xl"
-            className="pointer-events-none absolute -left-20 bottom-0 h-56 w-56 rounded-full bg-primary-glow opacity-10 blur-2xl"
-          />
+          <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-primary opacity-20 blur-3xl" />
+          <div className="pointer-events-none absolute -left-20 bottom-0 h-56 w-56 rounded-full bg-primary-glow opacity-10 blur-2xl" />
           <img
             src={logoBranca.url}
             alt="Hub Lavoro"
