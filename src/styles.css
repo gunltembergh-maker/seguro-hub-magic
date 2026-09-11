@@ -151,8 +151,8 @@
   --brand-teal: #338b85;
   --brand-white: #ffffff;
 
-  --background: #13405c;
-  --foreground: #ffffff;
+  --background: #ffffff;
+  --foreground: #12384f;
   --card: #ffffff;
   --card-foreground: #12384f;
   --popover: #ffffff;
@@ -163,7 +163,7 @@
   --secondary: #edf5f4;
   --secondary-foreground: #13405c;
   --muted: #f2f6f7;
-  --muted-foreground: #557284;
+  --muted-foreground: #4b6878;
   --accent: #dcecea;
   --accent-foreground: #13405c;
   --border: #d7e3e7;

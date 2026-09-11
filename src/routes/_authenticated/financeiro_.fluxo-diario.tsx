@@ -17,13 +17,13 @@ export const Route = createFileRoute("/_authenticated/financeiro_/fluxo-diario")
 
 function FluxoDiarioPage() {
   return (
-    <div className="px-6 pb-10 md:px-8 lg:px-10 min-h-screen pt-6 md:pt-8 lg:pt-10" style={{ background: "#13405C" }}>
+    <div className="min-h-screen bg-background px-6 pb-10 pt-6 md:px-8 md:pt-8 lg:px-10 lg:pt-10">
       <div className="mx-auto max-w-7xl">
         <div className="mb-6">
-          <h1 className="font-display text-3xl font-bold tracking-tight text-white md:text-4xl">
+          <h1 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
             Fluxo Diário
           </h1>
-          <p className="mt-1 text-white/70">Previsão de recebimento e repasse de parceiro</p>
+          <p className="mt-1 text-muted-foreground">Previsão de recebimento e repasse de parceiro</p>
         </div>
 
         <RecebimentoDezenas />

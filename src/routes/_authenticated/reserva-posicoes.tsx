@@ -27,18 +27,15 @@ export const Route = createFileRoute("/_authenticated/reserva-posicoes")({
 
 function ReservaPosicoesPage() {
   return (
-    <div
-      className="min-h-screen px-6 pb-10 pt-6 md:px-8 md:pt-8 lg:px-10 lg:pt-10"
-      style={{ background: "#13405C" }}
-    >
+    <div className="min-h-screen bg-background px-6 pb-10 pt-6 md:px-8 md:pt-8 lg:px-10 lg:pt-10">
       <div className="mx-auto max-w-6xl">
         <div className="mb-6 flex items-center gap-3">
-          <CalendarClock className="h-8 w-8 text-[#338B85]" />
+          <CalendarClock className="h-8 w-8 text-primary" />
           <div>
-            <h1 className="font-display text-3xl font-bold tracking-tight text-white md:text-4xl">
+            <h1 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
               Reserva de Posições
             </h1>
-            <p className="mt-1 text-white/70">
+            <p className="mt-1 text-muted-foreground">
               Escolha sua posição no escritório e acompanhe suas reservas.
             </p>
           </div>

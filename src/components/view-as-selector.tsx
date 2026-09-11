@@ -52,7 +52,7 @@ export function ViewAsSelector() {
         <Button
           variant="outline"
           size="sm"
-          className="h-8 gap-1.5 text-xs"
+          className="h-8 gap-1.5 border-border bg-card text-card-foreground text-xs shadow-sm hover:bg-accent hover:text-accent-foreground"
           title="Visualizar como outro usuário"
         >
           <Eye className="h-3.5 w-3.5" />

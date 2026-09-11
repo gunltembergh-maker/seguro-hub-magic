@@ -34,13 +34,13 @@ function FinanceiroPage() {
             <Landmark className="h-6 w-6" />
           </div>
           <div>
-            <Badge variant="outline" className="border-white/30 bg-white/10 text-white hover:bg-white/15">
+            <Badge variant="outline" className="border-primary/30 bg-primary/5 text-primary hover:bg-primary/10">
               Área
             </Badge>
-            <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-white md:text-4xl">
+            <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
               Financeiro
             </h1>
-            <p className="mt-1 max-w-2xl text-white/70">
+            <p className="mt-1 max-w-2xl text-muted-foreground">
               Contas, faturamento, comissionamento e fechamento contábil.
             </p>
           </div>
@@ -65,18 +65,18 @@ function FinanceiroPage() {
         <div className="mt-8">
           <Link
             to="/financeiro/fluxo-diario"
-            className="group flex items-center gap-4 rounded-xl border border-white/15 bg-white/5 p-5 transition-colors hover:bg-white/10"
+            className="group flex items-center gap-4 rounded-xl border border-border bg-card p-5 shadow-sm transition-colors hover:bg-accent/50"
           >
             <div className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
               <CalendarClock className="h-5 w-5" />
             </div>
             <div className="flex-1">
-              <p className="font-display text-base font-semibold text-white">Fluxo Diário</p>
-              <p className="text-sm text-white/70">
+              <p className="font-display text-base font-semibold text-card-foreground">Fluxo Diário</p>
+              <p className="text-sm text-muted-foreground">
                 Previsão de recebimento por dezenas e repasse de parceiro.
               </p>
             </div>
-            <ArrowRight className="h-5 w-5 text-white/60 transition-transform group-hover:translate-x-1" />
+            <ArrowRight className="h-5 w-5 text-primary transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
 

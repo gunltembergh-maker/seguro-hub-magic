@@ -933,10 +933,10 @@ function AdminReservasPage() {
     <div className="px-6 pb-10 pt-6 md:px-8 md:pt-8 lg:px-10 lg:pt-10">
       <div className="mx-auto max-w-6xl">
         <div className="mb-6">
-          <h1 className="font-display text-3xl font-bold tracking-tight text-white">
+          <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
             Reserva de Posições
           </h1>
-          <p className="mt-1 text-white/70">
+          <p className="mt-1 text-muted-foreground">
             Posições do escritório, reservas dos colaboradores e parâmetros do módulo.
           </p>
         </div>
