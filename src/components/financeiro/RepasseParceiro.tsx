@@ -210,14 +210,43 @@ const selectStyle: React.CSSProperties = {
 export function RepasseParceiro() {
   const queryClient = useQueryClient();
 
-  const mesCorrente = useMemo(() => {
-    const d = nowBRT();
-    return { ano: d.getFullYear(), mes: d.getMonth() + 1 };
-  }, []);
+  // Feriados nacionais para apurar o dia útil do repasse
+  const { data: feriadosRows } = useQuery({
+    queryKey: ["feriados-nacionais"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("feriados_nacionais").select("data");
+      if (error) throw error;
+      return (data || []) as Array<{ data: string }>;
+    },
+    staleTime: 60 * 60 * 1000,
+  });
 
-  const [mesAncora, setMesAncora] = useState(mesCorrente);
+  const feriados = useMemo(
+    () => new Set((feriadosRows || []).map((f) => String(f.data).slice(0, 10))),
+    [feriadosRows],
+  );
+
+  const mesCorrente = useMemo(() => cicloPadrao(feriados), [feriados]);
+
+  const [mesAncora, setMesAncora] = useState(() => cicloPadrao(new Set<string>()));
+  const [mesTocado, setMesTocado] = useState(false);
   const [canal, setCanal] = useState<string | null>(null);
   const [situacaoKey, setSituacaoKey] = useState<SituacaoKey>("AVENCER_APURADO");
+
+  // Quando os feriados chegam, reavalia o ciclo padrão (se o usuário não escolheu outro mês)
+  useEffect(() => {
+    if (mesTocado) return;
+    setMesAncora((atual) =>
+      atual.ano === mesCorrente.ano && atual.mes === mesCorrente.mes ? atual : mesCorrente,
+    );
+  }, [mesCorrente, mesTocado]);
+
+  const dataRepasse = useMemo(
+    () => dataRepasseDoCiclo(mesAncora.ano, mesAncora.mes, feriados),
+    [mesAncora, feriados],
+  );
+  const dataRepasseCurta = `${pad2(dataRepasse.getDate())}/${pad2(dataRepasse.getMonth() + 1)}`;
+  const dataRepasseLonga = `${dataRepasseCurta}/${dataRepasse.getFullYear()}`;
 
   const sit = SITUACOES.find((s) => s.key === situacaoKey)!;
   const isHistorico = sit.modo === "HISTORICO";
