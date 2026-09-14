@@ -123,6 +123,40 @@ function nowBRT() {
   return new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
 }
 
+const pad2 = (n: number) => String(n).padStart(2, "0");
+const chaveData = (d: Date) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+
+function ehDiaUtil(d: Date, feriados: Set<string>) {
+  const w = d.getDay();
+  return w !== 0 && w !== 6 && !feriados.has(chaveData(d));
+}
+
+/** Data do repasse: dia 10 do ciclo ou, se não for útil, o dia útil mais próximo (empate = o anterior). */
+function dataRepasseDoCiclo(ano: number, mes: number, feriados: Set<string>) {
+  const base = new Date(ano, mes - 1, 10);
+  if (ehDiaUtil(base, feriados)) return base;
+  for (let i = 1; i <= 15; i++) {
+    const antes = new Date(ano, mes - 1, 10 - i);
+    if (ehDiaUtil(antes, feriados)) return antes;
+    const depois = new Date(ano, mes - 1, 10 + i);
+    if (ehDiaUtil(depois, feriados)) return depois;
+  }
+  return base;
+}
+
+const soData = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+/** Ciclo padrão: o corrente até a data de pagamento; depois dela, rola para o mês seguinte. */
+function cicloPadrao(feriados: Set<string>) {
+  const hoje = soData(nowBRT());
+  const ano = hoje.getFullYear();
+  const mes = hoje.getMonth() + 1;
+  const pagamento = soData(dataRepasseDoCiclo(ano, mes, feriados));
+  if (hoje <= pagamento) return { ano, mes };
+  const prox = new Date(ano, mes, 1);
+  return { ano: prox.getFullYear(), mes: prox.getMonth() + 1 };
+}
+
 type SituacaoKey = "AVENCER_APURADO" | "AVENCER" | "APURADO" | "PAGA";
 
 const SITUACOES: Array<{
@@ -176,14 +210,43 @@ const selectStyle: React.CSSProperties = {
 export function RepasseParceiro() {
   const queryClient = useQueryClient();
 
-  const mesCorrente = useMemo(() => {
-    const d = nowBRT();
-    return { ano: d.getFullYear(), mes: d.getMonth() + 1 };
-  }, []);
+  // Feriados nacionais para apurar o dia útil do repasse
+  const { data: feriadosRows } = useQuery({
+    queryKey: ["feriados-nacionais"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("feriados_nacionais").select("data");
+      if (error) throw error;
+      return (data || []) as Array<{ data: string }>;
+    },
+    staleTime: 60 * 60 * 1000,
+  });
 
-  const [mesAncora, setMesAncora] = useState(mesCorrente);
+  const feriados = useMemo(
+    () => new Set((feriadosRows || []).map((f) => String(f.data).slice(0, 10))),
+    [feriadosRows],
+  );
+
+  const mesCorrente = useMemo(() => cicloPadrao(feriados), [feriados]);
+
+  const [mesAncora, setMesAncora] = useState(() => cicloPadrao(new Set<string>()));
+  const [mesTocado, setMesTocado] = useState(false);
   const [canal, setCanal] = useState<string | null>(null);
   const [situacaoKey, setSituacaoKey] = useState<SituacaoKey>("AVENCER_APURADO");
+
+  // Quando os feriados chegam, reavalia o ciclo padrão (se o usuário não escolheu outro mês)
+  useEffect(() => {
+    if (mesTocado) return;
+    setMesAncora((atual) =>
+      atual.ano === mesCorrente.ano && atual.mes === mesCorrente.mes ? atual : mesCorrente,
+    );
+  }, [mesCorrente, mesTocado]);
+
+  const dataRepasse = useMemo(
+    () => dataRepasseDoCiclo(mesAncora.ano, mesAncora.mes, feriados),
+    [mesAncora, feriados],
+  );
+  const dataRepasseCurta = `${pad2(dataRepasse.getDate())}/${pad2(dataRepasse.getMonth() + 1)}`;
+  const dataRepasseLonga = `${dataRepasseCurta}/${dataRepasse.getFullYear()}`;
 
   const sit = SITUACOES.find((s) => s.key === situacaoKey)!;
   const isHistorico = sit.modo === "HISTORICO";
@@ -232,7 +295,7 @@ export function RepasseParceiro() {
       const info = [
         { rotulo: "Parceiro", valor: canalClicado },
         { rotulo: "Ciclo", valor: `${MESES_LONGOS[mesAncora.mes - 1]} / ${mesAncora.ano}` },
-        { rotulo: "Data prevista de pagamento", valor: `10/${String(mesAncora.mes).padStart(2, "0")}/${mesAncora.ano}` },
+        { rotulo: "Data prevista de pagamento", valor: dataRepasseLonga },
         { rotulo: "Total a repassar", valor: BRL(totalRepasse) },
         { rotulo: "Parcelas", valor: String(todas.length) },
       ];
@@ -411,6 +474,7 @@ export function RepasseParceiro() {
   }, [queryClient]);
 
   const limpar = () => {
+    setMesTocado(false);
     setMesAncora(mesCorrente);
     setCanal(null);
     setSituacaoKey("AVENCER_APURADO");
@@ -578,7 +642,7 @@ export function RepasseParceiro() {
                 className="rounded-full px-2 py-0.5 text-[10px] font-semibold normal-case tracking-normal"
                 style={{ background: "rgba(51,139,133,0.18)", color: CYAN }}
               >
-                padrão: corrente
+                padrão: ciclo {dataRepasseCurta}
               </span>
             </label>
             <input
@@ -587,7 +651,7 @@ export function RepasseParceiro() {
               value={`${mesAncora.ano}-${String(mesAncora.mes).padStart(2, "0")}`}
               onChange={(e) => {
                 const [a, m] = e.target.value.split("-").map(Number);
-                if (a && m) setMesAncora({ ano: a, mes: m });
+                if (a && m) { setMesTocado(true); setMesAncora({ ano: a, mes: m }); }
               }}
             />
           </div>
@@ -636,7 +700,7 @@ export function RepasseParceiro() {
         ) : (
           <>
             <ResumoCard
-              titulo={`A pagar em 10/${String(mesAncora.mes).padStart(2, "0")}`}
+              titulo={`A pagar em ${dataRepasseCurta}`}
               valor={BRL(totalAPagar)}
               destaque
             />
@@ -791,7 +855,7 @@ export function RepasseParceiro() {
                             <LinhaCanal key={l.canal} l={l} info={porCanal.get(l.canal)} pill={pill} valorCell={valorCell} border={BORDER} navy={NAVY} exportando={exportando === l.canal} bloqueado={exportando !== null} onExport={exportar} />
                           ))}
                           <SubtotalRow
-                            label={`A pagar em 10/${String(mesAncora.mes).padStart(2, "0")}`}
+                            label={`A pagar em ${dataRepasseCurta}`}
                             grupo={grupoAPagar}
                             navy={NAVY}
                             border={BORDER}
