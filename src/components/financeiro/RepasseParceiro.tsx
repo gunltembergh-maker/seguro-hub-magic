@@ -295,7 +295,7 @@ export function RepasseParceiro() {
       const info = [
         { rotulo: "Parceiro", valor: canalClicado },
         { rotulo: "Ciclo", valor: `${MESES_LONGOS[mesAncora.mes - 1]} / ${mesAncora.ano}` },
-        { rotulo: "Data prevista de pagamento", valor: `10/${String(mesAncora.mes).padStart(2, "0")}/${mesAncora.ano}` },
+        { rotulo: "Data prevista de pagamento", valor: dataRepasseLonga },
         { rotulo: "Total a repassar", valor: BRL(totalRepasse) },
         { rotulo: "Parcelas", valor: String(todas.length) },
       ];
@@ -474,6 +474,7 @@ export function RepasseParceiro() {
   }, [queryClient]);
 
   const limpar = () => {
+    setMesTocado(false);
     setMesAncora(mesCorrente);
     setCanal(null);
     setSituacaoKey("AVENCER_APURADO");
@@ -641,7 +642,7 @@ export function RepasseParceiro() {
                 className="rounded-full px-2 py-0.5 text-[10px] font-semibold normal-case tracking-normal"
                 style={{ background: "rgba(51,139,133,0.18)", color: CYAN }}
               >
-                padrão: corrente
+                padrão: ciclo {dataRepasseCurta}
               </span>
             </label>
             <input
@@ -650,7 +651,7 @@ export function RepasseParceiro() {
               value={`${mesAncora.ano}-${String(mesAncora.mes).padStart(2, "0")}`}
               onChange={(e) => {
                 const [a, m] = e.target.value.split("-").map(Number);
-                if (a && m) setMesAncora({ ano: a, mes: m });
+                if (a && m) { setMesTocado(true); setMesAncora({ ano: a, mes: m }); }
               }}
             />
           </div>
@@ -699,7 +700,7 @@ export function RepasseParceiro() {
         ) : (
           <>
             <ResumoCard
-              titulo={`A pagar em 10/${String(mesAncora.mes).padStart(2, "0")}`}
+              titulo={`A pagar em ${dataRepasseCurta}`}
               valor={BRL(totalAPagar)}
               destaque
             />
@@ -854,7 +855,7 @@ export function RepasseParceiro() {
                             <LinhaCanal key={l.canal} l={l} info={porCanal.get(l.canal)} pill={pill} valorCell={valorCell} border={BORDER} navy={NAVY} exportando={exportando === l.canal} bloqueado={exportando !== null} onExport={exportar} />
                           ))}
                           <SubtotalRow
-                            label={`A pagar em 10/${String(mesAncora.mes).padStart(2, "0")}`}
+                            label={`A pagar em ${dataRepasseCurta}`}
                             grupo={grupoAPagar}
                             navy={NAVY}
                             border={BORDER}
