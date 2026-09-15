@@ -36,7 +36,7 @@ export async function receberSolicitacaoGarantiaJudicial(payload: unknown) {
       cnpj_tomador,
       nome_tomador: nome_tomador ?? null,
       numero_processo: numero_processo ?? null,
-      dados_formulario,
+      dados_formulario: dados_formulario as Json,
       status: "recebida",
     })
     .select("id")
