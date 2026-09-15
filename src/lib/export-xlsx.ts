@@ -223,7 +223,16 @@ export async function montarXlsxBuffer(opts: {
     }
   }
 
-  const buf = await workbook.xlsx.writeBuffer();
+  return (await workbook.xlsx.writeBuffer()) as ArrayBuffer;
+}
+
+/** Mesma assinatura e mesmo comportamento de antes: monta e baixa no navegador. */
+export async function exportarXlsx(opts: {
+  arquivo: string;
+  cabecalho: CabecalhoExport;
+  abas: AbaExport[];
+}): Promise<void> {
+  const buf = await montarXlsxBuffer({ cabecalho: opts.cabecalho, abas: opts.abas });
   const blob = new Blob([buf], {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });
