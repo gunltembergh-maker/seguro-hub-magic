@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { Json } from "@/integrations/supabase/types";
 
 const PayloadSchema = z.object({
   cnpj_tomador: z.string().regex(/^\d{14}$/, "cnpj_tomador deve ter 14 dígitos"),
