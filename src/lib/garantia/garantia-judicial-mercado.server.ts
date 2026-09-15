@@ -109,6 +109,19 @@ async function consultarWorker(cnpjDigits: string): Promise<ResultadoConsulta> {
   return { tipo: "em_andamento" };
 }
 
+// A planilha nunca derruba a execução: se falhar, a linha fica em
+// `mercado_consultado` com `xlsx_path` nulo e a execução seguinte tenta de novo,
+// sem refazer a consulta de mercado.
+async function gerarPlanilha(id: string): Promise<{ ok: boolean; erro?: string }> {
+  try {
+    const { gerarXlsxConsultaMercado } = await import("./garantia-judicial-xlsx.server");
+    const r = await gerarXlsxConsultaMercado(id);
+    return r.ok ? { ok: true } : { ok: false, erro: truncar(r.erro) };
+  } catch (e) {
+    return { ok: false, erro: truncar(e instanceof Error ? e.message : e) };
+  }
+}
+
 export async function consultarMercadoPendentes() {
   const { lavoroAdmin: supabaseAdmin } = await import(
     "@/integrations/supabase/lavoro-admin.server"
