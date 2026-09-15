@@ -64,11 +64,17 @@ function converter(v: unknown, formato: FormatoCol): unknown {
   return String(v);
 }
 
-export async function exportarXlsx(opts: {
-  arquivo: string;
+/**
+ * Monta o workbook e devolve o conteúdo binário do arquivo.
+ * Não usa nenhuma API de navegador — serve tanto para a tela quanto para o servidor.
+ * `baseUrl` é a origem absoluta usada para resolver o logo (necessária no
+ * servidor, onde o caminho relativo do asset não resolve sozinho).
+ */
+export async function montarXlsxBuffer(opts: {
   cabecalho: CabecalhoExport;
   abas: AbaExport[];
-}): Promise<void> {
+  baseUrl?: string;
+}): Promise<ArrayBuffer> {
   const ExcelJS = (await import("exceljs")).default;
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "Hub Lavoro Seguros";
@@ -76,7 +82,10 @@ export async function exportarXlsx(opts: {
 
   let logoId: number | null = null;
   try {
-    const res = await fetch(logoAsset.url);
+    const logoUrl = opts.baseUrl
+      ? new URL(logoAsset.url, opts.baseUrl).toString()
+      : logoAsset.url;
+    const res = await fetch(logoUrl);
     if (res.ok) {
       const buffer = await res.arrayBuffer();
       logoId = workbook.addImage({ buffer, extension: "png" });
