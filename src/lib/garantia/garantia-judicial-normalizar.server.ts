@@ -189,6 +189,17 @@ export function classifyErrorMessage(message: unknown): StatusKey {
     )
   )
     return "instavel";
+  // DIVERGÊNCIA DELIBERADA em relação a public/analise-limite/app.js (que ainda
+  // trata isto como erro técnico): cadastro/teto vencido, expirado ou
+  // desatualizado é resposta de negócio e acionável (alguém precisa renovar o
+  // cadastro), não falha de consulta. Entra depois de nomeado/filial/timeout/
+  // instável para não roubar casos dessas regras, e devolve "sem_limite" —
+  // a mensagem original da seguradora é preservada pelo chamador.
+  if (
+    (t.includes("cadastro") || t.includes("teto")) &&
+    (t.includes("vencid") || t.includes("expirad") || t.includes("desatualizad"))
+  )
+    return "sem_limite";
   if (
     t.includes("limits_not_found") ||
     t.includes("não possui limite") ||
