@@ -3,7 +3,18 @@ import logoAsset from "@/assets/logo-lavoro-email.png.asset.json";
 
 export type FormatoCol = "moeda" | "percentual" | "data" | "inteiro" | "texto";
 
-export type ColunaExport = { header: string; key: string; width?: number; formato?: FormatoCol };
+export type ColunaExport = {
+  header: string;
+  key: string;
+  width?: number;
+  formato?: FormatoCol;
+  /**
+   * Opcional. Cor de preenchimento (hex, ex.: "#E6F4EA") por linha nesta coluna.
+   * Quando ausente ou quando devolve vazio, o comportamento é exatamente o
+   * atual (zebra padrão) — nenhuma tela existente passa esta opção.
+   */
+  corFundo?: (row: Record<string, unknown>, idx: number) => string | undefined;
+};
 
 export type AbaExport = {
   nome: string;
