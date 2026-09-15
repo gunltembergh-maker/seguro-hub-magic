@@ -149,6 +149,8 @@ export async function enviarEmailNovaDemanda(solicitacaoId: string): Promise<
   const nomeXlsx = `Consulta_Mercado_${protocolo}.xlsx`;
 
   const usarResend = Boolean(process.env.RESEND_API_KEY);
+  if (!usarResend && !process.env.LOVABLE_API_KEY)
+    return { ok: false, erro: "sem_credencial_de_email" };
 
   let linkPdf: string | undefined;
   let linkXlsx: string | undefined;
