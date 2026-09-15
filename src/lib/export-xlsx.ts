@@ -190,6 +190,8 @@ export async function montarXlsxBuffer(opts: {
         cell.alignment = { horizontal: ALIGN[formato], vertical: "middle" };
         cell.border = bordaFina;
         if (zebra) cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: argb(LIGHT_BG) } };
+        const cor = col.corFundo?.(row, idx);
+        if (cor) cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: argb(cor) } };
       });
       linha++;
     });
