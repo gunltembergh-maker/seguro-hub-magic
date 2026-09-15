@@ -3,6 +3,7 @@ import { template as testeTemplate } from './teste'
 import { template as receitaTemplate } from './receita-diaria'
 import { template as executivoTemplate } from './resumo-executivo-semanal'
 import { template as fechamentoTemplate } from './fechamento'
+import { template as garantiaNovaDemandaTemplate } from './garantia-judicial-nova-demanda'
 
 export interface TemplateEntry {
   component: ComponentType<any>
@@ -18,6 +19,9 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'receita-lavoro': receitaTemplate,
   'executivo-lavoro': executivoTemplate,
   'fechamento-lavoro': fechamentoTemplate,
+  // Pré-visualização apenas: o disparo real é feito por
+  // src/lib/garantia/garantia-judicial-email.server.ts (precisa de anexos).
+  'garantia-judicial-nova-demanda': garantiaNovaDemandaTemplate,
   // Aliases legados (compat)
   'receita-diaria': receitaTemplate,
   'resumo-executivo-semanal': executivoTemplate,
