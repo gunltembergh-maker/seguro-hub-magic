@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/api/public/hooks/garantia-judicial-submit")({
+export const Route = createFileRoute("/api/public/garantia-judicial-submit")({
   server: {
     handlers: {
       POST: async ({ request }) => handle(request),
