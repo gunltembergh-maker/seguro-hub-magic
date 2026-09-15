@@ -306,7 +306,7 @@ export function RepasseParceiro() {
         await exportarXlsx({
           arquivo,
           cabecalho: { titulo: "Repasse de Parceiro · conferência interna", subtitulo: `${canalClicado} · ${anoMes}`, info },
-          abas: [{ nome: "Detalhe", colunas: COLS_INTERNO, linhas: todas, totalizar: ["valor_repasse_total"] }],
+          abas: [{ nome: "Detalhe", colunas: COLS_INTERNO, linhas: todas, totalizar: ["valor_repasse_total"], semLinhasDeGrade: true }],
         });
       } else {
         // Garantia: nenhuma coluna proibida sai no arquivo do parceiro.
@@ -333,8 +333,9 @@ export function RepasseParceiro() {
               linhas: linhasResumo,
               totalizar: ["base_liquida", "valor_repasse_total"],
               nota: "Valor do Repasse = Comissão Recebida × (1 − % Imposto) × % Repasse. A aba Detalhe traz a conta aberta linha a linha.",
+              semLinhasDeGrade: true,
             },
-            { nome: "Detalhe", colunas: COLS_PARCEIRO_DETALHE, linhas: linhasDetalhe, totalizar: ["valor_repasse_total"] },
+            { nome: "Detalhe", colunas: COLS_PARCEIRO_DETALHE, linhas: linhasDetalhe, totalizar: ["valor_repasse_total"], semLinhasDeGrade: true },
           ],
         });
       }
