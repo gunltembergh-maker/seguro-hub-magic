@@ -1995,10 +1995,12 @@ export type Database = {
           dados_formulario: Json
           email_enviado_em: string | null
           erro_mensagem: string | null
+          gerado_em: string | null
           id: string
           nome_tomador: string | null
           numero_processo: string | null
           pdf_path: string | null
+          protocolo: string | null
           resultado_mercado: Json | null
           status: string
           xlsx_path: string | null
@@ -2010,10 +2012,12 @@ export type Database = {
           dados_formulario: Json
           email_enviado_em?: string | null
           erro_mensagem?: string | null
+          gerado_em?: string | null
           id?: string
           nome_tomador?: string | null
           numero_processo?: string | null
           pdf_path?: string | null
+          protocolo?: string | null
           resultado_mercado?: Json | null
           status?: string
           xlsx_path?: string | null
@@ -2025,10 +2029,12 @@ export type Database = {
           dados_formulario?: Json
           email_enviado_em?: string | null
           erro_mensagem?: string | null
+          gerado_em?: string | null
           id?: string
           nome_tomador?: string | null
           numero_processo?: string | null
           pdf_path?: string | null
+          protocolo?: string | null
           resultado_mercado?: Json | null
           status?: string
           xlsx_path?: string | null
