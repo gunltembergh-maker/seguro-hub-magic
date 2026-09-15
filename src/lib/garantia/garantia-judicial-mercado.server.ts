@@ -109,6 +109,19 @@ async function consultarWorker(cnpjDigits: string): Promise<ResultadoConsulta> {
   return { tipo: "em_andamento" };
 }
 
+// A planilha nunca derruba a execução: se falhar, a linha fica em
+// `mercado_consultado` com `xlsx_path` nulo e a execução seguinte tenta de novo,
+// sem refazer a consulta de mercado.
+async function gerarPlanilha(id: string): Promise<{ ok: boolean; erro?: string }> {
+  try {
+    const { gerarXlsxConsultaMercado } = await import("./garantia-judicial-xlsx.server");
+    const r = await gerarXlsxConsultaMercado(id);
+    return r.ok ? { ok: true } : { ok: false, erro: truncar(r.erro) };
+  } catch (e) {
+    return { ok: false, erro: truncar(e instanceof Error ? e.message : e) };
+  }
+}
+
 export async function consultarMercadoPendentes() {
   const { lavoroAdmin: supabaseAdmin } = await import(
     "@/integrations/supabase/lavoro-admin.server"
@@ -116,14 +129,18 @@ export async function consultarMercadoPendentes() {
 
   const limiteRetomada = new Date(Date.now() - RETOMAR_APOS_MS).toISOString();
 
-  // Solicitação mais antiga pendente de consulta: ou nunca consultada
-  // (`recebida`), ou retomada de uma execução anterior que não coube no
-  // orçamento de tempo (`consultando_mercado` e parada há tempo suficiente).
+  // Solicitação mais antiga pendente: nunca consultada (`recebida`), retomada de
+  // uma execução anterior que não coube no orçamento (`consultando_mercado`
+  // parada há tempo suficiente), ou já consultada mas ainda sem planilha
+  // (`mercado_consultado` com `xlsx_path` nulo) — nesse caso só gera o arquivo,
+  // sem reconsultar o mercado.
   const { data: candidatas, error: selErro } = await supabaseAdmin
     .from("garantia_judicial_solicitacoes")
-    .select("id, status, cnpj_tomador, consulta_tentativas")
+    .select("id, status, cnpj_tomador, consulta_tentativas, xlsx_path")
     .or(
-      `status.eq.recebida,and(status.eq.consultando_mercado,consulta_iniciada_em.lt.${limiteRetomada})`,
+      `status.eq.recebida,` +
+        `and(status.eq.consultando_mercado,consulta_iniciada_em.lt.${limiteRetomada}),` +
+        `and(status.eq.mercado_consultado,xlsx_path.is.null,consulta_tentativas.lt.${LIMITE_TENTATIVAS},or(consulta_iniciada_em.is.null,consulta_iniciada_em.lt.${limiteRetomada}))`,
     )
     .order("criado_em", { ascending: true })
     .limit(1);
@@ -133,6 +150,27 @@ export async function consultarMercadoPendentes() {
   if (!candidata) return { ok: true, processadas: 0, motivo: "nada_pendente" };
 
   const tentativas = (candidata.consulta_tentativas ?? 0) + 1;
+
+  // Caso "só planilha": a consulta já terminou, o status permanece
+  // `mercado_consultado` (a restrição da tabela não admite status novo) e o
+  // `consulta_tentativas` serve de proteção contra tentativa infinita.
+  if (candidata.status === "mercado_consultado") {
+    const { data: travadaXlsx, error: lockXlsxErro } = await supabaseAdmin
+      .from("garantia_judicial_solicitacoes")
+      .update({ consulta_iniciada_em: new Date().toISOString(), consulta_tentativas: tentativas })
+      .eq("id", candidata.id)
+      .eq("status", "mercado_consultado")
+      .is("xlsx_path", null)
+      .select("id")
+      .maybeSingle();
+    if (lockXlsxErro) return { ok: false, erro: "falha_ao_travar", detalhe: lockXlsxErro.message };
+    if (!travadaXlsx) return { ok: true, processadas: 0, motivo: "ja_assumida_por_outra_execucao" };
+
+    const planilha = await gerarPlanilha(candidata.id);
+    return planilha.ok
+      ? { ok: true, id: candidata.id, processadas: 1, status: "mercado_consultado", xlsx: "gerado", tentativas }
+      : { ok: false, id: candidata.id, erro: "falha_ao_gerar_xlsx", detalhe: planilha.erro, tentativas };
+  }
 
   // Trava otimista: só assume a linha se ninguém mudou o status no meio.
   const { data: travada, error: lockErro } = await supabaseAdmin
@@ -171,7 +209,16 @@ export async function consultarMercadoPendentes() {
       })
       .eq("id", travada.id);
     if (upErro) return { ok: false, id: travada.id, erro: "falha_ao_gravar", detalhe: upErro.message };
-    return { ok: true, id: travada.id, processadas: 1, status: "mercado_consultado", tentativas };
+    // Só depois de o resultado estar gravado é que a planilha é gerada.
+    const planilha = await gerarPlanilha(travada.id);
+    return {
+      ok: true,
+      id: travada.id,
+      processadas: 1,
+      status: "mercado_consultado",
+      xlsx: planilha.ok ? "gerado" : `pendente: ${planilha.erro}`,
+      tentativas,
+    };
   }
 
   // Erro de configuração não melhora tentando de novo.

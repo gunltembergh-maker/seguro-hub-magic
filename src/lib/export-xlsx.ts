@@ -3,7 +3,18 @@ import logoAsset from "@/assets/logo-lavoro-email.png.asset.json";
 
 export type FormatoCol = "moeda" | "percentual" | "data" | "inteiro" | "texto";
 
-export type ColunaExport = { header: string; key: string; width?: number; formato?: FormatoCol };
+export type ColunaExport = {
+  header: string;
+  key: string;
+  width?: number;
+  formato?: FormatoCol;
+  /**
+   * Opcional. Cor de preenchimento (hex, ex.: "#E6F4EA") por linha nesta coluna.
+   * Quando ausente ou quando devolve vazio, o comportamento é exatamente o
+   * atual (zebra padrão) — nenhuma tela existente passa esta opção.
+   */
+  corFundo?: (row: Record<string, unknown>, idx: number) => string | undefined;
+};
 
 export type AbaExport = {
   nome: string;
@@ -53,11 +64,17 @@ function converter(v: unknown, formato: FormatoCol): unknown {
   return String(v);
 }
 
-export async function exportarXlsx(opts: {
-  arquivo: string;
+/**
+ * Monta o workbook e devolve o conteúdo binário do arquivo.
+ * Não usa nenhuma API de navegador — serve tanto para a tela quanto para o servidor.
+ * `baseUrl` é a origem absoluta usada para resolver o logo (necessária no
+ * servidor, onde o caminho relativo do asset não resolve sozinho).
+ */
+export async function montarXlsxBuffer(opts: {
   cabecalho: CabecalhoExport;
   abas: AbaExport[];
-}): Promise<void> {
+  baseUrl?: string;
+}): Promise<ArrayBuffer> {
   const ExcelJS = (await import("exceljs")).default;
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "Hub Lavoro Seguros";
@@ -65,7 +82,10 @@ export async function exportarXlsx(opts: {
 
   let logoId: number | null = null;
   try {
-    const res = await fetch(logoAsset.url);
+    const logoUrl = opts.baseUrl
+      ? new URL(logoAsset.url, opts.baseUrl).toString()
+      : logoAsset.url;
+    const res = await fetch(logoUrl);
     if (res.ok) {
       const buffer = await res.arrayBuffer();
       logoId = workbook.addImage({ buffer, extension: "png" });
@@ -170,6 +190,8 @@ export async function exportarXlsx(opts: {
         cell.alignment = { horizontal: ALIGN[formato], vertical: "middle" };
         cell.border = bordaFina;
         if (zebra) cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: argb(LIGHT_BG) } };
+        const cor = col.corFundo?.(row, idx);
+        if (cor) cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: argb(cor) } };
       });
       linha++;
     });
@@ -201,7 +223,16 @@ export async function exportarXlsx(opts: {
     }
   }
 
-  const buf = await workbook.xlsx.writeBuffer();
+  return (await workbook.xlsx.writeBuffer()) as ArrayBuffer;
+}
+
+/** Mesma assinatura e mesmo comportamento de antes: monta e baixa no navegador. */
+export async function exportarXlsx(opts: {
+  arquivo: string;
+  cabecalho: CabecalhoExport;
+  abas: AbaExport[];
+}): Promise<void> {
+  const buf = await montarXlsxBuffer({ cabecalho: opts.cabecalho, abas: opts.abas });
   const blob = new Blob([buf], {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });
