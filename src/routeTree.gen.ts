@@ -31,6 +31,7 @@ import { Route as ApiTcLavoroTcAnalisesRouteImport } from './routes/api/tc-lavor
 import { Route as ApiTcLavoroLimitsQueryRouteImport } from './routes/api/tc-lavoro/limits-query'
 import { Route as ApiTcLavoroLegacyAnalysisRouteImport } from './routes/api/tc-lavoro/legacy-analysis'
 import { Route as ApiTcLavoroAnalysisJobsRouteImport } from './routes/api/tc-lavoro/analysis-jobs'
+import { Route as ApiPublicGarantiaJudicialSubmitRouteImport } from './routes/api/public/garantia-judicial-submit'
 import { Route as ApiAbSolicitarRouteImport } from './routes/api/ab/solicitar'
 import { Route as ApiAbExecutarRouteImport } from './routes/api/ab/executar'
 import { Route as ApiAbCotaRouteImport } from './routes/api/ab/cota'
@@ -59,7 +60,6 @@ import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/em
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiTcLavoroTcAnalisesIdRouteImport } from './routes/api/tc-lavoro/tc-analises.$id'
 import { Route as ApiTcLavoroAnalysisJobsJobIdRouteImport } from './routes/api/tc-lavoro/analysis-jobs.$jobId'
-import { Route as ApiPublicHooksGarantiaJudicialSubmitRouteImport } from './routes/api/public/hooks/garantia-judicial-submit'
 import { Route as ApiPublicHooksDispatchScheduledNewslettersRouteImport } from './routes/api/public/hooks/dispatch-scheduled-newsletters'
 import { Route as ApiPublicHooksAdminAuditNotifyRouteImport } from './routes/api/public/hooks/admin-audit-notify'
 import { Route as ApiPublicHooksAbMotorRunRouteImport } from './routes/api/public/hooks/ab-motor-run'
@@ -187,6 +187,12 @@ const ApiTcLavoroAnalysisJobsRoute = ApiTcLavoroAnalysisJobsRouteImport.update({
   path: '/api/tc-lavoro/analysis-jobs',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicGarantiaJudicialSubmitRoute =
+  ApiPublicGarantiaJudicialSubmitRouteImport.update({
+    id: '/api/public/garantia-judicial-submit',
+    path: '/api/public/garantia-judicial-submit',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiAbSolicitarRoute = ApiAbSolicitarRouteImport.update({
   id: '/api/ab/solicitar',
   path: '/api/ab/solicitar',
@@ -347,12 +353,6 @@ const ApiTcLavoroAnalysisJobsJobIdRoute =
     path: '/$jobId',
     getParentRoute: () => ApiTcLavoroAnalysisJobsRoute,
   } as any)
-const ApiPublicHooksGarantiaJudicialSubmitRoute =
-  ApiPublicHooksGarantiaJudicialSubmitRouteImport.update({
-    id: '/api/public/hooks/garantia-judicial-submit',
-    path: '/api/public/hooks/garantia-judicial-submit',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const ApiPublicHooksDispatchScheduledNewslettersRoute =
   ApiPublicHooksDispatchScheduledNewslettersRouteImport.update({
     id: '/api/public/hooks/dispatch-scheduled-newsletters',
@@ -466,6 +466,7 @@ export interface FileRoutesByFullPath {
   '/api/ab/cota': typeof ApiAbCotaRoute
   '/api/ab/executar': typeof ApiAbExecutarRoute
   '/api/ab/solicitar': typeof ApiAbSolicitarRoute
+  '/api/public/garantia-judicial-submit': typeof ApiPublicGarantiaJudicialSubmitRoute
   '/api/tc-lavoro/analysis-jobs': typeof ApiTcLavoroAnalysisJobsRouteWithChildren
   '/api/tc-lavoro/legacy-analysis': typeof ApiTcLavoroLegacyAnalysisRoute
   '/api/tc-lavoro/limits-query': typeof ApiTcLavoroLimitsQueryRoute
@@ -482,7 +483,6 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/ab-motor-run': typeof ApiPublicHooksAbMotorRunRoute
   '/api/public/hooks/admin-audit-notify': typeof ApiPublicHooksAdminAuditNotifyRoute
   '/api/public/hooks/dispatch-scheduled-newsletters': typeof ApiPublicHooksDispatchScheduledNewslettersRoute
-  '/api/public/hooks/garantia-judicial-submit': typeof ApiPublicHooksGarantiaJudicialSubmitRoute
   '/api/tc-lavoro/analysis-jobs/$jobId': typeof ApiTcLavoroAnalysisJobsJobIdRouteWithChildren
   '/api/tc-lavoro/tc-analises/$id': typeof ApiTcLavoroTcAnalisesIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -529,6 +529,7 @@ export interface FileRoutesByTo {
   '/api/ab/cota': typeof ApiAbCotaRoute
   '/api/ab/executar': typeof ApiAbExecutarRoute
   '/api/ab/solicitar': typeof ApiAbSolicitarRoute
+  '/api/public/garantia-judicial-submit': typeof ApiPublicGarantiaJudicialSubmitRoute
   '/api/tc-lavoro/analysis-jobs': typeof ApiTcLavoroAnalysisJobsRouteWithChildren
   '/api/tc-lavoro/legacy-analysis': typeof ApiTcLavoroLegacyAnalysisRoute
   '/api/tc-lavoro/limits-query': typeof ApiTcLavoroLimitsQueryRoute
@@ -545,7 +546,6 @@ export interface FileRoutesByTo {
   '/api/public/hooks/ab-motor-run': typeof ApiPublicHooksAbMotorRunRoute
   '/api/public/hooks/admin-audit-notify': typeof ApiPublicHooksAdminAuditNotifyRoute
   '/api/public/hooks/dispatch-scheduled-newsletters': typeof ApiPublicHooksDispatchScheduledNewslettersRoute
-  '/api/public/hooks/garantia-judicial-submit': typeof ApiPublicHooksGarantiaJudicialSubmitRoute
   '/api/tc-lavoro/analysis-jobs/$jobId': typeof ApiTcLavoroAnalysisJobsJobIdRouteWithChildren
   '/api/tc-lavoro/tc-analises/$id': typeof ApiTcLavoroTcAnalisesIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -595,6 +595,7 @@ export interface FileRoutesById {
   '/api/ab/cota': typeof ApiAbCotaRoute
   '/api/ab/executar': typeof ApiAbExecutarRoute
   '/api/ab/solicitar': typeof ApiAbSolicitarRoute
+  '/api/public/garantia-judicial-submit': typeof ApiPublicGarantiaJudicialSubmitRoute
   '/api/tc-lavoro/analysis-jobs': typeof ApiTcLavoroAnalysisJobsRouteWithChildren
   '/api/tc-lavoro/legacy-analysis': typeof ApiTcLavoroLegacyAnalysisRoute
   '/api/tc-lavoro/limits-query': typeof ApiTcLavoroLimitsQueryRoute
@@ -611,7 +612,6 @@ export interface FileRoutesById {
   '/api/public/hooks/ab-motor-run': typeof ApiPublicHooksAbMotorRunRoute
   '/api/public/hooks/admin-audit-notify': typeof ApiPublicHooksAdminAuditNotifyRoute
   '/api/public/hooks/dispatch-scheduled-newsletters': typeof ApiPublicHooksDispatchScheduledNewslettersRoute
-  '/api/public/hooks/garantia-judicial-submit': typeof ApiPublicHooksGarantiaJudicialSubmitRoute
   '/api/tc-lavoro/analysis-jobs/$jobId': typeof ApiTcLavoroAnalysisJobsJobIdRouteWithChildren
   '/api/tc-lavoro/tc-analises/$id': typeof ApiTcLavoroTcAnalisesIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -661,6 +661,7 @@ export interface FileRouteTypes {
     | '/api/ab/cota'
     | '/api/ab/executar'
     | '/api/ab/solicitar'
+    | '/api/public/garantia-judicial-submit'
     | '/api/tc-lavoro/analysis-jobs'
     | '/api/tc-lavoro/legacy-analysis'
     | '/api/tc-lavoro/limits-query'
@@ -677,7 +678,6 @@ export interface FileRouteTypes {
     | '/api/public/hooks/ab-motor-run'
     | '/api/public/hooks/admin-audit-notify'
     | '/api/public/hooks/dispatch-scheduled-newsletters'
-    | '/api/public/hooks/garantia-judicial-submit'
     | '/api/tc-lavoro/analysis-jobs/$jobId'
     | '/api/tc-lavoro/tc-analises/$id'
     | '/lovable/email/auth/preview'
@@ -724,6 +724,7 @@ export interface FileRouteTypes {
     | '/api/ab/cota'
     | '/api/ab/executar'
     | '/api/ab/solicitar'
+    | '/api/public/garantia-judicial-submit'
     | '/api/tc-lavoro/analysis-jobs'
     | '/api/tc-lavoro/legacy-analysis'
     | '/api/tc-lavoro/limits-query'
@@ -740,7 +741,6 @@ export interface FileRouteTypes {
     | '/api/public/hooks/ab-motor-run'
     | '/api/public/hooks/admin-audit-notify'
     | '/api/public/hooks/dispatch-scheduled-newsletters'
-    | '/api/public/hooks/garantia-judicial-submit'
     | '/api/tc-lavoro/analysis-jobs/$jobId'
     | '/api/tc-lavoro/tc-analises/$id'
     | '/lovable/email/auth/preview'
@@ -789,6 +789,7 @@ export interface FileRouteTypes {
     | '/api/ab/cota'
     | '/api/ab/executar'
     | '/api/ab/solicitar'
+    | '/api/public/garantia-judicial-submit'
     | '/api/tc-lavoro/analysis-jobs'
     | '/api/tc-lavoro/legacy-analysis'
     | '/api/tc-lavoro/limits-query'
@@ -805,7 +806,6 @@ export interface FileRouteTypes {
     | '/api/public/hooks/ab-motor-run'
     | '/api/public/hooks/admin-audit-notify'
     | '/api/public/hooks/dispatch-scheduled-newsletters'
-    | '/api/public/hooks/garantia-judicial-submit'
     | '/api/tc-lavoro/analysis-jobs/$jobId'
     | '/api/tc-lavoro/tc-analises/$id'
     | '/lovable/email/auth/preview'
@@ -823,6 +823,7 @@ export interface RootRouteChildren {
   ApiAbCotaRoute: typeof ApiAbCotaRoute
   ApiAbExecutarRoute: typeof ApiAbExecutarRoute
   ApiAbSolicitarRoute: typeof ApiAbSolicitarRoute
+  ApiPublicGarantiaJudicialSubmitRoute: typeof ApiPublicGarantiaJudicialSubmitRoute
   ApiTcLavoroAnalysisJobsRoute: typeof ApiTcLavoroAnalysisJobsRouteWithChildren
   ApiTcLavoroLegacyAnalysisRoute: typeof ApiTcLavoroLegacyAnalysisRoute
   ApiTcLavoroLimitsQueryRoute: typeof ApiTcLavoroLimitsQueryRoute
@@ -835,7 +836,6 @@ export interface RootRouteChildren {
   ApiPublicHooksAbMotorRunRoute: typeof ApiPublicHooksAbMotorRunRoute
   ApiPublicHooksAdminAuditNotifyRoute: typeof ApiPublicHooksAdminAuditNotifyRoute
   ApiPublicHooksDispatchScheduledNewslettersRoute: typeof ApiPublicHooksDispatchScheduledNewslettersRoute
-  ApiPublicHooksGarantiaJudicialSubmitRoute: typeof ApiPublicHooksGarantiaJudicialSubmitRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
@@ -995,6 +995,13 @@ declare module '@tanstack/react-router' {
       path: '/api/tc-lavoro/analysis-jobs'
       fullPath: '/api/tc-lavoro/analysis-jobs'
       preLoaderRoute: typeof ApiTcLavoroAnalysisJobsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/garantia-judicial-submit': {
+      id: '/api/public/garantia-judicial-submit'
+      path: '/api/public/garantia-judicial-submit'
+      fullPath: '/api/public/garantia-judicial-submit'
+      preLoaderRoute: typeof ApiPublicGarantiaJudicialSubmitRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/ab/solicitar': {
@@ -1192,13 +1199,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/tc-lavoro/analysis-jobs/$jobId'
       preLoaderRoute: typeof ApiTcLavoroAnalysisJobsJobIdRouteImport
       parentRoute: typeof ApiTcLavoroAnalysisJobsRoute
-    }
-    '/api/public/hooks/garantia-judicial-submit': {
-      id: '/api/public/hooks/garantia-judicial-submit'
-      path: '/api/public/hooks/garantia-judicial-submit'
-      fullPath: '/api/public/hooks/garantia-judicial-submit'
-      preLoaderRoute: typeof ApiPublicHooksGarantiaJudicialSubmitRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/dispatch-scheduled-newsletters': {
       id: '/api/public/hooks/dispatch-scheduled-newsletters'
@@ -1461,6 +1461,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAbCotaRoute: ApiAbCotaRoute,
   ApiAbExecutarRoute: ApiAbExecutarRoute,
   ApiAbSolicitarRoute: ApiAbSolicitarRoute,
+  ApiPublicGarantiaJudicialSubmitRoute: ApiPublicGarantiaJudicialSubmitRoute,
   ApiTcLavoroAnalysisJobsRoute: ApiTcLavoroAnalysisJobsRouteWithChildren,
   ApiTcLavoroLegacyAnalysisRoute: ApiTcLavoroLegacyAnalysisRoute,
   ApiTcLavoroLimitsQueryRoute: ApiTcLavoroLimitsQueryRoute,
@@ -1475,8 +1476,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksAdminAuditNotifyRoute: ApiPublicHooksAdminAuditNotifyRoute,
   ApiPublicHooksDispatchScheduledNewslettersRoute:
     ApiPublicHooksDispatchScheduledNewslettersRoute,
-  ApiPublicHooksGarantiaJudicialSubmitRoute:
-    ApiPublicHooksGarantiaJudicialSubmitRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
