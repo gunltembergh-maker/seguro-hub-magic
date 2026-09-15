@@ -28,7 +28,7 @@ export async function receberSolicitacaoGarantiaJudicial(payload: unknown) {
     return { status: 400, body: { erro: "pdf_tamanho_invalido" } };
   }
 
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { lavoroAdmin: supabaseAdmin } = await import("@/integrations/supabase/lavoro-admin.server");
 
   const { data: inserted, error: insertError } = await supabaseAdmin
     .from("garantia_judicial_solicitacoes")
