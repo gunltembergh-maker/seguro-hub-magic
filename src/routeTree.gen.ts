@@ -60,6 +60,7 @@ import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/em
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiTcLavoroTcAnalisesIdRouteImport } from './routes/api/tc-lavoro/tc-analises.$id'
 import { Route as ApiTcLavoroAnalysisJobsJobIdRouteImport } from './routes/api/tc-lavoro/analysis-jobs.$jobId'
+import { Route as ApiPublicHooksGarantiaJudicialConsultarMercadoRouteImport } from './routes/api/public/hooks/garantia-judicial-consultar-mercado'
 import { Route as ApiPublicHooksDispatchScheduledNewslettersRouteImport } from './routes/api/public/hooks/dispatch-scheduled-newsletters'
 import { Route as ApiPublicHooksAdminAuditNotifyRouteImport } from './routes/api/public/hooks/admin-audit-notify'
 import { Route as ApiPublicHooksAbMotorRunRouteImport } from './routes/api/public/hooks/ab-motor-run'
@@ -353,6 +354,12 @@ const ApiTcLavoroAnalysisJobsJobIdRoute =
     path: '/$jobId',
     getParentRoute: () => ApiTcLavoroAnalysisJobsRoute,
   } as any)
+const ApiPublicHooksGarantiaJudicialConsultarMercadoRoute =
+  ApiPublicHooksGarantiaJudicialConsultarMercadoRouteImport.update({
+    id: '/api/public/hooks/garantia-judicial-consultar-mercado',
+    path: '/api/public/hooks/garantia-judicial-consultar-mercado',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksDispatchScheduledNewslettersRoute =
   ApiPublicHooksDispatchScheduledNewslettersRouteImport.update({
     id: '/api/public/hooks/dispatch-scheduled-newsletters',
@@ -483,6 +490,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/ab-motor-run': typeof ApiPublicHooksAbMotorRunRoute
   '/api/public/hooks/admin-audit-notify': typeof ApiPublicHooksAdminAuditNotifyRoute
   '/api/public/hooks/dispatch-scheduled-newsletters': typeof ApiPublicHooksDispatchScheduledNewslettersRoute
+  '/api/public/hooks/garantia-judicial-consultar-mercado': typeof ApiPublicHooksGarantiaJudicialConsultarMercadoRoute
   '/api/tc-lavoro/analysis-jobs/$jobId': typeof ApiTcLavoroAnalysisJobsJobIdRouteWithChildren
   '/api/tc-lavoro/tc-analises/$id': typeof ApiTcLavoroTcAnalisesIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -546,6 +554,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/ab-motor-run': typeof ApiPublicHooksAbMotorRunRoute
   '/api/public/hooks/admin-audit-notify': typeof ApiPublicHooksAdminAuditNotifyRoute
   '/api/public/hooks/dispatch-scheduled-newsletters': typeof ApiPublicHooksDispatchScheduledNewslettersRoute
+  '/api/public/hooks/garantia-judicial-consultar-mercado': typeof ApiPublicHooksGarantiaJudicialConsultarMercadoRoute
   '/api/tc-lavoro/analysis-jobs/$jobId': typeof ApiTcLavoroAnalysisJobsJobIdRouteWithChildren
   '/api/tc-lavoro/tc-analises/$id': typeof ApiTcLavoroTcAnalisesIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -612,6 +621,7 @@ export interface FileRoutesById {
   '/api/public/hooks/ab-motor-run': typeof ApiPublicHooksAbMotorRunRoute
   '/api/public/hooks/admin-audit-notify': typeof ApiPublicHooksAdminAuditNotifyRoute
   '/api/public/hooks/dispatch-scheduled-newsletters': typeof ApiPublicHooksDispatchScheduledNewslettersRoute
+  '/api/public/hooks/garantia-judicial-consultar-mercado': typeof ApiPublicHooksGarantiaJudicialConsultarMercadoRoute
   '/api/tc-lavoro/analysis-jobs/$jobId': typeof ApiTcLavoroAnalysisJobsJobIdRouteWithChildren
   '/api/tc-lavoro/tc-analises/$id': typeof ApiTcLavoroTcAnalisesIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -678,6 +688,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/ab-motor-run'
     | '/api/public/hooks/admin-audit-notify'
     | '/api/public/hooks/dispatch-scheduled-newsletters'
+    | '/api/public/hooks/garantia-judicial-consultar-mercado'
     | '/api/tc-lavoro/analysis-jobs/$jobId'
     | '/api/tc-lavoro/tc-analises/$id'
     | '/lovable/email/auth/preview'
@@ -741,6 +752,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/ab-motor-run'
     | '/api/public/hooks/admin-audit-notify'
     | '/api/public/hooks/dispatch-scheduled-newsletters'
+    | '/api/public/hooks/garantia-judicial-consultar-mercado'
     | '/api/tc-lavoro/analysis-jobs/$jobId'
     | '/api/tc-lavoro/tc-analises/$id'
     | '/lovable/email/auth/preview'
@@ -806,6 +818,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/ab-motor-run'
     | '/api/public/hooks/admin-audit-notify'
     | '/api/public/hooks/dispatch-scheduled-newsletters'
+    | '/api/public/hooks/garantia-judicial-consultar-mercado'
     | '/api/tc-lavoro/analysis-jobs/$jobId'
     | '/api/tc-lavoro/tc-analises/$id'
     | '/lovable/email/auth/preview'
@@ -836,6 +849,7 @@ export interface RootRouteChildren {
   ApiPublicHooksAbMotorRunRoute: typeof ApiPublicHooksAbMotorRunRoute
   ApiPublicHooksAdminAuditNotifyRoute: typeof ApiPublicHooksAdminAuditNotifyRoute
   ApiPublicHooksDispatchScheduledNewslettersRoute: typeof ApiPublicHooksDispatchScheduledNewslettersRoute
+  ApiPublicHooksGarantiaJudicialConsultarMercadoRoute: typeof ApiPublicHooksGarantiaJudicialConsultarMercadoRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
@@ -1200,6 +1214,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTcLavoroAnalysisJobsJobIdRouteImport
       parentRoute: typeof ApiTcLavoroAnalysisJobsRoute
     }
+    '/api/public/hooks/garantia-judicial-consultar-mercado': {
+      id: '/api/public/hooks/garantia-judicial-consultar-mercado'
+      path: '/api/public/hooks/garantia-judicial-consultar-mercado'
+      fullPath: '/api/public/hooks/garantia-judicial-consultar-mercado'
+      preLoaderRoute: typeof ApiPublicHooksGarantiaJudicialConsultarMercadoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/dispatch-scheduled-newsletters': {
       id: '/api/public/hooks/dispatch-scheduled-newsletters'
       path: '/api/public/hooks/dispatch-scheduled-newsletters'
@@ -1476,6 +1497,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksAdminAuditNotifyRoute: ApiPublicHooksAdminAuditNotifyRoute,
   ApiPublicHooksDispatchScheduledNewslettersRoute:
     ApiPublicHooksDispatchScheduledNewslettersRoute,
+  ApiPublicHooksGarantiaJudicialConsultarMercadoRoute:
+    ApiPublicHooksGarantiaJudicialConsultarMercadoRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
