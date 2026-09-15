@@ -1991,6 +1991,8 @@ export type Database = {
         Row: {
           atualizado_em: string
           cnpj_tomador: string
+          consulta_iniciada_em: string | null
+          consulta_tentativas: number
           criado_em: string
           dados_formulario: Json
           email_enviado_em: string | null
@@ -2008,6 +2010,8 @@ export type Database = {
         Insert: {
           atualizado_em?: string
           cnpj_tomador: string
+          consulta_iniciada_em?: string | null
+          consulta_tentativas?: number
           criado_em?: string
           dados_formulario: Json
           email_enviado_em?: string | null
@@ -2025,6 +2029,8 @@ export type Database = {
         Update: {
           atualizado_em?: string
           cnpj_tomador?: string
+          consulta_iniciada_em?: string | null
+          consulta_tentativas?: number
           criado_em?: string
           dados_formulario?: Json
           email_enviado_em?: string | null
