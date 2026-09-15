@@ -25,11 +25,11 @@ const SITUACAO: Record<GrupoResumo, string> = {
   nao_consultado: "Não consultado",
 };
 
-// Fundo suave por situação, só nesta planilha.
-const COR_SITUACAO: Record<GrupoResumo, string> = {
-  com_limite: "#E8F5EC",
-  sem_limite: "#FDF3E3",
-  nao_consultado: "#F1F3F5",
+// Cores reconhecidas pelo time na tela de Análise de Limite, só nesta coluna.
+const COR_SITUACAO: Record<GrupoResumo, { fundo: string; texto: string }> = {
+  com_limite: { fundo: "#DCFCE7", texto: "#16A34A" },
+  sem_limite: { fundo: "#FEE2E2", texto: "#DC2626" },
+  nao_consultado: { fundo: "#EDE9FE", texto: "#7C3AED" },
 };
 
 function pareceHtml(texto: string): boolean {
@@ -141,7 +141,8 @@ export async function gerarXlsxConsultaMercado(solicitacaoId: string): Promise<
       header: "Situação",
       key: "situacao",
       width: 16,
-      corFundo: (row) => COR_SITUACAO[(row as unknown as Linha)._grupo],
+      corFundo: (row) => COR_SITUACAO[(row as unknown as Linha)._grupo].fundo,
+      corTexto: (row) => COR_SITUACAO[(row as unknown as Linha)._grupo].texto,
     },
     { header: "Capacidade total", key: "capacidade", width: 20, formato: "moeda" },
     { header: "Modalidade", key: "modalidade", width: 52 },
@@ -175,6 +176,7 @@ export async function gerarXlsxConsultaMercado(solicitacaoId: string): Promise<
         nome: "Consulta de Mercado",
         colunas,
         linhas: linhas as unknown as Record<string, unknown>[],
+        semLinhasDeGrade: true,
         nota:
           '"Não consultado" significa falha técnica na consulta automática àquela seguradora, ' +
           "e não recusa comercial: a seguradora pode ter limite disponível.",

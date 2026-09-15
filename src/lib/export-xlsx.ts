@@ -14,6 +14,8 @@ export type ColunaExport = {
    * atual (zebra padrão) — nenhuma tela existente passa esta opção.
    */
   corFundo?: (row: Record<string, unknown>, idx: number) => string | undefined;
+  /** Cor opcional do texto por linha nesta coluna. */
+  corTexto?: (row: Record<string, unknown>, idx: number) => string | undefined;
 };
 
 export type AbaExport = {
@@ -22,6 +24,8 @@ export type AbaExport = {
   linhas: Record<string, unknown>[];
   totalizar?: string[];
   nota?: string;
+  /** Oculta as linhas de grade do Excel apenas nesta aba. */
+  semLinhasDeGrade?: boolean;
 };
 
 export type CabecalhoExport = {
@@ -174,7 +178,11 @@ export async function montarXlsxBuffer(opts: {
       from: { row: headerRow, column: 1 },
       to: { row: headerRow + Math.max(aba.linhas.length, 1), column: aba.colunas.length },
     };
-    ws.views = [{ state: "frozen", ySplit: headerRow }];
+    ws.views = [{
+      state: "frozen",
+      ySplit: headerRow,
+      ...(aba.semLinhasDeGrade ? { showGridLines: false } : {}),
+    }];
     linha++;
 
     // Dados
@@ -192,6 +200,8 @@ export async function montarXlsxBuffer(opts: {
         if (zebra) cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: argb(LIGHT_BG) } };
         const cor = col.corFundo?.(row, idx);
         if (cor) cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: argb(cor) } };
+        const corTexto = col.corTexto?.(row, idx);
+        if (corTexto) cell.font = { ...cell.font, color: { argb: argb(corTexto) } };
       });
       linha++;
     });
