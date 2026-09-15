@@ -209,7 +209,16 @@ export async function consultarMercadoPendentes() {
       })
       .eq("id", travada.id);
     if (upErro) return { ok: false, id: travada.id, erro: "falha_ao_gravar", detalhe: upErro.message };
-    return { ok: true, id: travada.id, processadas: 1, status: "mercado_consultado", tentativas };
+    // Só depois de o resultado estar gravado é que a planilha é gerada.
+    const planilha = await gerarPlanilha(travada.id);
+    return {
+      ok: true,
+      id: travada.id,
+      processadas: 1,
+      status: "mercado_consultado",
+      xlsx: planilha.ok ? "gerado" : `pendente: ${planilha.erro}`,
+      tentativas,
+    };
   }
 
   // Erro de configuração não melhora tentando de novo.
