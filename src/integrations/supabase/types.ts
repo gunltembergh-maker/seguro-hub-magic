@@ -1987,6 +1987,54 @@ export type Database = {
         }
         Relationships: []
       }
+      garantia_judicial_solicitacoes: {
+        Row: {
+          atualizado_em: string
+          cnpj_tomador: string
+          criado_em: string
+          dados_formulario: Json
+          email_enviado_em: string | null
+          erro_mensagem: string | null
+          id: string
+          nome_tomador: string | null
+          numero_processo: string | null
+          pdf_path: string | null
+          resultado_mercado: Json | null
+          status: string
+          xlsx_path: string | null
+        }
+        Insert: {
+          atualizado_em?: string
+          cnpj_tomador: string
+          criado_em?: string
+          dados_formulario: Json
+          email_enviado_em?: string | null
+          erro_mensagem?: string | null
+          id?: string
+          nome_tomador?: string | null
+          numero_processo?: string | null
+          pdf_path?: string | null
+          resultado_mercado?: Json | null
+          status?: string
+          xlsx_path?: string | null
+        }
+        Update: {
+          atualizado_em?: string
+          cnpj_tomador?: string
+          criado_em?: string
+          dados_formulario?: Json
+          email_enviado_em?: string | null
+          erro_mensagem?: string | null
+          id?: string
+          nome_tomador?: string | null
+          numero_processo?: string | null
+          pdf_path?: string | null
+          resultado_mercado?: Json | null
+          status?: string
+          xlsx_path?: string | null
+        }
+        Relationships: []
+      }
       hub_admin_settings: {
         Row: {
           atualizado_em: string
