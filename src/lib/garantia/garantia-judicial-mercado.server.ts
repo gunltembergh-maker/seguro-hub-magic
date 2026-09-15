@@ -131,16 +131,18 @@ export async function consultarMercadoPendentes() {
 
   // Solicitação mais antiga pendente: nunca consultada (`recebida`), retomada de
   // uma execução anterior que não coube no orçamento (`consultando_mercado`
-  // parada há tempo suficiente), ou já consultada mas ainda sem planilha
+  // parada há tempo suficiente), já consultada mas ainda sem planilha
   // (`mercado_consultado` com `xlsx_path` nulo) — nesse caso só gera o arquivo,
-  // sem reconsultar o mercado.
+  // sem reconsultar o mercado —, ou com planilha pronta e e-mail ainda não
+  // enviado (`email_enviado_em` nulo).
   const { data: candidatas, error: selErro } = await supabaseAdmin
     .from("garantia_judicial_solicitacoes")
-    .select("id, status, cnpj_tomador, consulta_tentativas, xlsx_path")
+    .select("id, status, cnpj_tomador, consulta_tentativas, xlsx_path, email_enviado_em")
     .or(
       `status.eq.recebida,` +
         `and(status.eq.consultando_mercado,consulta_iniciada_em.lt.${limiteRetomada}),` +
-        `and(status.eq.mercado_consultado,xlsx_path.is.null,consulta_tentativas.lt.${LIMITE_TENTATIVAS},or(consulta_iniciada_em.is.null,consulta_iniciada_em.lt.${limiteRetomada}))`,
+        `and(status.eq.mercado_consultado,xlsx_path.is.null,consulta_tentativas.lt.${LIMITE_TENTATIVAS},or(consulta_iniciada_em.is.null,consulta_iniciada_em.lt.${limiteRetomada})),` +
+        `and(status.eq.mercado_consultado,xlsx_path.not.is.null,email_enviado_em.is.null,consulta_tentativas.lt.${LIMITE_TENTATIVAS},or(consulta_iniciada_em.is.null,consulta_iniciada_em.lt.${limiteRetomada}))`,
     )
     .order("criado_em", { ascending: true })
     .limit(1);
@@ -150,6 +152,74 @@ export async function consultarMercadoPendentes() {
   if (!candidata) return { ok: true, processadas: 0, motivo: "nada_pendente" };
 
   const tentativas = (candidata.consulta_tentativas ?? 0) + 1;
+
+  // Caso "só e-mail": consulta feita e planilha pronta, falta avisar operações.
+  // A trava é a mesma dos outros casos (data + tentativas) e ainda exige
+  // `email_enviado_em` nulo no próprio UPDATE: na dúvida, não envia de novo.
+  if (
+    candidata.status === "mercado_consultado" &&
+    candidata.xlsx_path &&
+    !candidata.email_enviado_em
+  ) {
+    const { data: travadaEmail, error: lockEmailErro } = await supabaseAdmin
+      .from("garantia_judicial_solicitacoes")
+      .update({ consulta_iniciada_em: new Date().toISOString(), consulta_tentativas: tentativas })
+      .eq("id", candidata.id)
+      .eq("status", "mercado_consultado")
+      .not("xlsx_path", "is", null)
+      .is("email_enviado_em", null)
+      .select("id")
+      .maybeSingle();
+    if (lockEmailErro) return { ok: false, erro: "falha_ao_travar", detalhe: lockEmailErro.message };
+    if (!travadaEmail) return { ok: true, processadas: 0, motivo: "ja_assumida_por_outra_execucao" };
+
+    const { enviarEmailNovaDemanda } = await import("./garantia-judicial-email.server");
+    const envio = await enviarEmailNovaDemanda(candidata.id);
+
+    if (envio.ok) {
+      const { error: upErro } = await supabaseAdmin
+        .from("garantia_judicial_solicitacoes")
+        .update({
+          email_enviado_em: new Date().toISOString(),
+          status: "email_enviado",
+          erro_mensagem: null,
+        })
+        .eq("id", candidata.id)
+        .is("email_enviado_em", null);
+      if (upErro)
+        return { ok: false, id: candidata.id, erro: "falha_ao_gravar_envio", detalhe: upErro.message };
+      return { ok: true, id: candidata.id, processadas: 1, status: "email_enviado", via: envio.via, tentativas };
+    }
+
+    // Anexo faltando (ou linha inconsistente) não melhora tentando de novo.
+    if (envio.fatal) {
+      const qual =
+        envio.erro === "sem_xlsx_path" || envio.erro === "xlsx_ausente_no_storage"
+          ? "a planilha da consulta de mercado"
+          : "o PDF do formulário";
+      await supabaseAdmin
+        .from("garantia_judicial_solicitacoes")
+        .update({
+          status: "erro",
+          erro_mensagem: `E-mail de nova demanda não enviado: ${qual} não foi encontrado no armazenamento (${envio.erro}).`,
+        })
+        .eq("id", candidata.id);
+      return { ok: false, id: candidata.id, erro: envio.erro, detalhe: envio.detalhe };
+    }
+
+    if (tentativas >= LIMITE_TENTATIVAS) {
+      await supabaseAdmin
+        .from("garantia_judicial_solicitacoes")
+        .update({
+          status: "erro",
+          erro_mensagem: `Falha ao enviar o e-mail de nova demanda após várias tentativas (${envio.erro}).`,
+        })
+        .eq("id", candidata.id);
+      return { ok: false, id: candidata.id, erro: "limite_tentativas", detalhe: envio.detalhe, tentativas };
+    }
+
+    return { ok: false, id: candidata.id, erro: envio.erro, detalhe: envio.detalhe, tentativas };
+  }
 
   // Caso "só planilha": a consulta já terminou, o status permanece
   // `mercado_consultado` (a restrição da tabela não admite status novo) e o
