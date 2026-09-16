@@ -2001,6 +2001,7 @@ export type Database = {
           id: string
           nome_tomador: string | null
           numero_processo: string | null
+          payload_bruto: Json | null
           pdf_path: string | null
           protocolo: string | null
           resultado_mercado: Json | null
@@ -2020,6 +2021,7 @@ export type Database = {
           id?: string
           nome_tomador?: string | null
           numero_processo?: string | null
+          payload_bruto?: Json | null
           pdf_path?: string | null
           protocolo?: string | null
           resultado_mercado?: Json | null
@@ -2039,6 +2041,7 @@ export type Database = {
           id?: string
           nome_tomador?: string | null
           numero_processo?: string | null
+          payload_bruto?: Json | null
           pdf_path?: string | null
           protocolo?: string | null
           resultado_mercado?: Json | null
