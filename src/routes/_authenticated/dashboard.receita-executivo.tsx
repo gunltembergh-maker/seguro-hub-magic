@@ -207,8 +207,98 @@ function DashboardReceitaExecutivo() {
     });
   };
 
+  const canais = canaisQ.data ?? [];
+
+  const exportarExcel = async () => {
+    setExportando(true);
+    try {
+      await exportarXlsx({
+        arquivo: `resumo-executivo-receita-${ano}.xlsx`,
+        cabecalho: {
+          titulo: `Receita Lavoro Seguros · Resumo Executivo ${ano}`,
+          subtitulo: `Janeiro a ${MESES_COMPLETOS[mesLimiteYtd - 1]} de ${ano}`,
+          info: [
+            { rotulo: "Emitido YTD", valor: BRL(totYtd.emitido) },
+            { rotulo: "Caixa Esperado YTD", valor: BRL(totYtd.caixa) },
+            { rotulo: "Caixa Recebido YTD", valor: BRL(totYtd.caixa_corrente) },
+            { rotulo: "Saldo Vencido YTD", valor: BRL(totYtd.saldo_vencido) },
+            { rotulo: "A Receber Futuro", valor: BRL(aReceberPosicaoAtual) },
+            { rotulo: "Dados atualizados em", valor: fmtAtualizacao(ultAtualQ.data) },
+          ],
+        },
+        abas: [
+          {
+            nome: "Detalhamento Mensal",
+            semLinhasDeGrade: true,
+            colunas: [
+              { header: "Mês", key: "mes", width: 16 },
+              { header: "Emitido", key: "emitido", width: 18, formato: "moeda" },
+              { header: "Caixa", key: "caixa", width: 18, formato: "moeda" },
+              { header: "Caixa Corrente", key: "caixa_corrente", width: 18, formato: "moeda" },
+              { header: "Caixa Saldo Vencido", key: "saldo_vencido", width: 20, formato: "moeda" },
+              { header: "A Receber Futuro", key: "a_receber_futuro", width: 20, formato: "moeda" },
+            ],
+            linhas: ytd.map((r) => ({
+              mes: MESES_COMPLETOS[r.mes - 1],
+              emitido: Number(r.emitido || 0),
+              caixa: Number(r.caixa || 0),
+              caixa_corrente: Number(r.caixa_corrente || 0),
+              saldo_vencido: Number(r.saldo_vencido || 0),
+              a_receber_futuro: Number(r.a_receber_futuro ?? 0),
+            })),
+            totalizar: ["emitido", "caixa", "caixa_corrente", "saldo_vencido"],
+          },
+          {
+            nome: "Por Canal",
+            semLinhasDeGrade: true,
+            colunas: [
+              { header: "Canal", key: "canal", width: 22 },
+              { header: "Caixa Esperado", key: "caixa", width: 20, formato: "moeda" },
+              { header: "Caixa Recebido", key: "caixa_corrente", width: 20, formato: "moeda" },
+              { header: "A Receber Futuro", key: "a_receber_futuro", width: 20, formato: "moeda" },
+            ],
+            linhas: CANAIS_ORDEM.map((c) => {
+              const l = canais.find((x) => x.canal === c);
+              return {
+                canal: c,
+                caixa: Number(l?.caixa ?? 0),
+                caixa_corrente: Number(l?.caixa_corrente ?? 0),
+                a_receber_futuro: Number(l?.a_receber_futuro ?? 0),
+              };
+            }),
+            totalizar: ["caixa", "caixa_corrente", "a_receber_futuro"],
+          },
+          {
+            nome: "Complementares",
+            semLinhasDeGrade: true,
+            colunas: [
+              { header: "Indicador", key: "indicador", width: 46 },
+              { header: "Valor", key: "valor", width: 20, formato: "moeda" },
+            ],
+            linhas: [
+              { indicador: `Emissões até ${ano - 1} ainda a receber`, valor: Number(compQ.data?.emissoes_ate_2025_a_receber ?? 0) },
+              { indicador: `Vencidos anteriores a ${ano}`, valor: Number(compQ.data?.vencidos_anteriores_2026 ?? 0) },
+              { indicador: "Posição total vencida", valor: Number(compQ.data?.posicao_total_vencida ?? 0) },
+            ],
+          },
+        ],
+      });
+    } finally {
+      setExportando(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen p-6" style={{ background: FUNDO }}>
+    <div id="exec-print" className="min-h-screen p-6" style={{ background: FUNDO }}>
+      <style>{`
+        @media print {
+          body * { visibility: hidden !important; }
+          #exec-print, #exec-print * { visibility: visible !important; }
+          #exec-print { position: absolute; left: 0; top: 0; width: 100%; padding: 0 !important; }
+          .no-print { display: none !important; }
+          @page { size: A4 landscape; margin: 10mm; }
+        }
+      `}</style>
       <div className="mx-auto max-w-[1400px] space-y-4">
 
         {/* Cabeçalho */}
