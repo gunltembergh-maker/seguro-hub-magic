@@ -81,14 +81,14 @@ function KpiCard({
       )}
       {subtitle && <p className="text-[11px] mt-1" style={{ color: "#6B7280" }}>{subtitle}</p>}
       {breakdown && (
-        <div className="mt-3 grid grid-cols-3 gap-2 border-t pt-2">
+        <div className="mt-3 border-t pt-2 space-y-1">
           {breakdown.map((b) => (
-            <div key={b.label}>
-              <p className="text-[10px] uppercase tracking-wider" style={{ color: "#9CA3AF" }}>{b.label}</p>
+            <div key={b.label} className="flex items-baseline justify-between gap-3">
+              <span className="text-[10px] uppercase tracking-wider shrink-0" style={{ color: "#9CA3AF" }}>{b.label}</span>
               {loading ? (
-                <div className="h-4 mt-1 w-14 bg-gray-100 rounded animate-pulse" />
+                <span className="h-4 w-20 bg-gray-100 rounded animate-pulse" />
               ) : (
-                <p className="text-sm font-semibold tabular-nums" style={{ color: NAVY }}>{b.value}</p>
+                <span className="text-xs font-semibold tabular-nums whitespace-nowrap" style={{ color: NAVY }}>{b.value}</span>
               )}
             </div>
           ))}
