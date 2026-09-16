@@ -90,7 +90,7 @@ async function logEnvio(
     await lavoroAdmin.from("email_send_log").insert({
       message_id: messageId,
       template_name: TEMPLATE_NAME,
-      recipient_email: DESTINATARIO,
+      recipient_email: destinatario,
       status,
       error_message: errorMessage,
       metadata: { subject, via: VIA },
