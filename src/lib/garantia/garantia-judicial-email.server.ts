@@ -214,7 +214,7 @@ export async function enviarEmailNovaDemanda(
             subject,
             body: { contentType: "HTML", content: html },
             from: { emailAddress: { address: REMETENTE } },
-            toRecipients: [{ emailAddress: { address: DESTINATARIO } }],
+            toRecipients: [{ emailAddress: { address: destinatario } }],
             attachments: [
               {
                 "@odata.type": "#microsoft.graph.fileAttachment",
