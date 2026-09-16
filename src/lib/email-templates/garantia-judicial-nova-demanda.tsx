@@ -17,7 +17,16 @@ export interface AnexoLink {
   url?: string
 }
 
+export interface SolicitanteInfo {
+  empresa: string
+  nome: string
+  email: string
+  telefone: string
+}
+
 export interface NovaDemandaProps {
+  /** Quem preencheu o formulário; campos faltantes viram "não informado". */
+  solicitante: SolicitanteInfo
   tomador: string
   cnpj: string
   protocolo: string

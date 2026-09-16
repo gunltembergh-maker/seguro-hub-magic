@@ -75,8 +75,22 @@ const AdvogadoSchema = z.object({
   uf: z.string(),
 });
 
+// Quem preencheu o formulário. Tolerante de propósito: ausente, nulo ou objeto.
+// Nunca obrigatório — falta de contato não pode derrubar a proposta do cliente.
+const ResponsavelSchema = z
+  .object({
+    nome: z.string().optional().nullable(),
+    email: z.string().optional().nullable(),
+    empresa: z.string().optional().nullable(),
+    telefone: z.string().optional().nullable(),
+  })
+  .passthrough()
+  .optional()
+  .nullable();
+
 const FormularioCommonBase = z.object({
   naturezaRotulo: z.string(),
+  responsavel: ResponsavelSchema,
   autor: AutorSchema,
   menorIdade: MenorIdadeSchema,
   representante: RepresentanteSchema,
