@@ -5,11 +5,13 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   AreaChart, Area,
 } from "recharts";
-import { AlertTriangle, Calendar } from "lucide-react";
+import { AlertTriangle, Calendar, FileSpreadsheet, FileText } from "lucide-react";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { SendNewsletterButton } from "@/components/admin/SendNewsletterButton";
+import { exportarXlsx } from "@/lib/export-xlsx";
 
 export const Route = createFileRoute("/_authenticated/dashboard/receita-executivo")({
   component: DashboardReceitaExecutivo,
@@ -81,14 +83,14 @@ function KpiCard({
       )}
       {subtitle && <p className="text-[11px] mt-1" style={{ color: "#6B7280" }}>{subtitle}</p>}
       {breakdown && (
-        <div className="mt-3 grid grid-cols-3 gap-2 border-t pt-2">
+        <div className="mt-3 border-t pt-2 space-y-1">
           {breakdown.map((b) => (
-            <div key={b.label}>
-              <p className="text-[10px] uppercase tracking-wider" style={{ color: "#9CA3AF" }}>{b.label}</p>
+            <div key={b.label} className="flex items-baseline justify-between gap-3">
+              <span className="text-[10px] uppercase tracking-wider shrink-0" style={{ color: "#9CA3AF" }}>{b.label}</span>
               {loading ? (
-                <div className="h-4 mt-1 w-14 bg-gray-100 rounded animate-pulse" />
+                <span className="h-4 w-20 bg-gray-100 rounded animate-pulse" />
               ) : (
-                <p className="text-sm font-semibold tabular-nums" style={{ color: NAVY }}>{b.value}</p>
+                <span className="text-xs font-semibold tabular-nums whitespace-nowrap" style={{ color: NAVY }}>{b.value}</span>
               )}
             </div>
           ))}
@@ -101,6 +103,7 @@ function KpiCard({
 function DashboardReceitaExecutivo() {
   const hoje = new Date();
   const [ano, setAno] = useState<number>(hoje.getFullYear());
+  const [exportando, setExportando] = useState(false);
   const mesAtual = hoje.getMonth() + 1;
   const anoAtual = hoje.getFullYear();
   const mesLimiteYtd = ano === anoAtual ? mesAtual : 12;
@@ -205,8 +208,98 @@ function DashboardReceitaExecutivo() {
     });
   };
 
+  const canais = canaisQ.data ?? [];
+
+  const exportarExcel = async () => {
+    setExportando(true);
+    try {
+      await exportarXlsx({
+        arquivo: `resumo-executivo-receita-${ano}.xlsx`,
+        cabecalho: {
+          titulo: `Receita Lavoro Seguros · Resumo Executivo ${ano}`,
+          subtitulo: `Janeiro a ${MESES_COMPLETOS[mesLimiteYtd - 1]} de ${ano}`,
+          info: [
+            { rotulo: "Emitido YTD", valor: BRL(totYtd.emitido) },
+            { rotulo: "Caixa Esperado YTD", valor: BRL(totYtd.caixa) },
+            { rotulo: "Caixa Recebido YTD", valor: BRL(totYtd.caixa_corrente) },
+            { rotulo: "Saldo Vencido YTD", valor: BRL(totYtd.saldo_vencido) },
+            { rotulo: "A Receber Futuro", valor: BRL(aReceberPosicaoAtual) },
+            { rotulo: "Dados atualizados em", valor: fmtAtualizacao(ultAtualQ.data) },
+          ],
+        },
+        abas: [
+          {
+            nome: "Detalhamento Mensal",
+            semLinhasDeGrade: true,
+            colunas: [
+              { header: "Mês", key: "mes", width: 16 },
+              { header: "Emitido", key: "emitido", width: 18, formato: "moeda" },
+              { header: "Caixa", key: "caixa", width: 18, formato: "moeda" },
+              { header: "Caixa Corrente", key: "caixa_corrente", width: 18, formato: "moeda" },
+              { header: "Caixa Saldo Vencido", key: "saldo_vencido", width: 20, formato: "moeda" },
+              { header: "A Receber Futuro", key: "a_receber_futuro", width: 20, formato: "moeda" },
+            ],
+            linhas: ytd.map((r) => ({
+              mes: MESES_COMPLETOS[r.mes - 1],
+              emitido: Number(r.emitido || 0),
+              caixa: Number(r.caixa || 0),
+              caixa_corrente: Number(r.caixa_corrente || 0),
+              saldo_vencido: Number(r.saldo_vencido || 0),
+              a_receber_futuro: Number(r.a_receber_futuro ?? 0),
+            })),
+            totalizar: ["emitido", "caixa", "caixa_corrente", "saldo_vencido"],
+          },
+          {
+            nome: "Por Canal",
+            semLinhasDeGrade: true,
+            colunas: [
+              { header: "Canal", key: "canal", width: 22 },
+              { header: "Caixa Esperado", key: "caixa", width: 20, formato: "moeda" },
+              { header: "Caixa Recebido", key: "caixa_corrente", width: 20, formato: "moeda" },
+              { header: "A Receber Futuro", key: "a_receber_futuro", width: 20, formato: "moeda" },
+            ],
+            linhas: CANAIS_ORDEM.map((c) => {
+              const l = canais.find((x) => x.canal === c);
+              return {
+                canal: c,
+                caixa: Number(l?.caixa ?? 0),
+                caixa_corrente: Number(l?.caixa_corrente ?? 0),
+                a_receber_futuro: Number(l?.a_receber_futuro ?? 0),
+              };
+            }),
+            totalizar: ["caixa", "caixa_corrente", "a_receber_futuro"],
+          },
+          {
+            nome: "Complementares",
+            semLinhasDeGrade: true,
+            colunas: [
+              { header: "Indicador", key: "indicador", width: 46 },
+              { header: "Valor", key: "valor", width: 20, formato: "moeda" },
+            ],
+            linhas: [
+              { indicador: `Emissões até ${ano - 1} ainda a receber`, valor: Number(compQ.data?.emissoes_ate_2025_a_receber ?? 0) },
+              { indicador: `Vencidos anteriores a ${ano}`, valor: Number(compQ.data?.vencidos_anteriores_2026 ?? 0) },
+              { indicador: "Posição total vencida", valor: Number(compQ.data?.posicao_total_vencida ?? 0) },
+            ],
+          },
+        ],
+      });
+    } finally {
+      setExportando(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen p-6" style={{ background: FUNDO }}>
+    <div id="exec-print" className="min-h-screen p-6" style={{ background: FUNDO }}>
+      <style>{`
+        @media print {
+          body * { visibility: hidden !important; }
+          #exec-print, #exec-print * { visibility: visible !important; }
+          #exec-print { position: absolute; left: 0; top: 0; width: 100%; padding: 0 !important; }
+          .no-print { display: none !important; }
+          @page { size: A4 landscape; margin: 10mm; }
+        }
+      `}</style>
       <div className="mx-auto max-w-[1400px] space-y-4">
 
         {/* Cabeçalho */}
@@ -231,6 +324,16 @@ function DashboardReceitaExecutivo() {
             </div>
             <div className="text-xs" style={{ color: "#6B7280" }}>
               Dados atualizados em: <span className="font-medium">{fmtAtualizacao(ultAtualQ.data)}</span>
+            </div>
+            <div className="no-print flex items-center gap-2">
+              <Button variant="outline" size="sm" className="h-8" onClick={exportarExcel} disabled={exportando || mensalQ.isLoading}>
+                <FileSpreadsheet className="h-4 w-4 mr-1.5" />
+                {exportando ? "Gerando…" : "Excel"}
+              </Button>
+              <Button variant="outline" size="sm" className="h-8" onClick={() => window.print()}>
+                <FileText className="h-4 w-4 mr-1.5" />
+                PDF
+              </Button>
             </div>
             <SendNewsletterButton modulo="executivo_lavoro" ano={ano} mes={mesLimiteYtd} />
           </div>
