@@ -1,36 +1,37 @@
 // E-mail de "Nova Demanda" da Garantia Judicial — última etapa do fluxo.
 //
-// Anexos: a API de e-mail gerenciada do Hub (`sendLovableEmail`, usada pelas
-// newsletters e pelo módulo Reserva de Posições) NÃO aceita anexo — o contrato
-// do pacote só tem to/from/subject/html/text. Para não alterar nada do envio em
-// produção, este módulo tem caminho próprio:
-//   1) se RESEND_API_KEY estiver configurada, envia pela API do Resend com os
-//      dois arquivos anexados de verdade (base64);
-//   2) senão, envia pelo caminho padrão do Hub com links assinados de 7 dias
-//      para os mesmos dois arquivos.
-// Em ambos os casos os arquivos precisam existir no Storage: se faltar um, o
-// e-mail NÃO é enviado e a solicitação vai para `erro`.
+// Transporte: Microsoft Graph (`sendMail`) com a caixa naoresponda@lavoroseguros.com.br,
+// usando o mesmo registro de aplicativo já utilizado pela integração SharePoint.
+// Os dois arquivos vão como anexo real (`#microsoft.graph.fileAttachment`).
+// Não existe caminho alternativo: se faltar arquivo no Storage ou o envio falhar,
+// a solicitação vai para `erro` e nada é enviado pela metade.
 
 import { render } from "@react-email/render";
 import * as React from "react";
-import { EmailAPIError, sendLovableEmail } from "@lovable.dev/email-js";
 import {
   GarantiaJudicialNovaDemandaEmail,
   type NovaDemandaProps,
 } from "@/lib/email-templates/garantia-judicial-nova-demanda";
 import { resumirResultadoMercado } from "./garantia-judicial-normalizar.server";
+import { obterTokenGraph } from "@/lib/graph/graph-token.server";
 
 const BUCKET = "garantia-judicial-anexos";
+const REMETENTE = "naoresponda@lavoroseguros.com.br";
 const DESTINATARIO = "operacoes@lavoroseguros.com.br";
 const TEMPLATE_NAME = "garantia-judicial-nova-demanda";
-
-const SITE_NAME = "Hub Lavoro Seguros";
-const SENDER_DOMAIN = "notify.hub.lavoroseguros.com.br";
-const FROM_DOMAIN = "notify.hub.lavoroseguros.com.br";
+const VIA = "graph_anexo";
 
 const TOP_CAPACIDADES = 5;
-const LINK_SEGUNDOS = 7 * 24 * 60 * 60;
 const PRAZO_HORAS = 48;
+
+// O `sendMail` do Graph aceita uma requisição de no máximo ~4 MB.
+// Adotamos 3 MB para a soma dos anexos já em base64, deixando ~1 MB de folga
+// para corpo HTML, cabeçalhos e o restante do JSON. Acima disso seria preciso
+// sessão de upload, que deliberadamente não implementamos.
+const LIMITE_ANEXOS_BASE64 = 3 * 1024 * 1024;
+
+const MIME_PDF = "application/pdf";
+const MIME_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
 type Any = Record<string, any>;
 
@@ -73,12 +74,15 @@ async function bytesBase64(bytes: ArrayBuffer): Promise<string> {
   return btoa(bin);
 }
 
+function kb(n: number): string {
+  return `${(n / 1024).toFixed(0)} KB`;
+}
+
 async function logEnvio(
   messageId: string,
   status: string,
   errorMessage: string | null,
   subject: string,
-  via: string,
 ) {
   try {
     const { lavoroAdmin } = await import("@/integrations/supabase/lavoro-admin.server");
@@ -88,7 +92,7 @@ async function logEnvio(
       recipient_email: DESTINATARIO,
       status,
       error_message: errorMessage,
-      metadata: { subject, via },
+      metadata: { subject, via: VIA },
     });
   } catch (e) {
     console.warn("[garantia-judicial-email] falha ao registrar log", e);
@@ -96,7 +100,7 @@ async function logEnvio(
 }
 
 export async function enviarEmailNovaDemanda(solicitacaoId: string): Promise<
-  | { ok: true; via: "resend_anexo" | "hub_link"; messageId: string }
+  | { ok: true; via: typeof VIA; messageId: string }
   | { ok: false; erro: string; detalhe?: string; fatal?: boolean }
 > {
   const { lavoroAdmin } = await import("@/integrations/supabase/lavoro-admin.server");
@@ -148,21 +152,17 @@ export async function enviarEmailNovaDemanda(solicitacaoId: string): Promise<
   const nomePdf = `Formulario_${protocolo}.pdf`;
   const nomeXlsx = `Consulta_Mercado_${protocolo}.xlsx`;
 
-  const usarResend = Boolean(process.env.RESEND_API_KEY);
-  if (!usarResend && !process.env.LOVABLE_API_KEY)
-    return { ok: false, erro: "sem_credencial_de_email" };
-
-  let linkPdf: string | undefined;
-  let linkXlsx: string | undefined;
-  if (!usarResend) {
-    const [a, b] = await Promise.all([
-      lavoroAdmin.storage.from(BUCKET).createSignedUrl(sol.pdf_path, LINK_SEGUNDOS),
-      lavoroAdmin.storage.from(BUCKET).createSignedUrl(sol.xlsx_path, LINK_SEGUNDOS),
-    ]);
-    if (a.error || !a.data?.signedUrl || b.error || !b.data?.signedUrl)
-      return { ok: false, erro: "falha_ao_gerar_links", detalhe: a.error?.message || b.error?.message };
-    linkPdf = a.data.signedUrl;
-    linkXlsx = b.data.signedUrl;
+  const pdfB64 = await bytesBase64(await pdfRes.data.arrayBuffer());
+  const xlsxB64 = await bytesBase64(await xlsxRes.data.arrayBuffer());
+  const total = pdfB64.length + xlsxB64.length;
+  if (total > LIMITE_ANEXOS_BASE64) {
+    const maior = pdfB64.length >= xlsxB64.length ? nomePdf : nomeXlsx;
+    return {
+      ok: false,
+      erro: "anexos_excedem_limite",
+      detalhe: `Anexos somam ${kb(total)} em base64 (limite ${kb(LIMITE_ANEXOS_BASE64)}). Maior anexo: ${maior} com ${kb(Math.max(pdfB64.length, xlsxB64.length))}.`,
+      fatal: true,
+    };
   }
 
   const props: NovaDemandaProps = {
@@ -180,72 +180,68 @@ export async function enviarEmailNovaDemanda(solicitacaoId: string): Promise<
     topCapacidades,
     nenhumComLimite: houveResposta && resumo.com_limite.length === 0,
     nenhumaResposta: !houveResposta,
-    anexos: [
-      { nome: nomePdf, url: linkPdf },
-      { nome: nomeXlsx, url: linkXlsx },
-    ],
-    anexosComoLink: !usarResend,
+    anexos: [{ nome: nomePdf }, { nome: nomeXlsx }],
+    anexosComoLink: false,
   };
 
   const element = React.createElement(GarantiaJudicialNovaDemandaEmail, props);
   const html = await render(element);
-  const text = await render(element, { plainText: true });
   const subject = `Nova Demanda · Garantia Judicial · ${tomador} (${cnpj})`;
   const messageId = `gj-nova-demanda-${sol.id}`;
-  const from = `${SITE_NAME} <noreply@${FROM_DOMAIN}>`;
 
   try {
-    if (usarResend) {
-      const resp = await fetch("https://api.resend.com/emails", {
+    const token = await obterTokenGraph();
+    const resp = await fetch(
+      `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(REMETENTE)}/sendMail`,
+      {
         method: "POST",
         headers: {
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
         },
         body: JSON.stringify({
-          from,
-          to: [DESTINATARIO],
-          subject,
-          html,
-          text,
-          attachments: [
-            { filename: nomePdf, content: await bytesBase64(await pdfRes.data.arrayBuffer()) },
-            { filename: nomeXlsx, content: await bytesBase64(await xlsxRes.data.arrayBuffer()) },
-          ],
+          message: {
+            subject,
+            body: { contentType: "HTML", content: html },
+            from: { emailAddress: { address: REMETENTE } },
+            toRecipients: [{ emailAddress: { address: DESTINATARIO } }],
+            attachments: [
+              {
+                "@odata.type": "#microsoft.graph.fileAttachment",
+                name: nomePdf,
+                contentType: MIME_PDF,
+                contentBytes: pdfB64,
+              },
+              {
+                "@odata.type": "#microsoft.graph.fileAttachment",
+                name: nomeXlsx,
+                contentType: MIME_XLSX,
+                contentBytes: xlsxB64,
+              },
+            ],
+          },
+          saveToSentItems: true,
         }),
-      });
-      if (!resp.ok) {
-        const corpo = await resp.text().catch(() => "");
-        throw new Error(`Resend [${resp.status}]: ${corpo.slice(0, 400)}`);
+      },
+    );
+
+    if (!resp.ok) {
+      // Só status e mensagem curta: nunca corpo inteiro, token ou anexo.
+      let codigo = "erro_desconhecido";
+      try {
+        const corpo: any = await resp.json();
+        codigo = String(corpo?.error?.code || corpo?.error?.message || codigo).slice(0, 120);
+      } catch {
+        /* resposta sem JSON */
       }
-    } else {
-      await sendLovableEmail(
-        {
-          to: DESTINATARIO,
-          from,
-          sender_domain: SENDER_DOMAIN,
-          subject,
-          html,
-          text,
-          purpose: "transactional",
-          label: TEMPLATE_NAME,
-          idempotency_key: messageId,
-        },
-        { apiKey: process.env.LOVABLE_API_KEY!, sendUrl: process.env.LOVABLE_SEND_URL },
-      );
+      throw new Error(`Graph sendMail [${resp.status}]: ${codigo}`);
     }
   } catch (error) {
-    const suprimido = error instanceof EmailAPIError && error.code === "recipient_suppressed";
-    const status = suprimido
-      ? "suppressed"
-      : error instanceof EmailAPIError && error.status === 429
-        ? "rate_limited"
-        : "failed";
-    const msg = error instanceof Error ? error.message : String(error);
-    await logEnvio(messageId, status, msg, subject, usarResend ? "resend_anexo" : "hub_link");
+    const msg = (error instanceof Error ? error.message : String(error)).slice(0, 500);
+    await logEnvio(messageId, "failed", msg, subject);
     return { ok: false, erro: "falha_no_envio", detalhe: msg };
   }
 
-  await logEnvio(messageId, "sent", null, subject, usarResend ? "resend_anexo" : "hub_link");
-  return { ok: true, via: usarResend ? "resend_anexo" : "hub_link", messageId };
+  await logEnvio(messageId, "sent", null, subject);
+  return { ok: true, via: VIA, messageId };
 }
