@@ -17,7 +17,7 @@ import { obterTokenGraph } from "@/lib/graph/graph-token.server";
 
 const BUCKET = "garantia-judicial-anexos";
 const REMETENTE = "naoresponda@lavoroseguros.com.br";
-const DESTINATARIO = "operacoes@lavoroseguros.com.br";
+const DESTINATARIO_PADRAO = "operacoes@lavoroseguros.com.br";
 const TEMPLATE_NAME = "garantia-judicial-nova-demanda";
 const VIA = "graph_anexo";
 
