@@ -263,6 +263,12 @@ export const template = {
     `Nova Demanda · Garantia Judicial · ${d?.tomador ?? '—'} (${d?.cnpj ?? '—'})`,
   displayName: 'Garantia Judicial · Nova Demanda',
   previewData: {
+    solicitante: {
+      empresa: 'KauanLTDA',
+      nome: 'KAUAN IURY LOLA DE LIMA',
+      email: 'kauan.iury@lavoroseguros.com.br',
+      telefone: '(11) 95443-2047',
+    },
     tomador: 'GRUPO HOSPITALAR DO RIO DE JANEIRO LTDA',
     cnpj: '31.925.548/0001-76',
     protocolo: 'LV-260915-1234',
