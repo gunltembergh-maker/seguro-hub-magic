@@ -83,6 +83,7 @@ async function logEnvio(
   status: string,
   errorMessage: string | null,
   subject: string,
+  destinatario: string,
 ) {
   try {
     const { lavoroAdmin } = await import("@/integrations/supabase/lavoro-admin.server");
