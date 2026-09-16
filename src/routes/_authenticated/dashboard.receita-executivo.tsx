@@ -325,6 +325,16 @@ function DashboardReceitaExecutivo() {
             <div className="text-xs" style={{ color: "#6B7280" }}>
               Dados atualizados em: <span className="font-medium">{fmtAtualizacao(ultAtualQ.data)}</span>
             </div>
+            <div className="no-print flex items-center gap-2">
+              <Button variant="outline" size="sm" className="h-8" onClick={exportarExcel} disabled={exportando || mensalQ.isLoading}>
+                <FileSpreadsheet className="h-4 w-4 mr-1.5" />
+                {exportando ? "Gerando…" : "Excel"}
+              </Button>
+              <Button variant="outline" size="sm" className="h-8" onClick={() => window.print()}>
+                <FileText className="h-4 w-4 mr-1.5" />
+                PDF
+              </Button>
+            </div>
             <SendNewsletterButton modulo="executivo_lavoro" ano={ano} mes={mesLimiteYtd} />
           </div>
         </div>
