@@ -123,6 +123,12 @@ async function gerarPlanilha(id: string): Promise<{ ok: boolean; erro?: string }
 }
 
 export async function consultarMercadoPendentes() {
+  // Verificação de alertas ANTES do processamento: roda em toda execução,
+  // haja ou não solicitação pendente — o caso mais grave é justamente quando
+  // nada está sendo processado. Nunca lança, para não bloquear o fluxo.
+  const { alertarSolicitacoesTravadas } = await import("./garantia-judicial-alerta.server");
+  const alertas = await alertarSolicitacoesTravadas();
+
   const { lavoroAdmin: supabaseAdmin } = await import(
     "@/integrations/supabase/lavoro-admin.server"
   );
