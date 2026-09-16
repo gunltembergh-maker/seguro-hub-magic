@@ -1,0 +1,1 @@
+ALTER TABLE public.garantia_judicial_solicitacoes ADD COLUMN IF NOT EXISTS alerta_enviado_em timestamptz;
