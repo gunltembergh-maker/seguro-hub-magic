@@ -103,6 +103,7 @@ function KpiCard({
 function DashboardReceitaExecutivo() {
   const hoje = new Date();
   const [ano, setAno] = useState<number>(hoje.getFullYear());
+  const [exportando, setExportando] = useState(false);
   const mesAtual = hoje.getMonth() + 1;
   const anoAtual = hoje.getFullYear();
   const mesLimiteYtd = ano === anoAtual ? mesAtual : 12;
