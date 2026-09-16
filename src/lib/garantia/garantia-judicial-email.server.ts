@@ -17,7 +17,13 @@ import { obterTokenGraph } from "@/lib/graph/graph-token.server";
 
 const BUCKET = "garantia-judicial-anexos";
 const REMETENTE = "naoresponda@lavoroseguros.com.br";
-const DESTINATARIO_PADRAO = "operacoes@lavoroseguros.com.br";
+// Time de NEGÓCIO (Garantia) — quem trata a demanda.
+// PROVISÓRIO: hoje aponta para a caixa de Operações apenas porque o endereço
+// do time de Garantia ainda não foi definido. Quando for, troque SÓ esta
+// constante. O alerta técnico tem destinatário próprio
+// (DESTINATARIO_ALERTA_TECNICO, em garantia-judicial-alerta.server.ts) e não
+// pode acompanhar esta troca.
+const DESTINATARIO_NOVA_DEMANDA = "operacoes@lavoroseguros.com.br";
 const TEMPLATE_NAME = "garantia-judicial-nova-demanda";
 const VIA = "graph_anexo";
 
@@ -112,7 +118,7 @@ export async function enviarEmailNovaDemanda(
   | { ok: true; via: typeof VIA; messageId: string }
   | { ok: false; erro: string; detalhe?: string; fatal?: boolean }
 > {
-  const destinatario = (destinatarioOverride || "").trim() || DESTINATARIO_PADRAO;
+  const destinatario = (destinatarioOverride || "").trim() || DESTINATARIO_NOVA_DEMANDA;
   const { lavoroAdmin } = await import("@/integrations/supabase/lavoro-admin.server");
 
   const { data: sol, error: selErro } = await lavoroAdmin

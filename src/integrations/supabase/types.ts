@@ -1989,6 +1989,7 @@ export type Database = {
       }
       garantia_judicial_solicitacoes: {
         Row: {
+          alerta_enviado_em: string | null
           atualizado_em: string
           cnpj_tomador: string
           consulta_iniciada_em: string | null
@@ -2009,6 +2010,7 @@ export type Database = {
           xlsx_path: string | null
         }
         Insert: {
+          alerta_enviado_em?: string | null
           atualizado_em?: string
           cnpj_tomador: string
           consulta_iniciada_em?: string | null
@@ -2029,6 +2031,7 @@ export type Database = {
           xlsx_path?: string | null
         }
         Update: {
+          alerta_enviado_em?: string | null
           atualizado_em?: string
           cnpj_tomador?: string
           consulta_iniciada_em?: string | null
