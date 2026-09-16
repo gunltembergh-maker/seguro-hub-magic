@@ -252,6 +252,6 @@ export async function enviarEmailNovaDemanda(
     return { ok: false, erro: "falha_no_envio", detalhe: msg };
   }
 
-  await logEnvio(messageId, "sent", null, subject);
+  await logEnvio(messageId, "sent", null, subject, destinatario);
   return { ok: true, via: VIA, messageId };
 }
