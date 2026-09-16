@@ -248,7 +248,7 @@ export async function enviarEmailNovaDemanda(
     }
   } catch (error) {
     const msg = (error instanceof Error ? error.message : String(error)).slice(0, 500);
-    await logEnvio(messageId, "failed", msg, subject);
+    await logEnvio(messageId, "failed", msg, subject, destinatario);
     return { ok: false, erro: "falha_no_envio", detalhe: msg };
   }
 
