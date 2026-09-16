@@ -100,7 +100,15 @@ async function logEnvio(
   }
 }
 
-export async function enviarEmailNovaDemanda(solicitacaoId: string): Promise<
+/**
+ * Envia o e-mail de Nova Demanda.
+ * `destinatarioOverride` existe apenas para disparos de teste explícitos;
+ * o job agendado nunca passa esse parâmetro (mantém operacoes@).
+ */
+export async function enviarEmailNovaDemanda(
+  solicitacaoId: string,
+  destinatarioOverride?: string,
+): Promise<
   | { ok: true; via: typeof VIA; messageId: string }
   | { ok: false; erro: string; detalhe?: string; fatal?: boolean }
 > {
