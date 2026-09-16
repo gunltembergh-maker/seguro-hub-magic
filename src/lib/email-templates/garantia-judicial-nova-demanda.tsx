@@ -17,7 +17,16 @@ export interface AnexoLink {
   url?: string
 }
 
+export interface SolicitanteInfo {
+  empresa: string
+  nome: string
+  email: string
+  telefone: string
+}
+
 export interface NovaDemandaProps {
+  /** Quem preencheu o formulário; campos faltantes viram "não informado". */
+  solicitante: SolicitanteInfo
   tomador: string
   cnpj: string
   protocolo: string
@@ -72,7 +81,21 @@ const alertaBox = (fundo: string, borda: string): React.CSSProperties => ({
   margin: '18px 0',
 })
 
+const NAO_INFORMADO = 'não informado'
+
+const solicitanteBox: React.CSSProperties = {
+  border: `1px solid ${BORDER}`,
+  backgroundColor: LIGHT_BG,
+  borderRadius: '12px',
+  padding: '16px 20px',
+  margin: '0 0 22px',
+}
+
+const preencher = (v?: string) => (v && v.trim() ? v.trim() : NAO_INFORMADO)
+const somenteDigitos = (v?: string) => (v ?? '').replace(/\D/g, '')
+
 export const GarantiaJudicialNovaDemandaEmail = ({
+  solicitante = { empresa: '', nome: '', email: '', telefone: '' },
   tomador = '—', cnpj = '—', protocolo = '—', numeroProcesso = '—', natureza = '—',
   importanciaSegurada = '—', advogado = '—', prazoLimite = '—',
   comLimite = 0, semLimite = 0, naoConsultado = 0,
@@ -102,6 +125,37 @@ export const GarantiaJudicialNovaDemandaEmail = ({
             </Text>
             <Text style={{ fontSize: '13px', color: NAVY, margin: 0, lineHeight: '20px' }}>
               Esse prazo foi informado ao cliente ao finalizar o preenchimento do formulário.
+            </Text>
+          </Section>
+
+          <Section style={solicitanteBox}>
+            <Text style={{ ...eyebrow, color: NAVY, margin: '0 0 10px' }}>Solicitante</Text>
+            <Text style={label}>Empresa</Text>
+            <Text style={valor}>{preencher(solicitante?.empresa)}</Text>
+            <Text style={label}>Nome</Text>
+            <Text style={valor}>{preencher(solicitante?.nome)}</Text>
+            <Text style={label}>E-mail</Text>
+            <Text style={valor}>
+              {solicitante?.email && solicitante.email.trim() ? (
+                <Link href={`mailto:${solicitante.email.trim()}`} style={{ color: NAVY, textDecoration: 'underline' }}>
+                  {solicitante.email.trim()}
+                </Link>
+              ) : (
+                NAO_INFORMADO
+              )}
+            </Text>
+            <Text style={label}>Telefone</Text>
+            <Text style={{ ...valor, margin: 0 }}>
+              {somenteDigitos(solicitante?.telefone) ? (
+                <Link
+                  href={`tel:${somenteDigitos(solicitante?.telefone)}`}
+                  style={{ color: NAVY, textDecoration: 'underline' }}
+                >
+                  {solicitante!.telefone!.trim()}
+                </Link>
+              ) : (
+                NAO_INFORMADO
+              )}
             </Text>
           </Section>
 
@@ -209,6 +263,12 @@ export const template = {
     `Nova Demanda · Garantia Judicial · ${d?.tomador ?? '—'} (${d?.cnpj ?? '—'})`,
   displayName: 'Garantia Judicial · Nova Demanda',
   previewData: {
+    solicitante: {
+      empresa: 'KauanLTDA',
+      nome: 'KAUAN IURY LOLA DE LIMA',
+      email: 'kauan.iury@lavoroseguros.com.br',
+      telefone: '(11) 95443-2047',
+    },
     tomador: 'GRUPO HOSPITALAR DO RIO DE JANEIRO LTDA',
     cnpj: '31.925.548/0001-76',
     protocolo: 'LV-260915-1234',
