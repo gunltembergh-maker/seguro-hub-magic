@@ -17,7 +17,7 @@ import { obterTokenGraph } from "@/lib/graph/graph-token.server";
 
 const BUCKET = "garantia-judicial-anexos";
 const REMETENTE = "naoresponda@lavoroseguros.com.br";
-const DESTINATARIO = "operacoes@lavoroseguros.com.br";
+const DESTINATARIO_PADRAO = "operacoes@lavoroseguros.com.br";
 const TEMPLATE_NAME = "garantia-judicial-nova-demanda";
 const VIA = "graph_anexo";
 
@@ -83,13 +83,14 @@ async function logEnvio(
   status: string,
   errorMessage: string | null,
   subject: string,
+  destinatario: string,
 ) {
   try {
     const { lavoroAdmin } = await import("@/integrations/supabase/lavoro-admin.server");
     await lavoroAdmin.from("email_send_log").insert({
       message_id: messageId,
       template_name: TEMPLATE_NAME,
-      recipient_email: DESTINATARIO,
+      recipient_email: destinatario,
       status,
       error_message: errorMessage,
       metadata: { subject, via: VIA },
@@ -99,10 +100,19 @@ async function logEnvio(
   }
 }
 
-export async function enviarEmailNovaDemanda(solicitacaoId: string): Promise<
+/**
+ * Envia o e-mail de Nova Demanda.
+ * `destinatarioOverride` existe apenas para disparos de teste explícitos;
+ * o job agendado nunca passa esse parâmetro (mantém operacoes@).
+ */
+export async function enviarEmailNovaDemanda(
+  solicitacaoId: string,
+  destinatarioOverride?: string,
+): Promise<
   | { ok: true; via: typeof VIA; messageId: string }
   | { ok: false; erro: string; detalhe?: string; fatal?: boolean }
 > {
+  const destinatario = (destinatarioOverride || "").trim() || DESTINATARIO_PADRAO;
   const { lavoroAdmin } = await import("@/integrations/supabase/lavoro-admin.server");
 
   const { data: sol, error: selErro } = await lavoroAdmin
@@ -204,7 +214,7 @@ export async function enviarEmailNovaDemanda(solicitacaoId: string): Promise<
             subject,
             body: { contentType: "HTML", content: html },
             from: { emailAddress: { address: REMETENTE } },
-            toRecipients: [{ emailAddress: { address: DESTINATARIO } }],
+            toRecipients: [{ emailAddress: { address: destinatario } }],
             attachments: [
               {
                 "@odata.type": "#microsoft.graph.fileAttachment",
@@ -238,10 +248,10 @@ export async function enviarEmailNovaDemanda(solicitacaoId: string): Promise<
     }
   } catch (error) {
     const msg = (error instanceof Error ? error.message : String(error)).slice(0, 500);
-    await logEnvio(messageId, "failed", msg, subject);
+    await logEnvio(messageId, "failed", msg, subject, destinatario);
     return { ok: false, erro: "falha_no_envio", detalhe: msg };
   }
 
-  await logEnvio(messageId, "sent", null, subject);
+  await logEnvio(messageId, "sent", null, subject, destinatario);
   return { ok: true, via: VIA, messageId };
 }
