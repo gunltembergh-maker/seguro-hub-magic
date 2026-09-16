@@ -5,11 +5,13 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   AreaChart, Area,
 } from "recharts";
-import { AlertTriangle, Calendar } from "lucide-react";
+import { AlertTriangle, Calendar, FileSpreadsheet, FileText } from "lucide-react";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { SendNewsletterButton } from "@/components/admin/SendNewsletterButton";
+import { exportarXlsx } from "@/lib/export-xlsx";
 
 export const Route = createFileRoute("/_authenticated/dashboard/receita-executivo")({
   component: DashboardReceitaExecutivo,
