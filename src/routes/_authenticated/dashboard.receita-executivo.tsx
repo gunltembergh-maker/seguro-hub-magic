@@ -347,7 +347,7 @@ function DashboardReceitaExecutivo() {
             title={`Caixa Recebido YTD ${ano}`}
             value={BRL(totYtd.caixa_corrente)}
             accent={VERDE}
-            subtitle={`${PCT(pctCaixa)} do Caixa Esperado`}
+            subtitle={`${PCT(pctCaixa)} do Caixa Esperado · base Caixa Comissão`}
             loading={mensalQ.isLoading}
             breakdown={breakdownCanais("caixa_corrente", totYtd.caixa_corrente)}
           />
