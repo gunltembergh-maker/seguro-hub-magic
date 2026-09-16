@@ -139,6 +139,7 @@ export async function receberSolicitacaoGarantiaJudicial(payload: unknown, pdfBy
       cnpj_tomador: formulario.reu.documento,
       nome_tomador: formulario.reu.nome,
       numero_processo: formulario.processo.numero,
+      payload_bruto: payload as unknown as Json,
       dados_formulario: formulario as unknown as Json,
       status: "recebida",
     })
