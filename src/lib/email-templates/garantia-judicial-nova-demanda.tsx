@@ -81,7 +81,21 @@ const alertaBox = (fundo: string, borda: string): React.CSSProperties => ({
   margin: '18px 0',
 })
 
+const NAO_INFORMADO = 'não informado'
+
+const solicitanteBox: React.CSSProperties = {
+  border: `1px solid ${BORDER}`,
+  backgroundColor: LIGHT_BG,
+  borderRadius: '12px',
+  padding: '16px 20px',
+  margin: '0 0 22px',
+}
+
+const preencher = (v?: string) => (v && v.trim() ? v.trim() : NAO_INFORMADO)
+const somenteDigitos = (v?: string) => (v ?? '').replace(/\D/g, '')
+
 export const GarantiaJudicialNovaDemandaEmail = ({
+  solicitante = { empresa: '', nome: '', email: '', telefone: '' },
   tomador = '—', cnpj = '—', protocolo = '—', numeroProcesso = '—', natureza = '—',
   importanciaSegurada = '—', advogado = '—', prazoLimite = '—',
   comLimite = 0, semLimite = 0, naoConsultado = 0,
