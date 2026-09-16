@@ -128,6 +128,37 @@ export const GarantiaJudicialNovaDemandaEmail = ({
             </Text>
           </Section>
 
+          <Section style={solicitanteBox}>
+            <Text style={{ ...eyebrow, color: NAVY, margin: '0 0 10px' }}>Solicitante</Text>
+            <Text style={label}>Empresa</Text>
+            <Text style={valor}>{preencher(solicitante?.empresa)}</Text>
+            <Text style={label}>Nome</Text>
+            <Text style={valor}>{preencher(solicitante?.nome)}</Text>
+            <Text style={label}>E-mail</Text>
+            <Text style={valor}>
+              {solicitante?.email && solicitante.email.trim() ? (
+                <Link href={`mailto:${solicitante.email.trim()}`} style={{ color: NAVY, textDecoration: 'underline' }}>
+                  {solicitante.email.trim()}
+                </Link>
+              ) : (
+                NAO_INFORMADO
+              )}
+            </Text>
+            <Text style={label}>Telefone</Text>
+            <Text style={{ ...valor, margin: 0 }}>
+              {somenteDigitos(solicitante?.telefone) ? (
+                <Link
+                  href={`tel:${somenteDigitos(solicitante?.telefone)}`}
+                  style={{ color: NAVY, textDecoration: 'underline' }}
+                >
+                  {solicitante!.telefone!.trim()}
+                </Link>
+              ) : (
+                NAO_INFORMADO
+              )}
+            </Text>
+          </Section>
+
           <Section style={{ margin: '4px 0 0' }}>
             <Text style={label}>Tomador</Text>
             <Text style={valor}>{tomador}</Text>

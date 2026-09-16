@@ -175,7 +175,14 @@ export async function enviarEmailNovaDemanda(
     };
   }
 
+  const resp0 = (form.responsavel || {}) as Any;
   const props: NovaDemandaProps = {
+    solicitante: {
+      empresa: String(resp0.empresa ?? ""),
+      nome: String(resp0.nome ?? ""),
+      email: String(resp0.email ?? ""),
+      telefone: String(resp0.telefone ?? ""),
+    },
     tomador,
     cnpj,
     protocolo,
