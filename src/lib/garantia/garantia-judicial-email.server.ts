@@ -112,6 +112,7 @@ export async function enviarEmailNovaDemanda(
   | { ok: true; via: typeof VIA; messageId: string }
   | { ok: false; erro: string; detalhe?: string; fatal?: boolean }
 > {
+  const destinatario = (destinatarioOverride || "").trim() || DESTINATARIO_PADRAO;
   const { lavoroAdmin } = await import("@/integrations/supabase/lavoro-admin.server");
 
   const { data: sol, error: selErro } = await lavoroAdmin
