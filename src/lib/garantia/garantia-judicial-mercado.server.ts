@@ -122,13 +122,20 @@ async function gerarPlanilha(id: string): Promise<{ ok: boolean; erro?: string }
   }
 }
 
+/**
+ * Ponto de entrada do job. A verificação de alertas roda ANTES do
+ * processamento e em toda execução, haja ou não solicitação pendente — o caso
+ * mais grave é justamente quando nada está sendo processado. Ela nunca lança,
+ * e um erro no processamento não impede o aviso de sair.
+ */
 export async function consultarMercadoPendentes() {
-  // Verificação de alertas ANTES do processamento: roda em toda execução,
-  // haja ou não solicitação pendente — o caso mais grave é justamente quando
-  // nada está sendo processado. Nunca lança, para não bloquear o fluxo.
   const { alertarSolicitacoesTravadas } = await import("./garantia-judicial-alerta.server");
   const alertas = await alertarSolicitacoesTravadas();
+  const processamento = await processarPendentes();
+  return { ...processamento, alertas };
+}
 
+async function processarPendentes() {
   const { lavoroAdmin: supabaseAdmin } = await import(
     "@/integrations/supabase/lavoro-admin.server"
   );
