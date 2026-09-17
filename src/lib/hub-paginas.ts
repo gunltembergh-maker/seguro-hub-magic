@@ -51,6 +51,7 @@ export const HUB_PAGINAS: GrupoPaginas[] = [
       { rota: "/garantia", nome: "Garantia (página do ramo)" },
       { rota: "/garantia/analise-limite", nome: "Operacional (Análise de Limite)" },
       { rota: "/garantia/analise-background", nome: "Análise de Processos" },
+      { rota: "/garantia/formulario-admin", nome: "Formulário Admin" },
     ],
   },
   {
