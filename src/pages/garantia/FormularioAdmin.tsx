@@ -3,9 +3,8 @@
 // (endpoint público + job), e a RLS só libera SELECT.
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, BellRing, FileSpreadsheet, FileText, Search } from "lucide-react";
+import { AlertTriangle, BellRing, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -21,16 +20,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  BotoesAnexos,
+  EtiquetaStatus,
+  STATUS,
+  formatarDataHora,
+  formatarDuracao,
+} from "@/components/garantia/formulario-admin-comuns";
+import { FormularioAdminDetalhe } from "@/components/garantia/formulario-admin-detalhe";
 
 const POR_PAGINA = 25;
-
-const STATUS = [
-  { valor: "recebida", rotulo: "Recebida", classe: "bg-slate-100 text-slate-700 border-slate-200" },
-  { valor: "consultando_mercado", rotulo: "Consultando mercado", classe: "bg-blue-100 text-blue-700 border-blue-200" },
-  { valor: "mercado_consultado", rotulo: "Mercado consultado", classe: "bg-purple-100 text-purple-700 border-purple-200" },
-  { valor: "email_enviado", rotulo: "E-mail enviado", classe: "bg-emerald-100 text-emerald-700 border-emerald-200" },
-  { valor: "erro", rotulo: "Erro", classe: "bg-red-100 text-red-700 border-red-200" },
-] as const;
 
 type Linha = {
   id: string;
@@ -55,33 +54,6 @@ const COLUNAS =
   "natureza:dados_formulario->>naturezaRotulo," +
   "solicitante:dados_formulario->responsavel->>nome";
 
-function formatarDataHora(iso: string | null) {
-  if (!iso) return "—";
-  return new Intl.DateTimeFormat("pt-BR", {
-    timeZone: "America/Sao_Paulo",
-    dateStyle: "short",
-    timeStyle: "short",
-  }).format(new Date(iso));
-}
-
-function formatarDuracao(inicio: string, fim: string | null) {
-  if (!fim) return "";
-  const ms = new Date(fim).getTime() - new Date(inicio).getTime();
-  if (!Number.isFinite(ms) || ms < 0) return "";
-  const min = Math.round(ms / 60000);
-  if (min < 60) return `${min} min`;
-  return `${Math.floor(min / 60)} h ${min % 60} min`;
-}
-
-function EtiquetaStatus({ status }: { status: string }) {
-  const def = STATUS.find((s) => s.valor === status);
-  return (
-    <Badge variant="outline" className={def?.classe ?? "bg-slate-100 text-slate-700 border-slate-200"}>
-      {def?.rotulo ?? status}
-    </Badge>
-  );
-}
-
 export default function GarantiaFormularioAdmin() {
   const [dataInicial, setDataInicial] = useState("");
   const [dataFinal, setDataFinal] = useState("");
@@ -89,6 +61,7 @@ export default function GarantiaFormularioAdmin() {
   const [busca, setBusca] = useState("");
   const [buscaAplicada, setBuscaAplicada] = useState("");
   const [pagina, setPagina] = useState(0);
+  const [detalheId, setDetalheId] = useState<string | null>(null);
 
   const filtros = useMemo(
     () => ({ dataInicial, dataFinal, statusSelecionados, buscaAplicada }),
@@ -270,7 +243,11 @@ export default function GarantiaFormularioAdmin() {
                 )}
 
                 {linhas.map((l) => (
-                  <TableRow key={l.id}>
+                  <TableRow
+                    key={l.id}
+                    onClick={() => setDetalheId(l.id)}
+                    className="cursor-pointer"
+                  >
                     <TableCell className="whitespace-nowrap font-medium">
                       <div className="flex items-center gap-1.5">
                         {l.protocolo ?? "—"}
@@ -311,14 +288,11 @@ export default function GarantiaFormularioAdmin() {
                       {formatarDuracao(l.criado_em, l.email_enviado_em)}
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <FileText
-                          className={`h-4 w-4 ${l.pdf_path ? "text-[#338B85]" : "text-muted-foreground/30"}`}
-                        />
-                        <FileSpreadsheet
-                          className={`h-4 w-4 ${l.xlsx_path ? "text-[#338B85]" : "text-muted-foreground/30"}`}
-                        />
-                      </div>
+                      <BotoesAnexos
+                        protocolo={l.protocolo}
+                        pdfPath={l.pdf_path}
+                        xlsxPath={l.xlsx_path}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}
@@ -351,6 +325,13 @@ export default function GarantiaFormularioAdmin() {
           </div>
         </div>
       </div>
+
+      <FormularioAdminDetalhe
+        solicitacaoId={detalheId}
+        onOpenChange={(aberto) => {
+          if (!aberto) setDetalheId(null);
+        }}
+      />
     </div>
   );
 }
