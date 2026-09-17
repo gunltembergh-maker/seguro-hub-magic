@@ -145,6 +145,36 @@ export async function receberSolicitacaoGarantiaJudicial(payload: unknown, pdfBy
 
   const { lavoroAdmin: supabaseAdmin } = await import("@/integrations/supabase/lavoro-admin.server");
 
+  // Proteção contra duplicidade. A demanda já registrada vale como confirmação:
+  // devolvemos 200 com o id existente (o Worker trata fora de 2xx como erro para o cliente).
+
+  // Checagem A: mesmo protocolo.
+  const { data: existenteProtocolo } = await supabaseAdmin
+    .from("garantia_judicial_solicitacoes")
+    .select("id, protocolo")
+    .eq("protocolo", protocolo)
+    .maybeSingle();
+
+  if (existenteProtocolo) {
+    console.log(`[garantia-judicial] duplicata barrada por protocolo: ${protocolo}`);
+    return { status: 200, body: { id: existenteProtocolo.id, protocolo: existenteProtocolo.protocolo, duplicada: true } };
+  }
+
+  // Checagem B: mesmo CNPJ + número de processo nos últimos 10 minutos.
+  const janelaInicio = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+  const { data: existenteJanela } = await supabaseAdmin
+    .from("garantia_judicial_solicitacoes")
+    .select("id, protocolo")
+    .eq("cnpj_tomador", formulario.reu.documento)
+    .eq("numero_processo", formulario.processo.numero)
+    .gte("criado_em", janelaInicio)
+    .maybeSingle();
+
+  if (existenteJanela) {
+    console.log(`[garantia-judicial] duplicata barrada por janela: ${protocolo} (existente ${existenteJanela.protocolo})`);
+    return { status: 200, body: { id: existenteJanela.id, protocolo: existenteJanela.protocolo, duplicada: true } };
+  }
+
   const { data: inserted, error: insertError } = await supabaseAdmin
     .from("garantia_judicial_solicitacoes")
     .insert({
@@ -161,6 +191,18 @@ export async function receberSolicitacaoGarantiaJudicial(payload: unknown, pdfBy
     .single();
 
   if (insertError || !inserted) {
+    // Corrida: outro request inseriu o mesmo protocolo entre a checagem e o insert.
+    if (insertError?.code === "23505") {
+      const { data: existente } = await supabaseAdmin
+        .from("garantia_judicial_solicitacoes")
+        .select("id, protocolo")
+        .eq("protocolo", protocolo)
+        .maybeSingle();
+      if (existente) {
+        console.log(`[garantia-judicial] duplicata barrada por unicidade (corrida): ${protocolo}`);
+        return { status: 200, body: { id: existente.id, protocolo: existente.protocolo, duplicada: true } };
+      }
+    }
     return { status: 500, body: { erro: "falha_ao_gravar" } };
   }
 
