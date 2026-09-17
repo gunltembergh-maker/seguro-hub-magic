@@ -231,6 +231,22 @@ export default function GarantiaFormularioAdmin() {
               Buscar
             </Button>
           </form>
+
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="gap-2"
+              disabled={atualizando}
+              onClick={atualizarTudo}
+            >
+              <RefreshCw className={`h-4 w-4 ${atualizando ? "animate-spin" : ""}`} />
+              Atualizar
+            </Button>
+            <span className="whitespace-nowrap text-xs text-muted-foreground">
+              {horaAtualizacao ? `atualizado às ${horaAtualizacao}` : "carregando…"}
+            </span>
+          </div>
         </div>
 
         <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
