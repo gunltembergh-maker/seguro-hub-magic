@@ -1,0 +1,1 @@
+create unique index if not exists uq_gjs_protocolo on public.garantia_judicial_solicitacoes (protocolo);
