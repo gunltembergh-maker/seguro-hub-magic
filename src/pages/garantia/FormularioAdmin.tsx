@@ -108,6 +108,25 @@ export default function GarantiaFormularioAdmin() {
   const total = data?.total ?? 0;
   const ultimaPagina = Math.max(0, Math.ceil(total / POR_PAGINA) - 1);
 
+  // Atualidade: botão manual recarrega lista e painel juntos.
+  const queryClient = useQueryClient();
+  const carregandoLista = useIsFetching({ queryKey: ["garantia-formulario-admin"] });
+  const carregandoPainel = useIsFetching({ queryKey: ["garantia-formulario-admin-painel"] });
+  const atualizando = carregandoLista + carregandoPainel > 0;
+
+  function atualizarTudo() {
+    void queryClient.refetchQueries({ queryKey: ["garantia-formulario-admin"] });
+    void queryClient.refetchQueries({ queryKey: ["garantia-formulario-admin-painel"] });
+  }
+
+  const horaAtualizacao = dataUpdatedAt
+    ? new Intl.DateTimeFormat("pt-BR", {
+        timeZone: "America/Sao_Paulo",
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(new Date(dataUpdatedAt))
+    : null;
+
   function alternarStatus(valor: string) {
     setPagina(0);
     setStatusSelecionados((atual) =>
