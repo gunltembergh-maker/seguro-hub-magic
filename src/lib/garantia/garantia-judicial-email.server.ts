@@ -84,12 +84,16 @@ function kb(n: number): string {
   return `${(n / 1024).toFixed(0)} KB`;
 }
 
+/** Marcação extra no log quando o disparo foi manual (reenvio pela tela). */
+export type OrigemEnvio = { reenvioManual?: boolean; disparadoPor?: string | null };
+
 async function logEnvio(
   messageId: string,
   status: string,
   errorMessage: string | null,
   subject: string,
   destinatario: string,
+  origem?: OrigemEnvio,
 ) {
   try {
     const { lavoroAdmin } = await import("@/integrations/supabase/lavoro-admin.server");
@@ -99,7 +103,8 @@ async function logEnvio(
       recipient_email: destinatario,
       status,
       error_message: errorMessage,
-      metadata: { subject, via: VIA },
+      metadata: { subject, via: VIA, ...(origem?.reenvioManual ? { reenvio_manual: true } : {}) },
+      disparado_por: origem?.disparadoPor ?? null,
     });
   } catch (e) {
     console.warn("[garantia-judicial-email] falha ao registrar log", e);
@@ -114,6 +119,7 @@ async function logEnvio(
 export async function enviarEmailNovaDemanda(
   solicitacaoId: string,
   destinatarioOverride?: string,
+  origem?: OrigemEnvio,
 ): Promise<
   | { ok: true; via: typeof VIA; messageId: string }
   | { ok: false; erro: string; detalhe?: string; fatal?: boolean }
@@ -261,10 +267,10 @@ export async function enviarEmailNovaDemanda(
     }
   } catch (error) {
     const msg = (error instanceof Error ? error.message : String(error)).slice(0, 500);
-    await logEnvio(messageId, "failed", msg, subject, destinatario);
+    await logEnvio(messageId, "failed", msg, subject, destinatario, origem);
     return { ok: false, erro: "falha_no_envio", detalhe: msg };
   }
 
-  await logEnvio(messageId, "sent", null, subject, destinatario);
+  await logEnvio(messageId, "sent", null, subject, destinatario, origem);
   return { ok: true, via: VIA, messageId };
 }

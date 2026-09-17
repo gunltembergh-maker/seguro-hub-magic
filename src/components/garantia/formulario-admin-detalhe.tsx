@@ -3,10 +3,26 @@
 // A consulta de mercado é lida com o MESMO normalizador da planilha e do
 // e-mail (garantia-judicial-normalizar), para não haver divergência entre o
 // que o administrador vê e o que o time recebe.
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, BellRing } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { AlertTriangle, BellRing, Loader2, Send } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { reenviarEmailNovaDemanda } from "@/lib/garantia/garantia-judicial-reenvio.functions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -17,7 +33,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   BotoesAnexos,
   EtiquetaStatus,
@@ -188,6 +204,23 @@ export function FormularioAdminDetalhe({
   const resumo = data?.resultado_mercado ? resumirResultadoMercado(data.resultado_mercado) : null;
   const linhas = resumo ? linhasMercado(resumo.seguradoras) : [];
 
+  const [reenviando, setReenviando] = useState(false);
+  const reenviar = useServerFn(reenviarEmailNovaDemanda);
+
+  async function confirmarReenvio() {
+    if (!data) return;
+    setReenviando(true);
+    try {
+      const r = await reenviar({ data: { solicitacaoId: data.id } });
+      if (r.ok) toast.success("E-mail reenviado para o time.");
+      else toast.error(`Não foi possível reenviar: ${r.detalhe || r.erro}`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao reenviar o e-mail.");
+    } finally {
+      setReenviando(false);
+    }
+  }
+
   const emailResponsavel = String(responsavel["email"] ?? "");
   const telResponsavel = String(responsavel["telefone"] ?? "");
 
@@ -225,13 +258,59 @@ export function FormularioAdminDetalhe({
                   />
                 </div>
 
-                <div className="mt-4">
+                <div className="mt-4 flex flex-wrap items-center gap-2">
                   <BotoesAnexos
                     protocolo={data.protocolo}
                     pdfPath={data.pdf_path}
                     xlsxPath={data.xlsx_path}
                     tamanho="completo"
                   />
+
+                  {data.xlsx_path ? (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="gap-2" disabled={reenviando}>
+                          {reenviando ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Send className="h-4 w-4" />
+                          )}
+                          Reenviar e-mail para o time
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Reenviar e-mail desta demanda?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            O e-mail da demanda {data.protocolo ?? ""} será enviado novamente para{" "}
+                            operacoes@lavoroseguros.com.br, com o formulário em PDF e a planilha da
+                            consulta de mercado.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => void confirmarReenvio()}>
+                            Reenviar
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  ) : (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span>
+                          <Button variant="outline" size="sm" className="gap-2" disabled>
+                            <Send className="h-4 w-4" />
+                            Reenviar e-mail para o time
+                          </Button>
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        A planilha da consulta de mercado ainda não foi gerada — a demanda segue em
+                        processamento.
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
                 </div>
 
                 {data.alerta_enviado_em && (
