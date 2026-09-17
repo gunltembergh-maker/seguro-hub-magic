@@ -28,6 +28,7 @@ import {
   formatarDuracao,
 } from "@/components/garantia/formulario-admin-comuns";
 import { FormularioAdminDetalhe } from "@/components/garantia/formulario-admin-detalhe";
+import { FormularioAdminPainel } from "@/components/garantia/formulario-admin-painel";
 
 const POR_PAGINA = 25;
 
@@ -120,6 +121,15 @@ export default function GarantiaFormularioAdmin() {
             Demandas recebidas pelo formulário público de Seguro Garantia Judicial
           </p>
         </div>
+
+        <FormularioAdminPainel
+          dataInicial={dataInicial}
+          dataFinal={dataFinal}
+          onFiltrarProblemas={() => {
+            setPagina(0);
+            setStatusSelecionados(["erro"]);
+          }}
+        />
 
         <div className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
           <div className="flex flex-col gap-1">
