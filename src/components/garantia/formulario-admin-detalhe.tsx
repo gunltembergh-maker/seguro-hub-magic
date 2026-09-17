@@ -46,6 +46,7 @@ import {
   type GrupoResumo,
   type SeguradoraResumo,
 } from "@/lib/garantia/garantia-judicial-normalizar";
+import { DESTINATARIO_NOVA_DEMANDA } from "@/lib/garantia/garantia-judicial-constantes";
 
 const SITUACAO: Record<GrupoResumo, string> = {
   com_limite: "Com limite",
