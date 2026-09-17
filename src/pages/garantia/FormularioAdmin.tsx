@@ -2,8 +2,8 @@
 // Judicial. Somente leitura: a gravação continua exclusiva do service_role
 // (endpoint público + job), e a RLS só libera SELECT.
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, BellRing, Search } from "lucide-react";
+import { useQuery, useQueryClient, useIsFetching } from "@tanstack/react-query";
+import { AlertTriangle, BellRing, RefreshCw, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
