@@ -173,6 +173,10 @@ export function FormularioAdminDetalhe({
   const { data, isLoading, error } = useQuery({
     queryKey: ["garantia-formulario-admin-detalhe", solicitacaoId],
     enabled: !!solicitacaoId,
+    // Tela de controle: precisa refletir o estado atual ao voltar o foco.
+    refetchOnWindowFocus: true,
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: false,
     queryFn: async () => {
       const { data: linha, error: err } = await supabase
         .from("garantia_judicial_solicitacoes")
