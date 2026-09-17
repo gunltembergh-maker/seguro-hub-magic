@@ -46,6 +46,7 @@ import {
   type GrupoResumo,
   type SeguradoraResumo,
 } from "@/lib/garantia/garantia-judicial-normalizar";
+import { DESTINATARIO_NOVA_DEMANDA } from "@/lib/garantia/garantia-judicial-constantes";
 
 const SITUACAO: Record<GrupoResumo, string> = {
   com_limite: "Com limite",
@@ -283,7 +284,7 @@ export function FormularioAdminDetalhe({
                           <AlertDialogTitle>Reenviar e-mail desta demanda?</AlertDialogTitle>
                           <AlertDialogDescription>
                             O e-mail da demanda {data.protocolo ?? ""} será enviado novamente para{" "}
-                            operacoes@lavoroseguros.com.br, com o formulário em PDF e a planilha da
+                            {DESTINATARIO_NOVA_DEMANDA}, com o formulário em PDF e a planilha da
                             consulta de mercado.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
