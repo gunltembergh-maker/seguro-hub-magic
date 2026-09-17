@@ -131,6 +131,8 @@ const ramosAll: CollapsibleItem[] = [
         perms: ["menu_garantia_operacional"] },
       { title: "Análise de Processos", url: "/garantia/analise-background", icon: SearchCheck,
         perms: ["menu_garantia_analise_processos", "ab_garantia"] },
+      { title: "Formulário Admin", url: "/garantia/formulario-admin", icon: ClipboardList,
+        perms: ["menu_garantia_formulario_admin"] },
     ],
   },
   { title: "Benefícios", url: "/beneficios", icon: HeartPulse, tooltip: "Benefícios", perm: "menu_ramo_beneficios" },
@@ -264,8 +266,15 @@ export function AppSidebar() {
   const areas = areasAll
     .filter((i) => isAdmin || hasPermission(meuPerfil, i.perm))
     .map((i) => semFilhosProibidos(i, meuPerfil, isAdmin));
+  // A área aparece quando o perfil tem a permissão do grupo OU a de qualquer
+  // um dos filhos — um sub-item liberado sozinho precisa ter porta de entrada.
   const ramos = ramosAll
-    .filter((i) => isAdmin || (i.perm ? hasPermission(meuPerfil, i.perm) : true))
+    .filter(
+      (i) =>
+        isAdmin ||
+        (i.perm ? hasPermission(meuPerfil, i.perm) : true) ||
+        (i.children ?? []).some((c) => (c.perms ?? []).some((p) => hasPermission(meuPerfil, p))),
+    )
     .map((i) => semFilhosProibidos(i, meuPerfil, isAdmin));
 
   const dashboardItems = [

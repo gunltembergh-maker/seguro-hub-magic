@@ -80,6 +80,7 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
       { key: "menu_ramo_garantia", label: "Garantia", desc: "Controle mestre do grupo Garantia" },
       { key: "menu_garantia_operacional", label: "↳ Operacional", desc: "Análise de limite / auditoria T&C", child: true },
       { key: "menu_garantia_analise_processos", label: "↳ Análise de Processos", desc: "Fila de originação por processo (requer também Originação (Garantia))", child: true },
+      { key: "menu_garantia_formulario_admin", label: "↳ Formulário Admin", desc: "Sub-item de Garantia — consulta das demandas recebidas pelo formulário público de Garantia Judicial", child: true },
       { key: "menu_ramo_beneficios", label: "Benefícios" },
       { key: "menu_ramo_demais", label: "Demais Ramos" },
     ],

@@ -3398,6 +3398,7 @@ export type Database = {
         Args: { _tipo: string; _user_id: string }
         Returns: boolean
       }
+      pode_ver_garantia_formulario: { Args: never; Returns: boolean }
       retry_lavoro_sync_if_needed: { Args: never; Returns: undefined }
       rp_expirar_reservas: { Args: never; Returns: number }
       rp_pode_controle: { Args: never; Returns: boolean }
