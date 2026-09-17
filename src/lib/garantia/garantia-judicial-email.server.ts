@@ -14,16 +14,14 @@ import {
 } from "@/lib/email-templates/garantia-judicial-nova-demanda";
 import { resumirResultadoMercado } from "./garantia-judicial-normalizar.server";
 import { obterTokenGraph } from "@/lib/graph/graph-token.server";
+import { DESTINATARIO_NOVA_DEMANDA } from "./garantia-judicial-constantes";
 
 const BUCKET = "garantia-judicial-anexos";
 const REMETENTE = "naoresponda@lavoroseguros.com.br";
-// Time de NEGÓCIO (Garantia) — quem trata a demanda.
-// PROVISÓRIO: hoje aponta para a caixa de Operações apenas porque o endereço
-// do time de Garantia ainda não foi definido. Quando for, troque SÓ esta
-// constante. O alerta técnico tem destinatário próprio
-// (DESTINATARIO_ALERTA_TECNICO, em garantia-judicial-alerta.server.ts) e não
-// pode acompanhar esta troca.
-const DESTINATARIO_NOVA_DEMANDA = "operacoes@lavoroseguros.com.br";
+// DESTINATARIO_NOVA_DEMANDA vem de garantia-judicial-constantes.ts (compartilhado
+// com a interface). É o time de NEGÓCIO (Garantia) — quem trata a demanda.
+// O alerta técnico tem destinatário próprio (DESTINATARIO_ALERTA_TECNICO, em
+// garantia-judicial-alerta.server.ts) e não acompanha este destino.
 const TEMPLATE_NAME = "garantia-judicial-nova-demanda";
 const VIA = "graph_anexo";
 
