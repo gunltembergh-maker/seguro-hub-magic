@@ -69,8 +69,13 @@ export default function GarantiaFormularioAdmin() {
     [dataInicial, dataFinal, statusSelecionados, buscaAplicada],
   );
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, dataUpdatedAt } = useQuery({
     queryKey: ["garantia-formulario-admin", filtros, pagina],
+    // Tela de controle: recarrega ao voltar o foco e a cada 60s com a aba visível.
+    refetchOnWindowFocus: true,
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: false,
+    placeholderData: (anterior: unknown) => anterior as never,
     queryFn: async () => {
       let q = supabase
         .from("garantia_judicial_solicitacoes")
