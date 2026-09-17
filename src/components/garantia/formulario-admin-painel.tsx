@@ -112,6 +112,11 @@ export function FormularioAdminPainel({
 }) {
   const { data, isLoading } = useQuery({
     queryKey: ["garantia-formulario-admin-painel", dataInicial, dataFinal],
+    // Acompanha a lista: foco da janela + 60s, só com a aba visível.
+    refetchOnWindowFocus: true,
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: false,
+    placeholderData: (anterior) => anterior,
     queryFn: async () => {
       let q = supabase
         .from("garantia_judicial_solicitacoes")

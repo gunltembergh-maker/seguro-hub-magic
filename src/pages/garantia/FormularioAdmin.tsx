@@ -2,8 +2,8 @@
 // Judicial. Somente leitura: a gravação continua exclusiva do service_role
 // (endpoint público + job), e a RLS só libera SELECT.
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, BellRing, Search } from "lucide-react";
+import { useQuery, useQueryClient, useIsFetching } from "@tanstack/react-query";
+import { AlertTriangle, BellRing, RefreshCw, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -69,8 +69,13 @@ export default function GarantiaFormularioAdmin() {
     [dataInicial, dataFinal, statusSelecionados, buscaAplicada],
   );
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, dataUpdatedAt } = useQuery({
     queryKey: ["garantia-formulario-admin", filtros, pagina],
+    // Tela de controle: recarrega ao voltar o foco e a cada 60s com a aba visível.
+    refetchOnWindowFocus: true,
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: false,
+    placeholderData: (anterior: unknown) => anterior as never,
     queryFn: async () => {
       let q = supabase
         .from("garantia_judicial_solicitacoes")
@@ -102,6 +107,25 @@ export default function GarantiaFormularioAdmin() {
   const linhas = data?.linhas ?? [];
   const total = data?.total ?? 0;
   const ultimaPagina = Math.max(0, Math.ceil(total / POR_PAGINA) - 1);
+
+  // Atualidade: botão manual recarrega lista e painel juntos.
+  const queryClient = useQueryClient();
+  const carregandoLista = useIsFetching({ queryKey: ["garantia-formulario-admin"] });
+  const carregandoPainel = useIsFetching({ queryKey: ["garantia-formulario-admin-painel"] });
+  const atualizando = carregandoLista + carregandoPainel > 0;
+
+  function atualizarTudo() {
+    void queryClient.refetchQueries({ queryKey: ["garantia-formulario-admin"] });
+    void queryClient.refetchQueries({ queryKey: ["garantia-formulario-admin-painel"] });
+  }
+
+  const horaAtualizacao = dataUpdatedAt
+    ? new Intl.DateTimeFormat("pt-BR", {
+        timeZone: "America/Sao_Paulo",
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(new Date(dataUpdatedAt))
+    : null;
 
   function alternarStatus(valor: string) {
     setPagina(0);
@@ -207,6 +231,22 @@ export default function GarantiaFormularioAdmin() {
               Buscar
             </Button>
           </form>
+
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="gap-2"
+              disabled={atualizando}
+              onClick={atualizarTudo}
+            >
+              <RefreshCw className={`h-4 w-4 ${atualizando ? "animate-spin" : ""}`} />
+              Atualizar
+            </Button>
+            <span className="whitespace-nowrap text-xs text-muted-foreground">
+              {horaAtualizacao ? `atualizado às ${horaAtualizacao}` : "carregando…"}
+            </span>
+          </div>
         </div>
 
         <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
