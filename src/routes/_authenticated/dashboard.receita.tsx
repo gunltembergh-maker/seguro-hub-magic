@@ -6,8 +6,10 @@ import {
   Tooltip, Legend, LineChart, BarChart, RadialBarChart, RadialBar,
   PolarAngleAxis, LabelList,
 } from "recharts";
-import { Calendar, ChevronRight, ChevronDown, Clock, RefreshCw, TrendingUp, TrendingDown } from "lucide-react";
+import { Calendar, ChevronRight, ChevronDown, Clock, Download, Loader2, RefreshCw, TrendingUp, TrendingDown } from "lucide-react";
 import { toast } from "sonner";
+
+import { exportarXlsx, type ColunaExport } from "@/lib/export-xlsx";
 
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { Button } from "@/components/ui/button";
