@@ -268,8 +268,8 @@ function DashboardReceitaLavoro() {
       });
       if (error) throw error;
       return (data?.[0] ?? null) as {
-        receita_competencia: number; receita_caixa: number; meta_periodo: number;
-        atingimento: number; defasagem: number; previsto_caixa: number; atingimento_caixa: number;
+        receita_competencia: number; receita_caixa: number | null; meta_periodo: number;
+        atingimento: number; defasagem: number | null; previsto_caixa: number; atingimento_caixa: number | null;
         previsto_garantia: number; previsto_beneficios: number; previsto_demais: number;
         caixa_garantia: number; caixa_beneficios: number; caixa_demais: number;
         competencia_garantia: number; competencia_beneficios: number; competencia_demais: number;
@@ -278,23 +278,23 @@ function DashboardReceitaLavoro() {
   });
 
   const variacoesQ = useQuery({
-    queryKey: ["lavoro-receita-variacoes", ano, mesAtual],
+    queryKey: ["lavoro-receita-variacoes", ano, mesAtual, viewAsUserId],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("rpc_lavoro_receita_variacoes" as any, {
-        p_ano: ano, p_mes: mesAtual,
+        p_ano: ano, p_mes: mesAtual, p_user_id: viewAsUserId,
       });
       if (error) throw error;
       return (data?.[0] ?? null) as {
-        variacao_mes_anterior: number; variacao_ano_anterior: number;
+        variacao_mes_anterior: number | null; variacao_ano_anterior: number | null;
       } | null;
     },
   });
 
   const caixaYoyQ = useQuery({
-    queryKey: ["lavoro-caixa-yoy", ano],
+    queryKey: ["lavoro-caixa-yoy", ano, viewAsUserId],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("rpc_lavoro_receita_caixa_comparativo_anual" as any, {
-        p_anos: [ano - 1, ano],
+        p_anos: [ano - 1, ano], p_user_id: viewAsUserId,
       });
       if (error) throw error;
       return (data || []) as Array<{ ano: number; mes: number; receita_caixa: number }>;
@@ -403,6 +403,7 @@ function DashboardReceitaLavoro() {
   };
 
   const kpis = kpisQ.data;
+  const caixaIndisponivel = !!kpis && kpis.receita_caixa == null;
   const atingCaixa = Number(kpis?.atingimento_caixa || 0) * 100;
   const atingCaixaColor = atingCaixa >= 100 ? "#16a34a" : atingCaixa >= 80 ? "#f59e0b" : "#dc2626";
   const atingimento = Number(kpis?.atingimento || 0) * 100;
@@ -596,8 +597,9 @@ function DashboardReceitaLavoro() {
           <BigStatCard
             title={`Receita Caixa em ${periodoLabel}`}
             subtitle="Receita Caixa (efetivamente recebido)"
-            value={BRL(kpis?.receita_caixa)} accent="#13405C" loading={kpisQ.isLoading}
-            breakdown={escopo.filtrar([
+            value={caixaIndisponivel ? "Indisponível para o seu perfil" : BRL(kpis?.receita_caixa)}
+            accent="#13405C" loading={kpisQ.isLoading}
+            breakdown={caixaIndisponivel ? undefined : escopo.filtrar([
               { label: "Garantia", value: BRL(kpis?.caixa_garantia) },
               { label: "Benefícios", value: BRL(kpis?.caixa_beneficios) },
               { label: "Demais Ramos", value: BRL(kpis?.caixa_demais) },
@@ -638,13 +640,15 @@ function DashboardReceitaLavoro() {
                   Atingimento de Caixa ({periodoLabel})
                 </p>
                 <p className="text-[11px] text-gray-400">
-                  Receita Caixa / Previsto — {BRL(kpis?.receita_caixa)} / {BRL(kpis?.previsto_caixa)}
+                  Receita Caixa / Previsto — {caixaIndisponivel ? "indisponível" : BRL(kpis?.receita_caixa)} / {BRL(kpis?.previsto_caixa)}
                 </p>
               </div>
               {isAtingimentoValido(kpis?.atingimento_caixa) && Number(kpis?.previsto_caixa || 0) > 0 ? (
                 <p className="text-2xl font-bold" style={{ color: atingCaixaColor }}>
                   {formatarAtingimento(kpis?.atingimento_caixa)}
                 </p>
+              ) : caixaIndisponivel ? (
+                <p className="text-sm font-semibold text-gray-400">Indisponível para o seu perfil</p>
               ) : (
                 <p className="text-sm font-semibold text-gray-400">Sem previsão no período</p>
               )}
@@ -690,6 +694,11 @@ function DashboardReceitaLavoro() {
           </PbiCard>
 
           <PbiCard title={`Receita Caixa — ${ano - 1} x ${ano}`} subtitle="Receita Caixa mensal (barras lado a lado)">
+            {escopo.restrito ? (
+              <div className="flex items-center justify-center" style={{ height: 400 }}>
+                <p className="text-sm font-semibold text-gray-400">Indisponível para o seu perfil</p>
+              </div>
+            ) : (
             <div style={{ width: "100%", height: 400 }}>
               <ResponsiveContainer>
                 <BarChart data={caixaYoyChart} margin={{ top: 28, right: 12, left: 8, bottom: 4 }} barCategoryGap="18%">
@@ -711,6 +720,7 @@ function DashboardReceitaLavoro() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
+            )}
           </PbiCard>
         </div>
 
@@ -802,7 +812,9 @@ function DashboardReceitaLavoro() {
                   </span>
                 }
               />
-              <MetricCard title="Defasagem (Comp - Caixa)" value={BRL(kpis?.defasagem)} loading={kpisQ.isLoading} />
+              <MetricCard title="Defasagem (Comp - Caixa)"
+                value={kpis != null && kpis.defasagem == null ? "Indisponível para o seu perfil" : BRL(kpis?.defasagem)}
+                loading={kpisQ.isLoading} />
             </div>
 
             <PbiCard title="Receita Mensal" subtitle={`Competência x Caixa x Meta — ${periodoLabel}`}>
@@ -815,7 +827,7 @@ function DashboardReceitaLavoro() {
                     <Tooltip formatter={(v: any) => BRL(Number(v))} />
                     <Legend wrapperStyle={{ fontSize: 11 }} />
                     <Bar dataKey="Competência" fill="#13405C" />
-                    <Bar dataKey="Caixa" fill="#338B85" />
+                    {!escopo.restrito && <Bar dataKey="Caixa" fill="#338B85" />}
                     <Line type="monotone" dataKey="Meta" stroke="#6B9AAA" strokeWidth={2} dot={{ r: 3 }} />
                   </ComposedChart>
                 </ResponsiveContainer>

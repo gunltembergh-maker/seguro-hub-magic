@@ -3381,6 +3381,7 @@ export type Database = {
         Args: { p_canal: string; p_user_id: string }
         Returns: boolean
       }
+      lavoro_receita_caixa_visivel: { Args: never; Returns: boolean }
       lavoro_times_usuario: { Args: { _user_id: string }; Returns: string[] }
       normalize_canal_repasse: { Args: { p_canal: string }; Returns: string }
       normalize_categoria_financeira: {
@@ -4236,14 +4237,23 @@ export type Database = {
           valor: number
         }[]
       }
-      rpc_lavoro_receita_caixa_comparativo_anual: {
-        Args: { p_anos: number[] }
-        Returns: {
-          ano: number
-          mes: number
-          receita_caixa: number
-        }[]
-      }
+      rpc_lavoro_receita_caixa_comparativo_anual:
+        | {
+            Args: { p_anos: number[] }
+            Returns: {
+              ano: number
+              mes: number
+              receita_caixa: number
+            }[]
+          }
+        | {
+            Args: { p_anos: number[]; p_user_id: string }
+            Returns: {
+              ano: number
+              mes: number
+              receita_caixa: number
+            }[]
+          }
       rpc_lavoro_receita_comparativo_anual:
         | {
             Args: { p_anos: number[] }
@@ -4368,13 +4378,21 @@ export type Database = {
               receita_competencia: number
             }[]
           }
-      rpc_lavoro_receita_variacoes: {
-        Args: { p_ano: number; p_mes: number }
-        Returns: {
-          variacao_ano_anterior: number
-          variacao_mes_anterior: number
-        }[]
-      }
+      rpc_lavoro_receita_variacoes:
+        | {
+            Args: { p_ano: number; p_mes: number }
+            Returns: {
+              variacao_ano_anterior: number
+              variacao_mes_anterior: number
+            }[]
+          }
+        | {
+            Args: { p_ano: number; p_mes: number; p_user_id: string }
+            Returns: {
+              variacao_ano_anterior: number
+              variacao_mes_anterior: number
+            }[]
+          }
       rpc_lavoro_repasse_detalhe: {
         Args: {
           p_ano?: number
