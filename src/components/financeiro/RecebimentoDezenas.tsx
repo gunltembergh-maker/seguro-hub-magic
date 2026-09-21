@@ -368,13 +368,14 @@ export function RecebimentoDezenas() {
                             >
                               <CellButton
                                 value={val}
+                                exportando={exportando}
+                                onExport={exportar}
                                 recorte={{
                                   chave: `c-${ano}-${mes}-${d}-${e}`,
                                   ini: primeiroDia(ano, mes),
                                   fim: ultimoDia(ano, mes),
                                   dezena: d,
                                   empresa: e,
-                                  rotuloPeriodo: `${MESES_LONGO[mes - 1]} / ${ano}`,
                                   arquivo: `Recebimento_${ano}-${mesStr}_${d}_${slugEmp(e)}.xlsx`,
                                 }}
                               />
