@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,7 +11,6 @@ const NAVY = "#13405C";
 const CYAN = "#338B85";
 
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-const MESES_LONGO = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
 const BRL = (v: number | null | undefined) =>
   Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
@@ -70,7 +69,6 @@ type Recorte = {
   fim: string;
   dezena: string | null;
   empresa: string | null;
-  rotuloPeriodo: string;
   arquivo: string;
 };
 
@@ -87,6 +85,45 @@ const ultimoDia = (ano: number, mes: number) =>
 
 const slugEmp = (s: string) =>
   s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+
+type CellButtonProps = {
+  value: number;
+  recorte: Recorte;
+  exportando: string | null;
+  onExport: (r: Recorte) => void | Promise<void>;
+  className?: string;
+};
+
+const CellButton = ({
+  value,
+  recorte,
+  exportando,
+  onExport,
+  className,
+}: CellButtonProps) => {
+  const isExporting = exportando === recorte.chave;
+  const isDisabled = exportando !== null;
+  return (
+    <button
+      type="button"
+      disabled={isDisabled}
+      onClick={() => onExport(recorte)}
+      className={[
+        "block h-full w-full px-4 py-2 text-right font-mono tabular-nums transition-colors",
+        "hover:bg-[#EAF7FC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00BAF2] focus-visible:ring-offset-1",
+        value === 0 ? "text-gray-300" : "",
+        isDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer",
+        className || "",
+      ].join(" ")}
+    >
+      {isExporting ? (
+        <Loader2 className="ml-auto h-3.5 w-3.5 animate-spin" />
+      ) : (
+        BRL(value)
+      )}
+    </button>
+  );
+};
 
 export function RecebimentoDezenas() {
   const queryClient = useQueryClient();
@@ -106,7 +143,10 @@ export function RecebimentoDezenas() {
     });
   }, [ancora]);
 
-  const queryKey = ["lavoro-recebimento-dezenas-empresas", ancora.ano, ancora.mes];
+  const queryKey = useMemo(
+    () => ["lavoro-recebimento-dezenas-empresas", ancora.ano, ancora.mes],
+    [ancora.ano, ancora.mes],
+  );
 
   const { data, isLoading, error } = useQuery({
     queryKey,
@@ -247,38 +287,6 @@ export function RecebimentoDezenas() {
     }
   };
 
-  const CellButton = ({
-    value,
-    recorte,
-    className,
-  }: {
-    value: number;
-    recorte: Recorte;
-    className?: string;
-  }) => {
-    const isLoading = exportando === recorte.chave;
-    const isDisabled = exportando !== null && !isLoading;
-    return (
-      <button
-        type="button"
-        disabled={isDisabled}
-        onClick={() => exportar(recorte)}
-        className={[
-          "block h-full w-full px-4 py-2 text-right font-mono tabular-nums transition-colors",
-          "hover:bg-[#EAF7FC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00BAF2] focus-visible:ring-offset-1",
-          value === 0 ? "text-gray-300" : "",
-          isDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer",
-          className || "",
-        ].join(" ")}
-      >
-        {isLoading ? (
-          <Loader2 className="ml-auto h-3.5 w-3.5 animate-spin" />
-        ) : (
-          BRL(value)
-        )}
-      </button>
-    );
-  };
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
@@ -367,13 +375,14 @@ export function RecebimentoDezenas() {
                             >
                               <CellButton
                                 value={val}
+                                exportando={exportando}
+                                onExport={exportar}
                                 recorte={{
                                   chave: `c-${ano}-${mes}-${d}-${e}`,
                                   ini: primeiroDia(ano, mes),
                                   fim: ultimoDia(ano, mes),
                                   dezena: d,
                                   empresa: e,
-                                  rotuloPeriodo: `${MESES_LONGO[mes - 1]} / ${ano}`,
                                   arquivo: `Recebimento_${ano}-${mesStr}_${d}_${slugEmp(e)}.xlsx`,
                                 }}
                               />
@@ -387,13 +396,14 @@ export function RecebimentoDezenas() {
                       >
                         <CellButton
                           value={totalMes(ano, mes)}
+                          exportando={exportando}
+                          onExport={exportar}
                           recorte={{
                             chave: `m-${ano}-${mes}`,
                             ini: primeiroDia(ano, mes),
                             fim: ultimoDia(ano, mes),
                             dezena: null,
                             empresa: null,
-                            rotuloPeriodo: `${MESES_LONGO[mes - 1]} / ${ano}`,
                             arquivo: `Recebimento_${ano}-${mesStr}_mes_completo.xlsx`,
                           }}
                           className="font-semibold"
@@ -412,18 +422,19 @@ export function RecebimentoDezenas() {
                       return (
                         <TableCell
                           key={`${d}-${e}`}
-                          className={`border-l border-gray-200 p-0 text-right font-mono font-semibold tabular-nums ${i === 0 ? "border-l border-gray-200" : ""}`}
+                          className={`p-0 text-right font-mono font-semibold tabular-nums ${i === 0 ? "border-l border-gray-200" : ""}`}
                           style={{ color: NAVY }}
                         >
                           <CellButton
                             value={val}
+                            exportando={exportando}
+                            onExport={exportar}
                             recorte={{
                               chave: `j-${d}-${e}`,
                               ini: iniJanelaStr,
                               fim: fimJanelaStr,
                               dezena: d,
                               empresa: e,
-                              rotuloPeriodo: janelaLabel,
                               arquivo: `Recebimento_${iniJanelaFile}_a_${fimJanelaFile}_${d}_${slugEmp(e)}.xlsx`,
                             }}
                             className="font-semibold"
@@ -438,13 +449,14 @@ export function RecebimentoDezenas() {
                   >
                     <CellButton
                       value={totalJanela}
+                      exportando={exportando}
+                      onExport={exportar}
                       recorte={{
                         chave: "jt",
                         ini: iniJanelaStr,
                         fim: fimJanelaStr,
                         dezena: null,
                         empresa: null,
-                        rotuloPeriodo: janelaLabel,
                         arquivo: `Recebimento_${iniJanelaFile}_a_${fimJanelaFile}_completo.xlsx`,
                       }}
                       className="font-bold"
