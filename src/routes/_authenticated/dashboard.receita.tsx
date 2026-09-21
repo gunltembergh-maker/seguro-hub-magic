@@ -403,7 +403,6 @@ function DashboardReceitaLavoro() {
   };
 
   const kpis = kpisQ.data;
-  const caixaIndisponivel = !!kpis && kpis.receita_caixa == null;
   const atingCaixa = Number(kpis?.atingimento_caixa || 0) * 100;
   const atingCaixaColor = atingCaixa >= 100 ? "#16a34a" : atingCaixa >= 80 ? "#f59e0b" : "#dc2626";
   const atingimento = Number(kpis?.atingimento || 0) * 100;
