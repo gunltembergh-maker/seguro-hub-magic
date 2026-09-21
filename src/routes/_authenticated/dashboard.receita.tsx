@@ -403,6 +403,7 @@ function DashboardReceitaLavoro() {
   };
 
   const kpis = kpisQ.data;
+  const caixaIndisponivel = !!kpis && kpis.receita_caixa == null;
   const atingCaixa = Number(kpis?.atingimento_caixa || 0) * 100;
   const atingCaixaColor = atingCaixa >= 100 ? "#16a34a" : atingCaixa >= 80 ? "#f59e0b" : "#dc2626";
   const atingimento = Number(kpis?.atingimento || 0) * 100;
@@ -596,8 +597,9 @@ function DashboardReceitaLavoro() {
           <BigStatCard
             title={`Receita Caixa em ${periodoLabel}`}
             subtitle="Receita Caixa (efetivamente recebido)"
-            value={BRL(kpis?.receita_caixa)} accent="#13405C" loading={kpisQ.isLoading}
-            breakdown={escopo.filtrar([
+            value={caixaIndisponivel ? "Indisponível para o seu perfil" : BRL(kpis?.receita_caixa)}
+            accent="#13405C" loading={kpisQ.isLoading}
+            breakdown={caixaIndisponivel ? undefined : escopo.filtrar([
               { label: "Garantia", value: BRL(kpis?.caixa_garantia) },
               { label: "Benefícios", value: BRL(kpis?.caixa_beneficios) },
               { label: "Demais Ramos", value: BRL(kpis?.caixa_demais) },
