@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,7 +11,6 @@ const NAVY = "#13405C";
 const CYAN = "#338B85";
 
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-const MESES_LONGO = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
 const BRL = (v: number | null | undefined) =>
   Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
@@ -70,7 +69,6 @@ type Recorte = {
   fim: string;
   dezena: string | null;
   empresa: string | null;
-  rotuloPeriodo: string;
   arquivo: string;
 };
 
@@ -106,7 +104,10 @@ export function RecebimentoDezenas() {
     });
   }, [ancora]);
 
-  const queryKey = ["lavoro-recebimento-dezenas-empresas", ancora.ano, ancora.mes];
+  const queryKey = useMemo(
+    () => ["lavoro-recebimento-dezenas-empresas", ancora.ano, ancora.mes],
+    [ancora.ano, ancora.mes],
+  );
 
   const { data, isLoading, error } = useQuery({
     queryKey,
@@ -412,7 +413,7 @@ export function RecebimentoDezenas() {
                       return (
                         <TableCell
                           key={`${d}-${e}`}
-                          className={`border-l border-gray-200 p-0 text-right font-mono font-semibold tabular-nums ${i === 0 ? "border-l border-gray-200" : ""}`}
+                          className={`p-0 text-right font-mono font-semibold tabular-nums ${i === 0 ? "border-l border-gray-200" : ""}`}
                           style={{ color: NAVY }}
                         >
                           <CellButton
