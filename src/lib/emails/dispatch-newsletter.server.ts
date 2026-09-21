@@ -154,11 +154,14 @@ export async function dispatchNewsletterCore(opts: {
         detalhes.push({ to, ok: false, reason: 'sem_acesso_receita' })
         continue
       }
-      const cacheKey = uid ?? '__all__'
+      const cacheKey = escopoDest.times.length === 0
+        ? '__irrestrito__'
+        : [...escopoDest.times].sort().join('|')
 
       let templateData = cache.get(cacheKey)
       if (!templateData) {
-        templateData = await buildTemplateData(uid ?? null)
+        const uidRepresentativo = escopoDest.times.length === 0 ? null : (uid ?? null)
+        templateData = await buildTemplateData(uidRepresentativo)
         cache.set(cacheKey, templateData)
       }
       const r = await sendTemplateEmail(templateName, to, {
