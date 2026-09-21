@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { SendNewsletterButton } from "@/components/admin/SendNewsletterButton";
 import { useEscopoReceita } from "@/hooks/use-escopo-receita";
+import { useViewAs } from "@/contexts/view-as-context";
 import { SEM_ACESSO_RECEITA_MSG } from "@/lib/receita-escopo";
 
 
