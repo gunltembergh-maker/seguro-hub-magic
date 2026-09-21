@@ -268,8 +268,8 @@ function DashboardReceitaLavoro() {
       });
       if (error) throw error;
       return (data?.[0] ?? null) as {
-        receita_competencia: number; receita_caixa: number; meta_periodo: number;
-        atingimento: number; defasagem: number; previsto_caixa: number; atingimento_caixa: number;
+        receita_competencia: number; receita_caixa: number | null; meta_periodo: number;
+        atingimento: number; defasagem: number | null; previsto_caixa: number; atingimento_caixa: number | null;
         previsto_garantia: number; previsto_beneficios: number; previsto_demais: number;
         caixa_garantia: number; caixa_beneficios: number; caixa_demais: number;
         competencia_garantia: number; competencia_beneficios: number; competencia_demais: number;
@@ -278,23 +278,23 @@ function DashboardReceitaLavoro() {
   });
 
   const variacoesQ = useQuery({
-    queryKey: ["lavoro-receita-variacoes", ano, mesAtual],
+    queryKey: ["lavoro-receita-variacoes", ano, mesAtual, viewAsUserId],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("rpc_lavoro_receita_variacoes" as any, {
-        p_ano: ano, p_mes: mesAtual,
+        p_ano: ano, p_mes: mesAtual, p_user_id: viewAsUserId,
       });
       if (error) throw error;
       return (data?.[0] ?? null) as {
-        variacao_mes_anterior: number; variacao_ano_anterior: number;
+        variacao_mes_anterior: number | null; variacao_ano_anterior: number | null;
       } | null;
     },
   });
 
   const caixaYoyQ = useQuery({
-    queryKey: ["lavoro-caixa-yoy", ano],
+    queryKey: ["lavoro-caixa-yoy", ano, viewAsUserId],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("rpc_lavoro_receita_caixa_comparativo_anual" as any, {
-        p_anos: [ano - 1, ano],
+        p_anos: [ano - 1, ano], p_user_id: viewAsUserId,
       });
       if (error) throw error;
       return (data || []) as Array<{ ano: number; mes: number; receita_caixa: number }>;
