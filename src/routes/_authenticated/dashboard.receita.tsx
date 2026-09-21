@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { SendNewsletterButton } from "@/components/admin/SendNewsletterButton";
 import { useEscopoReceita } from "@/hooks/use-escopo-receita";
+import { useViewAs } from "@/contexts/view-as-context";
 import { SEM_ACESSO_RECEITA_MSG } from "@/lib/receita-escopo";
 
 
@@ -93,12 +94,12 @@ const COLS_VENCIDA_DETALHE: ColunaExport[] = [
   { header: "Observação", key: "observacao", formato: "texto", width: 40 },
 ];
 
-async function exportarComissaoVencida() {
+async function exportarComissaoVencida(viewAsUserId: string | null) {
   const toastId = toast.loading("Gerando planilha…");
   try {
     const { data: resumoData, error: resumoErr } = await supabase.rpc(
       "rpc_lavoro_comissao_vencida_export_resumo" as never,
-      { p_data_ini: DATA_INI_EXPORT } as never,
+      { p_data_ini: DATA_INI_EXPORT, p_user_id: viewAsUserId } as never,
     );
     if (resumoErr) throw resumoErr;
     const resumo = ((resumoData || []) as Array<{
@@ -119,6 +120,7 @@ async function exportarComissaoVencida() {
         p_seguradora: null,
         p_limit: PAGINA,
         p_offset: offset,
+        p_user_id: viewAsUserId,
       } as never);
       if (error) throw error;
       const lote = (data || []) as any[];
@@ -242,6 +244,7 @@ function VarCard({ title, value, loading }: { title: string; value: number | nul
 // ─── Página ──────────────────────────────────────────────────────────────
 function DashboardReceitaLavoro() {
   const escopo = useEscopoReceita();
+  const { viewAsUserId } = useViewAs();
   const hoje = new Date();
   const [ano, setAno] = useState<number>(hoje.getFullYear());
   const [periodo, setPeriodo] = useState<Periodo>("YTD");
@@ -258,10 +261,10 @@ function DashboardReceitaLavoro() {
 
   // ─── Queries ──────────────────────────────────────────────────────────
   const kpisQ = useQuery({
-    queryKey: ["lavoro-receita-kpis", ano, mesAtual, periodo],
+    queryKey: ["lavoro-receita-kpis", ano, mesAtual, periodo, viewAsUserId],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("rpc_lavoro_receita_kpis" as any, {
-        p_ano: ano, p_mes: mesAtual, p_periodo: periodo,
+        p_ano: ano, p_mes: mesAtual, p_periodo: periodo, p_user_id: viewAsUserId,
       });
       if (error) throw error;
       return (data?.[0] ?? null) as {
@@ -299,10 +302,10 @@ function DashboardReceitaLavoro() {
   });
 
   const competenciaYoyQ = useQuery({
-    queryKey: ["lavoro-competencia-yoy", ano],
+    queryKey: ["lavoro-competencia-yoy", ano, viewAsUserId],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("rpc_lavoro_receita_comparativo_anual" as any, {
-        p_anos: [ano - 1, ano],
+        p_anos: [ano - 1, ano], p_user_id: viewAsUserId,
       });
       if (error) throw error;
       return (data || []) as Array<{ ano: number; mes: number; receita_competencia: number }>;
@@ -310,9 +313,9 @@ function DashboardReceitaLavoro() {
   });
 
   const serieQ = useQuery({
-    queryKey: ["lavoro-receita-serie", ano],
+    queryKey: ["lavoro-receita-serie", ano, viewAsUserId],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("rpc_lavoro_receita_serie_mensal" as any, { p_ano: ano });
+      const { data, error } = await supabase.rpc("rpc_lavoro_receita_serie_mensal" as any, { p_ano: ano, p_user_id: viewAsUserId });
       if (error) throw error;
       return (data || []) as Array<{ mes: number; receita_competencia: number; receita_caixa: number; meta_mensal: number }>;
     },
@@ -320,10 +323,10 @@ function DashboardReceitaLavoro() {
   });
 
   const comparativoQ = useQuery({
-    queryKey: ["lavoro-receita-comparativo", anosDisponiveis],
+    queryKey: ["lavoro-receita-comparativo", anosDisponiveis, viewAsUserId],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("rpc_lavoro_receita_comparativo_anual" as any, {
-        p_anos: anosDisponiveis,
+        p_anos: anosDisponiveis, p_user_id: viewAsUserId,
       });
       if (error) throw error;
       return (data || []) as Array<{ ano: number; mes: number; receita_competencia: number }>;
@@ -332,10 +335,10 @@ function DashboardReceitaLavoro() {
   });
 
   const canalQ = useQuery({
-    queryKey: ["lavoro-receita-canal", ano, mesAtual, periodo],
+    queryKey: ["lavoro-receita-canal", ano, mesAtual, periodo, viewAsUserId],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("rpc_lavoro_receita_por_canal" as any, {
-        p_ano: ano, p_mes: mesAtual, p_periodo: periodo,
+        p_ano: ano, p_mes: mesAtual, p_periodo: periodo, p_user_id: viewAsUserId,
       });
       if (error) throw error;
       return (data || []) as Array<{ tipo_de_ramo: string; receita: number }>;
@@ -344,10 +347,10 @@ function DashboardReceitaLavoro() {
   });
 
   const ramoQ = useQuery({
-    queryKey: ["lavoro-receita-ramo", ano, mesAtual, periodo],
+    queryKey: ["lavoro-receita-ramo", ano, mesAtual, periodo, viewAsUserId],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("rpc_lavoro_receita_por_ramo" as any, {
-        p_ano: ano, p_mes: mesAtual, p_periodo: periodo,
+        p_ano: ano, p_mes: mesAtual, p_periodo: periodo, p_user_id: viewAsUserId,
       });
       if (error) throw error;
       return (data || []) as Array<{ ramo: string; receita: number }>;
@@ -360,7 +363,7 @@ function DashboardReceitaLavoro() {
     if (exportandoVencida) return;
     setExportandoVencida(true);
     try {
-      await exportarComissaoVencida();
+      await exportarComissaoVencida(viewAsUserId);
     } finally {
       setExportandoVencida(false);
     }
@@ -368,10 +371,10 @@ function DashboardReceitaLavoro() {
 
   // Usa o RPC de vencidos que já existe neste projeto
   const vencidosQ = useQuery({
-    queryKey: ["lavoro-comissao-vencida", ano, mesAtual, periodo],
+    queryKey: ["lavoro-comissao-vencida", ano, mesAtual, periodo, viewAsUserId],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("rpc_comissao_vencida_por_canal" as any, {
-        p_ano: ano, p_mes: mesAtual, p_periodo: periodo,
+        p_ano: ano, p_mes: mesAtual, p_periodo: periodo, p_user_id: viewAsUserId,
       });
       if (error) throw error;
       return (data || []) as Array<{ tipo_de_ramo: string; comissao_vencida: number }>;
