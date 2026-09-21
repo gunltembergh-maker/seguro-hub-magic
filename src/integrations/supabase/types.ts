@@ -4012,6 +4012,43 @@ export type Database = {
           tipo_pagamento: string
         }[]
       }
+      rpc_lavoro_comissao_vencida_export_detalhe: {
+        Args: {
+          p_data_ini?: string
+          p_limit?: number
+          p_offset?: number
+          p_seguradora?: string
+          p_tipo_de_ramo?: string
+        }
+        Returns: {
+          comissao_bruta: number
+          data_emissao: string
+          data_pagamento: string
+          dias_atraso: number
+          documento: string
+          faixa_aging: string
+          numero_apolice: string
+          numero_da_parcela: number
+          observacao: string
+          ramo: string
+          responsavel: string
+          segurado: string
+          seguradora: string
+          status_parcela_comissao: string
+          tipo_de_ramo: string
+          tomador: string
+        }[]
+      }
+      rpc_lavoro_comissao_vencida_export_resumo: {
+        Args: { p_data_ini?: string }
+        Returns: {
+          comissao_bruta: number
+          faixa_aging: string
+          qtd_itens: number
+          seguradora: string
+          tipo_de_ramo: string
+        }[]
+      }
       rpc_lavoro_dezenas_detalhe: {
         Args: {
           p_data_fim: string
