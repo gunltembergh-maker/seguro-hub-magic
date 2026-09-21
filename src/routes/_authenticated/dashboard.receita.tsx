@@ -640,13 +640,15 @@ function DashboardReceitaLavoro() {
                   Atingimento de Caixa ({periodoLabel})
                 </p>
                 <p className="text-[11px] text-gray-400">
-                  Receita Caixa / Previsto — {BRL(kpis?.receita_caixa)} / {BRL(kpis?.previsto_caixa)}
+                  Receita Caixa / Previsto — {caixaIndisponivel ? "indisponível" : BRL(kpis?.receita_caixa)} / {BRL(kpis?.previsto_caixa)}
                 </p>
               </div>
               {isAtingimentoValido(kpis?.atingimento_caixa) && Number(kpis?.previsto_caixa || 0) > 0 ? (
                 <p className="text-2xl font-bold" style={{ color: atingCaixaColor }}>
                   {formatarAtingimento(kpis?.atingimento_caixa)}
                 </p>
+              ) : caixaIndisponivel ? (
+                <p className="text-sm font-semibold text-gray-400">Indisponível para o seu perfil</p>
               ) : (
                 <p className="text-sm font-semibold text-gray-400">Sem previsão no período</p>
               )}
@@ -692,6 +694,11 @@ function DashboardReceitaLavoro() {
           </PbiCard>
 
           <PbiCard title={`Receita Caixa — ${ano - 1} x ${ano}`} subtitle="Receita Caixa mensal (barras lado a lado)">
+            {escopo.restrito ? (
+              <div className="flex items-center justify-center" style={{ height: 400 }}>
+                <p className="text-sm font-semibold text-gray-400">Indisponível para o seu perfil</p>
+              </div>
+            ) : (
             <div style={{ width: "100%", height: 400 }}>
               <ResponsiveContainer>
                 <BarChart data={caixaYoyChart} margin={{ top: 28, right: 12, left: 8, bottom: 4 }} barCategoryGap="18%">
