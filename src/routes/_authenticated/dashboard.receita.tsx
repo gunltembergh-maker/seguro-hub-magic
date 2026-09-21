@@ -64,6 +64,102 @@ const labelPeriodo = (p: Periodo, mes: number, ano: number) => {
   return `YTD ${ano}`;
 };
 
+// ─── Exportação "Comissão Vencida p/ Financeiro" ────────────────────────
+const DATA_INI_EXPORT = "2026-01-01";
+
+const COLS_VENCIDA_RESUMO: ColunaExport[] = [
+  { header: "Canal", key: "tipo_de_ramo", formato: "texto", width: 18 },
+  { header: "Seguradora", key: "seguradora", formato: "texto", width: 24 },
+  { header: "Faixa de Atraso", key: "faixa_aging", formato: "texto", width: 18 },
+  { header: "Qtd. Itens", key: "qtd_itens", formato: "inteiro" },
+  { header: "Comissão Bruta", key: "comissao_bruta", formato: "moeda", width: 18 },
+];
+
+const COLS_VENCIDA_DETALHE: ColunaExport[] = [
+  { header: "Tomador", key: "tomador", formato: "texto", width: 34 },
+  { header: "Segurado", key: "segurado", formato: "texto", width: 34 },
+  { header: "Documento", key: "documento", formato: "texto", width: 20 },
+  { header: "Canal", key: "tipo_de_ramo", formato: "texto", width: 16 },
+  { header: "Ramo", key: "ramo", formato: "texto" },
+  { header: "Seguradora", key: "seguradora", formato: "texto", width: 24 },
+  { header: "Nº Apólice", key: "numero_apolice", formato: "texto", width: 26 },
+  { header: "Data de Emissão", key: "data_emissao", formato: "data" },
+  { header: "Data de Vencimento", key: "data_pagamento", formato: "data" },
+  { header: "Dias em Atraso", key: "dias_atraso", formato: "inteiro" },
+  { header: "Faixa de Atraso", key: "faixa_aging", formato: "texto", width: 18 },
+  { header: "Nº Parcela", key: "numero_da_parcela", formato: "inteiro" },
+  { header: "Comissão Bruta", key: "comissao_bruta", formato: "moeda", width: 18 },
+  { header: "Responsável", key: "responsavel", formato: "texto", width: 24 },
+  { header: "Observação", key: "observacao", formato: "texto", width: 40 },
+];
+
+async function exportarComissaoVencida() {
+  const toastId = toast.loading("Gerando planilha…");
+  try {
+    const { data: resumoData, error: resumoErr } = await supabase.rpc(
+      "rpc_lavoro_comissao_vencida_export_resumo" as never,
+      { p_data_ini: DATA_INI_EXPORT } as never,
+    );
+    if (resumoErr) throw resumoErr;
+    const resumo = ((resumoData || []) as Array<{
+      tipo_de_ramo: string; seguradora: string; faixa_aging: string; qtd_itens: number; comissao_bruta: number;
+    }>).sort((a, b) =>
+      String(a.tipo_de_ramo).localeCompare(String(b.tipo_de_ramo)) ||
+      Number(b.comissao_bruta) - Number(a.comissao_bruta),
+    );
+
+    const PAGINA = 500;
+    let offset = 0;
+    const detalhe: any[] = [];
+    let truncado = false;
+    for (let i = 0; i < 40; i++) {
+      const { data, error } = await supabase.rpc("rpc_lavoro_comissao_vencida_export_detalhe" as never, {
+        p_data_ini: DATA_INI_EXPORT,
+        p_tipo_de_ramo: null,
+        p_seguradora: null,
+        p_limit: PAGINA,
+        p_offset: offset,
+      } as never);
+      if (error) throw error;
+      const lote = (data || []) as any[];
+      detalhe.push(...lote);
+      if (lote.length < PAGINA) break;
+      if (i === 39) truncado = true;
+      offset += PAGINA;
+    }
+
+    if (resumo.length === 0 && detalhe.length === 0) {
+      toast.error("Nada a exportar no período", { id: toastId });
+      return;
+    }
+    if (truncado) {
+      toast.warning("Detalhe truncado em 20.000 linhas. Ajuste os filtros para exportar tudo.", { duration: 8000 });
+    }
+
+    const hoje = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+    const ddmmyyyy = `${String(hoje.getDate()).padStart(2, "0")}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${hoje.getFullYear()}`;
+    const arquivo = `Comissao_Vencida_${ddmmyyyy}.xlsx`;
+    const totalBruta = resumo.reduce((acc, r) => acc + Number(r.comissao_bruta || 0), 0);
+    const info = [
+      { rotulo: "Corte", valor: `Vencidas desde ${DATA_INI_EXPORT.split("-").reverse().join("/")}` },
+      { rotulo: "Itens no detalhe", valor: String(detalhe.length) },
+      { rotulo: "Comissão bruta total", valor: BRL(totalBruta) },
+    ];
+
+    await exportarXlsx({
+      arquivo,
+      cabecalho: { titulo: "Comissão Vencida", subtitulo: "EXPORTAÇÃO PARA O FINANCEIRO", info },
+      abas: [
+        { nome: "Resumo", colunas: COLS_VENCIDA_RESUMO, linhas: resumo as any, totalizar: ["qtd_itens", "comissao_bruta"], semLinhasDeGrade: true },
+        { nome: "Detalhe", colunas: COLS_VENCIDA_DETALHE, linhas: detalhe, totalizar: ["comissao_bruta"], semLinhasDeGrade: true },
+      ],
+    });
+    toast.success(arquivo, { id: toastId });
+  } catch (e: any) {
+    toast.error(e?.message || "Falha ao gerar a planilha", { id: toastId });
+  }
+}
+
 // ─── PbiCard reutilizável ───────────────────────────────────────────────
 function PbiCard({
   title, subtitle, children, className, headerRight,
