@@ -812,7 +812,9 @@ function DashboardReceitaLavoro() {
                   </span>
                 }
               />
-              <MetricCard title="Defasagem (Comp - Caixa)" value={BRL(kpis?.defasagem)} loading={kpisQ.isLoading} />
+              <MetricCard title="Defasagem (Comp - Caixa)"
+                value={kpis != null && kpis.defasagem == null ? "Indisponível para o seu perfil" : BRL(kpis?.defasagem)}
+                loading={kpisQ.isLoading} />
             </div>
 
             <PbiCard title="Receita Mensal" subtitle={`Competência x Caixa x Meta — ${periodoLabel}`}>
@@ -825,7 +827,7 @@ function DashboardReceitaLavoro() {
                     <Tooltip formatter={(v: any) => BRL(Number(v))} />
                     <Legend wrapperStyle={{ fontSize: 11 }} />
                     <Bar dataKey="Competência" fill="#13405C" />
-                    <Bar dataKey="Caixa" fill="#338B85" />
+                    {!escopo.restrito && <Bar dataKey="Caixa" fill="#338B85" />}
                     <Line type="monotone" dataKey="Meta" stroke="#6B9AAA" strokeWidth={2} dot={{ r: 3 }} />
                   </ComposedChart>
                 </ResponsiveContainer>
