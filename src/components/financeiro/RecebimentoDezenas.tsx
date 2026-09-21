@@ -86,6 +86,45 @@ const ultimoDia = (ano: number, mes: number) =>
 const slugEmp = (s: string) =>
   s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
 
+type CellButtonProps = {
+  value: number;
+  recorte: Recorte;
+  exportando: string | null;
+  onExport: (r: Recorte) => void | Promise<void>;
+  className?: string;
+};
+
+const CellButton = ({
+  value,
+  recorte,
+  exportando,
+  onExport,
+  className,
+}: CellButtonProps) => {
+  const isExporting = exportando === recorte.chave;
+  const isDisabled = exportando !== null;
+  return (
+    <button
+      type="button"
+      disabled={isDisabled}
+      onClick={() => onExport(recorte)}
+      className={[
+        "block h-full w-full px-4 py-2 text-right font-mono tabular-nums transition-colors",
+        "hover:bg-[#EAF7FC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00BAF2] focus-visible:ring-offset-1",
+        value === 0 ? "text-gray-300" : "",
+        isDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer",
+        className || "",
+      ].join(" ")}
+    >
+      {isExporting ? (
+        <Loader2 className="ml-auto h-3.5 w-3.5 animate-spin" />
+      ) : (
+        BRL(value)
+      )}
+    </button>
+  );
+};
+
 export function RecebimentoDezenas() {
   const queryClient = useQueryClient();
   const [exportando, setExportando] = useState<string | null>(null);
@@ -248,38 +287,6 @@ export function RecebimentoDezenas() {
     }
   };
 
-  const CellButton = ({
-    value,
-    recorte,
-    className,
-  }: {
-    value: number;
-    recorte: Recorte;
-    className?: string;
-  }) => {
-    const isLoading = exportando === recorte.chave;
-    const isDisabled = exportando !== null && !isLoading;
-    return (
-      <button
-        type="button"
-        disabled={isDisabled}
-        onClick={() => exportar(recorte)}
-        className={[
-          "block h-full w-full px-4 py-2 text-right font-mono tabular-nums transition-colors",
-          "hover:bg-[#EAF7FC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00BAF2] focus-visible:ring-offset-1",
-          value === 0 ? "text-gray-300" : "",
-          isDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer",
-          className || "",
-        ].join(" ")}
-      >
-        {isLoading ? (
-          <Loader2 className="ml-auto h-3.5 w-3.5 animate-spin" />
-        ) : (
-          BRL(value)
-        )}
-      </button>
-    );
-  };
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
