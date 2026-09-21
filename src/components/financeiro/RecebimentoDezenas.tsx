@@ -389,13 +389,14 @@ export function RecebimentoDezenas() {
                       >
                         <CellButton
                           value={totalMes(ano, mes)}
+                          exportando={exportando}
+                          onExport={exportar}
                           recorte={{
                             chave: `m-${ano}-${mes}`,
                             ini: primeiroDia(ano, mes),
                             fim: ultimoDia(ano, mes),
                             dezena: null,
                             empresa: null,
-                            rotuloPeriodo: `${MESES_LONGO[mes - 1]} / ${ano}`,
                             arquivo: `Recebimento_${ano}-${mesStr}_mes_completo.xlsx`,
                           }}
                           className="font-semibold"
@@ -419,13 +420,14 @@ export function RecebimentoDezenas() {
                         >
                           <CellButton
                             value={val}
+                            exportando={exportando}
+                            onExport={exportar}
                             recorte={{
                               chave: `j-${d}-${e}`,
                               ini: iniJanelaStr,
                               fim: fimJanelaStr,
                               dezena: d,
                               empresa: e,
-                              rotuloPeriodo: janelaLabel,
                               arquivo: `Recebimento_${iniJanelaFile}_a_${fimJanelaFile}_${d}_${slugEmp(e)}.xlsx`,
                             }}
                             className="font-semibold"
@@ -440,13 +442,14 @@ export function RecebimentoDezenas() {
                   >
                     <CellButton
                       value={totalJanela}
+                      exportando={exportando}
+                      onExport={exportar}
                       recorte={{
                         chave: "jt",
                         ini: iniJanelaStr,
                         fim: fimJanelaStr,
                         dezena: null,
                         empresa: null,
-                        rotuloPeriodo: janelaLabel,
                         arquivo: `Recebimento_${iniJanelaFile}_a_${fimJanelaFile}_completo.xlsx`,
                       }}
                       className="font-bold"
