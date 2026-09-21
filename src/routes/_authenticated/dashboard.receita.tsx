@@ -720,6 +720,7 @@ function DashboardReceitaLavoro() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
+            )}
           </PbiCard>
         </div>
 
