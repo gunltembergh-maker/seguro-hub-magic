@@ -355,6 +355,17 @@ function DashboardReceitaLavoro() {
     enabled: detOpen,
   });
 
+  const [exportandoVencida, setExportandoVencida] = useState(false);
+  const handleExportVencida = async () => {
+    if (exportandoVencida) return;
+    setExportandoVencida(true);
+    try {
+      await exportarComissaoVencida();
+    } finally {
+      setExportandoVencida(false);
+    }
+  };
+
   // Usa o RPC de vencidos que já existe neste projeto
   const vencidosQ = useQuery({
     queryKey: ["lavoro-comissao-vencida", ano, mesAtual, periodo],
@@ -716,7 +727,20 @@ function DashboardReceitaLavoro() {
                     Parcelas com status "Vencida" no período {periodoLabel}
                   </p>
                 </div>
-                <p className="text-2xl font-bold" style={{ color: "#B45309" }}>{BRL(totalVencido)}</p>
+                <div className="flex items-center gap-3">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleExportVencida}
+                    disabled={exportandoVencida}
+                    className="h-8 text-xs font-semibold"
+                    style={{ borderColor: "#D97706", color: "#B45309", background: "#FFFBEB" }}
+                  >
+                    {exportandoVencida ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+                    Exportar para Financeiro
+                  </Button>
+                  <p className="text-2xl font-bold" style={{ color: "#B45309" }}>{BRL(totalVencido)}</p>
+                </div>
               </div>
               <div className="p-2">
                 {vencidosQ.isLoading ? (
