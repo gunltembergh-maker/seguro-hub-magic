@@ -4012,6 +4012,46 @@ export type Database = {
           tipo_pagamento: string
         }[]
       }
+      rpc_lavoro_dezenas_detalhe: {
+        Args: {
+          p_data_fim: string
+          p_data_ini: string
+          p_dezena?: string
+          p_empresa?: string
+          p_limit?: number
+          p_offset?: number
+        }
+        Returns: {
+          comissao_bruta: number
+          data_emissao: string
+          data_pagamento: string
+          dezena: string
+          documento: string
+          empresa_faturada: string
+          fim_vigencia: string
+          imposto_ret: number
+          inicio_vigencia: string
+          numero_apolice: string
+          numero_da_parcela: number
+          observacao: string
+          percentual_comissao: number
+          percentual_repasse: number
+          possui_repasse: string
+          premio_parcela: number
+          premio_total: number
+          qtd_parcelas: number
+          ramo: string
+          segurado: string
+          seguradora: string
+          status_parcela_comissao: string
+          status_repasse: string
+          tipo_de_ramo: string
+          tomador: string
+          valor_iss: number
+          valor_recebido_a_receber: number
+          valor_repasse_total: number
+        }[]
+      }
       rpc_lavoro_get_meta_anual: { Args: { p_ano: number }; Returns: number }
       rpc_lavoro_recebimento_dezenas_empresas: {
         Args: { p_ano: number; p_mes: number }
