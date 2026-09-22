@@ -54,7 +54,7 @@ export function useDocumentosDaDemanda(demandaId: string) {
         .order("tipo")
         .order("versao", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as DocumentoDemanda[];
+      return (data ?? []) as unknown as DocumentoDemanda[];
     },
   });
 }
@@ -154,7 +154,7 @@ export function useEnviarDocumento(demandaId: string) {
         // etapa; nada é chamado aqui.
         const { error: erroIA } = await supabase.from("garantia_analises_ia").insert({
           demanda_id: demandaId,
-          documento_id: (documento as DocumentoDemanda).id,
+          documento_id: (documento as unknown as DocumentoDemanda).id,
           fluxo: produto === "fianca_locaticia" ? "fianca_locaticia" : "seguro_garantia",
           situacao: "solicitada",
           solicitada_por: usuario,
@@ -168,7 +168,7 @@ export function useEnviarDocumento(demandaId: string) {
           .eq("id", demandaId);
       }
 
-      return documento as DocumentoDemanda;
+      return documento as unknown as DocumentoDemanda;
     },
     onSuccess: () => invalidar(qc, demandaId),
   });
