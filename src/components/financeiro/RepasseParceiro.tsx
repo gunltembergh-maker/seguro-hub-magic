@@ -1045,6 +1045,23 @@ function PainelLiberacoes({ pendentes }: { pendentes: LiberacaoPendente[] }) {
   const queryClient = useQueryClient();
   const [aberto, setAberto] = useState(false);
   const [decidindo, setDecidindo] = useState<string | null>(null);
+  const [abrindoAnexo, setAbrindoAnexo] = useState<string | null>(null);
+
+  const verDeAcordo = async (p: LiberacaoPendente) => {
+    if (!p.anexo_path || abrindoAnexo) return;
+    setAbrindoAnexo(p.liberacao_id);
+    try {
+      const { data, error } = await supabase.storage
+        .from("canal-parceiros-contratos")
+        .createSignedUrl(p.anexo_path, 300);
+      if (error) throw new Error(error.message);
+      window.open(data?.signedUrl, "_blank", "noopener");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setAbrindoAnexo(null);
+    }
+  };
 
   const decidir = async (id: string, aprovar: boolean) => {
     if (decidindo) return;
