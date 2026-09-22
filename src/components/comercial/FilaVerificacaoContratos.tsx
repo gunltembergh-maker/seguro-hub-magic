@@ -163,7 +163,7 @@ function useSouAprovador() {
 
 /* -------------------------------------------------------------- o bloco */
 
-export function FilaVerificacaoContratos() {
+export function FilaVerificacaoContratos({ semCard = false }: { semCard?: boolean } = {}) {
   const pendencias = usePendenciasVerificacao();
   const aprovador = useSouAprovador();
   const { abrir, ocupado } = useAbrirContrato();
@@ -172,20 +172,8 @@ export function FilaVerificacaoContratos() {
   const linhas = pendencias.data ?? [];
   if (pendencias.isLoading || linhas.length === 0) return null;
 
-  return (
-    <>
-      <Card className="border-amber-600/40">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
-            <AlertTriangle className="h-4 w-4" />
-            Aguardando conferência
-          </CardTitle>
-          <CardDescription>
-            Contratos parados esperando alguém abrir o documento e confirmar o que o Hub não
-            conseguiu concluir sozinho.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
+  const conteudo = (
+    <div className="space-y-3">
           {linhas.map((p) => (
             <div key={p.contrato_id} className="rounded-lg border bg-muted/30 p-3">
               <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
