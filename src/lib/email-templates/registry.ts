@@ -23,6 +23,7 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   // Pré-visualização apenas: o disparo real é feito por
   // src/lib/garantia/garantia-judicial-email.server.ts (precisa de anexos).
   'garantia-judicial-nova-demanda': garantiaNovaDemandaTemplate,
+  'canal-parceiro-vencimento': canalParceiroVencimentoTemplate,
   // Aliases legados (compat)
   'receita-diaria': receitaTemplate,
   'resumo-executivo-semanal': executivoTemplate,
