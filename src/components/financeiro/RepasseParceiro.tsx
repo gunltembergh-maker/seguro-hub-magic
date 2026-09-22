@@ -54,6 +54,9 @@ type LiberacaoPendente = {
   ano?: number | null;
   mes?: number | null;
   justificativa?: string | null;
+  email_de_acordo?: string | null;
+  anexo_path?: string | null;
+  anexo_nome?: string | null;
   solicitado_por_nome?: string | null;
   solicitado_por_email?: string | null;
   sou_o_aprovador?: boolean | null;
