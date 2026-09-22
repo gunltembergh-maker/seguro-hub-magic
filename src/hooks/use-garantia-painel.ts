@@ -161,10 +161,10 @@ export function useCarteiraPainel(f: FiltrosPainel) {
     queryKey: ["garantia-painel", "carteira", f],
     queryFn: async (): Promise<LinhaCarteira[]> => {
       const { data, error } = await supabase.rpc("rpc_garantia_painel_carteira", {
-        _produto: f.produto,
-        _modalidade: f.modalidade,
-        _canal: f.canal,
-        _responsavel: f.responsavel,
+        _produto: ou(f.produto),
+        _modalidade: ou(f.modalidade),
+        _canal: ou(f.canal),
+        _responsavel: ou(f.responsavel),
       });
       if (error) throw error;
       return (data ?? []) as LinhaCarteira[];
