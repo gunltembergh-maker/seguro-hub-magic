@@ -178,6 +178,25 @@ async function sha256(buf: ArrayBuffer): Promise<string> {
   return [...new Uint8Array(h)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+/** A camada de texto do PDF esta legivel? PDFs exportados do Word com mapa de
+ *  caracteres quebrado caem aqui e precisam de OCR. */
+function textoLegivel(t: string): boolean {
+  const latinas   = (t.match(/[A-Za-zÀ-ÿ]/g) || []).length;
+  const estranhas = (t.match(/[Ā-ӿ]/g) || []).length;
+  return latinas > 300 && estranhas < latinas * 0.2;
+}
+
+interface DadosManuais {
+  razao_social?: string;
+  cnpj?: string;
+  vigencia_inicio?: string;
+  vigencia_fim?: string;
+  pct_beneficios?: number;
+  pct_garantia?: number;
+  pct_demais?: number;
+  minimo?: number;
+}
+
 async function handle(request: Request): Promise<Response> {
   try {
     // Quem esta enviando precisa estar logado e enxergar o cadastro
