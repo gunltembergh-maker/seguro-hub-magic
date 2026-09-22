@@ -93,6 +93,7 @@ export function DemandasRepasseNF() {
   const [recusar, setRecusar] = useState<DemandaNF | null>(null);
   const [confirmar, setConfirmar] = useState<DemandaNF | null>(null);
   const [naoPagou, setNaoPagou] = useState<DemandaNF | null>(null);
+  const [relacao, setRelacao] = useState<DemandaNF | null>(null);
 
   const aConfirmar = useMemo(
     () =>
