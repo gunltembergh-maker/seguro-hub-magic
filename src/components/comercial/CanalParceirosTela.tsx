@@ -811,39 +811,31 @@ const rotuloStatusAlteracao: Record<string, string> = {
   SUPERADA: "Superada",
 };
 
-/** Percentual do contrato — ou o autorizado pela diretoria, que é o que vale. */
+/** Percentual já resolvido no banco; o selo marca o que veio da diretoria. */
 function CelulaPct({
-  contrato,
-  autorizado,
+  valor,
+  origem,
   autorizadoEm,
-  herdadoDeGarantia,
-  rodape,
 }: {
-  contrato?: number | null;
-  autorizado?: number | null;
+  valor?: number | null;
+  origem?: string | null;
   autorizadoEm?: string | null;
-  herdadoDeGarantia?: boolean;
-  rodape?: string | null;
 }) {
-  const temAutorizacao = autorizado != null;
-  const title = herdadoDeGarantia
-    ? `Autorizado pela diretoria em ${dia(autorizadoEm)} (percentual de Garantia, herdado para Demais ramos) · contrato: ${pct(contrato)}`
-    : `Autorizado pela diretoria em ${dia(autorizadoEm)} · contrato: ${pct(contrato)}`;
+  const diretoria = origem === "DIRETORIA";
   return (
     <TableCell className="tabular-nums">
       <span className="inline-flex items-center gap-1.5">
-        {pct(temAutorizacao ? autorizado : contrato)}
-        {temAutorizacao ? (
+        {pct(valor)}
+        {diretoria ? (
           <Badge
             variant="outline"
             className="border-amber-600/40 bg-amber-50 px-1.5 py-0 text-[10px] text-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
-            title={title}
+            title={`Autorizado pela diretoria em ${dia(autorizadoEm)}`}
           >
             diretoria
           </Badge>
         ) : null}
       </span>
-      {rodape ? <div className="text-xs text-muted-foreground">{rodape}</div> : null}
     </TableCell>
   );
 }
