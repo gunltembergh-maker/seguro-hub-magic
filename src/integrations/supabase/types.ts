@@ -2347,6 +2347,267 @@ export type Database = {
         }
         Relationships: []
       }
+      garantia_consultas_mercado: {
+        Row: {
+          capacidade_total: number
+          cliente_id: string
+          completa: boolean
+          consultada_em: string
+          criado_por: string | null
+          demanda_id: string | null
+          id: string
+          origem: string
+          resultado_bruto: Json | null
+          solicitacao_id: string | null
+          substituida_por_id: string | null
+          total_com_limite: number
+          total_nao_consultado: number
+          total_sem_limite: number
+          valida_ate: string
+        }
+        Insert: {
+          capacidade_total?: number
+          cliente_id: string
+          completa?: boolean
+          consultada_em?: string
+          criado_por?: string | null
+          demanda_id?: string | null
+          id?: string
+          origem: string
+          resultado_bruto?: Json | null
+          solicitacao_id?: string | null
+          substituida_por_id?: string | null
+          total_com_limite?: number
+          total_nao_consultado?: number
+          total_sem_limite?: number
+          valida_ate?: string
+        }
+        Update: {
+          capacidade_total?: number
+          cliente_id?: string
+          completa?: boolean
+          consultada_em?: string
+          criado_por?: string | null
+          demanda_id?: string | null
+          id?: string
+          origem?: string
+          resultado_bruto?: Json | null
+          solicitacao_id?: string | null
+          substituida_por_id?: string | null
+          total_com_limite?: number
+          total_nao_consultado?: number
+          total_sem_limite?: number
+          valida_ate?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "garantia_consultas_mercado_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "hub_clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "garantia_consultas_mercado_demanda_id_fkey"
+            columns: ["demanda_id"]
+            isOneToOne: false
+            referencedRelation: "garantia_demandas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "garantia_consultas_mercado_solicitacao_id_fkey"
+            columns: ["solicitacao_id"]
+            isOneToOne: false
+            referencedRelation: "garantia_judicial_solicitacoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "garantia_consultas_mercado_substituida_por_id_fkey"
+            columns: ["substituida_por_id"]
+            isOneToOne: false
+            referencedRelation: "garantia_consultas_mercado"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      garantia_demandas: {
+        Row: {
+          apolice_anterior_id: string | null
+          atualizado_em: string
+          balancos_assinados: boolean | null
+          cadastrado_em: string
+          cadastrado_por: string | null
+          canal_id: string | null
+          chegada_em: string
+          cliente_id: string
+          codigo: string | null
+          comissao_estimada: number | null
+          criado_em: string
+          data_limite: string | null
+          dre_assinados: boolean | null
+          entrada_id: string | null
+          etapa: string
+          exige_cadastro: boolean
+          fase: string
+          ia_analise_solicitada: boolean
+          id: string
+          importancia_segurada: number | null
+          justificativa_excecao: string | null
+          legenda: string | null
+          modalidade: string | null
+          natureza_rotulo: string | null
+          numero_processo: string | null
+          objeto: string | null
+          observacao: string | null
+          percentual_garantia: number | null
+          precisa_ccg: boolean
+          precisa_nomeacao: boolean
+          premio_estimado: number | null
+          produto: string
+          publico_privado: string | null
+          responsavel_cliente_id: string | null
+          responsavel_tecnico_id: string | null
+          segurado_id: string | null
+          solicitacao_id: string | null
+          status_atual: string
+          tipo_alteracao: string | null
+          tipo_movimento: string | null
+          triagem_completa: boolean
+          vigencia_exigida: string | null
+        }
+        Insert: {
+          apolice_anterior_id?: string | null
+          atualizado_em?: string
+          balancos_assinados?: boolean | null
+          cadastrado_em?: string
+          cadastrado_por?: string | null
+          canal_id?: string | null
+          chegada_em: string
+          cliente_id: string
+          codigo?: string | null
+          comissao_estimada?: number | null
+          criado_em?: string
+          data_limite?: string | null
+          dre_assinados?: boolean | null
+          entrada_id?: string | null
+          etapa?: string
+          exige_cadastro?: boolean
+          fase?: string
+          ia_analise_solicitada?: boolean
+          id?: string
+          importancia_segurada?: number | null
+          justificativa_excecao?: string | null
+          legenda?: string | null
+          modalidade?: string | null
+          natureza_rotulo?: string | null
+          numero_processo?: string | null
+          objeto?: string | null
+          observacao?: string | null
+          percentual_garantia?: number | null
+          precisa_ccg?: boolean
+          precisa_nomeacao?: boolean
+          premio_estimado?: number | null
+          produto: string
+          publico_privado?: string | null
+          responsavel_cliente_id?: string | null
+          responsavel_tecnico_id?: string | null
+          segurado_id?: string | null
+          solicitacao_id?: string | null
+          status_atual: string
+          tipo_alteracao?: string | null
+          tipo_movimento?: string | null
+          triagem_completa?: boolean
+          vigencia_exigida?: string | null
+        }
+        Update: {
+          apolice_anterior_id?: string | null
+          atualizado_em?: string
+          balancos_assinados?: boolean | null
+          cadastrado_em?: string
+          cadastrado_por?: string | null
+          canal_id?: string | null
+          chegada_em?: string
+          cliente_id?: string
+          codigo?: string | null
+          comissao_estimada?: number | null
+          criado_em?: string
+          data_limite?: string | null
+          dre_assinados?: boolean | null
+          entrada_id?: string | null
+          etapa?: string
+          exige_cadastro?: boolean
+          fase?: string
+          ia_analise_solicitada?: boolean
+          id?: string
+          importancia_segurada?: number | null
+          justificativa_excecao?: string | null
+          legenda?: string | null
+          modalidade?: string | null
+          natureza_rotulo?: string | null
+          numero_processo?: string | null
+          objeto?: string | null
+          observacao?: string | null
+          percentual_garantia?: number | null
+          precisa_ccg?: boolean
+          precisa_nomeacao?: boolean
+          premio_estimado?: number | null
+          produto?: string
+          publico_privado?: string | null
+          responsavel_cliente_id?: string | null
+          responsavel_tecnico_id?: string | null
+          segurado_id?: string | null
+          solicitacao_id?: string | null
+          status_atual?: string
+          tipo_alteracao?: string | null
+          tipo_movimento?: string | null
+          triagem_completa?: boolean
+          vigencia_exigida?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "garantia_demandas_canal_id_fkey"
+            columns: ["canal_id"]
+            isOneToOne: false
+            referencedRelation: "canais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "garantia_demandas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "hub_clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "garantia_demandas_entrada_id_fkey"
+            columns: ["entrada_id"]
+            isOneToOne: false
+            referencedRelation: "hub_entradas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "garantia_demandas_segurado_id_fkey"
+            columns: ["segurado_id"]
+            isOneToOne: false
+            referencedRelation: "garantia_segurados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "garantia_demandas_solicitacao_id_fkey"
+            columns: ["solicitacao_id"]
+            isOneToOne: true
+            referencedRelation: "garantia_judicial_solicitacoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "garantia_demandas_status_atual_fkey"
+            columns: ["status_atual"]
+            isOneToOne: false
+            referencedRelation: "garantia_status_catalogo"
+            referencedColumns: ["codigo"]
+          },
+        ]
+      }
       garantia_judicial_solicitacoes: {
         Row: {
           alerta_enviado_em: string | null
@@ -2413,6 +2674,264 @@ export type Database = {
         }
         Relationships: []
       }
+      garantia_limites_tomador: {
+        Row: {
+          atualizado_em: string
+          chave_mercado: string
+          cliente_id: string
+          consulta_id: string
+          data_ultimo_cadastro: string | null
+          grupo_mercado: string | null
+          id: string
+          limite_disponivel: number | null
+          limite_total: number | null
+          limite_utilizado: number
+          mensagem: string | null
+          modalidades: Json | null
+          nomeacao: string | null
+          origem: string
+          registrado_por: string | null
+          status_mercado: string | null
+          taxa: number | null
+        }
+        Insert: {
+          atualizado_em?: string
+          chave_mercado: string
+          cliente_id: string
+          consulta_id: string
+          data_ultimo_cadastro?: string | null
+          grupo_mercado?: string | null
+          id?: string
+          limite_disponivel?: number | null
+          limite_total?: number | null
+          limite_utilizado?: number
+          mensagem?: string | null
+          modalidades?: Json | null
+          nomeacao?: string | null
+          origem: string
+          registrado_por?: string | null
+          status_mercado?: string | null
+          taxa?: number | null
+        }
+        Update: {
+          atualizado_em?: string
+          chave_mercado?: string
+          cliente_id?: string
+          consulta_id?: string
+          data_ultimo_cadastro?: string | null
+          grupo_mercado?: string | null
+          id?: string
+          limite_disponivel?: number | null
+          limite_total?: number | null
+          limite_utilizado?: number
+          mensagem?: string | null
+          modalidades?: Json | null
+          nomeacao?: string | null
+          origem?: string
+          registrado_por?: string | null
+          status_mercado?: string | null
+          taxa?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "garantia_limites_tomador_chave_mercado_fkey"
+            columns: ["chave_mercado"]
+            isOneToOne: false
+            referencedRelation: "garantia_seguradoras_config"
+            referencedColumns: ["chave_mercado"]
+          },
+          {
+            foreignKeyName: "garantia_limites_tomador_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "hub_clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "garantia_limites_tomador_consulta_id_fkey"
+            columns: ["consulta_id"]
+            isOneToOne: false
+            referencedRelation: "garantia_consultas_mercado"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      garantia_seguradoras_config: {
+        Row: {
+          ativa_garantia: boolean
+          atualizado_em: string
+          chave_mercado: string
+          id: string
+          identificador_api: string | null
+          observacao: string | null
+          rotulo: string
+          seguradora_id: string | null
+          tem_portal: boolean
+        }
+        Insert: {
+          ativa_garantia?: boolean
+          atualizado_em?: string
+          chave_mercado: string
+          id?: string
+          identificador_api?: string | null
+          observacao?: string | null
+          rotulo: string
+          seguradora_id?: string | null
+          tem_portal?: boolean
+        }
+        Update: {
+          ativa_garantia?: boolean
+          atualizado_em?: string
+          chave_mercado?: string
+          id?: string
+          identificador_api?: string | null
+          observacao?: string | null
+          rotulo?: string
+          seguradora_id?: string | null
+          tem_portal?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "garantia_seguradoras_config_seguradora_id_fkey"
+            columns: ["seguradora_id"]
+            isOneToOne: false
+            referencedRelation: "seguradoras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      garantia_segurados: {
+        Row: {
+          atualizado_em: string
+          cartao_atualizado_em: string | null
+          cpf_cnpj: string
+          criado_em: string
+          criado_por: string | null
+          dados_cartao_cnpj: Json | null
+          exige_texto_proprio: boolean
+          id: string
+          nome: string
+          publico_privado: string | null
+          tipo_pessoa: string
+        }
+        Insert: {
+          atualizado_em?: string
+          cartao_atualizado_em?: string | null
+          cpf_cnpj: string
+          criado_em?: string
+          criado_por?: string | null
+          dados_cartao_cnpj?: Json | null
+          exige_texto_proprio?: boolean
+          id?: string
+          nome: string
+          publico_privado?: string | null
+          tipo_pessoa: string
+        }
+        Update: {
+          atualizado_em?: string
+          cartao_atualizado_em?: string | null
+          cpf_cnpj?: string
+          criado_em?: string
+          criado_por?: string | null
+          dados_cartao_cnpj?: Json | null
+          exige_texto_proprio?: boolean
+          id?: string
+          nome?: string
+          publico_privado?: string | null
+          tipo_pessoa?: string
+        }
+        Relationships: []
+      }
+      garantia_status_catalogo: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          com_quem: string | null
+          etapa: string
+          fase: string
+          nome: string
+          ordem: number
+          relogio: string
+          sla_horas: number | null
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          com_quem?: string | null
+          etapa: string
+          fase: string
+          nome: string
+          ordem: number
+          relogio: string
+          sla_horas?: number | null
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          com_quem?: string | null
+          etapa?: string
+          fase?: string
+          nome?: string
+          ordem?: number
+          relogio?: string
+          sla_horas?: number | null
+        }
+        Relationships: []
+      }
+      garantia_status_historico: {
+        Row: {
+          com_quem: string | null
+          demanda_id: string
+          duracao_segundos: number | null
+          fim: string | null
+          id: string
+          inicio: string
+          observacao: string | null
+          relogio: string
+          status_codigo: string
+          usuario_id: string | null
+        }
+        Insert: {
+          com_quem?: string | null
+          demanda_id: string
+          duracao_segundos?: number | null
+          fim?: string | null
+          id?: string
+          inicio?: string
+          observacao?: string | null
+          relogio: string
+          status_codigo: string
+          usuario_id?: string | null
+        }
+        Update: {
+          com_quem?: string | null
+          demanda_id?: string
+          duracao_segundos?: number | null
+          fim?: string | null
+          id?: string
+          inicio?: string
+          observacao?: string | null
+          relogio?: string
+          status_codigo?: string
+          usuario_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "garantia_status_historico_demanda_id_fkey"
+            columns: ["demanda_id"]
+            isOneToOne: false
+            referencedRelation: "garantia_demandas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "garantia_status_historico_status_codigo_fkey"
+            columns: ["status_codigo"]
+            isOneToOne: false
+            referencedRelation: "garantia_status_catalogo"
+            referencedColumns: ["codigo"]
+          },
+        ]
+      }
       hub_admin_settings: {
         Row: {
           atualizado_em: string
@@ -2436,6 +2955,219 @@ export type Database = {
           value?: Json
         }
         Relationships: []
+      }
+      hub_clientes: {
+        Row: {
+          ab_empresa_id: string | null
+          ativo: boolean
+          atualizado_em: string
+          bairro: string | null
+          capital_social: number | null
+          cartao_atualizado_em: string | null
+          cartao_fonte: string | null
+          cep: string | null
+          cliente_id: string | null
+          cnae: string | null
+          cnae_descricao: string | null
+          complemento: string | null
+          cpf_cnpj: string
+          criado_em: string
+          criado_por: string | null
+          dados_cartao_cnpj: Json | null
+          data_abertura: string | null
+          email: string | null
+          id: string
+          logradouro: string | null
+          municipio: string | null
+          natureza_juridica: string | null
+          nome: string
+          nome_fantasia: string | null
+          numero: string | null
+          observacao: string | null
+          porte: string | null
+          responsavel_id: string | null
+          situacao_cadastral: string | null
+          telefone: string | null
+          tipo_pessoa: string
+          uf: string | null
+        }
+        Insert: {
+          ab_empresa_id?: string | null
+          ativo?: boolean
+          atualizado_em?: string
+          bairro?: string | null
+          capital_social?: number | null
+          cartao_atualizado_em?: string | null
+          cartao_fonte?: string | null
+          cep?: string | null
+          cliente_id?: string | null
+          cnae?: string | null
+          cnae_descricao?: string | null
+          complemento?: string | null
+          cpf_cnpj: string
+          criado_em?: string
+          criado_por?: string | null
+          dados_cartao_cnpj?: Json | null
+          data_abertura?: string | null
+          email?: string | null
+          id?: string
+          logradouro?: string | null
+          municipio?: string | null
+          natureza_juridica?: string | null
+          nome: string
+          nome_fantasia?: string | null
+          numero?: string | null
+          observacao?: string | null
+          porte?: string | null
+          responsavel_id?: string | null
+          situacao_cadastral?: string | null
+          telefone?: string | null
+          tipo_pessoa: string
+          uf?: string | null
+        }
+        Update: {
+          ab_empresa_id?: string | null
+          ativo?: boolean
+          atualizado_em?: string
+          bairro?: string | null
+          capital_social?: number | null
+          cartao_atualizado_em?: string | null
+          cartao_fonte?: string | null
+          cep?: string | null
+          cliente_id?: string | null
+          cnae?: string | null
+          cnae_descricao?: string | null
+          complemento?: string | null
+          cpf_cnpj?: string
+          criado_em?: string
+          criado_por?: string | null
+          dados_cartao_cnpj?: Json | null
+          data_abertura?: string | null
+          email?: string | null
+          id?: string
+          logradouro?: string | null
+          municipio?: string | null
+          natureza_juridica?: string | null
+          nome?: string
+          nome_fantasia?: string | null
+          numero?: string | null
+          observacao?: string | null
+          porte?: string | null
+          responsavel_id?: string | null
+          situacao_cadastral?: string | null
+          telefone?: string | null
+          tipo_pessoa?: string
+          uf?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hub_clientes_ab_empresa_id_fkey"
+            columns: ["ab_empresa_id"]
+            isOneToOne: false
+            referencedRelation: "ab_empresa"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hub_clientes_ab_empresa_id_fkey"
+            columns: ["ab_empresa_id"]
+            isOneToOne: false
+            referencedRelation: "ab_v_carteira"
+            referencedColumns: ["empresa_id"]
+          },
+          {
+            foreignKeyName: "hub_clientes_ab_empresa_id_fkey"
+            columns: ["ab_empresa_id"]
+            isOneToOne: false
+            referencedRelation: "ab_v_fila"
+            referencedColumns: ["empresa_id"]
+          },
+          {
+            foreignKeyName: "hub_clientes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hub_entradas: {
+        Row: {
+          assunto: string | null
+          atualizado_em: string
+          canal_id: string | null
+          chegada_em: string
+          cliente_id: string | null
+          demanda_id: string | null
+          destino: string
+          id: string
+          motivo_retencao: string | null
+          observacao: string | null
+          origem: string
+          produto: string | null
+          protocolo: string
+          ramo: string
+          registrado_em: string
+          registrado_por: string | null
+        }
+        Insert: {
+          assunto?: string | null
+          atualizado_em?: string
+          canal_id?: string | null
+          chegada_em: string
+          cliente_id?: string | null
+          demanda_id?: string | null
+          destino?: string
+          id?: string
+          motivo_retencao?: string | null
+          observacao?: string | null
+          origem?: string
+          produto?: string | null
+          protocolo?: string
+          ramo: string
+          registrado_em?: string
+          registrado_por?: string | null
+        }
+        Update: {
+          assunto?: string | null
+          atualizado_em?: string
+          canal_id?: string | null
+          chegada_em?: string
+          cliente_id?: string | null
+          demanda_id?: string | null
+          destino?: string
+          id?: string
+          motivo_retencao?: string | null
+          observacao?: string | null
+          origem?: string
+          produto?: string | null
+          protocolo?: string
+          ramo?: string
+          registrado_em?: string
+          registrado_por?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hub_entradas_canal_id_fkey"
+            columns: ["canal_id"]
+            isOneToOne: false
+            referencedRelation: "canais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hub_entradas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "hub_clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hub_entradas_demanda_fk"
+            columns: ["demanda_id"]
+            isOneToOne: false
+            referencedRelation: "garantia_demandas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       lavoro_sync_log: {
         Row: {
@@ -3830,6 +4562,11 @@ export type Database = {
       pode_aprovar_liberacao_repasse: { Args: never; Returns: boolean }
       pode_beneficios: { Args: never; Returns: boolean }
       pode_cadastros: { Args: never; Returns: boolean }
+      pode_definir_responsavel_cliente: { Args: never; Returns: boolean }
+      pode_entrada_cadastrar_canal: { Args: never; Returns: boolean }
+      pode_entrada_demandas: { Args: never; Returns: boolean }
+      pode_garantia_painel: { Args: never; Returns: boolean }
+      pode_garantia_pipeline: { Args: never; Returns: boolean }
       pode_gerenciar_configuracoes: {
         Args: { _user_id: string }
         Returns: boolean
@@ -4478,6 +5215,7 @@ export type Database = {
             }[]
           }
       rpc_dispensar_popup: { Args: { p_popup_id: string }; Returns: Json }
+      rpc_entrada_criar_canal: { Args: { _nome: string }; Returns: string }
       rpc_fechamento_a_receber: {
         Args: { p_ano: number; p_gran: string; p_periodo: number }
         Returns: Json
@@ -5363,6 +6101,8 @@ export type Database = {
         Args: { p_modulo: string; p_motivo?: string }
         Returns: boolean
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
       app_role: "ADMIN" | "DIRETORIA_GERAL" | "COLABORADOR"
