@@ -155,6 +155,10 @@ export function DemandasRepasseNF() {
                         <FileSearch className="mr-2 h-4 w-4" />
                         Abrir a relação
                       </Button>
+                      <Button size="sm" variant="outline" onClick={() => setContrato(d)}>
+                        <FileText className="mr-2 h-4 w-4" />
+                        Ver o contrato
+                      </Button>
                       {d.sou_o_aprovador ? (
                         <>
                           <Button size="sm" onClick={() => setAutorizar(d)}>
