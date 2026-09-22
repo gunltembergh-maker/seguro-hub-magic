@@ -1052,13 +1052,17 @@ export function DemandaSheet({
         <Separator className="my-4" />
 
         <Tabs defaultValue="dados" className="flex-1">
-          <TabsList>
+          <TabsList className="flex-wrap">
             <TabsTrigger value="dados">Dados</TabsTrigger>
             <TabsTrigger value="documentos">Documentos</TabsTrigger>
             {/* Fiança locatícia não faz consulta a mercado: a aba nem aparece. */}
             {demanda.produto === "seguro_garantia" && (
               <TabsTrigger value="limites">Limites</TabsTrigger>
             )}
+            <TabsTrigger value="cotacoes">Cotações</TabsTrigger>
+            {/* Abas do CRM: mesma demanda, outra fase — o detalhe é o mesmo. */}
+            {demanda.fase === "crm" && <TabsTrigger value="curadoria">Curadoria</TabsTrigger>}
+            {demanda.fase === "crm" && <TabsTrigger value="minuta">Minuta</TabsTrigger>}
             <TabsTrigger value="origem">Origem</TabsTrigger>
             <TabsTrigger value="historico">Histórico</TabsTrigger>
           </TabsList>
@@ -1066,8 +1070,23 @@ export function DemandaSheet({
             <AbaDados demanda={demanda} />
           </TabsContent>
           <TabsContent value="documentos" className="mt-4">
-            <AbaDocumentos demanda={demanda} />
+            {/* Na etapa da minuta, a aba já abre com o tipo "Minuta" escolhido. */}
+            <AbaDocumentos demanda={demanda} tipoInicial={demanda.etapa === "7" ? "minuta" : undefined} />
           </TabsContent>
+          <TabsContent value="cotacoes" className="mt-4">
+            <AbaCotacoes demanda={demanda} />
+          </TabsContent>
+          {demanda.fase === "crm" && (
+            <TabsContent value="curadoria" className="mt-4">
+              <AbaCuradoria demanda={demanda} />
+            </TabsContent>
+          )}
+          {demanda.fase === "crm" && (
+            <TabsContent value="minuta" className="mt-4">
+              <AbaMinuta demanda={demanda} catalogo={catalogo} />
+            </TabsContent>
+          )}
+
 
           {demanda.produto === "seguro_garantia" && (
             <TabsContent value="limites" className="mt-4">
