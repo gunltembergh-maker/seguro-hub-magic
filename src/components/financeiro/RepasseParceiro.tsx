@@ -976,7 +976,7 @@ export function RepasseParceiro() {
                       {grupoAPagar.length > 0 && (
                         <>
                           {grupoAPagar.map((l) => (
-                            <LinhaCanal key={l.canal} l={l} info={porCanal.get(l.canal)} pill={pill} valorCell={valorCell} border={BORDER} navy={NAVY} exportando={exportando === l.canal} bloqueado={exportando !== null} onExport={exportar} />
+                            <LinhaCanal key={l.canal} l={l} info={porCanal.get(l.canal)} pill={pill} valorCell={valorCell} border={BORDER} navy={NAVY} exportando={exportando === l.canal} bloqueado={exportando !== null} onExport={pedirExport} situacao={situacaoDe(l.canal)} onBloqueado={() => abrirBloqueio(l.canal, cicloAncora(l))} />
                           ))}
                           <SubtotalRow
                             label={`A pagar em ${dataRepasseCurta}`}
