@@ -8,13 +8,11 @@ import { toast } from "sonner";
 import {
   AlertTriangle,
   CalendarClock,
-  CheckCircle2,
   FileSignature,
   FileText,
   Loader2,
   Plus,
   Upload,
-  Users,
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
