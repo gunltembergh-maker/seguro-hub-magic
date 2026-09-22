@@ -21,7 +21,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMeuPerfilEfetivo } from "@/contexts/view-as-context";
 import { hasRole } from "@/hooks/use-meu-perfil";
 import EnviarContratoParceiro from "@/components/comercial/EnviarContratoParceiro";
-import { FilaVerificacaoContratos } from "@/components/comercial/FilaVerificacaoContratos";
+import {
+  FilaVerificacaoContratos,
+  usePendenciasVerificacao,
+} from "@/components/comercial/FilaVerificacaoContratos";
 import {
   FilaAlteracoesPercentual,
   useAlteracoesPercentual,
@@ -69,6 +72,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cicloPadrao } from "@/lib/repasse/ciclo-datas";
 import { cn } from "@/lib/utils";
 
 /* ------------------------------------------------------------------ tipos */
