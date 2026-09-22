@@ -306,12 +306,14 @@ function CampoPct({
   atual,
   valor,
   onChange,
+  erro,
 }: {
   id: string;
   rotulo: string;
   atual?: number | null;
   valor: string;
   onChange: (v: string) => void;
+  erro?: boolean;
 }) {
   return (
     <div className="space-y-1.5">
@@ -326,6 +328,11 @@ function CampoPct({
         />
         <span className="shrink-0 text-xs text-muted-foreground">{hoje(atual)}</span>
       </div>
+      {erro ? (
+        <p className="text-xs text-destructive">
+          Informe apenas números nos percentuais, por exemplo 30 ou 27,5.
+        </p>
+      ) : null}
     </div>
   );
 }
