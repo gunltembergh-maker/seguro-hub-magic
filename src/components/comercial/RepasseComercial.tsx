@@ -153,6 +153,8 @@ export function RepasseComercial({
   const { data: estadoCiclo } = useCicloRepasse(ciclo.ano, ciclo.mes);
   const [exportando, setExportando] = useState<string | null>(null);
   const [relacao, setRelacao] = useState<string | null>(null);
+  const [contrato, setContrato] = useState<string | null>(null);
+  const [liberacao, setLiberacao] = useState<{ canal: string; valor: number } | null>(null);
   const [pedido, setPedido] = useState<{ canal: string; linhas: number; valor: number } | null>(
     null,
   );
