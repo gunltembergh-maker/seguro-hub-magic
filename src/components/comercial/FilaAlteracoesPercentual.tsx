@@ -100,7 +100,7 @@ async function abrirAnexo(path?: string | null) {
 
 /* -------------------------------------------------------------- o bloco */
 
-export function FilaAlteracoesPercentual() {
+export function FilaAlteracoesPercentual({ semCard = false }: { semCard?: boolean } = {}) {
   const pendentes = useAlteracoesPercentual("PENDENTE");
   const queryClient = useQueryClient();
 
@@ -136,19 +136,8 @@ export function FilaAlteracoesPercentual() {
     }
   }
 
-  return (
-    <>
-      <Card className="border-amber-600/40">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
-            <AlertTriangle className="h-4 w-4" />
-            Alterações de percentual aguardando aprovação
-          </CardTitle>
-          <CardDescription>
-            Percentual diferente do contrato só vale depois do De Acordo da diretoria.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
+  const conteudo = (
+    <div className="space-y-3">
           {linhas.map((a) => (
             <div key={a.alteracao_id} className="rounded-lg border bg-muted/30 p-3">
               <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
