@@ -1,8 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { RecebimentoDezenas } from "@/components/financeiro/RecebimentoDezenas";
 import { RepasseParceiro } from "@/components/financeiro/RepasseParceiro";
+import { DemandasRepasseNF } from "@/components/financeiro/DemandasRepasseNF";
 
 export const Route = createFileRoute("/_authenticated/financeiro_/fluxo-diario")({
+  validateSearch: (search: Record<string, unknown>): { demanda?: string } =>
+    typeof search.demanda === "string" ? { demanda: search.demanda } : {},
   head: () => ({
     meta: [
       { title: "Fluxo Diário | Financeiro | Hub Lavoro Seguros" },
@@ -10,6 +13,13 @@ export const Route = createFileRoute("/_authenticated/financeiro_/fluxo-diario")
         name: "description",
         content: "Previsão de recebimento e repasse de parceiro por dezenas do Financeiro Lavoro.",
       },
+      { property: "og:title", content: "Fluxo Diário | Financeiro | Hub Lavoro Seguros" },
+      {
+        property: "og:description",
+        content: "Previsão de recebimento e repasse de parceiro por dezenas do Financeiro Lavoro.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: FluxoDiarioPage,
@@ -27,6 +37,8 @@ function FluxoDiarioPage() {
         </div>
 
         <RecebimentoDezenas />
+
+        <DemandasRepasseNF />
 
         <RepasseParceiro />
       </div>

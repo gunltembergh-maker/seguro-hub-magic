@@ -139,8 +139,11 @@ export async function exportarRepasse(opts: {
   const { canal, ano, mes, modo, modoDados, situacaoRepasse } = opts;
 
   // O banco autoriza (ou recusa) a exportação ANTES de montar o arquivo.
+  // No modo PARCEIRO a autorização depende da demanda aprovada pelo Financeiro.
   const { data: autz, error: erroAutz } = await supabase.rpc(
-    "rpc_canal_parceiro_autorizar_exportacao" as never,
+    (modo === "PARCEIRO"
+      ? "rpc_canal_repasse_autorizar_envio_parceiro"
+      : "rpc_canal_parceiro_autorizar_exportacao") as never,
     {
       p_canal_planilha: canal,
       p_ano: ano,
@@ -151,8 +154,13 @@ export async function exportarRepasse(opts: {
   );
   if (erroAutz) throw new Error(erroAutz.message);
 
-  const autorizacao = (Array.isArray(autz) ? autz[0] : autz) as
-    { base?: string; liberado_por?: string | null; data_prevista?: string | null } | null;
+  const autorizacao = (Array.isArray(autz) ? autz[0] : autz) as {
+    base?: string;
+    liberado_por?: string | null;
+    data_prevista?: string | null;
+    rotulo_status?: string | null;
+    aprovado_por_nome?: string | null;
+  } | null;
   const dataPrevista = autorizacao?.data_prevista ?? null;
 
   const PAGINA = 500;
@@ -188,6 +196,12 @@ export async function exportarRepasse(opts: {
     { rotulo: "Parcelas", valor: String(todas.length) },
     ...(dataPrevista
       ? [{ rotulo: "Data prevista de pagamento", valor: fmtBR(dataPrevista) }]
+      : []),
+    ...(modo === "PARCEIRO" && autorizacao?.rotulo_status
+      ? [{ rotulo: "Status do repasse", valor: autorizacao.rotulo_status }]
+      : []),
+    ...(modo === "PARCEIRO" && autorizacao?.aprovado_por_nome
+      ? [{ rotulo: "Autorizado por", valor: autorizacao.aprovado_por_nome }]
       : []),
     ...(autorizacao?.base === "LIBERACAO_EXCEPCIONAL"
       ? [{ rotulo: "Liberado por", valor: autorizacao.liberado_por ?? "" }]
@@ -226,7 +240,9 @@ export async function exportarRepasse(opts: {
           colunas: COLS_PARCEIRO_RESUMO,
           linhas: linhasResumo,
           totalizar: ["base_liquida", "valor_repasse_total"],
-          nota: "Valor do Repasse = Comissão Recebida × (1 − % Imposto) × % Repasse. A aba Detalhe traz a conta aberta linha a linha.",
+          nota:
+            "Valor do Repasse = Comissão Recebida × (1 − % Imposto) × % Repasse. A aba Detalhe traz a conta aberta linha a linha.\n" +
+            "O pagamento será efetuado somente após o envio da nota fiscal.",
           semLinhasDeGrade: true,
         },
         { nome: "Detalhe", colunas: COLS_PARCEIRO_DETALHE, linhas: linhasDetalhe, totalizar: ["valor_repasse_total"], semLinhasDeGrade: true },
