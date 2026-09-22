@@ -51,6 +51,18 @@ function paraNumero(v: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+function campoPctInvalido(v: string): boolean {
+  const t = v.trim();
+  if (!t) return false;
+  return !Number.isFinite(Number(t.replace(",", ".")));
+}
+
+function campoMonetarioInvalido(v: string): boolean {
+  const t = v.trim();
+  if (!t) return false;
+  return !Number.isFinite(Number(t.replace(/\./g, "").replace(",", ".")));
+}
+
 const emailValido = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim());
 
 const sanitizar = (nome: string) =>
