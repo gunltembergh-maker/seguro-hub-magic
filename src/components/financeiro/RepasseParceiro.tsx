@@ -315,10 +315,33 @@ export function RepasseParceiro() {
   const sit = SITUACOES.find((s) => s.key === situacaoKey)!;
   const isHistorico = sit.modo === "HISTORICO";
 
+  // Situação do contrato de cada parceiro (trava da exportação)
+  const { data: situacoes } = useQuery({
+    queryKey: ["canal-parceiro-situacao"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_canal_parceiro_situacao" as never);
+      if (error) throw error;
+      return (data ?? []) as SituacaoContrato[];
+    },
+    staleTime: 60_000,
+  });
+
+  const situacaoPorCanal = useMemo(() => {
+    const m = new Map<string, SituacaoContrato>();
+    for (const s of situacoes ?? []) m.set(s.chave_planilha, s);
+    return m;
+  }, [situacoes]);
+
+  const situacaoDe = (canalNome: string) => situacaoPorCanal.get(chaveCanal(canalNome)) ?? null;
+
+  // Diálogos: trava por falta de contrato e escolha da data prevista
+  const [bloqueado, setBloqueado] = useState<{ canal: string; valor: number } | null>(null);
+  const [pendente, setPendente] = useState<{ canal: string; modo: ModoExport } | null>(null);
+
   // Exportação do detalhe por parceiro (ExcelJS carregado sob demanda)
   const [exportando, setExportando] = useState<string | null>(null);
 
-  const exportar = async (canalClicado: string, modo: ModoExport) => {
+  const exportar = async (canalClicado: string, modo: ModoExport, dataPrevista: string) => {
     if (exportando) return;
     setExportando(canalClicado);
     const toastId = toast.loading("Gerando planilha…");
