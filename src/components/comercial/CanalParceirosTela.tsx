@@ -1142,6 +1142,43 @@ function Historico({ canalId }: { canalId: string | null }) {
 }
 
 
+/** Correção do contrato: só o que mudou, no formato "Garantia: 20% → 25%".
+ *  Campo que ficou igual não entra — numa conferência ele só atrapalha. */
+function Correcao({ detalhe }: { detalhe: Record<string, unknown> }) {
+  const antes = (detalhe["antes"] ?? {}) as Record<string, unknown>;
+  const depois = (detalhe["depois"] ?? {}) as Record<string, unknown>;
+  const motivo = detalhe["motivo"] == null ? null : String(detalhe["motivo"]);
+
+  const mostrar = (v: unknown, tipo: "pct" | "data" | "valor") => {
+    if (v == null || v === "") return "—";
+    if (tipo === "pct") return pct(Number(v));
+    if (tipo === "data") return dia(String(v));
+    return Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  };
+
+  const mudancas = CAMPOS_CORRECAO.filter(
+    (c) => JSON.stringify(antes[c.chave] ?? null) !== JSON.stringify(depois[c.chave] ?? null),
+  );
+
+  return (
+    <div className="mt-1 space-y-1">
+      {mudancas.length === 0 ? (
+        <p className="text-muted-foreground">Nenhum campo foi alterado.</p>
+      ) : (
+        <ul className="space-y-0.5">
+          {mudancas.map((c) => (
+            <li key={c.chave} className="text-foreground">
+              {c.rotulo}: <span className="text-muted-foreground">{mostrar(antes[c.chave], c.tipo)}</span>{" "}
+              → <span className="font-medium">{mostrar(depois[c.chave], c.tipo)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {motivo ? <p className="text-muted-foreground">{motivo}</p> : null}
+    </div>
+  );
+}
+
 /** Assinatura lida do arquivo e assinatura atestada por gente são informações
  *  diferentes: quando existirem as duas, as duas aparecem. */
 function InfoAssinatura({ contrato }: { contrato: Contrato }) {
