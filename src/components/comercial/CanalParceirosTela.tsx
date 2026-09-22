@@ -8,20 +8,21 @@ import { toast } from "sonner";
 import {
   AlertTriangle,
   CalendarClock,
-  CheckCircle2,
   FileSignature,
   FileText,
   Loader2,
   Plus,
   Upload,
-  Users,
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useMeuPerfilEfetivo } from "@/contexts/view-as-context";
 import { hasRole } from "@/hooks/use-meu-perfil";
 import EnviarContratoParceiro from "@/components/comercial/EnviarContratoParceiro";
-import { FilaVerificacaoContratos } from "@/components/comercial/FilaVerificacaoContratos";
+import {
+  FilaVerificacaoContratos,
+  usePendenciasVerificacao,
+} from "@/components/comercial/FilaVerificacaoContratos";
 import {
   FilaAlteracoesPercentual,
   useAlteracoesPercentual,
@@ -30,7 +31,6 @@ import {
 import { SolicitarAlteracaoPercentual } from "@/components/comercial/SolicitarAlteracaoPercentual";
 import { RepasseComercial } from "@/components/comercial/RepasseComercial";
 import { SuperAdminGate } from "@/components/admin/SuperAdminGate";
-
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -69,6 +69,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cicloPadrao } from "@/lib/repasse/ciclo-datas";
 import { cn } from "@/lib/utils";
 
 /* ------------------------------------------------------------------ tipos */
@@ -285,6 +287,47 @@ export default function CanalParceirosTela() {
     enabled: isAdmin,
   });
 
+  /* Mesma consulta da tabela de repasse (mesma chave de cache, sem chamada nova). */
+  const ciclo = useMemo(() => cicloPadrao(new Set<string>()), []);
+  const repasseCiclo = useQuery({
+    queryKey: ["lavoro-repasse-por-canal", ciclo.ano, ciclo.mes, "PROVISIONADO", null, null],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc(
+        "rpc_lavoro_repasse_por_canal" as never,
+        {
+          p_ano: ciclo.ano,
+          p_mes: ciclo.mes,
+          p_modo: "PROVISIONADO",
+          p_canal_repasse: null,
+          p_situacao_repasse: null,
+        } as never,
+      );
+      if (error) throw error;
+      return (data || []) as {
+        ciclo_ano: number;
+        ciclo_mes: number;
+        canal_repasse: string;
+        valor: number;
+      }[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const resumoCiclo = useMemo(() => {
+    const porCanal = new Map<string, number>();
+    for (const r of repasseCiclo.data ?? []) {
+      if (r.ciclo_ano !== ciclo.ano || r.ciclo_mes !== ciclo.mes) continue;
+      porCanal.set(r.canal_repasse, (porCanal.get(r.canal_repasse) ?? 0) + Number(r.valor || 0));
+    }
+    let valor = 0;
+    let parceiros = 0;
+    for (const v of porCanal.values()) {
+      valor += v;
+      if (v > 0) parceiros += 1;
+    }
+    return { parceiros, valor };
+  }, [repasseCiclo.data, ciclo]);
+
   function recarregarTudo() {
     queryClient.invalidateQueries({ queryKey: ["canal-parceiro-situacao"] });
     queryClient.invalidateQueries({ queryKey: ["canal-parceiro-lista"] });
@@ -353,6 +396,15 @@ export default function CanalParceirosTela() {
     (c) => c.situacao === "VINCULO_A_CONFIRMAR",
   );
 
+  /* Contagens das três filas, para montar (ou esconder) o bloco "Precisa de você". */
+  const pendVerificacao = usePendenciasVerificacao();
+  const altPendentes = useAlteracoesPercentual("PENDENTE");
+  const nVinculos = isAdmin ? vinculosPendentes.length : 0;
+  const nVerificacao = (pendVerificacao.data ?? []).length;
+  const nAlteracoes = (altPendentes.data ?? []).length;
+  const filasAtivas = [nVinculos, nVerificacao, nAlteracoes].filter((n) => n > 0).length;
+  const umaFilaSo = filasAtivas === 1;
+
   const carregando = situacoes.isLoading || lista.isLoading;
   const erro = situacoes.error ?? lista.error ?? vigencias.error;
 
@@ -379,257 +431,312 @@ export default function CanalParceirosTela() {
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Não deu para carregar</AlertTitle>
-          <AlertDescription>
-            {erro instanceof Error ? erro.message : String(erro)}
-          </AlertDescription>
+          <AlertDescription>{erro instanceof Error ? erro.message : String(erro)}</AlertDescription>
         </Alert>
       ) : null}
 
-      {/* KPIs */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Kpi
-          titulo="Canais com repasse na base"
-          valor={totalCanais}
-          icone={<Users className="h-4 w-4" />}
-        />
-        <Kpi
-          titulo="Com contrato assinado e ativo"
-          valor={ativos}
-          icone={<CheckCircle2 className="h-4 w-4 text-emerald-600" />}
-        />
+      {/* faixa de números */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Kpi titulo="Parceiros com repasse no ciclo" valor={String(resumoCiclo.parceiros)} />
+        <Kpi titulo="Com contrato assinado e ativo" valor={String(ativos)} />
         <Kpi
           titulo="Sem contrato assinado"
-          valor={semContrato}
-          icone={<AlertTriangle className="h-4 w-4 text-destructive" />}
+          valor={String(semContrato)}
+          className={semContrato > 0 ? "text-destructive" : undefined}
+        />
+        <Kpi
+          titulo="Valor do ciclo corrente"
+          valor={resumoCiclo.valor.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          })}
+          className="font-mono text-primary"
         />
       </div>
 
-      {/* vínculos a confirmar — só ADMIN */}
-      {isAdmin && vinculosPendentes.length > 0 ? (
-        <VinculosAConfirmar
-          contratos={vinculosPendentes}
-          parceiros={lista.data ?? []}
-          onResolvido={recarregarTudo}
-        />
+      {/* precisa de você — as três filas juntas, some quando não há nada */}
+      {filasAtivas > 0 ? (
+        <Card className="border-amber-600/40">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
+              <AlertTriangle className="h-4 w-4" />
+              Precisa de você
+            </CardTitle>
+            <CardDescription>
+              Pendências que travam contrato ou repasse até alguém resolver.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {nVinculos > 0 ? (
+              <section className="space-y-3">
+                {umaFilaSo ? null : (
+                  <h3 className="text-sm font-semibold text-foreground">
+                    Vínculos a confirmar · {nVinculos}
+                  </h3>
+                )}
+                <VinculosAConfirmar
+                  semCard
+                  contratos={vinculosPendentes}
+                  parceiros={lista.data ?? []}
+                  onResolvido={recarregarTudo}
+                />
+              </section>
+            ) : null}
+
+            {nVerificacao > 0 ? (
+              <section className="space-y-3">
+                {umaFilaSo ? null : (
+                  <h3 className="text-sm font-semibold text-foreground">
+                    Conferência de contratos · {nVerificacao}
+                  </h3>
+                )}
+                <FilaVerificacaoContratos semCard />
+              </section>
+            ) : null}
+
+            {nAlteracoes > 0 ? (
+              <section className="space-y-3">
+                {umaFilaSo ? null : (
+                  <h3 className="text-sm font-semibold text-foreground">
+                    Alterações de percentual · {nAlteracoes}
+                  </h3>
+                )}
+                <FilaAlteracoesPercentual semCard />
+              </section>
+            ) : null}
+          </CardContent>
+        </Card>
       ) : null}
 
-      {/* fila de conferência humana — só aparece quando há pendência */}
-      <FilaVerificacaoContratos />
+      <Tabs defaultValue="repasse" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="repasse">Repasse do ciclo</TabsTrigger>
+          <TabsTrigger value="parceiros">Parceiros</TabsTrigger>
+          <TabsTrigger value="vigencias">Vigências</TabsTrigger>
+        </TabsList>
 
-      {/* alterações de percentual aguardando o De Acordo da diretoria */}
-      <FilaAlteracoesPercentual />
+        <TabsContent value="repasse">
+          <RepasseComercial podeExportarPorChave={podeExportarPorChave} />
+        </TabsContent>
 
-      {/* repasse do ciclo por parceiro */}
-      <RepasseComercial podeExportarPorChave={podeExportarPorChave} />
-
-
-      {/* tabela principal */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Parceiros</CardTitle>
-          <CardDescription>
-            Clique na linha para ver contratos e aditivos do parceiro.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Parceiro</TableHead>
-                  <TableHead>Razão social</TableHead>
-                  <TableHead>Contrato</TableHead>
-                  <TableHead>Vencimento</TableHead>
-                  <TableHead>Benefícios</TableHead>
-                  <TableHead>Garantia</TableHead>
-                  <TableHead>Demais ramos</TableHead>
-                  <TableHead>Origem</TableHead>
-                  <TableHead className="text-right">Ação</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {carregando ? (
-                  <TableRow>
-                    <TableCell colSpan={9} className="py-10 text-center text-muted-foreground">
-                      <Loader2 className="mr-2 inline h-4 w-4 animate-spin" />
-                      Carregando
-                    </TableCell>
-                  </TableRow>
-                ) : linhas.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={9} className="py-10 text-center text-muted-foreground">
-                      Nenhum parceiro por aqui ainda.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  linhas.map((l) => {
-                    const demaisHerdado = l.s?.pct_demais == null && l.s?.pct_garantia != null;
-                    const dias = l.s?.dias_para_vencer ?? null;
-                    const aut = l.canalId ? aprovadaPorCanal.get(l.canalId) ?? null : null;
-                    return (
-                      <TableRow
-                        key={l.chave}
-                        className={l.canalId ? "cursor-pointer" : undefined}
-                        onClick={() =>
-                          l.canalId && setDetalhe({ canalId: l.canalId, nome: l.nome })
-                        }
-                      >
-                        <TableCell>
-                          <div className="font-medium text-foreground">{l.nome}</div>
-                          {l.chaves.length > 0 ? (
-                            <div className="text-xs text-muted-foreground">
-                              {l.chaves.join(" · ")}
-                            </div>
-                          ) : null}
+        <TabsContent value="parceiros">
+          <Card>
+            <CardHeader>
+              <CardTitle>Parceiros</CardTitle>
+              <CardDescription>
+                Clique na linha para ver contratos e aditivos do parceiro.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Parceiro</TableHead>
+                      <TableHead>Razão social</TableHead>
+                      <TableHead>Contrato</TableHead>
+                      <TableHead>Vencimento</TableHead>
+                      <TableHead>Benefícios</TableHead>
+                      <TableHead>Garantia</TableHead>
+                      <TableHead>Demais ramos</TableHead>
+                      <TableHead>Origem</TableHead>
+                      <TableHead className="text-right">Ação</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {carregando ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="py-10 text-center text-muted-foreground">
+                          <Loader2 className="mr-2 inline h-4 w-4 animate-spin" />
+                          Carregando
                         </TableCell>
-                        <TableCell>
-                          {l.razaoSocial ? (
-                            <div>
-                              <div className="text-sm text-foreground">{l.razaoSocial}</div>
-                              {l.cnpj ? (
-                                <div className="text-xs text-muted-foreground">{l.cnpj}</div>
-                              ) : null}
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
+                      </TableRow>
+                    ) : linhas.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="py-10 text-center text-muted-foreground">
+                          Nenhum parceiro por aqui ainda.
                         </TableCell>
-                        <TableCell>
-                          <BadgeContrato situacao={l.s?.situacao ?? "SEM_CONTRATO"} />
-                        </TableCell>
-                        <TableCell>
-                          {l.s?.vigencia_fim ? (
-                            <div>
-                              <div className="text-sm">{dia(l.s.vigencia_fim)}</div>
-                              {dias != null ? (
-                                <div
-                                  className={cn(
-                                    "text-xs",
-                                    dias < 30 ? "font-medium text-destructive" : "text-muted-foreground",
-                                  )}
-                                >
-                                  {dias < 0 ? `vencido há ${Math.abs(dias)} dias` : `${dias} dias`}
+                      </TableRow>
+                    ) : (
+                      linhas.map((l) => {
+                        const demaisHerdado = l.s?.pct_demais == null && l.s?.pct_garantia != null;
+                        const dias = l.s?.dias_para_vencer ?? null;
+                        const aut = l.canalId ? (aprovadaPorCanal.get(l.canalId) ?? null) : null;
+                        return (
+                          <TableRow
+                            key={l.chave}
+                            className={l.canalId ? "cursor-pointer" : undefined}
+                            onClick={() =>
+                              l.canalId && setDetalhe({ canalId: l.canalId, nome: l.nome })
+                            }
+                          >
+                            <TableCell>
+                              <div className="font-medium text-foreground">{l.nome}</div>
+                              {l.chaves.length > 0 ? (
+                                <div className="text-xs text-muted-foreground">
+                                  {l.chaves.join(" · ")}
                                 </div>
                               ) : null}
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
-                        </TableCell>
-                        <CelulaPct
-                          contrato={l.s?.pct_beneficios}
-                          autorizado={aut?.pct_beneficios ?? null}
-                          autorizadoEm={aut?.aprovado_em ?? null}
-                        />
-                        <CelulaPct
-                          contrato={l.s?.pct_garantia}
-                          autorizado={aut?.pct_garantia ?? null}
-                          autorizadoEm={aut?.aprovado_em ?? null}
-                        />
-                        {(() => {
-                          const autorizadoDemais = aut?.pct_demais ?? aut?.pct_garantia ?? null;
-                          const herdadoDeGarantia =
-                            autorizadoDemais != null &&
-                            aut?.pct_demais == null &&
-                            aut?.pct_garantia != null;
-                          return (
+                            </TableCell>
+                            <TableCell>
+                              {l.razaoSocial ? (
+                                <div>
+                                  <div className="text-sm text-foreground">{l.razaoSocial}</div>
+                                  {l.cnpj ? (
+                                    <div className="text-xs text-muted-foreground">{l.cnpj}</div>
+                                  ) : null}
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <BadgeContrato situacao={l.s?.situacao ?? "SEM_CONTRATO"} />
+                            </TableCell>
+                            <TableCell>
+                              {l.s?.vigencia_fim ? (
+                                <div>
+                                  <div className="text-sm">{dia(l.s.vigencia_fim)}</div>
+                                  {dias != null ? (
+                                    <div
+                                      className={cn(
+                                        "text-xs",
+                                        dias < 30
+                                          ? "font-medium text-destructive"
+                                          : "text-muted-foreground",
+                                      )}
+                                    >
+                                      {dias < 0
+                                        ? `vencido há ${Math.abs(dias)} dias`
+                                        : `${dias} dias`}
+                                    </div>
+                                  ) : null}
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground">—</span>
+                              )}
+                            </TableCell>
                             <CelulaPct
-                              contrato={l.s?.pct_demais_efetivo}
-                              autorizado={autorizadoDemais}
+                              contrato={l.s?.pct_beneficios}
+                              autorizado={aut?.pct_beneficios ?? null}
                               autorizadoEm={aut?.aprovado_em ?? null}
-                              herdadoDeGarantia={herdadoDeGarantia}
-                              rodape={
-                                autorizadoDemais == null && demaisHerdado ? "herdado de Garantia" : null
-                              }
                             />
-                          );
-                        })()}
-                        <TableCell className="text-sm text-muted-foreground">{l.origem}</TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={(ev) => {
-                              ev.stopPropagation();
-                              setEnviarPara({ canalId: l.canalId, nome: l.nome });
-                            }}
-                          >
-                            <Upload className="mr-2 h-4 w-4" />
-                            Enviar contrato
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+                            <CelulaPct
+                              contrato={l.s?.pct_garantia}
+                              autorizado={aut?.pct_garantia ?? null}
+                              autorizadoEm={aut?.aprovado_em ?? null}
+                            />
+                            {(() => {
+                              const autorizadoDemais = aut?.pct_demais ?? aut?.pct_garantia ?? null;
+                              const herdadoDeGarantia =
+                                autorizadoDemais != null &&
+                                aut?.pct_demais == null &&
+                                aut?.pct_garantia != null;
+                              return (
+                                <CelulaPct
+                                  contrato={l.s?.pct_demais_efetivo}
+                                  autorizado={autorizadoDemais}
+                                  autorizadoEm={aut?.aprovado_em ?? null}
+                                  herdadoDeGarantia={herdadoDeGarantia}
+                                  rodape={
+                                    autorizadoDemais == null && demaisHerdado
+                                      ? "herdado de Garantia"
+                                      : null
+                                  }
+                                />
+                              );
+                            })()}
+                            <TableCell className="text-sm text-muted-foreground">
+                              {l.origem}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={(ev) => {
+                                  ev.stopPropagation();
+                                  setEnviarPara({ canalId: l.canalId, nome: l.nome });
+                                }}
+                              >
+                                <Upload className="mr-2 h-4 w-4" />
+                                Enviar contrato
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      {/* vigências */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CalendarClock className="h-4 w-4" />
-            Vigências
-          </CardTitle>
-          <CardDescription>
-            O jurídico é avisado automaticamente 60 dias antes do vencimento.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Parceiro</TableHead>
-                  <TableHead>Fim da vigência</TableHead>
-                  <TableHead>Dias restantes</TableHead>
-                  <TableHead>Situação</TableHead>
-                  <TableHead>Aviso ao jurídico</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {(vigencias.data ?? []).length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
-                      Nenhuma vigência registrada.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  (vigencias.data ?? []).map((v, i) => {
-                    const critico = (v.dias_para_vencer ?? 999) < 30;
-                    return (
-                      <TableRow key={`${v.parceiro}-${v.vigencia_fim}-${i}`}>
-                        <TableCell className="font-medium">{v.parceiro ?? "—"}</TableCell>
-                        <TableCell>{dia(v.vigencia_fim)}</TableCell>
-                        <TableCell
-                          className={cn(
-                            "tabular-nums",
-                            critico ? "font-semibold text-destructive" : undefined,
-                          )}
-                        >
-                          {v.dias_para_vencer ?? "—"}
-                        </TableCell>
-                        <TableCell>
-                          <BadgeContrato situacao={v.situacao} />
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {v.aviso_60_enviado_em
-                            ? `Enviado em ${dataHora(v.aviso_60_enviado_em)}`
-                            : "Não enviado"}
+        <TabsContent value="vigencias">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CalendarClock className="h-4 w-4" />
+                Vigências
+              </CardTitle>
+              <CardDescription>
+                O jurídico é avisado automaticamente 60 dias antes do vencimento.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Parceiro</TableHead>
+                      <TableHead>Fim da vigência</TableHead>
+                      <TableHead>Dias restantes</TableHead>
+                      <TableHead>Situação</TableHead>
+                      <TableHead>Aviso ao jurídico</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(vigencias.data ?? []).length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
+                          Nenhuma vigência registrada.
                         </TableCell>
                       </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+                    ) : (
+                      (vigencias.data ?? []).map((v, i) => {
+                        const critico = (v.dias_para_vencer ?? 999) < 30;
+                        return (
+                          <TableRow key={`${v.parceiro}-${v.vigencia_fim}-${i}`}>
+                            <TableCell className="font-medium">{v.parceiro ?? "—"}</TableCell>
+                            <TableCell>{dia(v.vigencia_fim)}</TableCell>
+                            <TableCell
+                              className={cn(
+                                "tabular-nums",
+                                critico ? "font-semibold text-destructive" : undefined,
+                              )}
+                            >
+                              {v.dias_para_vencer ?? "—"}
+                            </TableCell>
+                            <TableCell>
+                              <BadgeContrato situacao={v.situacao} />
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {v.aviso_60_enviado_em
+                                ? `Enviado em ${dataHora(v.aviso_60_enviado_em)}`
+                                : "Não enviado"}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* diálogos */}
       <NovoParceiro
@@ -652,7 +759,7 @@ export default function CanalParceirosTela() {
       <DetalheParceiro
         canalId={detalhe?.canalId ?? null}
         nome={detalhe?.nome ?? ""}
-        situacao={detalhe?.canalId ? situacaoPorCanal.get(detalhe.canalId) ?? null : null}
+        situacao={detalhe?.canalId ? (situacaoPorCanal.get(detalhe.canalId) ?? null) : null}
         onFechar={() => setDetalhe(null)}
       />
     </div>
@@ -705,17 +812,14 @@ function CelulaPct({
   );
 }
 
-function Kpi({ titulo, valor, icone }: { titulo: string; valor: number; icone: React.ReactNode }) {
+function Kpi({ titulo, valor, className }: { titulo: string; valor: string; className?: string }) {
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-          {icone}
-          {titulo}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-3xl font-bold tabular-nums text-foreground">{valor}</p>
+      <CardContent className="p-4">
+        <p className="text-xs font-medium text-muted-foreground">{titulo}</p>
+        <p className={cn("mt-1 text-2xl font-semibold tabular-nums text-foreground", className)}>
+          {valor}
+        </p>
       </CardContent>
     </Card>
   );
@@ -763,16 +867,19 @@ function NovoParceiro({
     if (!form.nome.trim() || !form.motivo.trim() || salvando) return;
     setSalvando(true);
     try {
-      const { error } = await supabase.rpc("rpc_canal_parceiro_cadastrar_manual" as never, {
-        p_canal_id: null,
-        p_nome: form.nome.trim(),
-        p_razao_social: form.razao_social.trim() || null,
-        p_cnpj: form.cnpj.trim() || null,
-        p_contato_nome: form.contato_nome.trim() || null,
-        p_contato_email: form.contato_email.trim() || null,
-        p_email_financeiro: form.email_financeiro.trim() || null,
-        p_motivo: form.motivo.trim(),
-      } as never);
+      const { error } = await supabase.rpc(
+        "rpc_canal_parceiro_cadastrar_manual" as never,
+        {
+          p_canal_id: null,
+          p_nome: form.nome.trim(),
+          p_razao_social: form.razao_social.trim() || null,
+          p_cnpj: form.cnpj.trim() || null,
+          p_contato_nome: form.contato_nome.trim() || null,
+          p_contato_email: form.contato_email.trim() || null,
+          p_email_financeiro: form.email_financeiro.trim() || null,
+          p_motivo: form.motivo.trim(),
+        } as never,
+      );
       if (error) throw error;
       toast.success("Parceiro cadastrado. A exportação de repasse segue travada até o contrato.");
       onFeito();
@@ -786,7 +893,12 @@ function NovoParceiro({
 
   return (
     <>
-      <Dialog open={aberto && !enviarAberto} onOpenChange={(v) => { if (!v) fechar(); }}>
+      <Dialog
+        open={aberto && !enviarAberto}
+        onOpenChange={(v) => {
+          if (!v) fechar();
+        }}
+      >
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Novo parceiro</DialogTitle>
@@ -824,8 +936,9 @@ function NovoParceiro({
                   Cadastro manual
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Registra o parceiro para consulta. <strong>Não libera a exportação de
-                  repasse</strong> — isso só acontece com o contrato assinado no Hub.
+                  Registra o parceiro para consulta.{" "}
+                  <strong>Não libera a exportação de repasse</strong> — isso só acontece com o
+                  contrato assinado no Hub.
                 </p>
               </button>
             </div>
@@ -897,7 +1010,10 @@ function NovoParceiro({
               Cancelar
             </Button>
             {caminho === "manual" ? (
-              <Button onClick={salvar} disabled={!form.nome.trim() || !form.motivo.trim() || salvando}>
+              <Button
+                onClick={salvar}
+                disabled={!form.nome.trim() || !form.motivo.trim() || salvando}
+              >
                 {salvando && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Cadastrar
               </Button>
@@ -945,10 +1061,12 @@ function VinculosAConfirmar({
   contratos,
   parceiros,
   onResolvido,
+  semCard = false,
 }: {
   contratos: Contrato[];
   parceiros: Parceiro[];
   onResolvido: () => void;
+  semCard?: boolean;
 }) {
   const [escolha, setEscolha] = useState<Record<string, string>>({});
   const [salvando, setSalvando] = useState<string | null>(null);
@@ -958,14 +1076,18 @@ function VinculosAConfirmar({
     if (!canalId) return;
     setSalvando(contratoId);
     try {
-      const { data, error } = await supabase.rpc("rpc_canal_parceiro_resolver_vinculo" as never, {
-        p_contrato_id: contratoId,
-        p_canal_id: canalId,
-      } as never);
+      const { data, error } = await supabase.rpc(
+        "rpc_canal_parceiro_resolver_vinculo" as never,
+        {
+          p_contrato_id: contratoId,
+          p_canal_id: canalId,
+        } as never,
+      );
       if (error) throw error;
-      const r = (Array.isArray(data) ? data[0] : data) as
-        | { situacao?: string; pode_exportar?: boolean }
-        | null;
+      const r = (Array.isArray(data) ? data[0] : data) as {
+        situacao?: string;
+        pode_exportar?: boolean;
+      } | null;
       toast.success(
         r?.pode_exportar
           ? "Vínculo confirmado. Repasse liberado."
@@ -979,6 +1101,55 @@ function VinculosAConfirmar({
     }
   }
 
+  const conteudo = (
+    <div className="space-y-3">
+      {contratos.map((c) => {
+        const id = String(c.contrato_id ?? "");
+        return (
+          <div
+            key={id}
+            className="flex flex-col gap-3 rounded-lg border bg-muted/30 p-3 md:flex-row md:items-center"
+          >
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                <span className="truncate">{c.arquivo_nome ?? "Contrato"}</span>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {c.motivo_bloqueio ?? "Sem motivo informado."}
+              </p>
+            </div>
+            <Select
+              value={escolha[id] ?? ""}
+              onValueChange={(v) => setEscolha((e) => ({ ...e, [id]: v }))}
+            >
+              <SelectTrigger className="md:w-72">
+                <SelectValue placeholder="Escolha o parceiro" />
+              </SelectTrigger>
+              <SelectContent>
+                {parceiros.map((p) => (
+                  <SelectItem key={p.canal_id} value={p.canal_id}>
+                    {p.nome ?? p.razao_social ?? p.canal_id}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              onClick={() => resolver(id)}
+              disabled={!escolha[id] || salvando === id}
+              size="sm"
+            >
+              {salvando === id && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Confirmar
+            </Button>
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  if (semCard) return conteudo;
+
   return (
     <Card className="border-amber-600/40">
       <CardHeader>
@@ -991,50 +1162,7 @@ function VinculosAConfirmar({
           documento pertence.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-3">
-        {contratos.map((c) => {
-          const id = String(c.contrato_id ?? "");
-          return (
-            <div
-              key={id}
-              className="flex flex-col gap-3 rounded-lg border bg-muted/30 p-3 md:flex-row md:items-center"
-            >
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 text-sm font-medium">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                  <span className="truncate">{c.arquivo_nome ?? "Contrato"}</span>
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {c.motivo_bloqueio ?? "Sem motivo informado."}
-                </p>
-              </div>
-              <Select
-                value={escolha[id] ?? ""}
-                onValueChange={(v) => setEscolha((e) => ({ ...e, [id]: v }))}
-              >
-                <SelectTrigger className="md:w-72">
-                  <SelectValue placeholder="Escolha o parceiro" />
-                </SelectTrigger>
-                <SelectContent>
-                  {parceiros.map((p) => (
-                    <SelectItem key={p.canal_id} value={p.canal_id}>
-                      {p.nome ?? p.razao_social ?? p.canal_id}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                onClick={() => resolver(id)}
-                disabled={!escolha[id] || salvando === id}
-                size="sm"
-              >
-                {salvando === id && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Confirmar
-              </Button>
-            </div>
-          );
-        })}
-      </CardContent>
+      <CardContent>{conteudo}</CardContent>
     </Card>
   );
 }
@@ -1087,7 +1215,12 @@ function DetalheParceiro({
   const linhas = contratos.data ?? [];
 
   return (
-    <Sheet open={!!canalId} onOpenChange={(v) => { if (!v) onFechar(); }}>
+    <Sheet
+      open={!!canalId}
+      onOpenChange={(v) => {
+        if (!v) onFechar();
+      }}
+    >
       <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
         <SheetHeader>
           <SheetTitle>{nome}</SheetTitle>
@@ -1208,11 +1341,16 @@ function DetalheParceiro({
                     </div>
                   </div>
 
-
                   <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
                     <InfoAssinatura contrato={c} />
-                    <Info rotulo="Signatários" valor={c.signatarios != null ? String(c.signatarios) : "—"} />
-                    <Info rotulo="Vigência" valor={`${dia(c.vigencia_inicio)} a ${dia(c.vigencia_fim)}`} />
+                    <Info
+                      rotulo="Signatários"
+                      valor={c.signatarios != null ? String(c.signatarios) : "—"}
+                    />
+                    <Info
+                      rotulo="Vigência"
+                      valor={`${dia(c.vigencia_inicio)} a ${dia(c.vigencia_fim)}`}
+                    />
                     <Info rotulo="Benefícios" valor={pct(c.pct_beneficios)} />
                     <Info rotulo="Garantia" valor={pct(c.pct_garantia)} />
                     <InfoDemais
@@ -1306,10 +1444,13 @@ function ExcluirParceiroDialog({
     if (!canalId || !motivo.trim() || excluindo) return;
     setExcluindo(true);
     try {
-      const { data, error } = await supabase.rpc("rpc_canal_parceiro_excluir" as never, {
-        p_canal_id: canalId,
-        p_motivo: motivo.trim(),
-      } as never);
+      const { data, error } = await supabase.rpc(
+        "rpc_canal_parceiro_excluir" as never,
+        {
+          p_canal_id: canalId,
+          p_motivo: motivo.trim(),
+        } as never,
+      );
       if (error) throw error;
       const r = (Array.isArray(data) ? data[0] : data) as { mensagem?: string } | null;
       toast.success(r?.mensagem ?? "Parceiro excluído.");
@@ -1323,7 +1464,12 @@ function ExcluirParceiroDialog({
   }
 
   return (
-    <Dialog open={aberto} onOpenChange={(v) => { if (!v) onFechar(); }}>
+    <Dialog
+      open={aberto}
+      onOpenChange={(v) => {
+        if (!v) onFechar();
+      }}
+    >
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Excluir parceiro</DialogTitle>
@@ -1390,8 +1536,7 @@ function textoDetalhe(ev: Evento): string | null {
 function Historico({ canalId }: { canalId: string | null }) {
   const eventos = useQuery({
     queryKey: ["canal-parceiro-eventos", canalId],
-    queryFn: () =>
-      rpc<Evento>("rpc_canal_parceiro_eventos", { p_canal_id: canalId, p_limite: 50 }),
+    queryFn: () => rpc<Evento>("rpc_canal_parceiro_eventos", { p_canal_id: canalId, p_limite: 50 }),
     enabled: !!canalId,
   });
 
@@ -1436,7 +1581,8 @@ function Historico({ canalId }: { canalId: string | null }) {
                     <Badge
                       variant="outline"
                       className={cn(
-                        declarado && !assinado &&
+                        declarado &&
+                          !assinado &&
                           "border-amber-600/40 bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200",
                       )}
                     >
@@ -1469,7 +1615,6 @@ function Historico({ canalId }: { canalId: string | null }) {
   );
 }
 
-
 /** Correção do contrato: só o que mudou, no formato "Garantia: 20% → 25%".
  *  Campo que ficou igual não entra — numa conferência ele só atrapalha. */
 function Correcao({ detalhe }: { detalhe: Record<string, unknown> }) {
@@ -1496,8 +1641,9 @@ function Correcao({ detalhe }: { detalhe: Record<string, unknown> }) {
         <ul className="space-y-0.5">
           {mudancas.map((c) => (
             <li key={c.chave} className="text-foreground">
-              {c.rotulo}: <span className="text-muted-foreground">{mostrar(antes[c.chave], c.tipo)}</span>{" "}
-              → <span className="font-medium">{mostrar(depois[c.chave], c.tipo)}</span>
+              {c.rotulo}:{" "}
+              <span className="text-muted-foreground">{mostrar(antes[c.chave], c.tipo)}</span> →{" "}
+              <span className="font-medium">{mostrar(depois[c.chave], c.tipo)}</span>
             </li>
           ))}
         </ul>

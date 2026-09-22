@@ -6,7 +6,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
-import { AlertTriangle, Download, FileSearch, FileText, Loader2, Lock, Send } from "lucide-react";
+import {
+  AlertTriangle,
+  Download,
+  FileSearch,
+  FileText,
+  Loader2,
+  Lock,
+  MoreHorizontal,
+  Send,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -39,8 +48,13 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -177,13 +191,16 @@ export function RepasseComercial({
   const { data, isLoading, error } = useQuery({
     queryKey: ["lavoro-repasse-por-canal", ciclo.ano, ciclo.mes, "PROVISIONADO", null, null],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("rpc_lavoro_repasse_por_canal" as never, {
-        p_ano: ciclo.ano,
-        p_mes: ciclo.mes,
-        p_modo: "PROVISIONADO",
-        p_canal_repasse: null,
-        p_situacao_repasse: null,
-      } as never);
+      const { data, error } = await supabase.rpc(
+        "rpc_lavoro_repasse_por_canal" as never,
+        {
+          p_ano: ciclo.ano,
+          p_mes: ciclo.mes,
+          p_modo: "PROVISIONADO",
+          p_canal_repasse: null,
+          p_situacao_repasse: null,
+        } as never,
+      );
       if (error) throw error;
       return (data || []) as CanalRow[];
     },
@@ -193,11 +210,14 @@ export function RepasseComercial({
   const demandas = useQuery({
     queryKey: ["canal-repasse-demandas", ciclo.ano, ciclo.mes],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("rpc_canal_repasse_demandas" as never, {
-        p_situacao: null,
-        p_ano: ciclo.ano,
-        p_mes: ciclo.mes,
-      } as never);
+      const { data, error } = await supabase.rpc(
+        "rpc_canal_repasse_demandas" as never,
+        {
+          p_situacao: null,
+          p_ano: ciclo.ano,
+          p_mes: ciclo.mes,
+        } as never,
+      );
       if (error) throw error;
       return (data || []) as DemandaNF[];
     },
@@ -237,7 +257,13 @@ export function RepasseComercial({
   const linhas = useMemo(() => {
     const map = new Map<
       string,
-      { canal: string; cicloCorrente: number; acumulado: number; situacao: string; parcelas: number }
+      {
+        canal: string;
+        cicloCorrente: number;
+        acumulado: number;
+        situacao: string;
+        parcelas: number;
+      }
     >();
     for (const r of data || []) {
       const cur = map.get(r.canal_repasse) ?? {
@@ -305,7 +331,8 @@ export function RepasseComercial({
           <p className="text-sm text-muted-foreground">
             Pagamento previsto para{" "}
             <strong className="text-foreground">{fmtBR(estadoCiclo.data_prevista)}</strong>
-            {estadoCiclo.definida_por_nome ? `, definido por ${estadoCiclo.definida_por_nome}` : ""}.
+            {estadoCiclo.definida_por_nome ? `, definido por ${estadoCiclo.definida_por_nome}` : ""}
+            .
           </p>
         ) : null}
 
@@ -471,6 +498,7 @@ function LinhaRepasse({
   const [aceso, setAceso] = useState(false);
   const [agora, setAgora] = useState(() => Date.now());
   const [cancelando, setCancelando] = useState(false);
+  const [confirmarCancelar, setConfirmarCancelar] = useState(false);
 
   useEffect(() => {
     if (!destacar) return;
@@ -504,7 +532,8 @@ function LinhaRepasse({
   const horasParaReenvio =
     situacao === "RECUSADA" && demanda?.decidido_em
       ? Math.ceil(
-          (new Date(demanda.decidido_em).getTime() + 24 * 60 * 60 * 1000 - agora) / (60 * 60 * 1000),
+          (new Date(demanda.decidido_em).getTime() + 24 * 60 * 60 * 1000 - agora) /
+            (60 * 60 * 1000),
         )
       : 0;
   const bloqueado24h = horasParaReenvio > 0;
@@ -513,9 +542,12 @@ function LinhaRepasse({
     if (!demanda || cancelando) return;
     setCancelando(true);
     try {
-      const { data, error } = await supabase.rpc("rpc_canal_repasse_cancelar_nf" as never, {
-        p_demanda_id: demanda.demanda_id,
-      } as never);
+      const { data, error } = await supabase.rpc(
+        "rpc_canal_repasse_cancelar_nf" as never,
+        {
+          p_demanda_id: demanda.demanda_id,
+        } as never,
+      );
       if (error) throw error;
       const r = (Array.isArray(data) ? data[0] : data) as { mensagem?: string } | null;
       toast.success(r?.mensagem ?? "Envio cancelado.");
@@ -531,9 +563,7 @@ function LinhaRepasse({
     <TableRow ref={ref} className={aceso ? "ring-2 ring-primary ring-offset-2" : undefined}>
       <TableCell className="font-medium">
         {canal}
-        {razaoSocial ? (
-          <p className="text-xs text-muted-foreground">{razaoSocial}</p>
-        ) : null}
+        {razaoSocial ? <p className="text-xs text-muted-foreground">{razaoSocial}</p> : null}
         {situacao === "RECUSADA" && demanda?.observacao_financeiro ? (
           <p className="mt-1 text-xs text-destructive">{demanda.observacao_financeiro}</p>
         ) : null}
@@ -553,31 +583,17 @@ function LinhaRepasse({
       </TableCell>
       <TableCell className="text-right">
         <div className="flex flex-wrap items-center justify-end gap-1">
-          <Button size="sm" variant="outline" title="Ver a relação" onClick={onVerRelacao}>
-            <FileSearch className="mr-2 h-4 w-4" />
-            Ver a relação
-          </Button>
-          <Button size="sm" variant="outline" title="Ver o contrato" onClick={onVerContrato}>
-            <FileText className="mr-2 h-4 w-4" />
-            Ver o contrato
-          </Button>
-        {!liberado ? (
-          <>
+          {!liberado ? (
             <Badge variant="outline" className="gap-1 text-muted-foreground">
               <Lock className="h-3 w-3" />
               Sem contrato válido
             </Badge>
-            <Button size="sm" variant="outline" onClick={onPedirLiberacao}>
-              Pedir liberação sem contrato
+          ) : !demanda ? (
+            <Button size="sm" variant="default" onClick={onPedir} disabled={cicloCorrente <= 0}>
+              <Send className="mr-2 h-4 w-4" />
+              Enviar ao financeiro
             </Button>
-          </>
-        ) : !demanda ? (
-          <Button size="sm" variant="default" onClick={onPedir} disabled={cicloCorrente <= 0}>
-            <Send className="mr-2 h-4 w-4" />
-            Enviar ao financeiro
-          </Button>
-        ) : situacao === "PENDENTE" ? (
-          <>
+          ) : situacao === "PENDENTE" ? (
             <Tooltip>
               <TooltipTrigger asChild>
                 <span>
@@ -591,57 +607,83 @@ function LinhaRepasse({
                 {demanda.solicitado_por_nome ? ` por ${demanda.solicitado_por_nome}` : ""}
               </TooltipContent>
             </Tooltip>
-            {dentroDaJanela ? (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button size="sm" variant="ghost" disabled={cancelando}>
-                    {cancelando ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Cancelar envio ({contador})
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Cancelar o envio ao Financeiro?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      O pedido de {canal} sai da fila do Financeiro e você pode enviar de novo
-                      depois.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Voltar</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => void cancelar()}>
-                      Cancelar envio
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            ) : demanda.sou_o_solicitante === true ? (
-              <span className="text-xs text-muted-foreground">
-                Só o Financeiro pode desfazer agora
-              </span>
-            ) : null}
-          </>
-        ) : situacao === "RECUSADA" ? (
-          <Button size="sm" variant="outline" onClick={onPedir} disabled={bloqueado24h}>
-            <Send className="mr-2 h-4 w-4" />
-            {bloqueado24h ? `Novo envio em ${horasParaReenvio}h` : "Pedir de novo"}
-          </Button>
-        ) : (
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={exportando !== null || pago}
-            onClick={onExportar}
-          >
-            {exportando === canal ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Download className="mr-2 h-4 w-4" />
-            )}
-            Exportar ao parceiro
-          </Button>
-        )}
+          ) : situacao === "RECUSADA" ? (
+            <Button size="sm" variant="outline" onClick={onPedir} disabled={bloqueado24h}>
+              <Send className="mr-2 h-4 w-4" />
+              {bloqueado24h ? `Novo envio em ${horasParaReenvio}h` : "Pedir de novo"}
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={exportando !== null || pago}
+              onClick={onExportar}
+            >
+              {exportando === canal ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="mr-2 h-4 w-4" />
+              )}
+              Exportar ao parceiro
+            </Button>
+          )}
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="ghost" title="Mais ações">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={onVerRelacao}>
+                <FileSearch className="mr-2 h-4 w-4" />
+                Ver a relação
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={onVerContrato}>
+                <FileText className="mr-2 h-4 w-4" />
+                Ver o contrato
+              </DropdownMenuItem>
+              {!liberado ? (
+                <DropdownMenuItem onSelect={onPedirLiberacao}>
+                  <Lock className="mr-2 h-4 w-4" />
+                  Pedir liberação sem contrato
+                </DropdownMenuItem>
+              ) : null}
+              {dentroDaJanela ? (
+                <DropdownMenuItem
+                  disabled={cancelando}
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setConfirmarCancelar(true);
+                  }}
+                >
+                  {cancelando ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Cancelar envio ({contador})
+                </DropdownMenuItem>
+              ) : null}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <AlertDialog open={confirmarCancelar} onOpenChange={setConfirmarCancelar}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Cancelar o envio ao Financeiro?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  O pedido de {canal} sai da fila do Financeiro e você pode enviar de novo depois.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Voltar</AlertDialogCancel>
+                <AlertDialogAction onClick={() => void cancelar()}>
+                  Cancelar envio
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
+        {situacao === "PENDENTE" && !dentroDaJanela && demanda?.sou_o_solicitante === true ? (
+          <p className="mt-1 text-xs text-muted-foreground">Só o Financeiro pode desfazer agora</p>
+        ) : null}
         {parcelas > 0 ? (
           <p className="mt-1 text-xs text-muted-foreground">{parcelas} parcelas</p>
         ) : null}
@@ -679,14 +721,17 @@ function PedirNFDialog({
   async function enviar() {
     setEnviando(true);
     try {
-      const { data, error } = await supabase.rpc("rpc_canal_repasse_solicitar_nf" as never, {
-        p_canal_planilha: canal,
-        p_ano: ciclo.ano,
-        p_mes: ciclo.mes,
-        p_linhas: linhas,
-        p_valor: valor,
-        p_observacao: observacao.trim() || null,
-      } as never);
+      const { data, error } = await supabase.rpc(
+        "rpc_canal_repasse_solicitar_nf" as never,
+        {
+          p_canal_planilha: canal,
+          p_ano: ciclo.ano,
+          p_mes: ciclo.mes,
+          p_linhas: linhas,
+          p_valor: valor,
+          p_observacao: observacao.trim() || null,
+        } as never,
+      );
       if (error) throw error;
       const row = (Array.isArray(data) ? data[0] : data) as { mensagem?: string } | null;
       toast.success(row?.mensagem ?? "Pedido enviado ao Financeiro.");
@@ -732,13 +777,13 @@ function PedirNFDialog({
             Ver a relação antes de enviar
           </Button>
           <div className="flex gap-2">
-          <Button variant="ghost" onClick={onFechar} disabled={enviando}>
-            Cancelar
-          </Button>
-          <Button onClick={() => void enviar()} disabled={enviando}>
-            {enviando ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Enviar ao financeiro
-          </Button>
+            <Button variant="ghost" onClick={onFechar} disabled={enviando}>
+              Cancelar
+            </Button>
+            <Button onClick={() => void enviar()} disabled={enviando}>
+              {enviando ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Enviar ao financeiro
+            </Button>
           </div>
         </DialogFooter>
       </DialogContent>

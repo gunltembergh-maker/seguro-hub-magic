@@ -150,9 +150,12 @@ function useSouAprovador() {
   return useQuery({
     queryKey: ["canal-parceiro-sou-aprovador"],
     queryFn: async (): Promise<boolean> => {
-      const { data, error } = await supabase.rpc("rpc_canal_parceiro_liberacoes" as never, {
-        p_canal_id: null,
-      } as never);
+      const { data, error } = await supabase.rpc(
+        "rpc_canal_parceiro_liberacoes" as never,
+        {
+          p_canal_id: null,
+        } as never,
+      );
       if (error) throw error;
       const linhas = (data ?? []) as Array<{ sou_o_aprovador?: boolean | null }>;
       return linhas.some((l) => l?.sou_o_aprovador === true);
@@ -163,7 +166,7 @@ function useSouAprovador() {
 
 /* -------------------------------------------------------------- o bloco */
 
-export function FilaVerificacaoContratos() {
+export function FilaVerificacaoContratos({ semCard = false }: { semCard?: boolean } = {}) {
   const pendencias = usePendenciasVerificacao();
   const aprovador = useSouAprovador();
   const { abrir, ocupado } = useAbrirContrato();
@@ -172,86 +175,92 @@ export function FilaVerificacaoContratos() {
   const linhas = pendencias.data ?? [];
   if (pendencias.isLoading || linhas.length === 0) return null;
 
+  const conteudo = (
+    <div className="space-y-3">
+      {linhas.map((p) => (
+        <div key={p.contrato_id} className="rounded-lg border bg-muted/30 p-3">
+          <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+            <div className="min-w-0">
+              <p className="font-medium text-foreground">{p.parceiro ?? "Parceiro sem nome"}</p>
+              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <FileText className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{p.arquivo_nome ?? "Contrato"}</span>
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={ocupado}
+                onClick={() => abrir(p.arquivo_path)}
+              >
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Abrir contrato
+              </Button>
+              <Button size="sm" onClick={() => setConferindo(p)}>
+                Conferir e liberar
+              </Button>
+            </div>
+          </div>
+
+          <p className="mt-2 rounded-md border border-amber-600/40 bg-amber-50 p-2 text-sm font-medium text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+            {p.motivo_bloqueio ?? "Sem motivo informado."}
+          </p>
+
+          <div className="mt-3 grid gap-2 text-xs sm:grid-cols-3">
+            <Dado rotulo="Declarado como assinado" valor={simNao(p.declarado_assinado)} />
+            <Dado rotulo="Assinatura encontrada no arquivo" valor={simNao(p.assinatura_lida)} />
+            <Dado
+              rotulo="Origem da leitura"
+              valor={rotuloOrigemLeitura[p.origem_leitura ?? ""] ?? "—"}
+            />
+          </div>
+
+          <div className="mt-2 grid gap-2 text-xs sm:grid-cols-4">
+            <Dado
+              rotulo="Vigência lida"
+              valor={
+                p.vigencia_inicio || p.vigencia_fim
+                  ? `${dia(p.vigencia_inicio)} a ${dia(p.vigencia_fim)}`
+                  : "—"
+              }
+            />
+            <Dado rotulo="Benefícios" valor={pctTexto(p.pct_beneficios)} />
+            <Dado rotulo="Garantia" valor={pctTexto(p.pct_garantia)} />
+            <Dado rotulo="Demais ramos" valor={pctTexto(p.pct_demais)} />
+          </div>
+
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+            <span>
+              Enviado por {p.enviado_por_nome ?? "—"} em {dataHora(p.enviado_em)}
+            </span>
+            <Badge variant="outline">Repasse acumulado travado: {reais(p.repasse_acumulado)}</Badge>
+            {p.ja_avisado_em ? <span>Avisado em {dataHora(p.ja_avisado_em)}</span> : null}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <>
-      <Card className="border-amber-600/40">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
-            <AlertTriangle className="h-4 w-4" />
-            Aguardando conferência
-          </CardTitle>
-          <CardDescription>
-            Contratos parados esperando alguém abrir o documento e confirmar o que o Hub não
-            conseguiu concluir sozinho.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {linhas.map((p) => (
-            <div key={p.contrato_id} className="rounded-lg border bg-muted/30 p-3">
-              <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-                <div className="min-w-0">
-                  <p className="font-medium text-foreground">{p.parceiro ?? "Parceiro sem nome"}</p>
-                  <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <FileText className="h-3.5 w-3.5 shrink-0" />
-                    <span className="truncate">{p.arquivo_nome ?? "Contrato"}</span>
-                  </p>
-                </div>
-                <div className="flex shrink-0 flex-wrap gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={ocupado}
-                    onClick={() => abrir(p.arquivo_path)}
-                  >
-                    <ExternalLink className="mr-2 h-4 w-4" />
-                    Abrir contrato
-                  </Button>
-                  <Button size="sm" onClick={() => setConferindo(p)}>
-                    Conferir e liberar
-                  </Button>
-                </div>
-              </div>
-
-              <p className="mt-2 rounded-md border border-amber-600/40 bg-amber-50 p-2 text-sm font-medium text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
-                {p.motivo_bloqueio ?? "Sem motivo informado."}
-              </p>
-
-              <div className="mt-3 grid gap-2 text-xs sm:grid-cols-3">
-                <Dado rotulo="Declarado como assinado" valor={simNao(p.declarado_assinado)} />
-                <Dado rotulo="Assinatura encontrada no arquivo" valor={simNao(p.assinatura_lida)} />
-                <Dado
-                  rotulo="Origem da leitura"
-                  valor={rotuloOrigemLeitura[p.origem_leitura ?? ""] ?? "—"}
-                />
-              </div>
-
-              <div className="mt-2 grid gap-2 text-xs sm:grid-cols-4">
-                <Dado
-                  rotulo="Vigência lida"
-                  valor={
-                    p.vigencia_inicio || p.vigencia_fim
-                      ? `${dia(p.vigencia_inicio)} a ${dia(p.vigencia_fim)}`
-                      : "—"
-                  }
-                />
-                <Dado rotulo="Benefícios" valor={pctTexto(p.pct_beneficios)} />
-                <Dado rotulo="Garantia" valor={pctTexto(p.pct_garantia)} />
-                <Dado rotulo="Demais ramos" valor={pctTexto(p.pct_demais)} />
-              </div>
-
-              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                <span>
-                  Enviado por {p.enviado_por_nome ?? "—"} em {dataHora(p.enviado_em)}
-                </span>
-                <Badge variant="outline">
-                  Repasse acumulado travado: {reais(p.repasse_acumulado)}
-                </Badge>
-                {p.ja_avisado_em ? <span>Avisado em {dataHora(p.ja_avisado_em)}</span> : null}
-              </div>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+      {semCard ? (
+        conteudo
+      ) : (
+        <Card className="border-amber-600/40">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
+              <AlertTriangle className="h-4 w-4" />
+              Aguardando conferência
+            </CardTitle>
+            <CardDescription>
+              Contratos parados esperando alguém abrir o documento e confirmar o que o Hub não
+              conseguiu concluir sozinho.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>{conteudo}</CardContent>
+        </Card>
+      )}
 
       <ConferirDialog
         pendencia={conferindo}
@@ -351,7 +360,8 @@ function ConferirDialog({
           p_pct_demais:
             demais.trim() === paraTexto(pendencia.pct_demais) ? null : paraFracao(demais),
           p_minimo:
-            minimo.trim() === (pendencia.minimo_repasse == null ? "" : String(pendencia.minimo_repasse))
+            minimo.trim() ===
+            (pendencia.minimo_repasse == null ? "" : String(pendencia.minimo_repasse))
               ? null
               : Number(minimo.trim().replace(",", ".")) || null,
           p_confirmar_assinatura: souAprovador && atestar ? true : null,
@@ -408,7 +418,9 @@ function ConferirDialog({
               variant="ghost"
               size="sm"
               disabled={ocupado}
-              onClick={() => abrir(pendencia.arquivo_path, pendencia.arquivo_nome ?? "contrato.pdf")}
+              onClick={() =>
+                abrir(pendencia.arquivo_path, pendencia.arquivo_nome ?? "contrato.pdf")
+              }
             >
               <Download className="mr-2 h-4 w-4" />
               Baixar
