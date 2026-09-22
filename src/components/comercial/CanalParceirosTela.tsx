@@ -1136,7 +1136,24 @@ function VinculosAConfirmar({
             </div>
           );
         })}
-      </CardContent>
+    </div>
+  );
+
+  if (semCard) return conteudo;
+
+  return (
+    <Card className="border-amber-600/40">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
+          <AlertTriangle className="h-4 w-4" />
+          Vínculos a confirmar
+        </CardTitle>
+        <CardDescription>
+          Contratos recebidos que o sistema não conseguiu ligar a um parceiro. Escolha a quem cada
+          documento pertence.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>{conteudo}</CardContent>
     </Card>
   );
 }
