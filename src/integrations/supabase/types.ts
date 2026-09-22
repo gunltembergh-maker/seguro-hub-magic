@@ -1448,14 +1448,18 @@ export type Database = {
         Row: {
           apelidos: string[]
           ativo: boolean
+          cadastro_origem: string | null
           cnpj: string | null
           contato_email: string | null
           contato_nome: string | null
           contato_telefone: string | null
           created_at: string
+          criado_por: string | null
+          eh_parceiro: boolean
           email_financeiro: string | null
           id: string
           modelo_repasse: string | null
+          motivo_sem_contrato: string | null
           nome: string
           percentual_repasse: number | null
           pipefy_card_id: number | null
@@ -1465,14 +1469,18 @@ export type Database = {
         Insert: {
           apelidos?: string[]
           ativo?: boolean
+          cadastro_origem?: string | null
           cnpj?: string | null
           contato_email?: string | null
           contato_nome?: string | null
           contato_telefone?: string | null
           created_at?: string
+          criado_por?: string | null
+          eh_parceiro?: boolean
           email_financeiro?: string | null
           id?: string
           modelo_repasse?: string | null
+          motivo_sem_contrato?: string | null
           nome: string
           percentual_repasse?: number | null
           pipefy_card_id?: number | null
@@ -1482,14 +1490,18 @@ export type Database = {
         Update: {
           apelidos?: string[]
           ativo?: boolean
+          cadastro_origem?: string | null
           cnpj?: string | null
           contato_email?: string | null
           contato_nome?: string | null
           contato_telefone?: string | null
           created_at?: string
+          criado_por?: string | null
+          eh_parceiro?: boolean
           email_financeiro?: string | null
           id?: string
           modelo_repasse?: string | null
+          motivo_sem_contrato?: string | null
           nome?: string
           percentual_repasse?: number | null
           pipefy_card_id?: number | null
@@ -1497,6 +1509,300 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      canal_contrato_avisos: {
+        Row: {
+          contrato_id: string
+          destinatario: string
+          enviado_em: string
+          id: string
+          message_id: string | null
+          tipo: string
+        }
+        Insert: {
+          contrato_id: string
+          destinatario: string
+          enviado_em?: string
+          id?: string
+          message_id?: string | null
+          tipo: string
+        }
+        Update: {
+          contrato_id?: string
+          destinatario?: string
+          enviado_em?: string
+          id?: string
+          message_id?: string | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canal_contrato_avisos_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "canal_contratos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      canal_contratos: {
+        Row: {
+          arquivo_nome: string
+          arquivo_path: string
+          assinado: boolean
+          assinado_em: string | null
+          base_calculo: string
+          canal_id: string | null
+          enviado_em: string
+          enviado_por: string | null
+          extracao: Json | null
+          hash_sha256: string | null
+          id: string
+          minimo_repasse: number
+          motivo_bloqueio: string | null
+          percentual_beneficios: number | null
+          percentual_demais: number | null
+          percentual_garantia: number | null
+          signatarios: number | null
+          situacao: string
+          tipo: string
+          validado_em: string | null
+          vigencia_fim: string | null
+          vigencia_inicio: string | null
+        }
+        Insert: {
+          arquivo_nome: string
+          arquivo_path: string
+          assinado?: boolean
+          assinado_em?: string | null
+          base_calculo?: string
+          canal_id?: string | null
+          enviado_em?: string
+          enviado_por?: string | null
+          extracao?: Json | null
+          hash_sha256?: string | null
+          id?: string
+          minimo_repasse?: number
+          motivo_bloqueio?: string | null
+          percentual_beneficios?: number | null
+          percentual_demais?: number | null
+          percentual_garantia?: number | null
+          signatarios?: number | null
+          situacao?: string
+          tipo?: string
+          validado_em?: string | null
+          vigencia_fim?: string | null
+          vigencia_inicio?: string | null
+        }
+        Update: {
+          arquivo_nome?: string
+          arquivo_path?: string
+          assinado?: boolean
+          assinado_em?: string | null
+          base_calculo?: string
+          canal_id?: string | null
+          enviado_em?: string
+          enviado_por?: string | null
+          extracao?: Json | null
+          hash_sha256?: string | null
+          id?: string
+          minimo_repasse?: number
+          motivo_bloqueio?: string | null
+          percentual_beneficios?: number | null
+          percentual_demais?: number | null
+          percentual_garantia?: number | null
+          signatarios?: number | null
+          situacao?: string
+          tipo?: string
+          validado_em?: string | null
+          vigencia_fim?: string | null
+          vigencia_inicio?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canal_contratos_canal_id_fkey"
+            columns: ["canal_id"]
+            isOneToOne: false
+            referencedRelation: "canais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      canal_liberacao_aprovadores: {
+        Row: {
+          criado_em: string
+          criado_por: string | null
+          user_id: string
+        }
+        Insert: {
+          criado_em?: string
+          criado_por?: string | null
+          user_id: string
+        }
+        Update: {
+          criado_em?: string
+          criado_por?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      canal_liberacoes_excepcionais: {
+        Row: {
+          aprovado_em: string | null
+          aprovado_por: string | null
+          canal_id: string
+          ciclo_ano: number
+          ciclo_mes: number
+          id: string
+          justificativa: string
+          observacao: string | null
+          solicitado_em: string
+          solicitado_por: string | null
+          status: string
+          usada_em: string | null
+        }
+        Insert: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          canal_id: string
+          ciclo_ano: number
+          ciclo_mes: number
+          id?: string
+          justificativa: string
+          observacao?: string | null
+          solicitado_em?: string
+          solicitado_por?: string | null
+          status?: string
+          usada_em?: string | null
+        }
+        Update: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          canal_id?: string
+          ciclo_ano?: number
+          ciclo_mes?: number
+          id?: string
+          justificativa?: string
+          observacao?: string | null
+          solicitado_em?: string
+          solicitado_por?: string | null
+          status?: string
+          usada_em?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canal_liberacoes_excepcionais_canal_id_fkey"
+            columns: ["canal_id"]
+            isOneToOne: false
+            referencedRelation: "canais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      canal_parceiro_vinculos: {
+        Row: {
+          canal_id: string
+          chave_planilha: string
+          criado_em: string
+          criado_por: string | null
+          id: string
+          origem: string
+        }
+        Insert: {
+          canal_id: string
+          chave_planilha: string
+          criado_em?: string
+          criado_por?: string | null
+          id?: string
+          origem?: string
+        }
+        Update: {
+          canal_id?: string
+          chave_planilha?: string
+          criado_em?: string
+          criado_por?: string | null
+          id?: string
+          origem?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canal_parceiro_vinculos_canal_id_fkey"
+            columns: ["canal_id"]
+            isOneToOne: false
+            referencedRelation: "canais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      canal_repasse_exportacoes: {
+        Row: {
+          base: string
+          canal_id: string | null
+          chave_planilha: string
+          ciclo_ano: number
+          ciclo_mes: number
+          contrato_id: string | null
+          data_prevista_pagamento: string
+          exportado_em: string
+          exportado_por: string | null
+          id: string
+          liberacao_id: string | null
+          linhas: number | null
+          valor_total: number | null
+        }
+        Insert: {
+          base: string
+          canal_id?: string | null
+          chave_planilha: string
+          ciclo_ano: number
+          ciclo_mes: number
+          contrato_id?: string | null
+          data_prevista_pagamento: string
+          exportado_em?: string
+          exportado_por?: string | null
+          id?: string
+          liberacao_id?: string | null
+          linhas?: number | null
+          valor_total?: number | null
+        }
+        Update: {
+          base?: string
+          canal_id?: string | null
+          chave_planilha?: string
+          ciclo_ano?: number
+          ciclo_mes?: number
+          contrato_id?: string | null
+          data_prevista_pagamento?: string
+          exportado_em?: string
+          exportado_por?: string | null
+          id?: string
+          liberacao_id?: string | null
+          linhas?: number | null
+          valor_total?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canal_repasse_exportacoes_canal_id_fkey"
+            columns: ["canal_id"]
+            isOneToOne: false
+            referencedRelation: "canais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "canal_repasse_exportacoes_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "canal_contratos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "canal_repasse_exportacoes_liberacao_id_fkey"
+            columns: ["liberacao_id"]
+            isOneToOne: false
+            referencedRelation: "canal_liberacoes_excepcionais"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cliente_ramos: {
         Row: {
@@ -3347,6 +3653,72 @@ export type Database = {
       ab_minha_area: { Args: never; Returns: string }
       ab_pode: { Args: { p_chave: string }; Returns: boolean }
       ab_seed_demo: { Args: never; Returns: string }
+      canal_parceiro_casar: {
+        Args: { p_nomes: string[] }
+        Returns: {
+          canal_id: string
+          chave_planilha: string
+          nome: string
+        }[]
+      }
+      canal_parceiro_data_prevista_recusa: {
+        Args: { p_data: string }
+        Returns: string
+      }
+      canal_parceiro_de: { Args: { p_canal_planilha: string }; Returns: string }
+      canal_parceiro_expirar_contratos: { Args: never; Returns: number }
+      canal_parceiro_janela_pagamento: {
+        Args: { p_ref?: string }
+        Returns: {
+          fim: string
+          inicio: string
+        }[]
+      }
+      canal_parceiro_marcar_aviso: {
+        Args: {
+          p_contrato_id: string
+          p_destinatario: string
+          p_message_id?: string
+          p_tipo: string
+        }
+        Returns: string
+      }
+      canal_parceiro_percentual: {
+        Args: { p_canal_planilha: string; p_tipo_de_ramo: string }
+        Returns: number
+      }
+      canal_parceiro_pode_exportar: {
+        Args: { p_ano?: number; p_canal_planilha: string; p_mes?: number }
+        Returns: boolean
+      }
+      canal_parceiro_registrar_contrato: {
+        Args: {
+          p_arquivo_nome: string
+          p_arquivo_path: string
+          p_assinado?: boolean
+          p_assinado_em?: string
+          p_canal_id?: string
+          p_enviado_por?: string
+          p_extracao?: Json
+          p_hash_sha256?: string
+          p_minimo?: number
+          p_nomes_do_contrato: string[]
+          p_pct_beneficios?: number
+          p_pct_demais?: number
+          p_pct_garantia?: number
+          p_signatarios?: number
+          p_tipo?: string
+          p_vigencia_fim?: string
+          p_vigencia_inicio?: string
+        }
+        Returns: {
+          canal_id: string
+          contrato_id: string
+          motivo: string
+          pode_exportar: boolean
+          situacao: string
+        }[]
+      }
       divide_safe: {
         Args: { denominador: number; numerador: number }
         Returns: number
@@ -3389,6 +3761,7 @@ export type Database = {
         Returns: string
       }
       notificar_admin_audit: { Args: never; Returns: undefined }
+      pode_aprovar_liberacao_repasse: { Args: never; Returns: boolean }
       pode_beneficios: { Args: never; Returns: boolean }
       pode_cadastros: { Args: never; Returns: boolean }
       pode_gerenciar_configuracoes: {
@@ -3399,6 +3772,7 @@ export type Database = {
         Args: { _tipo: string; _user_id: string }
         Returns: boolean
       }
+      pode_ver_canal_parceiro: { Args: never; Returns: boolean }
       pode_ver_garantia_formulario: { Args: never; Returns: boolean }
       retry_lavoro_sync_if_needed: { Args: never; Returns: undefined }
       rp_expirar_reservas: { Args: never; Returns: number }
@@ -3822,6 +4196,143 @@ export type Database = {
           nome: string
           role: string
           user_id: string
+        }[]
+      }
+      rpc_canal_parceiro_autorizar_exportacao: {
+        Args: {
+          p_ano: number
+          p_canal_planilha: string
+          p_data_prevista: string
+          p_linhas?: number
+          p_mes: number
+          p_valor?: number
+        }
+        Returns: {
+          base: string
+          data_prevista: string
+          exportacao_id: string
+          liberado_por: string
+          parceiro: string
+        }[]
+      }
+      rpc_canal_parceiro_contratos: {
+        Args: { p_canal_id?: string }
+        Returns: {
+          arquivo_nome: string
+          arquivo_path: string
+          assinado: boolean
+          assinado_em: string
+          canal_id: string
+          canal_nome: string
+          contrato_id: string
+          dias_para_vencer: number
+          enviado_em: string
+          hash_sha256: string
+          minimo_repasse: number
+          motivo_bloqueio: string
+          pct_beneficios: number
+          pct_demais_efetivo: number
+          pct_garantia: number
+          signatarios: number
+          situacao: string
+          tipo: string
+          validado_em: string
+          vigencia_fim: string
+          vigencia_inicio: string
+        }[]
+      }
+      rpc_canal_parceiro_decidir_liberacao: {
+        Args: {
+          p_aprovar: boolean
+          p_liberacao_id: string
+          p_observacao?: string
+        }
+        Returns: {
+          liberacao_id: string
+          status: string
+        }[]
+      }
+      rpc_canal_parceiro_liberacoes: {
+        Args: { p_status?: string }
+        Returns: {
+          aprovado_em: string
+          aprovado_por_nome: string
+          canal_id: string
+          canal_nome: string
+          chave_planilha: string
+          ciclo_ano: number
+          ciclo_mes: number
+          justificativa: string
+          liberacao_id: string
+          observacao: string
+          solicitado_em: string
+          solicitado_por_nome: string
+          sou_o_aprovador: boolean
+          status: string
+          usada_em: string
+        }[]
+      }
+      rpc_canal_parceiro_situacao: {
+        Args: { p_canal_planilha?: string }
+        Returns: {
+          assinado: boolean
+          assinado_em: string
+          cadastro_origem: string
+          canal_id: string
+          chave_planilha: string
+          contrato_id: string
+          dias_para_vencer: number
+          eh_parceiro: boolean
+          minimo_repasse: number
+          nome: string
+          pct_beneficios: number
+          pct_demais_efetivo: number
+          pct_garantia: number
+          pode_exportar: boolean
+          situacao: string
+          vigencia_fim: string
+          vigencia_inicio: string
+        }[]
+      }
+      rpc_canal_parceiro_solicitar_liberacao: {
+        Args: {
+          p_ano: number
+          p_canal_planilha: string
+          p_justificativa: string
+          p_mes: number
+        }
+        Returns: {
+          liberacao_id: string
+          mensagem: string
+          status: string
+        }[]
+      }
+      rpc_canal_parceiro_vencimentos_pendentes: {
+        Args: { p_dias?: number }
+        Returns: {
+          arquivo_nome: string
+          canal_id: string
+          cnpj: string
+          contrato_id: string
+          dias_para_vencer: number
+          parceiro: string
+          repasse_acumulado: number
+          tipo_aviso: string
+          vigencia_fim: string
+          vigencia_inicio: string
+        }[]
+      }
+      rpc_canal_parceiro_vigencias: {
+        Args: never
+        Returns: {
+          aviso_60_enviado_em: string
+          canal_id: string
+          contrato_id: string
+          dias_para_vencer: number
+          parceiro: string
+          situacao: string
+          vigencia_fim: string
+          vigencia_inicio: string
         }[]
       }
       rpc_comissao_vencida_por_canal:
