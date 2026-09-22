@@ -311,6 +311,13 @@ export default function CanalParceirosTela() {
     return m;
   }, [linhasSituacao]);
 
+  /** Autorizações da diretoria em vigor: é o percentual que a exportação usa. */
+  const alteracoesAprovadas = useAlteracoesPercentual("APROVADA");
+  const aprovadaPorCanal = useMemo(() => {
+    const m = new Map<string, Alteracao>();
+    for (const a of alteracoesAprovadas.data ?? []) if (a.canal_id) m.set(a.canal_id, a);
+    return m;
+  }, [alteracoesAprovadas.data]);
 
   /** Base da tabela: parceiros cadastrados + canais da planilha ainda sem parceiro. */
   const linhas = useMemo(() => {
