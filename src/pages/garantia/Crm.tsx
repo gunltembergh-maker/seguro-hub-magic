@@ -121,6 +121,7 @@ export default function Crm() {
   });
   const { data: pessoas = [] } = useResponsaveis();
   const { data: inicios = {} } = useInicioDoStatus(podeVerTempo);
+  const { data: seguradoraPorDemanda = {} } = useSeguradorasEscolhidas(demandas.map((d) => d.id));
 
   const colunas = useMemo(() => colunasDoCatalogo(catalogo), [catalogo]);
   const demandaAberta = demandas.find((d) => d.id === aberta) ?? null;
@@ -223,6 +224,7 @@ export default function Crm() {
                         statusNome={
                           catalogo.find((s) => s.codigo === d.status_atual)?.nome ?? d.status_atual
                         }
+                        seguradora={seguradoraPorDemanda[d.id] ?? null}
                         inicioStatus={inicios[d.id]}
                         podeVerTempo={podeVerTempo}
                         onAbrir={() =>
