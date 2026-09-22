@@ -240,7 +240,9 @@ export async function exportarRepasse(opts: {
           colunas: COLS_PARCEIRO_RESUMO,
           linhas: linhasResumo,
           totalizar: ["base_liquida", "valor_repasse_total"],
-          nota: "Valor do Repasse = Comissão Recebida × (1 − % Imposto) × % Repasse. A aba Detalhe traz a conta aberta linha a linha.",
+          nota:
+            "Valor do Repasse = Comissão Recebida × (1 − % Imposto) × % Repasse. A aba Detalhe traz a conta aberta linha a linha.\n" +
+            "O pagamento será efetuado somente após o envio da nota fiscal.",
           semLinhasDeGrade: true,
         },
         { nome: "Detalhe", colunas: COLS_PARCEIRO_DETALHE, linhas: linhasDetalhe, totalizar: ["valor_repasse_total"], semLinhasDeGrade: true },
