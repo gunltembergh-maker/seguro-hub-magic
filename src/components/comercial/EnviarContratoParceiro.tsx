@@ -8,6 +8,7 @@
 // A pessoa declara se o contrato está assinado; quem constata a assinatura é
 // sempre o servidor, lendo o arquivo. O componente nunca decide situação:
 // quem decide é a função do banco.
+import { mensagemDeErro } from "@/lib/erro";
 import { useRef, useState } from "react";
 import { AlertTriangle, CheckCircle2, FileText, Loader2, ScanLine, XCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -235,7 +236,7 @@ export default function EnviarContratoParceiro({
       setResposta(corpo);
       setPasso("resultado");
     } catch (e) {
-      setErro(e instanceof Error ? e.message : String(e));
+      setErro(mensagemDeErro(e));
     } finally {
       setEnviando(false);
     }
@@ -258,7 +259,7 @@ export default function EnviarContratoParceiro({
           `Este PDF tem ${e.paginas} páginas, acima do limite de ${OCR_MAX_PAGINAS} para o reconhecimento por imagem. Informe os dados à mão.`,
         );
       } else {
-        setErro(e instanceof Error ? e.message : String(e));
+        setErro(mensagemDeErro(e));
       }
       setPasso("manual");
     } finally {
@@ -295,7 +296,7 @@ export default function EnviarContratoParceiro({
       setResposta(corpo);
       setPasso("resultado");
     } catch (e) {
-      setErro(e instanceof Error ? e.message : String(e));
+      setErro(mensagemDeErro(e));
     } finally {
       setEnviando(false);
     }
@@ -320,7 +321,7 @@ export default function EnviarContratoParceiro({
       onSucesso?.();
       fechar();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
+      toast.error(mensagemDeErro(e));
     } finally {
       setEnviando(false);
     }

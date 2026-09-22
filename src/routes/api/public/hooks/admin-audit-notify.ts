@@ -1,5 +1,6 @@
 // Hook chamado pelo gatilho de auditoria (pg_net) e pelo pg_cron a cada 5 min.
 // Envia por e-mail as alterações administrativas ainda não notificadas.
+import { mensagemDeErro } from "@/lib/erro";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/api/public/hooks/admin-audit-notify")({
@@ -22,7 +23,7 @@ async function handle(request: Request): Promise<Response> {
     const result = await notificarAuditoriaPendente();
     return json({ ok: true, ...result });
   } catch (e) {
-    return json({ ok: false, error: e instanceof Error ? e.message : String(e) }, 500);
+    return json({ ok: false, error: mensagemDeErro(e) }, 500);
   }
 }
 

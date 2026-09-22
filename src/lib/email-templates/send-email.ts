@@ -1,3 +1,4 @@
+import { mensagemDeErro } from "@/lib/erro";
 import * as React from 'react'
 import { render } from '@react-email/render'
 import { EmailAPIError, sendLovableEmail } from '@lovable.dev/email-js'
@@ -105,7 +106,7 @@ export async function sendTemplateEmail(
     }
     const status =
       error instanceof EmailAPIError && error.status === 429 ? 'rate_limited' : 'failed'
-    await logInsert(status, error instanceof Error ? error.message : String(error))
+    await logInsert(status, mensagemDeErro(error))
     throw error
   }
 

@@ -1,3 +1,4 @@
+import { mensagemDeErro } from "@/lib/erro";
 import { render } from "@react-email/render";
 import { EmailAPIError, sendLovableEmail } from "@lovable.dev/email-js";
 import React from "react";
@@ -108,7 +109,7 @@ export async function sendAdminAuthEmail(data: SendAdminAuthEmailInput, context:
       metadata: { subject: emailConfig.subject, workflow_id: result.workflow_id ?? null },
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = mensagemDeErro(error);
     const status = error instanceof EmailAPIError && error.status === 429 ? "rate_limited" : "failed";
     await lavoroAdmin.from("email_send_log").insert({
       message_id: messageId,

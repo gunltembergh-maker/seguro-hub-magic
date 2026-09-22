@@ -3,6 +3,7 @@
 // Quem pode aprovar é o banco que decide (sou_o_aprovador). Aqui só escondemos
 // os botões de quem não é o aprovador e exigimos a senha de super administrador
 // antes de aprovar, do mesmo jeito que as liberações excepcionais.
+import { mensagemDeErro } from "@/lib/erro";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -14,6 +15,7 @@ import { SuperAdminGate } from "@/components/admin/SuperAdminGate";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Dialog,
   DialogContent,
@@ -111,6 +113,7 @@ export function FilaAlteracoesPercentual({ semCard = false }: { semCard?: boolea
   const [recusando, setRecusando] = useState<Alteracao | null>(null);
   const [observacao, setObservacao] = useState("");
   const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
 
   const linhas = pendentes.data ?? [];
   if (pendentes.isLoading || linhas.length === 0) return null;
@@ -136,7 +139,8 @@ export function FilaAlteracoesPercentual({ semCard = false }: { semCard?: boolea
       setRecusando(null);
       setObservacao("");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
+      setErro(mensagemDeErro(e));
+      toast.error(mensagemDeErro(e));
     } finally {
       setSalvando(false);
     }
@@ -160,7 +164,7 @@ export function FilaAlteracoesPercentual({ semCard = false }: { semCard?: boolea
               </Button>
               {a.sou_o_aprovador === true ? (
                 <>
-                  <Button size="sm" onClick={() => setAprovando(a)}>
+                  <Button size="sm" onClick={() => { setErro(null); setAprovando(a); }}>
                     Aprovar
                   </Button>
                   <Button
@@ -168,6 +172,7 @@ export function FilaAlteracoesPercentual({ semCard = false }: { semCard?: boolea
                     variant="outline"
                     onClick={() => {
                       setObservacao("");
+                      setErro(null);
                       setRecusando(a);
                     }}
                   >
@@ -239,7 +244,10 @@ export function FilaAlteracoesPercentual({ semCard = false }: { semCard?: boolea
       <Dialog
         open={!!aprovando}
         onOpenChange={(v) => {
-          if (!v) setAprovando(null);
+          if (!v) {
+            setAprovando(null);
+            setErro(null);
+          }
         }}
       >
         <DialogContent className="max-w-lg">
@@ -263,6 +271,11 @@ export function FilaAlteracoesPercentual({ semCard = false }: { semCard?: boolea
                 </span>
                 .
               </p>
+              {erro ? (
+                <Alert variant="destructive">
+                  <AlertDescription>{erro}</AlertDescription>
+                </Alert>
+              ) : null}
               <Button
                 className="w-full"
                 disabled={salvando}
@@ -280,7 +293,10 @@ export function FilaAlteracoesPercentual({ semCard = false }: { semCard?: boolea
       <Dialog
         open={!!recusando}
         onOpenChange={(v) => {
-          if (!v) setRecusando(null);
+          if (!v) {
+            setRecusando(null);
+            setErro(null);
+          }
         }}
       >
         <DialogContent className="max-w-lg">
@@ -300,6 +316,12 @@ export function FilaAlteracoesPercentual({ semCard = false }: { semCard?: boolea
               onChange={(e) => setObservacao(e.target.value)}
             />
           </div>
+
+          {erro ? (
+            <Alert variant="destructive">
+              <AlertDescription>{erro}</AlertDescription>
+            </Alert>
+          ) : null}
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setRecusando(null)} disabled={salvando}>

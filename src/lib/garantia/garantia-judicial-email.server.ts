@@ -6,6 +6,7 @@
 // Não existe caminho alternativo: se faltar arquivo no Storage ou o envio falhar,
 // a solicitação vai para `erro` e nada é enviado pela metade.
 
+import { mensagemDeErro } from "@/lib/erro";
 import { render } from "@react-email/render";
 import * as React from "react";
 import {
@@ -264,7 +265,7 @@ export async function enviarEmailNovaDemanda(
       throw new Error(`Graph sendMail [${resp.status}]: ${codigo}`);
     }
   } catch (error) {
-    const msg = (error instanceof Error ? error.message : String(error)).slice(0, 500);
+    const msg = (mensagemDeErro(error)).slice(0, 500);
     await logEnvio(messageId, "failed", msg, subject, destinatario, origem);
     return { ok: false, erro: "falha_no_envio", detalhe: msg };
   }

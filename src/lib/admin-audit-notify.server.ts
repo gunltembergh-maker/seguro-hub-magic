@@ -1,3 +1,4 @@
+import { mensagemDeErro } from "@/lib/erro";
 import { render } from "@react-email/render";
 import { sendLovableEmail } from "@lovable.dev/email-js";
 import React from "react";
@@ -116,7 +117,7 @@ export async function notificarAuditoriaPendente() {
 
     return { enviados: ids.length };
   } catch (e) {
-    const message = e instanceof Error ? e.message : String(e);
+    const message = mensagemDeErro(e);
     await lavoroAdmin.from("admin_audit_log").update({ notificacao_erro: message }).in("id", ids);
     throw e;
   }

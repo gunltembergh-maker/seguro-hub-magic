@@ -2,6 +2,7 @@
 //
 // Tudo que decide situação, vigência e liberação de repasse vem do banco.
 // A tela só mostra e chama as RPCs; nunca calcula regra por conta própria.
+import { mensagemDeErro } from "@/lib/erro";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -448,7 +449,7 @@ export default function CanalParceirosTela() {
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Não deu para carregar</AlertTitle>
-          <AlertDescription>{erro instanceof Error ? erro.message : String(erro)}</AlertDescription>
+          <AlertDescription>{mensagemDeErro(erro)}</AlertDescription>
         </Alert>
       ) : null}
 
@@ -905,7 +906,7 @@ function NovoParceiro({
       onFeito();
       fechar();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
+      toast.error(mensagemDeErro(e));
     } finally {
       setSalvando(false);
     }
@@ -1115,7 +1116,7 @@ function VinculosAConfirmar({
       );
       onResolvido();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
+      toast.error(mensagemDeErro(e));
     } finally {
       setSalvando(null);
     }
@@ -1217,7 +1218,7 @@ function DetalheParceiro({
       if (error) throw new Error(error.message);
       window.open(data?.signedUrl, "_blank", "noopener");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
+      toast.error(mensagemDeErro(e));
     } finally {
       setAbrindo(null);
     }
@@ -1477,7 +1478,7 @@ function ExcluirParceiroDialog({
       setMotivo("");
       onExcluido();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
+      toast.error(mensagemDeErro(e));
     } finally {
       setExcluindo(false);
     }
@@ -1573,7 +1574,7 @@ function Historico({ canalId }: { canalId: string | null }) {
       ) : eventos.error ? (
         <Alert variant="destructive">
           <AlertDescription>
-            {eventos.error instanceof Error ? eventos.error.message : String(eventos.error)}
+            {mensagemDeErro(eventos.error)}
           </AlertDescription>
         </Alert>
       ) : linhas.length === 0 ? (

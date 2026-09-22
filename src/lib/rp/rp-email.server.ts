@@ -1,5 +1,6 @@
 // Server-only: envio dos e-mails do módulo Reserva de Posições.
 // Usa os modelos gravados em `rp_email_templates` e registra em `email_send_log`.
+import { mensagemDeErro } from "@/lib/erro";
 import { EmailAPIError, sendLovableEmail } from "@lovable.dev/email-js";
 
 const SITE_NAME = "Hub Lavoro Seguros";
@@ -84,7 +85,7 @@ export async function enviarHtml(opts: {
       : error instanceof EmailAPIError && error.status === 429
         ? "rate_limited"
         : "failed";
-    const msg = error instanceof Error ? error.message : String(error);
+    const msg = mensagemDeErro(error);
     await logEnvio(opts.idempotencyKey, opts.templateName, opts.to, status, msg, opts.subject);
     return { ok: false, erro: msg };
   }

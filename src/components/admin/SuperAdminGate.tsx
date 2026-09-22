@@ -1,3 +1,4 @@
+import { mensagemDeErro } from "@/lib/erro";
 import { useState, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2, ShieldCheck } from "lucide-react";
@@ -63,7 +64,7 @@ export function SuperAdminGate({
       }
     } catch (err) {
       toast.error("Não foi possível validar", {
-        description: err instanceof Error ? err.message : String(err),
+        description: mensagemDeErro(err),
       });
     } finally {
       setLoading(false);

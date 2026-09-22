@@ -13,6 +13,7 @@
 // `alerta_enviado_em` só é carimbado depois de um envio bem-sucedido: se o
 // alerta falhar, a linha continua elegível e tenta de novo no próximo ciclo.
 
+import { mensagemDeErro } from "@/lib/erro";
 import { obterTokenGraph } from "@/lib/graph/graph-token.server";
 
 /**
@@ -255,7 +256,7 @@ async function enviarAlerta(sol: Any): Promise<{ ok: boolean; erro?: string }> {
       throw new Error(`Graph sendMail [${resp.status}]: ${codigo}`);
     }
   } catch (error) {
-    const msg = (error instanceof Error ? error.message : String(error)).slice(0, 500);
+    const msg = (mensagemDeErro(error)).slice(0, 500);
     await logEnvio(messageId, "failed", msg, subject);
     return { ok: false, erro: msg };
   }
@@ -312,6 +313,6 @@ export async function alertarSolicitacoesTravadas() {
 
     return { ok: falhas.length === 0, alertadas: enviados, falhas };
   } catch (e) {
-    return { ok: false, erro: "excecao", detalhe: e instanceof Error ? e.message : String(e) };
+    return { ok: false, erro: "excecao", detalhe: mensagemDeErro(e) };
   }
 }
