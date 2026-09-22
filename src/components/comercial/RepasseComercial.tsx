@@ -191,13 +191,16 @@ export function RepasseComercial({
   const { data, isLoading, error } = useQuery({
     queryKey: ["lavoro-repasse-por-canal", ciclo.ano, ciclo.mes, "PROVISIONADO", null, null],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("rpc_lavoro_repasse_por_canal" as never, {
-        p_ano: ciclo.ano,
-        p_mes: ciclo.mes,
-        p_modo: "PROVISIONADO",
-        p_canal_repasse: null,
-        p_situacao_repasse: null,
-      } as never);
+      const { data, error } = await supabase.rpc(
+        "rpc_lavoro_repasse_por_canal" as never,
+        {
+          p_ano: ciclo.ano,
+          p_mes: ciclo.mes,
+          p_modo: "PROVISIONADO",
+          p_canal_repasse: null,
+          p_situacao_repasse: null,
+        } as never,
+      );
       if (error) throw error;
       return (data || []) as CanalRow[];
     },
@@ -207,11 +210,14 @@ export function RepasseComercial({
   const demandas = useQuery({
     queryKey: ["canal-repasse-demandas", ciclo.ano, ciclo.mes],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("rpc_canal_repasse_demandas" as never, {
-        p_situacao: null,
-        p_ano: ciclo.ano,
-        p_mes: ciclo.mes,
-      } as never);
+      const { data, error } = await supabase.rpc(
+        "rpc_canal_repasse_demandas" as never,
+        {
+          p_situacao: null,
+          p_ano: ciclo.ano,
+          p_mes: ciclo.mes,
+        } as never,
+      );
       if (error) throw error;
       return (data || []) as DemandaNF[];
     },
@@ -251,7 +257,13 @@ export function RepasseComercial({
   const linhas = useMemo(() => {
     const map = new Map<
       string,
-      { canal: string; cicloCorrente: number; acumulado: number; situacao: string; parcelas: number }
+      {
+        canal: string;
+        cicloCorrente: number;
+        acumulado: number;
+        situacao: string;
+        parcelas: number;
+      }
     >();
     for (const r of data || []) {
       const cur = map.get(r.canal_repasse) ?? {
@@ -319,7 +331,8 @@ export function RepasseComercial({
           <p className="text-sm text-muted-foreground">
             Pagamento previsto para{" "}
             <strong className="text-foreground">{fmtBR(estadoCiclo.data_prevista)}</strong>
-            {estadoCiclo.definida_por_nome ? `, definido por ${estadoCiclo.definida_por_nome}` : ""}.
+            {estadoCiclo.definida_por_nome ? `, definido por ${estadoCiclo.definida_por_nome}` : ""}
+            .
           </p>
         ) : null}
 
@@ -519,7 +532,8 @@ function LinhaRepasse({
   const horasParaReenvio =
     situacao === "RECUSADA" && demanda?.decidido_em
       ? Math.ceil(
-          (new Date(demanda.decidido_em).getTime() + 24 * 60 * 60 * 1000 - agora) / (60 * 60 * 1000),
+          (new Date(demanda.decidido_em).getTime() + 24 * 60 * 60 * 1000 - agora) /
+            (60 * 60 * 1000),
         )
       : 0;
   const bloqueado24h = horasParaReenvio > 0;
@@ -528,9 +542,12 @@ function LinhaRepasse({
     if (!demanda || cancelando) return;
     setCancelando(true);
     try {
-      const { data, error } = await supabase.rpc("rpc_canal_repasse_cancelar_nf" as never, {
-        p_demanda_id: demanda.demanda_id,
-      } as never);
+      const { data, error } = await supabase.rpc(
+        "rpc_canal_repasse_cancelar_nf" as never,
+        {
+          p_demanda_id: demanda.demanda_id,
+        } as never,
+      );
       if (error) throw error;
       const r = (Array.isArray(data) ? data[0] : data) as { mensagem?: string } | null;
       toast.success(r?.mensagem ?? "Envio cancelado.");
@@ -546,9 +563,7 @@ function LinhaRepasse({
     <TableRow ref={ref} className={aceso ? "ring-2 ring-primary ring-offset-2" : undefined}>
       <TableCell className="font-medium">
         {canal}
-        {razaoSocial ? (
-          <p className="text-xs text-muted-foreground">{razaoSocial}</p>
-        ) : null}
+        {razaoSocial ? <p className="text-xs text-muted-foreground">{razaoSocial}</p> : null}
         {situacao === "RECUSADA" && demanda?.observacao_financeiro ? (
           <p className="mt-1 text-xs text-destructive">{demanda.observacao_financeiro}</p>
         ) : null}
@@ -667,9 +682,7 @@ function LinhaRepasse({
           </AlertDialog>
         </div>
         {situacao === "PENDENTE" && !dentroDaJanela && demanda?.sou_o_solicitante === true ? (
-          <p className="mt-1 text-xs text-muted-foreground">
-            Só o Financeiro pode desfazer agora
-          </p>
+          <p className="mt-1 text-xs text-muted-foreground">Só o Financeiro pode desfazer agora</p>
         ) : null}
         {parcelas > 0 ? (
           <p className="mt-1 text-xs text-muted-foreground">{parcelas} parcelas</p>
@@ -708,14 +721,17 @@ function PedirNFDialog({
   async function enviar() {
     setEnviando(true);
     try {
-      const { data, error } = await supabase.rpc("rpc_canal_repasse_solicitar_nf" as never, {
-        p_canal_planilha: canal,
-        p_ano: ciclo.ano,
-        p_mes: ciclo.mes,
-        p_linhas: linhas,
-        p_valor: valor,
-        p_observacao: observacao.trim() || null,
-      } as never);
+      const { data, error } = await supabase.rpc(
+        "rpc_canal_repasse_solicitar_nf" as never,
+        {
+          p_canal_planilha: canal,
+          p_ano: ciclo.ano,
+          p_mes: ciclo.mes,
+          p_linhas: linhas,
+          p_valor: valor,
+          p_observacao: observacao.trim() || null,
+        } as never,
+      );
       if (error) throw error;
       const row = (Array.isArray(data) ? data[0] : data) as { mensagem?: string } | null;
       toast.success(row?.mensagem ?? "Pedido enviado ao Financeiro.");
@@ -761,13 +777,13 @@ function PedirNFDialog({
             Ver a relação antes de enviar
           </Button>
           <div className="flex gap-2">
-          <Button variant="ghost" onClick={onFechar} disabled={enviando}>
-            Cancelar
-          </Button>
-          <Button onClick={() => void enviar()} disabled={enviando}>
-            {enviando ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Enviar ao financeiro
-          </Button>
+            <Button variant="ghost" onClick={onFechar} disabled={enviando}>
+              Cancelar
+            </Button>
+            <Button onClick={() => void enviar()} disabled={enviando}>
+              {enviando ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Enviar ao financeiro
+            </Button>
           </div>
         </DialogFooter>
       </DialogContent>
