@@ -396,6 +396,15 @@ export default function CanalParceirosTela() {
     (c) => c.situacao === "VINCULO_A_CONFIRMAR",
   );
 
+  /* Contagens das três filas, para montar (ou esconder) o bloco "Precisa de você". */
+  const pendVerificacao = usePendenciasVerificacao();
+  const altPendentes = useAlteracoesPercentual("PENDENTE");
+  const nVinculos = isAdmin ? vinculosPendentes.length : 0;
+  const nVerificacao = (pendVerificacao.data ?? []).length;
+  const nAlteracoes = (altPendentes.data ?? []).length;
+  const filasAtivas = [nVinculos, nVerificacao, nAlteracoes].filter((n) => n > 0).length;
+  const umaFilaSo = filasAtivas === 1;
+
   const carregando = situacoes.isLoading || lista.isLoading;
   const erro = situacoes.error ?? lista.error ?? vigencias.error;
 
