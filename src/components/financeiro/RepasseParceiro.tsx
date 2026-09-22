@@ -990,7 +990,7 @@ export function RepasseParceiro() {
                         <>
                           <TableRow>
                             <TableCell
-                              colSpan={8}
+                              colSpan={9}
                               className="text-[12px] font-medium"
                               style={{ background: "#FEF3C7", color: "#92400E" }}
                             >
@@ -998,7 +998,7 @@ export function RepasseParceiro() {
                             </TableCell>
                           </TableRow>
                           {grupoRetido.map((l) => (
-                            <LinhaCanal key={l.canal} l={l} info={porCanal.get(l.canal)} pill={pill} valorCell={valorCell} border={BORDER} navy={NAVY} exportando={exportando === l.canal} bloqueado={exportando !== null} onExport={exportar} />
+                            <LinhaCanal key={l.canal} l={l} info={porCanal.get(l.canal)} pill={pill} valorCell={valorCell} border={BORDER} navy={NAVY} exportando={exportando === l.canal} bloqueado={exportando !== null} onExport={pedirExport} situacao={situacaoDe(l.canal)} onBloqueado={() => abrirBloqueio(l.canal, cicloAncora(l))} />
                           ))}
                           <SubtotalRow
                             label="Retido pelo mínimo"
