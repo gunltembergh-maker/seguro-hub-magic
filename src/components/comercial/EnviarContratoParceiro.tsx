@@ -649,17 +649,33 @@ export default function EnviarContratoParceiro({
               <p>
                 Leitura:{" "}
                 {origem === "OCR"
-                  ? "reconhecimento por imagem"
+                  ? "OCR (reconhecimento por imagem)"
                   : origem === "MANUAL"
-                    ? "informada à mão"
-                    : "camada de texto do PDF"}
+                    ? "Informado manualmente"
+                    : "Texto do PDF"}
               </p>
-              <p>Nomes: {e?.nomes?.length ? e.nomes.join(" · ") : "—"}</p>
+              <p>
+                Nomes:{" "}
+                {e?.nomes?.length ? (
+                  <>
+                    {e.nomes[0]}
+                    {e.nomes.length > 1 ? (
+                      <span className="text-muted-foreground">
+                        {" "}
+                        e mais {e.nomes.length - 1}{" "}
+                        {e.nomes.length - 1 === 1 ? "variação" : "variações"}
+                      </span>
+                    ) : null}
+                  </>
+                ) : (
+                  "—"
+                )}
+              </p>
               <p>CNPJ: {e?.cnpj ?? "—"}</p>
               <p>Vigência: {dia(e?.vigencia_inicio)} a {dia(e?.vigencia_fim)}</p>
               <p>
                 Percentuais: Benefícios {pct(e?.pct_beneficios)}, Garantia {pct(e?.pct_garantia)},
-                Demais ramos {pct(e?.pct_demais)}
+                Demais ramos <PctDemais pctDemais={e?.pct_demais} pctGarantia={e?.pct_garantia} />
               </p>
               <p>
                 Assinatura: {e?.assinado ? "encontrada" : "não encontrada"}
