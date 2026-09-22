@@ -38,6 +38,8 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { useResponsaveis } from "@/hooks/use-entrada-demandas";
 import { AbaLimites } from "@/components/garantia/aba-limites";
+import { AbaDocumentos } from "@/components/garantia/aba-documentos";
+
 
 import {
   MOTIVOS_PERDA,
@@ -1022,6 +1024,7 @@ export function DemandaSheet({
         <Tabs defaultValue="dados" className="flex-1">
           <TabsList>
             <TabsTrigger value="dados">Dados</TabsTrigger>
+            <TabsTrigger value="documentos">Documentos</TabsTrigger>
             {/* Fiança locatícia não faz consulta a mercado: a aba nem aparece. */}
             {demanda.produto === "seguro_garantia" && (
               <TabsTrigger value="limites">Limites</TabsTrigger>
@@ -1032,6 +1035,10 @@ export function DemandaSheet({
           <TabsContent value="dados" className="mt-4">
             <AbaDados demanda={demanda} />
           </TabsContent>
+          <TabsContent value="documentos" className="mt-4">
+            <AbaDocumentos demanda={demanda} />
+          </TabsContent>
+
           {demanda.produto === "seguro_garantia" && (
             <TabsContent value="limites" className="mt-4">
               <AbaLimites demanda={demanda} />
