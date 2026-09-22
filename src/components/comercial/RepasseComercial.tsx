@@ -463,11 +463,20 @@ function LinhaRepasse({
             <FileSearch className="mr-2 h-4 w-4" />
             Ver a relação
           </Button>
+          <Button size="sm" variant="outline" title="Ver o contrato" onClick={onVerContrato}>
+            <FileText className="mr-2 h-4 w-4" />
+            Ver o contrato
+          </Button>
         {!liberado ? (
-          <Badge variant="outline" className="gap-1 text-muted-foreground">
-            <Lock className="h-3 w-3" />
-            Sem contrato válido
-          </Badge>
+          <>
+            <Badge variant="outline" className="gap-1 text-muted-foreground">
+              <Lock className="h-3 w-3" />
+              Sem contrato válido
+            </Badge>
+            <Button size="sm" variant="outline" onClick={onPedirLiberacao}>
+              Pedir liberação sem contrato
+            </Button>
+          </>
         ) : !demanda ? (
           <Button size="sm" variant="default" onClick={onPedir} disabled={cicloCorrente <= 0}>
             <Send className="mr-2 h-4 w-4" />
