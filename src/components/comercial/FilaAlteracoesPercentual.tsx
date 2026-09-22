@@ -244,7 +244,10 @@ export function FilaAlteracoesPercentual({ semCard = false }: { semCard?: boolea
       <Dialog
         open={!!aprovando}
         onOpenChange={(v) => {
-          if (!v) setAprovando(null);
+          if (!v) {
+            setAprovando(null);
+            setErro(null);
+          }
         }}
       >
         <DialogContent className="max-w-lg">
