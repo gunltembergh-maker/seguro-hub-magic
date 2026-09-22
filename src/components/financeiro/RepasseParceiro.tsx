@@ -686,7 +686,9 @@ export function RepasseParceiro() {
 
       {/* Liberações excepcionais pendentes: só para o aprovador designado */}
       {pendentesDoAprovador.length > 0 && (
-        <PainelLiberacoes pendentes={pendentesDoAprovador} />
+        <div data-tour="fin-liberacoes">
+          <PainelLiberacoes pendentes={pendentesDoAprovador} />
+        </div>
       )}
 
 

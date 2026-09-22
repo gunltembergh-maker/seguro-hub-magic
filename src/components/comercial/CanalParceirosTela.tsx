@@ -71,6 +71,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cicloPadrao } from "@/lib/repasse/ciclo-datas";
+import { chaveCanal } from "@/lib/repasse/exportar-repasse";
 import { cn } from "@/lib/utils";
 
 /* ------------------------------------------------------------------ tipos */
@@ -355,6 +356,22 @@ export default function CanalParceirosTela() {
     return m;
   }, [linhasSituacao]);
 
+  const pctPorChave = useMemo(() => {
+    const m = new Map<
+      string,
+      { beneficios: number | null; garantia: number | null; demais: number | null }
+    >();
+    for (const s of linhasSituacao) {
+      if (!s.chave_planilha) continue;
+      m.set(chaveCanal(s.chave_planilha), {
+        beneficios: s.pct_beneficios,
+        garantia: s.pct_garantia,
+        demais: s.pct_demais_efetivo,
+      });
+    }
+    return m;
+  }, [linhasSituacao]);
+
   /** Autorizações da diretoria em vigor: é o percentual que a exportação usa. */
   const alteracoesAprovadas = useAlteracoesPercentual("APROVADA");
   const aprovadaPorCanal = useMemo(() => {
@@ -421,7 +438,7 @@ export default function CanalParceirosTela() {
             trava o repasse.
           </p>
         </div>
-        <Button onClick={() => setNovoAberto(true)}>
+        <Button data-tour="cp-novo-parceiro" onClick={() => setNovoAberto(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Novo parceiro
         </Button>
@@ -436,7 +453,7 @@ export default function CanalParceirosTela() {
       ) : null}
 
       {/* faixa de números */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div data-tour="cp-kpis" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Kpi titulo="Parceiros com repasse no ciclo" valor={String(resumoCiclo.parceiros)} />
         <Kpi titulo="Com contrato assinado e ativo" valor={String(ativos)} />
         <Kpi
@@ -456,7 +473,7 @@ export default function CanalParceirosTela() {
 
       {/* precisa de você — as três filas juntas, some quando não há nada */}
       {filasAtivas > 0 ? (
-        <Card className="border-amber-600/40">
+        <Card data-tour="cp-pendencias" className="border-amber-600/40">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
               <AlertTriangle className="h-4 w-4" />
@@ -509,17 +526,20 @@ export default function CanalParceirosTela() {
       ) : null}
 
       <Tabs defaultValue="repasse" className="space-y-4">
-        <TabsList>
+        <TabsList data-tour="cp-abas">
           <TabsTrigger value="repasse">Repasse do ciclo</TabsTrigger>
           <TabsTrigger value="parceiros">Parceiros</TabsTrigger>
           <TabsTrigger value="vigencias">Vigências</TabsTrigger>
         </TabsList>
 
         <TabsContent value="repasse">
-          <RepasseComercial podeExportarPorChave={podeExportarPorChave} />
+          <RepasseComercial
+            podeExportarPorChave={podeExportarPorChave}
+            pctPorChave={pctPorChave}
+          />
         </TabsContent>
 
-        <TabsContent value="parceiros">
+        <TabsContent value="parceiros" data-tour="cp-aba-parceiros">
           <Card>
             <CardHeader>
               <CardTitle>Parceiros</CardTitle>

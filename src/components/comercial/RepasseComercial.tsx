@@ -170,9 +170,14 @@ function BadgeFinanceiro({ d }: { d: DemandaNF | undefined }) {
 
 export function RepasseComercial({
   podeExportarPorChave,
+  pctPorChave,
 }: {
   /** Chave normalizada do canal → pode exportar (trava do contrato, vinda do banco). */
   podeExportarPorChave: Map<string, boolean>;
+  pctPorChave: Map<
+    string,
+    { beneficios: number | null; garantia: number | null; demais: number | null }
+  >;
 }) {
   const ciclo = useMemo(() => cicloPadrao(new Set<string>()), []);
   const { data: estadoCiclo } = useCicloRepasse(ciclo.ano, ciclo.mes);
@@ -346,10 +351,11 @@ export function RepasseComercial({
 
         <div className="overflow-x-auto">
           <TooltipProvider>
-            <Table>
+            <Table data-tour="cp-repasse-tabela">
               <TableHeader>
                 <TableRow>
                   <TableHead>Parceiro</TableHead>
+                  <TableHead className="text-right">% Repasse</TableHead>
                   <TableHead className="text-right">Ciclo corrente</TableHead>
                   <TableHead className="text-right">Acumulado</TableHead>
                   <TableHead>Situação</TableHead>
@@ -360,19 +366,19 @@ export function RepasseComercial({
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-sm text-muted-foreground">
+                    <TableCell colSpan={7} className="text-sm text-muted-foreground">
                       <Loader2 className="mr-2 inline h-4 w-4 animate-spin" />
                       Carregando
                     </TableCell>
                   </TableRow>
                 ) : linhas.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-sm text-muted-foreground">
+                    <TableCell colSpan={7} className="text-sm text-muted-foreground">
                       Nenhum repasse neste ciclo.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  linhas.map((l) => {
+                  linhas.map((l, index) => {
                     const chave = chaveCanal(l.canal);
                     const liberado = podeExportarPorChave.get(chave) === true;
                     const pill = PILL[l.situacao] ?? PILL.SEM_VALOR;
@@ -382,6 +388,8 @@ export function RepasseComercial({
                         key={l.canal}
                         canal={l.canal}
                         razaoSocial={razaoPorChave.get(chave) ?? null}
+                        percentuais={pctPorChave.get(chave)}
+                        primeiraLinha={index === 0}
                         onCancelado={() =>
                           void queryClient.invalidateQueries({
                             queryKey: ["canal-repasse-demandas"],
@@ -462,6 +470,8 @@ export function RepasseComercial({
 function LinhaRepasse({
   canal,
   razaoSocial,
+  percentuais,
+  primeiraLinha,
   cicloCorrente,
   acumulado,
   parcelas,
@@ -479,6 +489,10 @@ function LinhaRepasse({
 }: {
   canal: string;
   razaoSocial: string | null;
+  percentuais:
+    | { beneficios: number | null; garantia: number | null; demais: number | null }
+    | undefined;
+  primeiraLinha: boolean;
   cicloCorrente: number;
   acumulado: number;
   parcelas: number;
@@ -568,6 +582,9 @@ function LinhaRepasse({
           <p className="mt-1 text-xs text-destructive">{demanda.observacao_financeiro}</p>
         ) : null}
       </TableCell>
+      <TableCell className="text-right tabular-nums">
+        <PercentualRepasse percentuais={percentuais} />
+      </TableCell>
       <TableCell className="text-right font-mono tabular-nums">{BRL(cicloCorrente)}</TableCell>
       <TableCell className="text-right font-mono tabular-nums">{BRL(acumulado)}</TableCell>
       <TableCell>
@@ -581,7 +598,7 @@ function LinhaRepasse({
       <TableCell>
         <BadgeFinanceiro d={demanda} />
       </TableCell>
-      <TableCell className="text-right">
+      <TableCell className="text-right" data-tour={primeiraLinha ? "cp-repasse-acoes" : undefined}>
         <div className="flex flex-wrap items-center justify-end gap-1">
           {!liberado ? (
             <Badge variant="outline" className="gap-1 text-muted-foreground">
@@ -689,6 +706,37 @@ function LinhaRepasse({
         ) : null}
       </TableCell>
     </TableRow>
+  );
+}
+
+function PercentualRepasse({
+  percentuais,
+}: {
+  percentuais:
+    | { beneficios: number | null; garantia: number | null; demais: number | null }
+    | undefined;
+}) {
+  if (!percentuais) return <span className="text-muted-foreground">—</span>;
+  const formatar = (valor: number | null) =>
+    valor == null
+      ? "—"
+      : `${(valor * 100).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`;
+  const valores = [percentuais.beneficios, percentuais.garantia, percentuais.demais];
+  const disponiveis = valores.filter((v): v is number => v != null);
+  if (disponiveis.length === 0) return <span className="text-muted-foreground">—</span>;
+  const unicos = Array.from(new Set(disponiveis));
+  const resumo = unicos.map(formatar).join(" / ");
+  if (unicos.length === 1 && disponiveis.length === 3) return <span>{resumo}</span>;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="cursor-help underline decoration-dotted underline-offset-4">{resumo}</span>
+      </TooltipTrigger>
+      <TooltipContent>
+        Benefícios {formatar(percentuais.beneficios)}, Garantia {formatar(percentuais.garantia)},
+        Demais ramos {formatar(percentuais.demais)}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
