@@ -119,11 +119,19 @@ export function SolicitarAlteracaoPercentual({
     minimo.trim() !== "" ||
     vigenciaFim.trim() !== "";
 
+  const pctBeneficiosInvalido = campoPctInvalido(beneficios);
+  const pctGarantiaInvalido = campoPctInvalido(garantia);
+  const pctDemaisInvalido = campoPctInvalido(demais);
+  const minimoInvalido = campoMonetarioInvalido(minimo);
+  const algumNumeroInvalido =
+    pctBeneficiosInvalido || pctGarantiaInvalido || pctDemaisInvalido || minimoInvalido;
+
   const podeEnviar =
     justificativa.trim().length > 0 &&
     emailValido(diretor) &&
     arquivo !== null &&
     temValor &&
+    !algumNumeroInvalido &&
     !enviando;
 
   async function enviar() {
