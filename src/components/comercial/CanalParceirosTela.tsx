@@ -290,6 +290,44 @@ export default function CanalParceirosTela() {
     enabled: isAdmin,
   });
 
+  /* Mesma consulta da tabela de repasse (mesma chave de cache, sem chamada nova). */
+  const ciclo = useMemo(() => cicloPadrao(new Set<string>()), []);
+  const repasseCiclo = useQuery({
+    queryKey: ["lavoro-repasse-por-canal", ciclo.ano, ciclo.mes, "PROVISIONADO", null, null],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_lavoro_repasse_por_canal" as never, {
+        p_ano: ciclo.ano,
+        p_mes: ciclo.mes,
+        p_modo: "PROVISIONADO",
+        p_canal_repasse: null,
+        p_situacao_repasse: null,
+      } as never);
+      if (error) throw error;
+      return (data || []) as {
+        ciclo_ano: number;
+        ciclo_mes: number;
+        canal_repasse: string;
+        valor: number;
+      }[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const resumoCiclo = useMemo(() => {
+    const porCanal = new Map<string, number>();
+    for (const r of repasseCiclo.data ?? []) {
+      if (r.ciclo_ano !== ciclo.ano || r.ciclo_mes !== ciclo.mes) continue;
+      porCanal.set(r.canal_repasse, (porCanal.get(r.canal_repasse) ?? 0) + Number(r.valor || 0));
+    }
+    let valor = 0;
+    let parceiros = 0;
+    for (const v of porCanal.values()) {
+      valor += v;
+      if (v > 0) parceiros += 1;
+    }
+    return { parceiros, valor };
+  }, [repasseCiclo.data, ciclo]);
+
   function recarregarTudo() {
     queryClient.invalidateQueries({ queryKey: ["canal-parceiro-situacao"] });
     queryClient.invalidateQueries({ queryKey: ["canal-parceiro-lista"] });
