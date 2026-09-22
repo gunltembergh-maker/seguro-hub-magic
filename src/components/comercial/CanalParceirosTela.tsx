@@ -27,7 +27,6 @@ import {
 import {
   FilaAlteracoesPercentual,
   useAlteracoesPercentual,
-  type Alteracao,
 } from "@/components/comercial/FilaAlteracoesPercentual";
 import { SolicitarAlteracaoPercentual } from "@/components/comercial/SolicitarAlteracaoPercentual";
 import { RepasseComercial } from "@/components/comercial/RepasseComercial";
@@ -148,6 +147,21 @@ interface Vigencia {
   dias_para_vencer: number | null;
   situacao: string | null;
   aviso_60_enviado_em: string | null;
+}
+
+/** Percentuais já resolvidos no banco — a mesma fonte que a exportação usa. */
+interface PercentualCanal {
+  chave_planilha: string | null;
+  canal_id: string | null;
+  parceiro: string | null;
+  pct_beneficios: number | null;
+  pct_garantia: number | null;
+  pct_demais: number | null;
+  origem_beneficios: string | null;
+  origem_garantia: string | null;
+  origem_demais: string | null;
+  autorizado_em: string | null;
+  minimo_repasse: number | null;
 }
 
 /* --------------------------------------------------------------- formatos */
