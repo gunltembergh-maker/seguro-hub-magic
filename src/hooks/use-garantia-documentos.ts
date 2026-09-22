@@ -17,6 +17,7 @@ import { BUCKET_ANEXOS } from "@/lib/garantia/anexos-download";
 import {
   BUCKET_PIPELINE,
   TAMANHO_MAXIMO_BYTES,
+  fluxoIADoTipo,
   podeAnalisarPorIA,
 } from "@/lib/garantia/documentos-regra";
 import type { AnaliseIA } from "@/lib/garantia/garantia-ia";
@@ -155,7 +156,7 @@ export function useEnviarDocumento(demandaId: string) {
         const { error: erroIA } = await supabase.from("garantia_analises_ia").insert({
           demanda_id: demandaId,
           documento_id: (documento as unknown as DocumentoDemanda).id,
-          fluxo: produto === "fianca_locaticia" ? "fianca_locaticia" : "seguro_garantia",
+          fluxo: fluxoIADoTipo(tipo, produto),
           situacao: "solicitada",
           solicitada_por: usuario,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
