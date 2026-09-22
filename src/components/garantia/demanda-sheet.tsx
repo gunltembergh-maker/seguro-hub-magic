@@ -42,6 +42,7 @@ import { AbaDocumentos } from "@/components/garantia/aba-documentos";
 import { AbaCotacoes } from "@/components/garantia/aba-cotacoes";
 import { AbaCuradoria } from "@/components/garantia/aba-curadoria";
 import { AbaMinuta } from "@/components/garantia/aba-minuta";
+import { AbaApolice } from "@/components/garantia/aba-apolice";
 import { useRegistrarAceite } from "@/hooks/use-garantia-crm";
 
 
@@ -1063,6 +1064,9 @@ export function DemandaSheet({
             {/* Abas do CRM: mesma demanda, outra fase — o detalhe é o mesmo. */}
             {demanda.fase === "crm" && <TabsTrigger value="curadoria">Curadoria</TabsTrigger>}
             {demanda.fase === "crm" && <TabsTrigger value="minuta">Minuta</TabsTrigger>}
+            {(demanda.fase === "crm" || demanda.fase === "encerrada") && (
+              <TabsTrigger value="apolice">Apólice</TabsTrigger>
+            )}
             <TabsTrigger value="origem">Origem</TabsTrigger>
             <TabsTrigger value="historico">Histórico</TabsTrigger>
           </TabsList>
@@ -1086,7 +1090,11 @@ export function DemandaSheet({
               <AbaMinuta demanda={demanda} catalogo={catalogo} />
             </TabsContent>
           )}
-
+          {(demanda.fase === "crm" || demanda.fase === "encerrada") && (
+            <TabsContent value="apolice" className="mt-4">
+              <AbaApolice demanda={demanda} podeVerTempo={podeVerTempo} />
+            </TabsContent>
+          )}
 
           {demanda.produto === "seguro_garantia" && (
             <TabsContent value="limites" className="mt-4">

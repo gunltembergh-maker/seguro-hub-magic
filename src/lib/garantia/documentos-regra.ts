@@ -89,20 +89,30 @@ export const TIPOS_ANALISAVEIS = [
   "aditivo",
   // A minuta entra com fluxo próprio: a leitura compara o texto com o edital.
   "minuta",
+  // A apólice emitida também: a leitura traz os dados para conferência.
+  "apolice",
 ] as const;
 
 export const podeAnalisarPorIA = (tipo: string) =>
   (TIPOS_ANALISAVEIS as readonly string[]).includes(tipo);
 
-/** Pergunta da caixa de IA — a da minuta é outra leitura, com outro convite. */
+/** Pergunta da caixa de IA — cada leitura tem o seu convite. */
 export const perguntaIA = (tipo: string) =>
   tipo === "minuta"
     ? "Deseja que a IA analise a minuta e traga os dados?"
-    : "Deseja que a IA analise o contrato e já te dê um resumo?";
+    : tipo === "apolice"
+      ? "Deseja que a IA leia a apólice e traga os dados?"
+      : "Deseja que a IA analise o contrato e já te dê um resumo?";
 
 /** Fluxo gravado em garantia_analises_ia para o tipo enviado. */
 export const fluxoIADoTipo = (tipo: string, produto: string) =>
-  tipo === "minuta" ? "minuta" : produto === "fianca_locaticia" ? "fianca_locaticia" : "seguro_garantia";
+  tipo === "minuta"
+    ? "minuta"
+    : tipo === "apolice"
+      ? "apolice"
+      : produto === "fianca_locaticia"
+        ? "fianca_locaticia"
+        : "seguro_garantia";
 
 export const TAMANHO_MAXIMO_BYTES = 20 * 1024 * 1024;
 export const BUCKET_PIPELINE = "garantia-pipeline-anexos";
@@ -123,7 +133,9 @@ export interface DemandaChecklist {
 
 export interface Pendencia {
   /** Etapa a que a pendência pertence. */
-  etapa: "2" | "3b";
+  etapa: "2" | "3b" | "8";
+  /** Tipo de documento que resolve a pendência, quando houver um só. */
+  tipo?: string;
   /** O que falta, em uma frase. */
   texto: string;
   /** Por que passou a ser obrigatório — a condição, não a regra genérica. */
@@ -237,6 +249,34 @@ export function pendenciasEtapa3b(
       etapa: "3b",
       texto: "Anexe o CCG.",
       motivo: "este caso foi marcado como “precisa de CCG”",
+      bloqueia: true,
+    });
+  }
+  return lista;
+}
+
+/**
+ * Etapa 8 (emissão): a apólice só é lançada com a apólice e o boleto anexados.
+ * O RPC de lançamento faz a mesma checagem — a tela avisa antes, o banco
+ * garante depois.
+ */
+export function pendenciasEtapa8(tiposPresentes: Set<string>): Pendencia[] {
+  const lista: Pendencia[] = [];
+  if (!tiposPresentes.has("apolice")) {
+    lista.push({
+      etapa: "8",
+      tipo: "apolice",
+      texto: "Anexe a apólice emitida pela seguradora.",
+      motivo: "o lançamento grava os dados que estão no documento da apólice",
+      bloqueia: true,
+    });
+  }
+  if (!tiposPresentes.has("boleto")) {
+    lista.push({
+      etapa: "8",
+      tipo: "boleto",
+      texto: "Anexe o boleto do prêmio.",
+      motivo: "o financeiro é aberto com o vencimento do boleto",
       bloqueia: true,
     });
   }

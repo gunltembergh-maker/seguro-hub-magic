@@ -58,6 +58,27 @@ export interface ResultadoMinutaIA {
   campos_sugeridos: CamposSugeridosMinutaIA;
 }
 
+/**
+ * Campos que a leitura da APÓLICE emitida poderá sugerir — é o que o técnico
+ * confere contra o documento antes de lançar.
+ */
+export interface CamposSugeridosApoliceIA {
+  numero_apolice?: string | null;
+  numero_endosso?: number | null;
+  data_emissao?: string | null;
+  vigencia_inicio?: string | null;
+  vigencia_fim?: string | null;
+  objeto?: string | null;
+  importancia_segurada?: number | null;
+  premio?: number | null;
+}
+
+/** Resultado da leitura da apólice, quando o motor for ligado. */
+export interface ResultadoApoliceIA {
+  resumo: string;
+  campos_sugeridos: CamposSugeridosApoliceIA;
+}
+
 /** Resultado completo que o motor devolverá quando for ligado. */
 export interface ResultadoIA {
   /** Resumo em linguagem corrente, para leitura humana. */
