@@ -22,6 +22,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+import { Carteira } from "@/components/garantia/carteira";
 import { DemandaSheet, SeloProduto } from "@/components/garantia/demanda-sheet";
 import { GarantiaShell } from "@/components/garantia/garantia-shell";
 import { useMeuPerfilEfetivo } from "@/contexts/view-as-context";
@@ -245,7 +248,8 @@ export default function Crm() {
             })}
           </div>
         )}
-      </div>
+        </TabsContent>
+      </Tabs>
 
       <DemandaSheet
         demanda={demandaAberta}
