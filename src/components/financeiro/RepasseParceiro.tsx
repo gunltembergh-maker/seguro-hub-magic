@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2, Lock, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,6 +12,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { SuperAdminGate } from "@/components/admin/SuperAdminGate";
+import ExportacaoBloqueada from "@/components/financeiro/ExportacaoBloqueada";
+import DataPrevistaPagamento from "@/components/financeiro/DataPrevistaPagamento";
 import { exportarXlsx, type ColunaExport } from "@/lib/export-xlsx";
 import {
   NAVY,
@@ -114,6 +128,70 @@ function slugCanal(canal: string) {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^A-Za-z0-9]+/g, "_")
     .replace(/^_+|_+$/g, "");
+}
+
+/** Mesma normalização do banco: sem acento e em maiúsculas. */
+function chaveCanal(canal: string) {
+  return canal
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+    .trim();
+}
+
+type LiberacaoPendente = {
+  liberacao_id: string;
+  canal_planilha?: string | null;
+  parceiro?: string | null;
+  nome?: string | null;
+  ano?: number | null;
+  mes?: number | null;
+  justificativa?: string | null;
+  solicitado_por_nome?: string | null;
+  solicitado_por_email?: string | null;
+  sou_o_aprovador?: boolean | null;
+  status?: string | null;
+};
+
+type SituacaoContrato = {
+  chave_planilha: string;
+  canal_id: string | null;
+  nome: string | null;
+  situacao: "ATIVO" | "SEM_CONTRATO" | "VENCIDO" | "VINCULO_A_CONFIRMAR";
+  pode_exportar: boolean;
+  vigencia_fim: string | null;
+  dias_para_vencer: number | null;
+  pct_beneficios: number | null;
+  pct_garantia: number | null;
+  pct_demais_efetivo: number | null;
+  minimo_repasse: number | null;
+};
+
+const fmtBR = (iso: string | null | undefined) =>
+  iso ? new Date(`${String(iso).slice(0, 10)}T12:00:00`).toLocaleDateString("pt-BR") : "";
+
+function motivoBloqueio(s?: SituacaoContrato | null) {
+  if (!s) return "Parceiro sem contrato assinado no Hub";
+  if (s.situacao === "VENCIDO") return `Contrato vencido em ${fmtBR(s.vigencia_fim)}`;
+  if (s.situacao === "VINCULO_A_CONFIRMAR")
+    return "Contrato recebido, aguardando um administrador confirmar o vínculo";
+  return "Parceiro sem contrato assinado no Hub";
+}
+
+function BadgeContrato({ s }: { s?: SituacaoContrato | null }) {
+  const situacao = s?.situacao ?? "SEM_CONTRATO";
+  const estilos: Record<string, { bg: string; color: string; label: string }> = {
+    ATIVO: { bg: "#DCFCE7", color: "#166534", label: "Ativo" },
+    VINCULO_A_CONFIRMAR: { bg: "#FEF3C7", color: "#92400E", label: "A confirmar" },
+    SEM_CONTRATO: { bg: "#FEE2E2", color: "#991B1B", label: "Sem contrato" },
+    VENCIDO: { bg: "#FEE2E2", color: "#991B1B", label: "Vencido" },
+  };
+  const st = estilos[situacao] ?? estilos.SEM_CONTRATO;
+  return (
+    <Badge variant="outline" style={{ background: st.bg, color: st.color, borderColor: "transparent" }}>
+      {st.label}
+    </Badge>
+  );
 }
 
 const BRL = (v: number | null | undefined) =>
@@ -246,19 +324,60 @@ export function RepasseParceiro() {
     [mesAncora, feriados],
   );
   const dataRepasseCurta = `${pad2(dataRepasse.getDate())}/${pad2(dataRepasse.getMonth() + 1)}`;
-  const dataRepasseLonga = `${dataRepasseCurta}/${dataRepasse.getFullYear()}`;
 
   const sit = SITUACOES.find((s) => s.key === situacaoKey)!;
   const isHistorico = sit.modo === "HISTORICO";
 
+  // Situação do contrato de cada parceiro (trava da exportação)
+  const { data: situacoes } = useQuery({
+    queryKey: ["canal-parceiro-situacao"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_canal_parceiro_situacao" as never);
+      if (error) throw error;
+      return (data ?? []) as SituacaoContrato[];
+    },
+    staleTime: 60_000,
+  });
+
+  const situacaoPorCanal = useMemo(() => {
+    const m = new Map<string, SituacaoContrato>();
+    for (const s of situacoes ?? []) m.set(s.chave_planilha, s);
+    return m;
+  }, [situacoes]);
+
+  const situacaoDe = (canalNome: string) => situacaoPorCanal.get(chaveCanal(canalNome)) ?? null;
+
+  // Diálogos: trava por falta de contrato e escolha da data prevista
+  const [bloqueado, setBloqueado] = useState<{ canal: string; valor: number } | null>(null);
+  const [pendente, setPendente] = useState<{ canal: string; modo: ModoExport } | null>(null);
+
   // Exportação do detalhe por parceiro (ExcelJS carregado sob demanda)
   const [exportando, setExportando] = useState<string | null>(null);
 
-  const exportar = async (canalClicado: string, modo: ModoExport) => {
+  const exportar = async (canalClicado: string, modo: ModoExport, dataPrevista: string) => {
     if (exportando) return;
     setExportando(canalClicado);
     const toastId = toast.loading("Gerando planilha…");
     try {
+      // O banco autoriza (ou recusa) a exportação ANTES de montar o arquivo.
+      const { data: autz, error: erroAutz } = await supabase.rpc(
+        "rpc_canal_parceiro_autorizar_exportacao" as never,
+        {
+          p_canal_planilha: canalClicado,
+          p_ano: mesAncora.ano,
+          p_mes: mesAncora.mes,
+          p_data_prevista: dataPrevista,
+          p_linhas: null,
+          p_valor: null,
+        } as never,
+      );
+      if (erroAutz) {
+        toast.error(erroAutz.message, { id: toastId });
+        return;
+      }
+      const autorizacao = (Array.isArray(autz) ? autz[0] : autz) as
+        { base?: string; liberado_por?: string | null } | null;
+
       const PAGINA = 500;
       let offset = 0;
       const todas: any[] = [];
@@ -295,9 +414,12 @@ export function RepasseParceiro() {
       const info = [
         { rotulo: "Parceiro", valor: canalClicado },
         { rotulo: "Ciclo", valor: `${MESES_LONGOS[mesAncora.mes - 1]} / ${mesAncora.ano}` },
-        { rotulo: "Data prevista de pagamento", valor: dataRepasseLonga },
         { rotulo: "Total a repassar", valor: BRL(totalRepasse) },
         { rotulo: "Parcelas", valor: String(todas.length) },
+        { rotulo: "Data prevista de pagamento", valor: fmtBR(dataPrevista) },
+        ...(autorizacao?.base === "LIBERACAO_EXCEPCIONAL"
+          ? [{ rotulo: "Liberado por", valor: autorizacao.liberado_por ?? "" }]
+          : []),
       ];
 
       let arquivo: string;
@@ -346,6 +468,37 @@ export function RepasseParceiro() {
       setExportando(null);
     }
   };
+
+  /** Clique no Exportar de um parceiro liberado: primeiro escolhe a data. */
+  const pedirExport = (canalClicado: string, modo: ModoExport) => {
+    if (exportando) return;
+    setPendente({ canal: canalClicado, modo });
+  };
+
+  /** Clique no botão "Sem contrato". */
+  const abrirBloqueio = (canalClicado: string, valor: number) => {
+    setBloqueado({ canal: canalClicado, valor });
+  };
+
+  // Pedidos de liberação excepcional pendentes (só o aprovador vê o painel)
+  const { data: liberacoes } = useQuery({
+    queryKey: ["canal-parceiro-liberacoes", "PENDENTE"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc(
+        "rpc_canal_parceiro_liberacoes" as never,
+        { p_status: "PENDENTE" } as never,
+      );
+      if (error) throw error;
+      return (data ?? []) as LiberacaoPendente[];
+    },
+    staleTime: 60_000,
+  });
+
+  const pendentesDoAprovador = useMemo(
+    () => (liberacoes ?? []).filter((l) => l.sou_o_aprovador === true),
+    [liberacoes],
+  );
+
 
   const mesSeguinte = useMemo(() => {
     const d = new Date(mesAncora.ano, mesAncora.mes, 1);
@@ -743,6 +896,11 @@ export function RepasseParceiro() {
         </div>
       )}
 
+      {/* Liberações excepcionais pendentes: só para o aprovador designado */}
+      {pendentesDoAprovador.length > 0 && (
+        <PainelLiberacoes pendentes={pendentesDoAprovador} />
+      )}
+
       {/* BLOCO 2 + 3: quadro e rodapé */}
       <div className="rounded-xl border bg-white shadow-sm" style={{ borderColor: BORDER }}>
         <div className="border-b px-5 py-4" style={{ borderColor: BORDER }}>
@@ -798,6 +956,9 @@ export function RepasseParceiro() {
                       </>
                     )}
                     <TableHead rowSpan={2} className="border-l text-right align-bottom" style={{ borderColor: BORDER }}>
+                      Contrato
+                    </TableHead>
+                    <TableHead rowSpan={2} className="text-right align-bottom">
                       Situação
                     </TableHead>
                   </TableRow>
@@ -826,13 +987,23 @@ export function RepasseParceiro() {
                           <TableCell className="font-medium" style={{ color: NAVY }}>
                             <div className="flex items-center gap-2">
                             {l.canal}
-                            <ExportBtn canal={l.canal} exportando={exportando === l.canal} bloqueado={exportando !== null} onExport={exportar} />
+                            <ExportBtn
+                              canal={l.canal}
+                              situacao={situacaoDe(l.canal)}
+                              exportando={exportando === l.canal}
+                              bloqueado={exportando !== null}
+                              onExport={pedirExport}
+                              onBloqueado={() => abrirBloqueio(l.canal, l.pago)}
+                            />
                             </div>
                           </TableCell>
                           <TableCell className="border-l text-right font-mono tabular-nums" style={{ borderColor: BORDER }}>
                             {valorCell(l.pago)}
                           </TableCell>
-                          <TableCell className="border-l text-right" style={{ borderColor: BORDER }}>{pill(l.situacao)}</TableCell>
+                          <TableCell className="border-l text-right" style={{ borderColor: BORDER }}>
+                            <BadgeContrato s={situacaoDe(l.canal)} />
+                          </TableCell>
+                          <TableCell className="text-right">{pill(l.situacao)}</TableCell>
                         </TableRow>
                       ))}
                       <TableRow className="bg-gray-50">
@@ -846,6 +1017,7 @@ export function RepasseParceiro() {
                           {BRL(totalPago)}
                         </TableCell>
                         <TableCell className="border-l" style={{ borderColor: BORDER, borderTop: `2px solid ${NAVY}` }} />
+                        <TableCell style={{ borderTop: `2px solid ${NAVY}` }} />
                       </TableRow>
                     </>
                   ) : (
@@ -853,7 +1025,7 @@ export function RepasseParceiro() {
                       {grupoAPagar.length > 0 && (
                         <>
                           {grupoAPagar.map((l) => (
-                            <LinhaCanal key={l.canal} l={l} info={porCanal.get(l.canal)} pill={pill} valorCell={valorCell} border={BORDER} navy={NAVY} exportando={exportando === l.canal} bloqueado={exportando !== null} onExport={exportar} />
+                            <LinhaCanal key={l.canal} l={l} info={porCanal.get(l.canal)} pill={pill} valorCell={valorCell} border={BORDER} navy={NAVY} exportando={exportando === l.canal} bloqueado={exportando !== null} onExport={pedirExport} situacao={situacaoDe(l.canal)} onBloqueado={() => abrirBloqueio(l.canal, cicloAncora(l))} />
                           ))}
                           <SubtotalRow
                             label={`A pagar em ${dataRepasseCurta}`}
@@ -867,7 +1039,7 @@ export function RepasseParceiro() {
                         <>
                           <TableRow>
                             <TableCell
-                              colSpan={8}
+                              colSpan={9}
                               className="text-[12px] font-medium"
                               style={{ background: "#FEF3C7", color: "#92400E" }}
                             >
@@ -875,7 +1047,7 @@ export function RepasseParceiro() {
                             </TableCell>
                           </TableRow>
                           {grupoRetido.map((l) => (
-                            <LinhaCanal key={l.canal} l={l} info={porCanal.get(l.canal)} pill={pill} valorCell={valorCell} border={BORDER} navy={NAVY} exportando={exportando === l.canal} bloqueado={exportando !== null} onExport={exportar} />
+                            <LinhaCanal key={l.canal} l={l} info={porCanal.get(l.canal)} pill={pill} valorCell={valorCell} border={BORDER} navy={NAVY} exportando={exportando === l.canal} bloqueado={exportando !== null} onExport={pedirExport} situacao={situacaoDe(l.canal)} onBloqueado={() => abrirBloqueio(l.canal, cicloAncora(l))} />
                           ))}
                           <SubtotalRow
                             label="Retido pelo mínimo"
@@ -988,7 +1160,127 @@ export function RepasseParceiro() {
           </div>
         </div>
       )}
+
+      {bloqueado && (
+        <ExportacaoBloqueada
+          aberto
+          parceiro={bloqueado.canal}
+          chavePlanilha={chaveCanal(bloqueado.canal)}
+          canalId={situacaoDe(bloqueado.canal)?.canal_id ?? null}
+          situacao={situacaoDe(bloqueado.canal)?.situacao ?? null}
+          motivo={motivoBloqueio(situacaoDe(bloqueado.canal))}
+          valor={bloqueado.valor}
+          ano={mesAncora.ano}
+          mes={mesAncora.mes}
+          onFechar={() => setBloqueado(null)}
+        />
+      )}
+
+      <DataPrevistaPagamento
+        aberto={pendente !== null}
+        parceiro={pendente?.canal}
+        sugestao={`${dataRepasse.getFullYear()}-${pad2(dataRepasse.getMonth() + 1)}-${pad2(dataRepasse.getDate())}`}
+        onFechar={() => setPendente(null)}
+        onConfirmar={(dataISO) => {
+          const alvo = pendente;
+          setPendente(null);
+          if (alvo) void exportar(alvo.canal, alvo.modo, dataISO);
+        }}
+      />
     </div>
+  );
+}
+
+function PainelLiberacoes({ pendentes }: { pendentes: LiberacaoPendente[] }) {
+  const queryClient = useQueryClient();
+  const [aberto, setAberto] = useState(false);
+  const [decidindo, setDecidindo] = useState<string | null>(null);
+
+  const decidir = async (id: string, aprovar: boolean) => {
+    if (decidindo) return;
+    setDecidindo(id);
+    try {
+      const { error } = await supabase.rpc(
+        "rpc_canal_parceiro_decidir_liberacao" as never,
+        { p_liberacao_id: id, p_aprovar: aprovar, p_observacao: null } as never,
+      );
+      if (error) throw error;
+      toast.success(aprovar ? "Liberação aprovada." : "Pedido recusado.");
+      queryClient.invalidateQueries({ queryKey: ["canal-parceiro-liberacoes"] });
+      queryClient.invalidateQueries({ queryKey: ["canal-parceiro-situacao"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setDecidindo(null);
+    }
+  };
+
+  return (
+    <>
+      <Alert className="border-amber-600/40 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+        <ShieldAlert className="h-4 w-4" />
+        <AlertTitle>
+          {pendentes.length === 1
+            ? "1 pedido de liberação excepcional aguardando sua decisão"
+            : `${pendentes.length} pedidos de liberação excepcional aguardando sua decisão`}
+        </AlertTitle>
+        <AlertDescription className="mt-2">
+          <Button size="sm" variant="outline" onClick={() => setAberto(true)}>
+            Ver pedidos
+          </Button>
+        </AlertDescription>
+      </Alert>
+
+      <Dialog open={aberto} onOpenChange={setAberto}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Liberações excepcionais pendentes</DialogTitle>
+            <DialogDescription>
+              Aprovar libera a exportação do repasse sem contrato válido no Hub.
+            </DialogDescription>
+          </DialogHeader>
+
+          <SuperAdminGate area="canal-parceiro-liberacoes" titulo="Aprovar liberações de repasse">
+            <div className="max-h-[60vh] space-y-3 overflow-y-auto">
+              {pendentes.map((p) => (
+                <div key={p.liberacao_id} className="rounded-lg border p-3" style={{ borderColor: BORDER }}>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="text-sm font-semibold" style={{ color: NAVY }}>
+                      {p.parceiro ?? p.nome ?? p.canal_planilha ?? "Parceiro"}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Ciclo {p.mes ? `${MESES[p.mes - 1]}/${p.ano}` : "—"}
+                    </div>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Pedido por {p.solicitado_por_nome ?? p.solicitado_por_email ?? "—"}
+                  </p>
+                  <p className="mt-2 text-sm text-gray-700">{p.justificativa ?? "Sem justificativa."}</p>
+                  <div className="mt-3 flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => decidir(p.liberacao_id, true)}
+                      disabled={decidindo !== null}
+                    >
+                      {decidindo === p.liberacao_id && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+                      Aprovar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => decidir(p.liberacao_id, false)}
+                      disabled={decidindo !== null}
+                    >
+                      Recusar
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </SuperAdminGate>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -1024,15 +1316,43 @@ function mesAnoISO(iso: string) {
 
 function ExportBtn({
   canal,
+  situacao,
   exportando,
   bloqueado,
   onExport,
+  onBloqueado,
 }: {
   canal: string;
+  situacao?: SituacaoContrato | null;
   exportando: boolean;
   bloqueado: boolean;
   onExport: (canal: string, modo: ModoExport) => void;
+  onBloqueado: (canal: string) => void;
 }) {
+  const travado = situacao?.pode_exportar !== true;
+
+  if (travado) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => onBloqueado(canal)}
+              className="h-6 gap-1 border-amber-500/60 px-2 text-[11px] font-semibold text-amber-700 hover:bg-amber-50 hover:text-amber-800"
+            >
+              <Lock className="h-3 w-3" />
+              Sem contrato
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{motivoBloqueio(situacao)}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -1064,6 +1384,8 @@ function LinhaCanal({
   exportando,
   bloqueado,
   onExport,
+  situacao,
+  onBloqueado,
 }: {
   l: Linha;
   info?: { parcelas: number; maiorOrdem: number; maisAntigo: string | null };
@@ -1074,13 +1396,22 @@ function LinhaCanal({
   exportando: boolean;
   bloqueado: boolean;
   onExport: (canal: string, modo: ModoExport) => void;
+  situacao?: SituacaoContrato | null;
+  onBloqueado: (canal: string) => void;
 }) {
   return (
     <TableRow>
       <TableCell className="font-medium" style={{ color: navy }}>
         <div className="flex items-center gap-2">
           {l.canal}
-          <ExportBtn canal={l.canal} exportando={exportando} bloqueado={bloqueado} onExport={onExport} />
+          <ExportBtn
+            canal={l.canal}
+            situacao={situacao}
+            exportando={exportando}
+            bloqueado={bloqueado}
+            onExport={onExport}
+            onBloqueado={onBloqueado}
+          />
           {info && info.maiorOrdem >= 3 && info.maisAntigo && (
             <span
               className="inline-block h-2 w-2 rounded-full"
@@ -1105,7 +1436,10 @@ function LinhaCanal({
       <TableCell className="text-right font-mono font-semibold tabular-nums" style={{ color: navy }}>
         {valorCell(l.m2avencer + l.m2apurado)}
       </TableCell>
-      <TableCell className="border-l text-right" style={{ borderColor: border }}>{pill(l.situacao)}</TableCell>
+      <TableCell className="border-l text-right" style={{ borderColor: border }}>
+        <BadgeContrato s={situacao} />
+      </TableCell>
+      <TableCell className="text-right">{pill(l.situacao)}</TableCell>
     </TableRow>
   );
 }
@@ -1147,6 +1481,7 @@ function SubtotalRow({
         {BRL(s((l) => l.m2avencer + l.m2apurado))}
       </TableCell>
       <TableCell className="border-l" style={{ borderColor: border, borderTop: top }} />
+      <TableCell style={{ borderTop: top }} />
     </TableRow>
   );
 }
