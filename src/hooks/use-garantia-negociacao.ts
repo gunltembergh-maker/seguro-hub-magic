@@ -511,7 +511,11 @@ export function useTrocarStatus() {
       const contexto = precisaMercado ? await carregarContextoMercado(demanda.cliente_id) : undefined;
       const mudaEtapa = etapaDestino !== demanda.etapa;
       const tipos = mudaEtapa ? await carregarTiposPresentes(demanda.id) : undefined;
-      const impedimento = impedimentoDaTransicao(demanda, destino, contexto, tipos);
+      // Cotação escolhida, minuta e aprovações: só é lido quando a etapa muda.
+      const crm = mudaEtapa
+        ? await (await import("@/hooks/use-garantia-crm")).carregarContextoCrm(demanda)
+        : undefined;
+      const impedimento = impedimentoDaTransicao(demanda, destino, contexto, tipos, crm);
       if (impedimento) throw new Error(impedimento);
 
       const { error } = await supabase
