@@ -1008,7 +1008,7 @@ function DetalheParceiro({
 
 
                   <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                    <Info rotulo="Assinatura" valor={c.assinado_em ? dataHora(c.assinado_em) : c.assinado ? "encontrada" : "não encontrada"} />
+                    <InfoAssinatura contrato={c} />
                     <Info rotulo="Signatários" valor={c.signatarios != null ? String(c.signatarios) : "—"} />
                     <Info rotulo="Vigência" valor={`${dia(c.vigencia_inicio)} a ${dia(c.vigencia_fim)}`} />
                     <Info rotulo="Benefícios" valor={pct(c.pct_beneficios)} />
