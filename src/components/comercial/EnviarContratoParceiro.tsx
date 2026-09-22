@@ -610,14 +610,14 @@ export default function EnviarContratoParceiro({
             {situacao === "ATIVO" && (
               <Alert className="border-emerald-600/40 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-100">
                 <CheckCircle2 className="h-4 w-4" />
-                <AlertTitle>Contrato validado, repasse liberado</AlertTitle>
-                <AlertDescription>
-                  Vigência de {dia(e?.vigencia_inicio)} a {dia(e?.vigencia_fim)}. Benefícios{" "}
-                  {pct(e?.pct_beneficios)}, Garantia {pct(e?.pct_garantia)}, Demais ramos{" "}
-                  {pct(e?.pct_demais)}.
-                </AlertDescription>
-              </Alert>
-            )}
+              <AlertTitle>Contrato validado, repasse liberado</AlertTitle>
+              <AlertDescription>
+                Vigência de {dia(e?.vigencia_inicio)} a {dia(e?.vigencia_fim)}. Benefícios{" "}
+                {pct(e?.pct_beneficios)}, Garantia {pct(e?.pct_garantia)}, Demais ramos{" "}
+                <PctDemais pctDemais={e?.pct_demais} pctGarantia={e?.pct_garantia} />.
+              </AlertDescription>
+            </Alert>
+          )}
 
             {situacao === "VINCULO_A_CONFIRMAR" && (
               <Alert className="border-amber-600/40 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
