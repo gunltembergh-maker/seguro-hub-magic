@@ -449,7 +449,7 @@ export default function CanalParceirosTela() {
                         <TableCell className="tabular-nums">{pct(l.s?.pct_garantia)}</TableCell>
                         <TableCell className="tabular-nums">
                           {pct(l.s?.pct_demais_efetivo)}
-                          {herdado ? (
+                          {demaisHerdado ? (
                             <div className="text-xs text-muted-foreground">herdado de Garantia</div>
                           ) : null}
                         </TableCell>
