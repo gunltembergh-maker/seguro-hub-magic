@@ -27,14 +27,17 @@ export const FILTROS_VAZIOS: FiltrosPainel = {
   responsavel: null,
 };
 
+/** Filtro não escolhido vira ausente: o default da RPC é `null`. */
+const ou = (v: string | null) => v ?? undefined;
+
 function argumentos(f: FiltrosPainel) {
   return {
-    _de: f.de,
-    _ate: f.ate,
-    _produto: f.produto,
-    _modalidade: f.modalidade,
-    _canal: f.canal,
-    _responsavel: f.responsavel,
+    _de: ou(f.de),
+    _ate: ou(f.ate),
+    _produto: ou(f.produto),
+    _modalidade: ou(f.modalidade),
+    _canal: ou(f.canal),
+    _responsavel: ou(f.responsavel),
   };
 }
 
