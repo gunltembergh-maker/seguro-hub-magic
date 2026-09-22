@@ -77,6 +77,14 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
     ],
   },
   {
+    title: "Entrada de Demandas",
+    items: [
+      { key: "menu_entrada_demandas", label: "Entrada de Demandas", desc: "Porta única de registro de demandas de todos os ramos" },
+      { key: "entrada_cadastrar_canal", label: "↳ Cadastrar canal novo", desc: "Incluir canal/parceiro novo na lista", child: true },
+      { key: "entrada_definir_responsavel", label: "↳ Definir responsável pelo cliente", desc: "Atribuir ou trocar o responsável de um cliente", child: true },
+    ],
+  },
+  {
     title: "Ramos",
     items: [
       { key: "menu_ramo_garantia", label: "Garantia", desc: "Controle mestre do grupo Garantia" },
