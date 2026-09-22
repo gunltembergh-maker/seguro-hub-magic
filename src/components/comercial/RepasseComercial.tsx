@@ -354,6 +354,12 @@ export function RepasseComercial({
                       <LinhaRepasse
                         key={l.canal}
                         canal={l.canal}
+                        razaoSocial={razaoPorChave.get(chave) ?? null}
+                        onCancelado={() =>
+                          void queryClient.invalidateQueries({
+                            queryKey: ["canal-repasse-demandas"],
+                          })
+                        }
                         cicloCorrente={l.cicloCorrente}
                         acumulado={l.acumulado}
                         parcelas={l.parcelas}
