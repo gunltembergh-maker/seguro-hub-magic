@@ -55,6 +55,7 @@ export const HUB_PAGINAS: GrupoPaginas[] = [
       { rota: "/garantia/formulario-admin", nome: "Formulário Admin" },
       { rota: "/garantia/negociacao", nome: "Negociação" },
       { rota: "/garantia/crm", nome: "CRM" },
+      { rota: "/garantia/painel", nome: "Painel da Gerência" },
     ],
   },
   {
