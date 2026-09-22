@@ -1127,3 +1127,33 @@ function Info({ rotulo, valor }: { rotulo: string; valor: string }) {
     </div>
   );
 }
+
+function InfoDemais({
+  rotulo,
+  pctDemais,
+  pctDemaisEfetivo,
+  pctGarantia,
+}: {
+  rotulo: string;
+  pctDemais?: number | null;
+  pctDemaisEfetivo?: number | null;
+  pctGarantia?: number | null;
+}) {
+  return (
+    <div>
+      <dt className="text-muted-foreground">{rotulo}</dt>
+      <dd className="font-medium text-foreground">
+        {pctDemais != null ? (
+          pct(pctDemais)
+        ) : pctGarantia != null ? (
+          <>
+            {pct(pctDemaisEfetivo ?? pctGarantia)}{" "}
+            <span className="text-muted-foreground">(herdado de Garantia)</span>
+          </>
+        ) : (
+          "—"
+        )}
+      </dd>
+    </div>
+  );
+}
