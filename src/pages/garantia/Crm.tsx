@@ -53,12 +53,15 @@ const SEM_ACOES = new Set(["8", "9"]);
 function Cartao({
   demanda,
   statusNome,
+  seguradora,
   inicioStatus,
   podeVerTempo,
   onAbrir,
 }: {
   demanda: DemandaLista;
   statusNome: string;
+  /** Seguradora da cotação escolhida, herdada da negociação. */
+  seguradora: string | null;
   inicioStatus?: string;
   podeVerTempo: boolean;
   onAbrir: () => void;
