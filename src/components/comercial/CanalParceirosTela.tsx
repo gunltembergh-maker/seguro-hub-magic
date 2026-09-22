@@ -993,7 +993,12 @@ function DetalheParceiro({
                     <Info rotulo="Vigência" valor={`${dia(c.vigencia_inicio)} a ${dia(c.vigencia_fim)}`} />
                     <Info rotulo="Benefícios" valor={pct(c.pct_beneficios)} />
                     <Info rotulo="Garantia" valor={pct(c.pct_garantia)} />
-                    <Info rotulo="Demais ramos" valor={pct(c.pct_demais)} />
+                    <InfoDemais
+                      rotulo="Demais ramos"
+                      pctDemais={c.pct_demais}
+                      pctDemaisEfetivo={c.pct_demais_efetivo}
+                      pctGarantia={c.pct_garantia}
+                    />
                     <Info rotulo="Hash" valor={hash ? `${hash.slice(0, 12)}…` : "—"} />
                   </dl>
 
