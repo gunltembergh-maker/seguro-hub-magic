@@ -1720,6 +1720,97 @@ export type Database = {
           },
         ]
       }
+      canal_parceiro_alteracoes: {
+        Row: {
+          anexo_nome: string | null
+          anexo_path: string | null
+          aprovado_em: string | null
+          aprovado_por: string | null
+          canal_id: string
+          contrato_id: string | null
+          diretor_email: string
+          id: string
+          justificativa: string
+          minimo: number | null
+          observacao: string | null
+          pct_beneficios: number | null
+          pct_demais: number | null
+          pct_garantia: number | null
+          solicitado_em: string
+          solicitado_por: string | null
+          status: string
+          superada_em: string | null
+          superada_por_contrato_id: string | null
+          vigencia_fim: string | null
+        }
+        Insert: {
+          anexo_nome?: string | null
+          anexo_path?: string | null
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          canal_id: string
+          contrato_id?: string | null
+          diretor_email: string
+          id?: string
+          justificativa: string
+          minimo?: number | null
+          observacao?: string | null
+          pct_beneficios?: number | null
+          pct_demais?: number | null
+          pct_garantia?: number | null
+          solicitado_em?: string
+          solicitado_por?: string | null
+          status?: string
+          superada_em?: string | null
+          superada_por_contrato_id?: string | null
+          vigencia_fim?: string | null
+        }
+        Update: {
+          anexo_nome?: string | null
+          anexo_path?: string | null
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          canal_id?: string
+          contrato_id?: string | null
+          diretor_email?: string
+          id?: string
+          justificativa?: string
+          minimo?: number | null
+          observacao?: string | null
+          pct_beneficios?: number | null
+          pct_demais?: number | null
+          pct_garantia?: number | null
+          solicitado_em?: string
+          solicitado_por?: string | null
+          status?: string
+          superada_em?: string | null
+          superada_por_contrato_id?: string | null
+          vigencia_fim?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canal_parceiro_alteracoes_canal_id_fkey"
+            columns: ["canal_id"]
+            isOneToOne: false
+            referencedRelation: "canais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "canal_parceiro_alteracoes_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "canal_contratos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "canal_parceiro_alteracoes_superada_por_contrato_id_fkey"
+            columns: ["superada_por_contrato_id"]
+            isOneToOne: false
+            referencedRelation: "canal_contratos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       canal_parceiro_eventos: {
         Row: {
           canal_id: string | null
@@ -1793,6 +1884,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "canal_parceiro_vinculos_canal_id_fkey"
+            columns: ["canal_id"]
+            isOneToOne: false
+            referencedRelation: "canais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      canal_repasse_ciclo_datas: {
+        Row: {
+          canal_id: string | null
+          ciclo_ano: number
+          ciclo_mes: number
+          data_prevista: string
+          definida_em: string
+          definida_por: string | null
+          id: string
+          observacao: string | null
+        }
+        Insert: {
+          canal_id?: string | null
+          ciclo_ano: number
+          ciclo_mes: number
+          data_prevista: string
+          definida_em?: string
+          definida_por?: string | null
+          id?: string
+          observacao?: string | null
+        }
+        Update: {
+          canal_id?: string | null
+          ciclo_ano?: number
+          ciclo_mes?: number
+          data_prevista?: string
+          definida_em?: string
+          definida_por?: string | null
+          id?: string
+          observacao?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canal_repasse_ciclo_datas_canal_id_fkey"
             columns: ["canal_id"]
             isOneToOne: false
             referencedRelation: "canais"
@@ -5186,6 +5318,10 @@ export type Database = {
           nome: string
         }[]
       }
+      canal_parceiro_data_do_ciclo: {
+        Args: { p_ano: number; p_canal_id?: string; p_mes: number }
+        Returns: string
+      }
       canal_parceiro_data_prevista_recusa: {
         Args: { p_data: string }
         Returns: string
@@ -5256,6 +5392,10 @@ export type Database = {
           situacao: string
         }[]
       }
+      canal_parceiro_superar_alteracoes: {
+        Args: { p_canal_id: string; p_contrato_id: string }
+        Returns: number
+      }
       divide_safe: {
         Args: { denominador: number; numerador: number }
         Returns: number
@@ -5305,6 +5445,7 @@ export type Database = {
       pode_aprovar_liberacao_repasse: { Args: never; Returns: boolean }
       pode_beneficios: { Args: never; Returns: boolean }
       pode_cadastros: { Args: never; Returns: boolean }
+      pode_definir_data_repasse: { Args: never; Returns: boolean }
       pode_definir_responsavel_cliente: { Args: never; Returns: boolean }
       pode_entrada_cadastrar_canal: { Args: never; Returns: boolean }
       pode_entrada_demandas: { Args: never; Returns: boolean }
@@ -5744,11 +5885,39 @@ export type Database = {
           user_id: string
         }[]
       }
+      rpc_canal_parceiro_alteracoes: {
+        Args: { p_status?: string }
+        Returns: {
+          alteracao_id: string
+          anexo_nome: string
+          anexo_path: string
+          aprovado_em: string
+          aprovado_por_nome: string
+          canal_id: string
+          diretor_email: string
+          justificativa: string
+          minimo: number
+          observacao: string
+          parceiro: string
+          pct_beneficios: number
+          pct_beneficios_contrato: number
+          pct_demais: number
+          pct_garantia: number
+          pct_garantia_contrato: number
+          solicitado_em: string
+          solicitado_por_nome: string
+          sou_o_aprovador: boolean
+          sou_o_solicitante: boolean
+          status: string
+          superada_em: string
+          vigencia_fim: string
+        }[]
+      }
       rpc_canal_parceiro_autorizar_exportacao: {
         Args: {
           p_ano: number
           p_canal_planilha: string
-          p_data_prevista: string
+          p_data_prevista?: string
           p_linhas?: number
           p_mes: number
           p_valor?: number
@@ -5776,6 +5945,21 @@ export type Database = {
           canal_id: string
           criado: boolean
           nome: string
+        }[]
+      }
+      rpc_canal_parceiro_ciclo: {
+        Args: { p_ano: number; p_mes: number }
+        Returns: {
+          ciclo_ano: number
+          ciclo_mes: number
+          data_prevista: string
+          definida_em: string
+          definida_por_nome: string
+          excecoes: number
+          janela_fim: string
+          janela_inicio: string
+          observacao: string
+          posso_definir: boolean
         }[]
       }
       rpc_canal_parceiro_contratos: {
@@ -5830,6 +6014,17 @@ export type Database = {
           situacao: string
         }[]
       }
+      rpc_canal_parceiro_decidir_alteracao: {
+        Args: {
+          p_alteracao_id: string
+          p_aprovar: boolean
+          p_observacao?: string
+        }
+        Returns: {
+          alteracao_id: string
+          status: string
+        }[]
+      }
       rpc_canal_parceiro_decidir_liberacao: {
         Args: {
           p_aprovar: boolean
@@ -5839,6 +6034,20 @@ export type Database = {
         Returns: {
           liberacao_id: string
           status: string
+        }[]
+      }
+      rpc_canal_parceiro_definir_data_ciclo: {
+        Args: {
+          p_ano: number
+          p_canal_id?: string
+          p_data: string
+          p_mes: number
+          p_observacao?: string
+        }
+        Returns: {
+          abrangencia: string
+          ciclo: string
+          data_prevista: string
         }[]
       }
       rpc_canal_parceiro_eventos: {
@@ -5941,6 +6150,25 @@ export type Database = {
           situacao: string
           vigencia_fim: string
           vigencia_inicio: string
+        }[]
+      }
+      rpc_canal_parceiro_solicitar_alteracao: {
+        Args: {
+          p_anexo_nome?: string
+          p_anexo_path?: string
+          p_canal_id: string
+          p_diretor_email: string
+          p_justificativa: string
+          p_minimo?: number
+          p_pct_beneficios?: number
+          p_pct_demais?: number
+          p_pct_garantia?: number
+          p_vigencia_fim?: string
+        }
+        Returns: {
+          alteracao_id: string
+          mensagem: string
+          status: string
         }[]
       }
       rpc_canal_parceiro_solicitar_liberacao: {

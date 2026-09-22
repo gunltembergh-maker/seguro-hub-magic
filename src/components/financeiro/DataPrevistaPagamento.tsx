@@ -1,13 +1,17 @@
-// Escolha da data prevista de pagamento do repasse.
+// Definição da data prevista de pagamento do ciclo de repasse.
 //
-// A janela válida vem do banco (`canal_parceiro_janela_pagamento`), que hoje
-// devolve os dias 11 a 15. O calendário bloqueia tudo fora dela.
+// Quem define é o Financeiro, uma vez por ciclo. A janela válida vem do banco
+// (hoje, os dias 11 a 15) e o calendário bloqueia tudo fora dela.
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useCicloRepasse } from "@/hooks/use-ciclo-repasse";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -26,62 +30,84 @@ const soData = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate())
 
 export interface DataPrevistaPagamentoProps {
   aberto: boolean;
-  parceiro?: string;
-  /** Apenas sugestão inicial; quem manda é a data escolhida. */
+  ano: number;
+  mes: number;
+  /** Sugestão inicial; quem manda é a data escolhida. */
   sugestao?: string | null;
   onFechar: () => void;
-  onConfirmar: (dataISO: string) => void;
+  onDefinida?: (dataISO: string) => void;
 }
 
 export function DataPrevistaPagamento({
   aberto,
-  parceiro,
+  ano,
+  mes,
   sugestao,
   onFechar,
-  onConfirmar,
+  onDefinida,
 }: DataPrevistaPagamentoProps) {
+  const queryClient = useQueryClient();
   const [data, setData] = useState<Date | undefined>(undefined);
+  const [observacao, setObservacao] = useState("");
+  const [salvando, setSalvando] = useState(false);
 
-  const { data: janela, isLoading, error } = useQuery({
-    queryKey: ["canal-parceiro-janela-pagamento"],
-    enabled: aberto,
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("canal_parceiro_janela_pagamento" as never);
-      if (error) throw error;
-      const linha = (Array.isArray(data) ? data[0] : data) as
-        { inicio: string; fim: string } | undefined;
-      return linha ?? null;
-    },
-    staleTime: 60 * 60 * 1000,
-  });
+  const { data: ciclo, isLoading, error } = useCicloRepasse(ano, mes);
 
   const limites = useMemo(() => {
-    if (!janela) return null;
-    return { inicio: soData(doISO(janela.inicio)), fim: soData(doISO(janela.fim)) };
-  }, [janela]);
+    if (!ciclo?.janela_inicio || !ciclo?.janela_fim) return null;
+    return { inicio: soData(doISO(ciclo.janela_inicio)), fim: soData(doISO(ciclo.janela_fim)) };
+  }, [ciclo]);
 
   const sugerida = useMemo(() => {
-    if (!sugestao || !limites) return undefined;
-    const d = soData(doISO(sugestao));
+    const base = ciclo?.data_prevista ?? sugestao;
+    if (!base || !limites) return undefined;
+    const d = soData(doISO(base));
     return d >= limites.inicio && d <= limites.fim ? d : undefined;
-  }, [sugestao, limites]);
+  }, [ciclo, sugestao, limites]);
 
   const escolhida = data ?? sugerida;
 
   function fechar() {
     setData(undefined);
+    setObservacao("");
     onFechar();
+  }
+
+  async function salvar() {
+    if (!escolhida || salvando) return;
+    const iso = paraISO(escolhida);
+    setSalvando(true);
+    try {
+      const { error: erro } = await supabase.rpc(
+        "rpc_canal_parceiro_definir_data_ciclo" as never,
+        {
+          p_ano: ano,
+          p_mes: mes,
+          p_data: iso,
+          p_canal_id: null,
+          p_observacao: observacao.trim() || null,
+        } as never,
+      );
+      if (erro) throw erro;
+      toast.success(`Pagamento do ciclo previsto para ${fmtBR(iso)}.`);
+      queryClient.invalidateQueries({ queryKey: ["canal-parceiro-ciclo"] });
+      onDefinida?.(iso);
+      fechar();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSalvando(false);
+    }
   }
 
   return (
     <Dialog open={aberto} onOpenChange={(v) => { if (!v) fechar(); }}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Data prevista de pagamento</DialogTitle>
+          <DialogTitle>Data do ciclo de pagamento</DialogTitle>
           <DialogDescription>
-            {parceiro ? `Repasse de ${parceiro}. ` : ""}
-            {janela
-              ? `O pagamento acontece entre os dias 11 e 15. A janela disponível é de ${fmtBR(janela.inicio)} a ${fmtBR(janela.fim)}.`
+            {limites
+              ? `O pagamento acontece entre os dias 11 e 15. A janela disponível é de ${fmtBR(ciclo!.janela_inicio!)} a ${fmtBR(ciclo!.janela_fim!)}.`
               : "O pagamento acontece entre os dias 11 e 15."}
           </DialogDescription>
         </DialogHeader>
@@ -112,20 +138,24 @@ export function DataPrevistaPagamento({
           </div>
         )}
 
+        <div className="space-y-2">
+          <Label htmlFor="observacao-ciclo">Observação (opcional)</Label>
+          <Textarea
+            id="observacao-ciclo"
+            rows={3}
+            value={observacao}
+            onChange={(ev) => setObservacao(ev.target.value)}
+            placeholder="Algo que o time precise saber sobre esta data."
+          />
+        </div>
+
         <DialogFooter>
-          <Button variant="outline" onClick={fechar}>
+          <Button variant="outline" onClick={fechar} disabled={salvando}>
             Cancelar
           </Button>
-          <Button
-            disabled={!escolhida}
-            onClick={() => {
-              if (!escolhida) return;
-              const iso = paraISO(escolhida);
-              setData(undefined);
-              onConfirmar(iso);
-            }}
-          >
-            Confirmar e exportar
+          <Button disabled={!escolhida || salvando} onClick={salvar}>
+            {salvando && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Salvar data do ciclo
           </Button>
         </DialogFooter>
       </DialogContent>
