@@ -494,6 +494,7 @@ function PedirNFDialog({
   valor,
   onFechar,
   onSucesso,
+  onVerRelacao,
 }: {
   aberto: boolean;
   canal: string;
@@ -502,6 +503,7 @@ function PedirNFDialog({
   valor: number;
   onFechar: () => void;
   onSucesso: () => void;
+  onVerRelacao: () => void;
 }) {
   const [observacao, setObservacao] = useState("");
   const [enviando, setEnviando] = useState(false);
