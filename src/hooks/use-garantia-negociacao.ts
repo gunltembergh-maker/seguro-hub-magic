@@ -355,7 +355,19 @@ export function impedimentoDaTransicao(
   contexto?: ContextoMercado,
   /** Tipos de documento com versão vigente na demanda (checklists das etapas 2 e 3b). */
   tiposPresentes?: Set<string>,
+  /** Cotação escolhida, minuta e aprovações — travas das etapas 4, 6 e 7. */
+  crm?: ContextoCrm,
 ): string | null {
+  // O aceite não é troca de status: ele é o RPC que gera o código GAR-xxxxx.
+  // Arrastar o cartão para o CRM puluaria a geração do código.
+  if (demanda.fase !== "crm" && destino.fase === "crm") {
+    return "A entrada no CRM é feita pelo botão “Registrar aceite do cliente”, no detalhe da demanda: é ele que gera o código GAR e garante que não saiam dois códigos para o mesmo caso.";
+  }
+  // Depois do aceite não há volta pelo quadro: o caminho de saída é perda ou emissão.
+  if (demanda.fase === "crm" && destino.fase === "negociacao") {
+    return "Esta demanda já foi aceita pelo cliente e está no CRM. Ela não volta para a negociação pelo quadro: o caminho de saída é registrar a perda (desistência depois do aceite) ou seguir para a emissão.";
+  }
+
 
   if (!demanda.triagem_completa && destino.codigo !== demanda.status_atual) {
     return "A triagem ainda não foi completada. Use “Completar triagem” no detalhe da demanda: sem os dados da etapa 1 as etapas seguintes não têm o que analisar.";
