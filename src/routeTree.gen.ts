@@ -70,6 +70,7 @@ import { Route as ApiTcLavoroAnalysisJobsJobIdRouteImport } from './routes/api/t
 import { Route as ApiPublicHooksGarantiaJudicialConsultarMercadoRouteImport } from './routes/api/public/hooks/garantia-judicial-consultar-mercado'
 import { Route as ApiPublicHooksDispatchScheduledNewslettersRouteImport } from './routes/api/public/hooks/dispatch-scheduled-newsletters'
 import { Route as ApiPublicHooksCanalParceiroVencimentosRouteImport } from './routes/api/public/hooks/canal-parceiro-vencimentos'
+import { Route as ApiPublicHooksCanalParceiroAvisosRouteImport } from './routes/api/public/hooks/canal-parceiro-avisos'
 import { Route as ApiPublicHooksAdminAuditNotifyRouteImport } from './routes/api/public/hooks/admin-audit-notify'
 import { Route as ApiPublicHooksAbMotorRunRouteImport } from './routes/api/public/hooks/ab-motor-run'
 import { Route as ApiPublicHooksAbIngestTransparenciaRouteImport } from './routes/api/public/hooks/ab-ingest-transparencia'
@@ -422,6 +423,12 @@ const ApiPublicHooksCanalParceiroVencimentosRoute =
     path: '/api/public/hooks/canal-parceiro-vencimentos',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksCanalParceiroAvisosRoute =
+  ApiPublicHooksCanalParceiroAvisosRouteImport.update({
+    id: '/api/public/hooks/canal-parceiro-avisos',
+    path: '/api/public/hooks/canal-parceiro-avisos',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksAdminAuditNotifyRoute =
   ApiPublicHooksAdminAuditNotifyRouteImport.update({
     id: '/api/public/hooks/admin-audit-notify',
@@ -552,6 +559,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/ab-ingest-transparencia': typeof ApiPublicHooksAbIngestTransparenciaRoute
   '/api/public/hooks/ab-motor-run': typeof ApiPublicHooksAbMotorRunRoute
   '/api/public/hooks/admin-audit-notify': typeof ApiPublicHooksAdminAuditNotifyRoute
+  '/api/public/hooks/canal-parceiro-avisos': typeof ApiPublicHooksCanalParceiroAvisosRoute
   '/api/public/hooks/canal-parceiro-vencimentos': typeof ApiPublicHooksCanalParceiroVencimentosRoute
   '/api/public/hooks/dispatch-scheduled-newsletters': typeof ApiPublicHooksDispatchScheduledNewslettersRoute
   '/api/public/hooks/garantia-judicial-consultar-mercado': typeof ApiPublicHooksGarantiaJudicialConsultarMercadoRoute
@@ -624,6 +632,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/ab-ingest-transparencia': typeof ApiPublicHooksAbIngestTransparenciaRoute
   '/api/public/hooks/ab-motor-run': typeof ApiPublicHooksAbMotorRunRoute
   '/api/public/hooks/admin-audit-notify': typeof ApiPublicHooksAdminAuditNotifyRoute
+  '/api/public/hooks/canal-parceiro-avisos': typeof ApiPublicHooksCanalParceiroAvisosRoute
   '/api/public/hooks/canal-parceiro-vencimentos': typeof ApiPublicHooksCanalParceiroVencimentosRoute
   '/api/public/hooks/dispatch-scheduled-newsletters': typeof ApiPublicHooksDispatchScheduledNewslettersRoute
   '/api/public/hooks/garantia-judicial-consultar-mercado': typeof ApiPublicHooksGarantiaJudicialConsultarMercadoRoute
@@ -699,6 +708,7 @@ export interface FileRoutesById {
   '/api/public/hooks/ab-ingest-transparencia': typeof ApiPublicHooksAbIngestTransparenciaRoute
   '/api/public/hooks/ab-motor-run': typeof ApiPublicHooksAbMotorRunRoute
   '/api/public/hooks/admin-audit-notify': typeof ApiPublicHooksAdminAuditNotifyRoute
+  '/api/public/hooks/canal-parceiro-avisos': typeof ApiPublicHooksCanalParceiroAvisosRoute
   '/api/public/hooks/canal-parceiro-vencimentos': typeof ApiPublicHooksCanalParceiroVencimentosRoute
   '/api/public/hooks/dispatch-scheduled-newsletters': typeof ApiPublicHooksDispatchScheduledNewslettersRoute
   '/api/public/hooks/garantia-judicial-consultar-mercado': typeof ApiPublicHooksGarantiaJudicialConsultarMercadoRoute
@@ -774,6 +784,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/ab-ingest-transparencia'
     | '/api/public/hooks/ab-motor-run'
     | '/api/public/hooks/admin-audit-notify'
+    | '/api/public/hooks/canal-parceiro-avisos'
     | '/api/public/hooks/canal-parceiro-vencimentos'
     | '/api/public/hooks/dispatch-scheduled-newsletters'
     | '/api/public/hooks/garantia-judicial-consultar-mercado'
@@ -846,6 +857,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/ab-ingest-transparencia'
     | '/api/public/hooks/ab-motor-run'
     | '/api/public/hooks/admin-audit-notify'
+    | '/api/public/hooks/canal-parceiro-avisos'
     | '/api/public/hooks/canal-parceiro-vencimentos'
     | '/api/public/hooks/dispatch-scheduled-newsletters'
     | '/api/public/hooks/garantia-judicial-consultar-mercado'
@@ -920,6 +932,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/ab-ingest-transparencia'
     | '/api/public/hooks/ab-motor-run'
     | '/api/public/hooks/admin-audit-notify'
+    | '/api/public/hooks/canal-parceiro-avisos'
     | '/api/public/hooks/canal-parceiro-vencimentos'
     | '/api/public/hooks/dispatch-scheduled-newsletters'
     | '/api/public/hooks/garantia-judicial-consultar-mercado'
@@ -953,6 +966,7 @@ export interface RootRouteChildren {
   ApiPublicHooksAbIngestTransparenciaRoute: typeof ApiPublicHooksAbIngestTransparenciaRoute
   ApiPublicHooksAbMotorRunRoute: typeof ApiPublicHooksAbMotorRunRoute
   ApiPublicHooksAdminAuditNotifyRoute: typeof ApiPublicHooksAdminAuditNotifyRoute
+  ApiPublicHooksCanalParceiroAvisosRoute: typeof ApiPublicHooksCanalParceiroAvisosRoute
   ApiPublicHooksCanalParceiroVencimentosRoute: typeof ApiPublicHooksCanalParceiroVencimentosRoute
   ApiPublicHooksDispatchScheduledNewslettersRoute: typeof ApiPublicHooksDispatchScheduledNewslettersRoute
   ApiPublicHooksGarantiaJudicialConsultarMercadoRoute: typeof ApiPublicHooksGarantiaJudicialConsultarMercadoRoute
@@ -1390,6 +1404,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksCanalParceiroVencimentosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/canal-parceiro-avisos': {
+      id: '/api/public/hooks/canal-parceiro-avisos'
+      path: '/api/public/hooks/canal-parceiro-avisos'
+      fullPath: '/api/public/hooks/canal-parceiro-avisos'
+      preLoaderRoute: typeof ApiPublicHooksCanalParceiroAvisosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/admin-audit-notify': {
       id: '/api/public/hooks/admin-audit-notify'
       path: '/api/public/hooks/admin-audit-notify'
@@ -1672,6 +1693,8 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicHooksAbIngestTransparenciaRoute,
   ApiPublicHooksAbMotorRunRoute: ApiPublicHooksAbMotorRunRoute,
   ApiPublicHooksAdminAuditNotifyRoute: ApiPublicHooksAdminAuditNotifyRoute,
+  ApiPublicHooksCanalParceiroAvisosRoute:
+    ApiPublicHooksCanalParceiroAvisosRoute,
   ApiPublicHooksCanalParceiroVencimentosRoute:
     ApiPublicHooksCanalParceiroVencimentosRoute,
   ApiPublicHooksDispatchScheduledNewslettersRoute:
