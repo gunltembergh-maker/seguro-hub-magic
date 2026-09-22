@@ -404,10 +404,7 @@ export default function CanalParceirosTela() {
                   </TableRow>
                 ) : (
                   linhas.map((l) => {
-                    const herdado =
-                      l.s?.pct_demais_efetivo != null &&
-                      l.s?.pct_garantia != null &&
-                      l.s.pct_demais_efetivo === l.s.pct_garantia;
+                    const demaisHerdado = l.s?.pct_demais == null && l.s?.pct_garantia != null;
                     const dias = l.s?.dias_para_vencer ?? null;
                     return (
                       <TableRow
