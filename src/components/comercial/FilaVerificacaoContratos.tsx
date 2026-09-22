@@ -238,8 +238,28 @@ export function FilaVerificacaoContratos({ semCard = false }: { semCard?: boolea
               </div>
             </div>
           ))}
-        </CardContent>
-      </Card>
+    </div>
+  );
+
+  return (
+    <>
+      {semCard ? (
+        conteudo
+      ) : (
+        <Card className="border-amber-600/40">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
+              <AlertTriangle className="h-4 w-4" />
+              Aguardando conferência
+            </CardTitle>
+            <CardDescription>
+              Contratos parados esperando alguém abrir o documento e confirmar o que o Hub não
+              conseguiu concluir sozinho.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>{conteudo}</CardContent>
+        </Card>
+      )}
 
       <ConferirDialog
         pendencia={conferindo}
