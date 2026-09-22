@@ -459,6 +459,7 @@ export default function CanalParceirosTela() {
                   linhas.map((l) => {
                     const demaisHerdado = l.s?.pct_demais == null && l.s?.pct_garantia != null;
                     const dias = l.s?.dias_para_vencer ?? null;
+                    const aut = l.canalId ? aprovadaPorCanal.get(l.canalId) ?? null : null;
                     return (
                       <TableRow
                         key={l.chave}
