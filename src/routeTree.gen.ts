@@ -47,6 +47,7 @@ import { Route as AuthenticatedDashboardReportFechamentoRouteImport } from './ro
 import { Route as AuthenticatedDashboardReceitaExecutivoRouteImport } from './routes/_authenticated/dashboard.receita-executivo'
 import { Route as AuthenticatedDashboardReceitaCaixaRouteImport } from './routes/_authenticated/dashboard.receita-caixa'
 import { Route as AuthenticatedDashboardReceitaRouteImport } from './routes/_authenticated/dashboard.receita'
+import { Route as AuthenticatedComercialCanalParceirosRouteImport } from './routes/_authenticated/comercial_.canal-parceiros'
 import { Route as AuthenticatedBeneficiosClientesRouteImport } from './routes/_authenticated/beneficios.clientes'
 import { Route as AuthenticatedBeneficiosCadastrosRouteImport } from './routes/_authenticated/beneficios.cadastros'
 import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authenticated/admin/usuarios'
@@ -283,6 +284,12 @@ const AuthenticatedDashboardReceitaRoute =
     path: '/dashboard/receita',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedComercialCanalParceirosRoute =
+  AuthenticatedComercialCanalParceirosRouteImport.update({
+    id: '/comercial_/canal-parceiros',
+    path: '/comercial/canal-parceiros',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedBeneficiosClientesRoute =
   AuthenticatedBeneficiosClientesRouteImport.update({
     id: '/clientes',
@@ -482,6 +489,7 @@ export interface FileRoutesByFullPath {
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/beneficios/cadastros': typeof AuthenticatedBeneficiosCadastrosRoute
   '/beneficios/clientes': typeof AuthenticatedBeneficiosClientesRoute
+  '/comercial/canal-parceiros': typeof AuthenticatedComercialCanalParceirosRoute
   '/dashboard/receita': typeof AuthenticatedDashboardReceitaRoute
   '/dashboard/receita-caixa': typeof AuthenticatedDashboardReceitaCaixaRoute
   '/dashboard/receita-executivo': typeof AuthenticatedDashboardReceitaExecutivoRoute
@@ -549,6 +557,7 @@ export interface FileRoutesByTo {
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/beneficios/cadastros': typeof AuthenticatedBeneficiosCadastrosRoute
   '/beneficios/clientes': typeof AuthenticatedBeneficiosClientesRoute
+  '/comercial/canal-parceiros': typeof AuthenticatedComercialCanalParceirosRoute
   '/dashboard/receita': typeof AuthenticatedDashboardReceitaRoute
   '/dashboard/receita-caixa': typeof AuthenticatedDashboardReceitaCaixaRoute
   '/dashboard/receita-executivo': typeof AuthenticatedDashboardReceitaExecutivoRoute
@@ -619,6 +628,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/_authenticated/beneficios/cadastros': typeof AuthenticatedBeneficiosCadastrosRoute
   '/_authenticated/beneficios/clientes': typeof AuthenticatedBeneficiosClientesRoute
+  '/_authenticated/comercial_/canal-parceiros': typeof AuthenticatedComercialCanalParceirosRoute
   '/_authenticated/dashboard/receita': typeof AuthenticatedDashboardReceitaRoute
   '/_authenticated/dashboard/receita-caixa': typeof AuthenticatedDashboardReceitaCaixaRoute
   '/_authenticated/dashboard/receita-executivo': typeof AuthenticatedDashboardReceitaExecutivoRoute
@@ -689,6 +699,7 @@ export interface FileRouteTypes {
     | '/admin/usuarios'
     | '/beneficios/cadastros'
     | '/beneficios/clientes'
+    | '/comercial/canal-parceiros'
     | '/dashboard/receita'
     | '/dashboard/receita-caixa'
     | '/dashboard/receita-executivo'
@@ -756,6 +767,7 @@ export interface FileRouteTypes {
     | '/admin/usuarios'
     | '/beneficios/cadastros'
     | '/beneficios/clientes'
+    | '/comercial/canal-parceiros'
     | '/dashboard/receita'
     | '/dashboard/receita-caixa'
     | '/dashboard/receita-executivo'
@@ -825,6 +837,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/usuarios'
     | '/_authenticated/beneficios/cadastros'
     | '/_authenticated/beneficios/clientes'
+    | '/_authenticated/comercial_/canal-parceiros'
     | '/_authenticated/dashboard/receita'
     | '/_authenticated/dashboard/receita-caixa'
     | '/_authenticated/dashboard/receita-executivo'
@@ -1164,6 +1177,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardReceitaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/comercial_/canal-parceiros': {
+      id: '/_authenticated/comercial_/canal-parceiros'
+      path: '/comercial/canal-parceiros'
+      fullPath: '/comercial/canal-parceiros'
+      preLoaderRoute: typeof AuthenticatedComercialCanalParceirosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/beneficios/clientes': {
       id: '/_authenticated/beneficios/clientes'
       path: '/clientes'
@@ -1438,6 +1458,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMiddleRoute: typeof AuthenticatedMiddleRoute
   AuthenticatedOperacionalRoute: typeof AuthenticatedOperacionalRoute
   AuthenticatedReservaPosicoesRoute: typeof AuthenticatedReservaPosicoesRoute
+  AuthenticatedComercialCanalParceirosRoute: typeof AuthenticatedComercialCanalParceirosRoute
   AuthenticatedDashboardReceitaRoute: typeof AuthenticatedDashboardReceitaRoute
   AuthenticatedDashboardReceitaCaixaRoute: typeof AuthenticatedDashboardReceitaCaixaRoute
   AuthenticatedDashboardReceitaExecutivoRoute: typeof AuthenticatedDashboardReceitaExecutivoRoute
@@ -1463,6 +1484,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMiddleRoute: AuthenticatedMiddleRoute,
   AuthenticatedOperacionalRoute: AuthenticatedOperacionalRoute,
   AuthenticatedReservaPosicoesRoute: AuthenticatedReservaPosicoesRoute,
+  AuthenticatedComercialCanalParceirosRoute:
+    AuthenticatedComercialCanalParceirosRoute,
   AuthenticatedDashboardReceitaRoute: AuthenticatedDashboardReceitaRoute,
   AuthenticatedDashboardReceitaCaixaRoute:
     AuthenticatedDashboardReceitaCaixaRoute,
