@@ -2347,6 +2347,348 @@ export type Database = {
         }
         Relationships: []
       }
+      garantia_analises_ia: {
+        Row: {
+          aplicada: boolean
+          aplicada_em: string | null
+          aplicada_por: string | null
+          apolice_id: string | null
+          atualizado_em: string
+          campos_sugeridos: Json | null
+          criado_em: string
+          demanda_id: string | null
+          documento_id: string | null
+          erro_mensagem: string | null
+          fluxo: string
+          id: string
+          job_id: string | null
+          resultado: Json | null
+          resumo: string | null
+          situacao: string
+          solicitada_por: string | null
+        }
+        Insert: {
+          aplicada?: boolean
+          aplicada_em?: string | null
+          aplicada_por?: string | null
+          apolice_id?: string | null
+          atualizado_em?: string
+          campos_sugeridos?: Json | null
+          criado_em?: string
+          demanda_id?: string | null
+          documento_id?: string | null
+          erro_mensagem?: string | null
+          fluxo: string
+          id?: string
+          job_id?: string | null
+          resultado?: Json | null
+          resumo?: string | null
+          situacao?: string
+          solicitada_por?: string | null
+        }
+        Update: {
+          aplicada?: boolean
+          aplicada_em?: string | null
+          aplicada_por?: string | null
+          apolice_id?: string | null
+          atualizado_em?: string
+          campos_sugeridos?: Json | null
+          criado_em?: string
+          demanda_id?: string | null
+          documento_id?: string | null
+          erro_mensagem?: string | null
+          fluxo?: string
+          id?: string
+          job_id?: string | null
+          resultado?: Json | null
+          resumo?: string | null
+          situacao?: string
+          solicitada_por?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "garantia_analises_ia_apolice_fk"
+            columns: ["apolice_id"]
+            isOneToOne: false
+            referencedRelation: "garantia_apolices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "garantia_analises_ia_demanda_id_fkey"
+            columns: ["demanda_id"]
+            isOneToOne: false
+            referencedRelation: "garantia_demandas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "garantia_analises_ia_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "garantia_documentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      garantia_apolices: {
+        Row: {
+          apolice_mae_id: string | null
+          atualizado_em: string
+          chave_mercado: string | null
+          comissao_pct: number | null
+          comissao_valor: number | null
+          criado_em: string
+          criado_por: string | null
+          data_emissao: string | null
+          demanda_id: string
+          id: string
+          importancia_segurada: number | null
+          locador_id: string | null
+          locatario_id: string | null
+          numero_apolice: string
+          numero_endosso: number
+          objeto: string | null
+          premio: number | null
+          produto: string
+          segurado_id: string | null
+          seguradora_livre: string | null
+          situacao: string
+          tomador_id: string | null
+          vigencia_fim: string | null
+          vigencia_inicio: string | null
+        }
+        Insert: {
+          apolice_mae_id?: string | null
+          atualizado_em?: string
+          chave_mercado?: string | null
+          comissao_pct?: number | null
+          comissao_valor?: number | null
+          criado_em?: string
+          criado_por?: string | null
+          data_emissao?: string | null
+          demanda_id: string
+          id?: string
+          importancia_segurada?: number | null
+          locador_id?: string | null
+          locatario_id?: string | null
+          numero_apolice: string
+          numero_endosso?: number
+          objeto?: string | null
+          premio?: number | null
+          produto: string
+          segurado_id?: string | null
+          seguradora_livre?: string | null
+          situacao?: string
+          tomador_id?: string | null
+          vigencia_fim?: string | null
+          vigencia_inicio?: string | null
+        }
+        Update: {
+          apolice_mae_id?: string | null
+          atualizado_em?: string
+          chave_mercado?: string | null
+          comissao_pct?: number | null
+          comissao_valor?: number | null
+          criado_em?: string
+          criado_por?: string | null
+          data_emissao?: string | null
+          demanda_id?: string
+          id?: string
+          importancia_segurada?: number | null
+          locador_id?: string | null
+          locatario_id?: string | null
+          numero_apolice?: string
+          numero_endosso?: number
+          objeto?: string | null
+          premio?: number | null
+          produto?: string
+          segurado_id?: string | null
+          seguradora_livre?: string | null
+          situacao?: string
+          tomador_id?: string | null
+          vigencia_fim?: string | null
+          vigencia_inicio?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "garantia_apolices_apolice_mae_id_fkey"
+            columns: ["apolice_mae_id"]
+            isOneToOne: false
+            referencedRelation: "garantia_apolices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "garantia_apolices_chave_mercado_fkey"
+            columns: ["chave_mercado"]
+            isOneToOne: false
+            referencedRelation: "garantia_seguradoras_config"
+            referencedColumns: ["chave_mercado"]
+          },
+          {
+            foreignKeyName: "garantia_apolices_demanda_id_fkey"
+            columns: ["demanda_id"]
+            isOneToOne: false
+            referencedRelation: "garantia_demandas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "garantia_apolices_locador_id_fkey"
+            columns: ["locador_id"]
+            isOneToOne: false
+            referencedRelation: "garantia_segurados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "garantia_apolices_locatario_id_fkey"
+            columns: ["locatario_id"]
+            isOneToOne: false
+            referencedRelation: "hub_clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "garantia_apolices_segurado_id_fkey"
+            columns: ["segurado_id"]
+            isOneToOne: false
+            referencedRelation: "garantia_segurados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "garantia_apolices_tomador_id_fkey"
+            columns: ["tomador_id"]
+            isOneToOne: false
+            referencedRelation: "hub_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      garantia_aprovacoes_minuta: {
+        Row: {
+          criado_em: string
+          data: string
+          demanda_id: string
+          documento_id: string | null
+          forma: string | null
+          id: string
+          observacao: string | null
+          quem: string
+          registrado_por: string | null
+        }
+        Insert: {
+          criado_em?: string
+          data?: string
+          demanda_id: string
+          documento_id?: string | null
+          forma?: string | null
+          id?: string
+          observacao?: string | null
+          quem: string
+          registrado_por?: string | null
+        }
+        Update: {
+          criado_em?: string
+          data?: string
+          demanda_id?: string
+          documento_id?: string | null
+          forma?: string | null
+          id?: string
+          observacao?: string | null
+          quem?: string
+          registrado_por?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "garantia_aprovacoes_minuta_demanda_id_fkey"
+            columns: ["demanda_id"]
+            isOneToOne: false
+            referencedRelation: "garantia_demandas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "garantia_aprovacoes_minuta_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "garantia_documentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      garantia_auditoria: {
+        Row: {
+          campo: string
+          data: string
+          id: string
+          registro_id: string
+          tabela: string
+          usuario_id: string | null
+          valor_anterior: string | null
+          valor_novo: string | null
+        }
+        Insert: {
+          campo: string
+          data?: string
+          id?: string
+          registro_id: string
+          tabela: string
+          usuario_id?: string | null
+          valor_anterior?: string | null
+          valor_novo?: string | null
+        }
+        Update: {
+          campo?: string
+          data?: string
+          id?: string
+          registro_id?: string
+          tabela?: string
+          usuario_id?: string | null
+          valor_anterior?: string | null
+          valor_novo?: string | null
+        }
+        Relationships: []
+      }
+      garantia_avisos_renovacao: {
+        Row: {
+          apolice_id: string
+          data_aviso: string
+          demanda_renovacao_id: string | null
+          dias_antes: number
+          enviado: boolean
+          enviado_em: string | null
+          id: string
+        }
+        Insert: {
+          apolice_id: string
+          data_aviso: string
+          demanda_renovacao_id?: string | null
+          dias_antes: number
+          enviado?: boolean
+          enviado_em?: string | null
+          id?: string
+        }
+        Update: {
+          apolice_id?: string
+          data_aviso?: string
+          demanda_renovacao_id?: string | null
+          dias_antes?: number
+          enviado?: boolean
+          enviado_em?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "garantia_avisos_renovacao_apolice_id_fkey"
+            columns: ["apolice_id"]
+            isOneToOne: false
+            referencedRelation: "garantia_apolices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "garantia_avisos_renovacao_demanda_renovacao_id_fkey"
+            columns: ["demanda_renovacao_id"]
+            isOneToOne: false
+            referencedRelation: "garantia_demandas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       garantia_consultas_mercado: {
         Row: {
           capacidade_total: number
@@ -2426,6 +2768,72 @@ export type Database = {
             columns: ["substituida_por_id"]
             isOneToOne: false
             referencedRelation: "garantia_consultas_mercado"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      garantia_cotacoes: {
+        Row: {
+          chave_mercado: string | null
+          comissao_pct: number | null
+          comissao_valor: number | null
+          cosseguro: boolean
+          criado_em: string
+          criado_por: string | null
+          demanda_id: string
+          escolhida: boolean
+          id: string
+          observacao: string | null
+          premio: number | null
+          recebida_em: string | null
+          seguradora_livre: string | null
+          taxa: number | null
+        }
+        Insert: {
+          chave_mercado?: string | null
+          comissao_pct?: number | null
+          comissao_valor?: number | null
+          cosseguro?: boolean
+          criado_em?: string
+          criado_por?: string | null
+          demanda_id: string
+          escolhida?: boolean
+          id?: string
+          observacao?: string | null
+          premio?: number | null
+          recebida_em?: string | null
+          seguradora_livre?: string | null
+          taxa?: number | null
+        }
+        Update: {
+          chave_mercado?: string | null
+          comissao_pct?: number | null
+          comissao_valor?: number | null
+          cosseguro?: boolean
+          criado_em?: string
+          criado_por?: string | null
+          demanda_id?: string
+          escolhida?: boolean
+          id?: string
+          observacao?: string | null
+          premio?: number | null
+          recebida_em?: string | null
+          seguradora_livre?: string | null
+          taxa?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "garantia_cotacoes_chave_mercado_fkey"
+            columns: ["chave_mercado"]
+            isOneToOne: false
+            referencedRelation: "garantia_seguradoras_config"
+            referencedColumns: ["chave_mercado"]
+          },
+          {
+            foreignKeyName: "garantia_cotacoes_demanda_id_fkey"
+            columns: ["demanda_id"]
+            isOneToOne: false
+            referencedRelation: "garantia_demandas"
             referencedColumns: ["id"]
           },
         ]
@@ -2565,6 +2973,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "garantia_demandas_apolice_anterior_fk"
+            columns: ["apolice_anterior_id"]
+            isOneToOne: false
+            referencedRelation: "garantia_apolices"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "garantia_demandas_canal_id_fkey"
             columns: ["canal_id"]
             isOneToOne: false
@@ -2605,6 +3020,205 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "garantia_status_catalogo"
             referencedColumns: ["codigo"]
+          },
+        ]
+      }
+      garantia_documentos: {
+        Row: {
+          apolice_id: string | null
+          caminho: string | null
+          caminho_externo: string | null
+          criado_em: string
+          demanda_id: string | null
+          enviado_por: string | null
+          externo: boolean
+          id: string
+          mime_type: string | null
+          nome_arquivo: string
+          observacao: string | null
+          solicitacao_id: string | null
+          substituido_por_id: string | null
+          tamanho_bytes: number | null
+          tipo: string
+          versao: number
+        }
+        Insert: {
+          apolice_id?: string | null
+          caminho?: string | null
+          caminho_externo?: string | null
+          criado_em?: string
+          demanda_id?: string | null
+          enviado_por?: string | null
+          externo?: boolean
+          id?: string
+          mime_type?: string | null
+          nome_arquivo: string
+          observacao?: string | null
+          solicitacao_id?: string | null
+          substituido_por_id?: string | null
+          tamanho_bytes?: number | null
+          tipo: string
+          versao?: number
+        }
+        Update: {
+          apolice_id?: string | null
+          caminho?: string | null
+          caminho_externo?: string | null
+          criado_em?: string
+          demanda_id?: string | null
+          enviado_por?: string | null
+          externo?: boolean
+          id?: string
+          mime_type?: string | null
+          nome_arquivo?: string
+          observacao?: string | null
+          solicitacao_id?: string | null
+          substituido_por_id?: string | null
+          tamanho_bytes?: number | null
+          tipo?: string
+          versao?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "garantia_documentos_apolice_fk"
+            columns: ["apolice_id"]
+            isOneToOne: false
+            referencedRelation: "garantia_apolices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "garantia_documentos_demanda_id_fkey"
+            columns: ["demanda_id"]
+            isOneToOne: false
+            referencedRelation: "garantia_demandas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "garantia_documentos_solicitacao_id_fkey"
+            columns: ["solicitacao_id"]
+            isOneToOne: false
+            referencedRelation: "garantia_judicial_solicitacoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "garantia_documentos_substituido_por_id_fkey"
+            columns: ["substituido_por_id"]
+            isOneToOne: false
+            referencedRelation: "garantia_documentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      garantia_encerramentos: {
+        Row: {
+          apolice_id: string
+          aprovado_por: string | null
+          criado_em: string
+          criado_por: string | null
+          data: string
+          documento_id: string | null
+          estorno_comissao: number | null
+          id: string
+          observacao: string | null
+          premio_devolver: number | null
+          tipo: string
+        }
+        Insert: {
+          apolice_id: string
+          aprovado_por?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          data: string
+          documento_id?: string | null
+          estorno_comissao?: number | null
+          id?: string
+          observacao?: string | null
+          premio_devolver?: number | null
+          tipo: string
+        }
+        Update: {
+          apolice_id?: string
+          aprovado_por?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          data?: string
+          documento_id?: string | null
+          estorno_comissao?: number | null
+          id?: string
+          observacao?: string | null
+          premio_devolver?: number | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "garantia_encerramentos_apolice_id_fkey"
+            columns: ["apolice_id"]
+            isOneToOne: true
+            referencedRelation: "garantia_apolices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "garantia_encerramentos_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "garantia_documentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      garantia_financeiro: {
+        Row: {
+          apolice_id: string
+          atualizado_em: string
+          comissao_prevista: number | null
+          comissao_recebida: number | null
+          data_pagamento_premio: string | null
+          data_recebimento: string | null
+          enviado_financeiro_em: string | null
+          id: string
+          observacao: string | null
+          repasse_para: string | null
+          repasse_valor: number | null
+          status_premio: string
+          vencimento_boleto: string | null
+        }
+        Insert: {
+          apolice_id: string
+          atualizado_em?: string
+          comissao_prevista?: number | null
+          comissao_recebida?: number | null
+          data_pagamento_premio?: string | null
+          data_recebimento?: string | null
+          enviado_financeiro_em?: string | null
+          id?: string
+          observacao?: string | null
+          repasse_para?: string | null
+          repasse_valor?: number | null
+          status_premio?: string
+          vencimento_boleto?: string | null
+        }
+        Update: {
+          apolice_id?: string
+          atualizado_em?: string
+          comissao_prevista?: number | null
+          comissao_recebida?: number | null
+          data_pagamento_premio?: string | null
+          data_recebimento?: string | null
+          enviado_financeiro_em?: string | null
+          id?: string
+          observacao?: string | null
+          repasse_para?: string | null
+          repasse_valor?: number | null
+          status_premio?: string
+          vencimento_boleto?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "garantia_financeiro_apolice_id_fkey"
+            columns: ["apolice_id"]
+            isOneToOne: true
+            referencedRelation: "garantia_apolices"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -2756,6 +3370,65 @@ export type Database = {
           },
         ]
       }
+      garantia_perdas: {
+        Row: {
+          comissao_estimada: number | null
+          concorrente: string | null
+          criado_em: string
+          criado_por: string | null
+          data_retomar: string | null
+          demanda_id: string
+          etapa_perdida: string
+          id: string
+          motivo: string
+          observacao: string | null
+          premio_estimado: number | null
+          reaberta_em: string | null
+          reaberta_por: string | null
+          status_perdido: string | null
+        }
+        Insert: {
+          comissao_estimada?: number | null
+          concorrente?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          data_retomar?: string | null
+          demanda_id: string
+          etapa_perdida: string
+          id?: string
+          motivo: string
+          observacao?: string | null
+          premio_estimado?: number | null
+          reaberta_em?: string | null
+          reaberta_por?: string | null
+          status_perdido?: string | null
+        }
+        Update: {
+          comissao_estimada?: number | null
+          concorrente?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          data_retomar?: string | null
+          demanda_id?: string
+          etapa_perdida?: string
+          id?: string
+          motivo?: string
+          observacao?: string | null
+          premio_estimado?: number | null
+          reaberta_em?: string | null
+          reaberta_por?: string | null
+          status_perdido?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "garantia_perdas_demanda_id_fkey"
+            columns: ["demanda_id"]
+            isOneToOne: true
+            referencedRelation: "garantia_demandas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       garantia_seguradoras_config: {
         Row: {
           ativa_garantia: boolean
@@ -2841,6 +3514,60 @@ export type Database = {
           tipo_pessoa?: string
         }
         Relationships: []
+      }
+      garantia_sinistros: {
+        Row: {
+          apolice_id: string
+          criado_em: string
+          criado_por: string | null
+          data: string
+          documento_id: string | null
+          id: string
+          observacao: string | null
+          prazos: string | null
+          situacao_regulacao: string | null
+          tipo: string
+        }
+        Insert: {
+          apolice_id: string
+          criado_em?: string
+          criado_por?: string | null
+          data: string
+          documento_id?: string | null
+          id?: string
+          observacao?: string | null
+          prazos?: string | null
+          situacao_regulacao?: string | null
+          tipo: string
+        }
+        Update: {
+          apolice_id?: string
+          criado_em?: string
+          criado_por?: string | null
+          data?: string
+          documento_id?: string | null
+          id?: string
+          observacao?: string | null
+          prazos?: string | null
+          situacao_regulacao?: string | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "garantia_sinistros_apolice_id_fkey"
+            columns: ["apolice_id"]
+            isOneToOne: false
+            referencedRelation: "garantia_apolices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "garantia_sinistros_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "garantia_documentos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       garantia_status_catalogo: {
         Row: {
