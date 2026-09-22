@@ -271,6 +271,11 @@ export function FilaAlteracoesPercentual({ semCard = false }: { semCard?: boolea
                 </span>
                 .
               </p>
+              {erro ? (
+                <Alert variant="destructive">
+                  <AlertDescription>{erro}</AlertDescription>
+                </Alert>
+              ) : null}
               <Button
                 className="w-full"
                 disabled={salvando}
