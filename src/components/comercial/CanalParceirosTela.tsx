@@ -74,6 +74,7 @@ interface Situacao {
   dias_para_vencer: number | null;
   pct_beneficios: number | null;
   pct_garantia: number | null;
+  pct_demais: number | null;
   pct_demais_efetivo: number | null;
   minimo_repasse: number | null;
 }
