@@ -438,16 +438,10 @@ function AdminUsuariosPage() {
       <UserDetailSheet
         user={detailUser}
         open={!!detailUser}
+        abaInicial={detailAba}
         onOpenChange={(o) => !o && setDetailUser(null)}
         onEdit={(u) => { setDetailUser(null); openEdit(u); }}
         onDelete={(u) => { setDetailUser(null); setDeletingUser(u); }}
-      />
-
-      <PermissoesDoUsuario
-        aberto={!!permissoesUser}
-        userId={permissoesUser?.user_id ?? null}
-        userNome={permissoesUser?.full_name ?? permissoesUser?.email ?? ""}
-        onFechar={() => setPermissoesUser(null)}
       />
 
       {convidarOpen && (
