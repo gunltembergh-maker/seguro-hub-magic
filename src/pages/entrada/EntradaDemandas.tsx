@@ -259,6 +259,8 @@ export default function EntradaDemandas() {
                       <TableCell>
                         {e.destino === "roteada" ? (
                           <Badge className="bg-[#338B85] hover:bg-[#338B85]">Roteada</Badge>
+                        ) : e.destino === "retida" && e.ramo === "garantia" ? (
+                          <CelulaPendencia entrada={e} />
                         ) : e.destino === "retida" ? (
                           <Badge variant="outline" className="border-amber-500 text-amber-700">
                             Retida · ramo sem fluxo no Hub
