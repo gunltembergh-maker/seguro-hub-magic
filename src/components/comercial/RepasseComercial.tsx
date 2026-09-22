@@ -430,8 +430,9 @@ function LinhaRepasse({
       </TableCell>
       <TableCell className="text-right">
         <div className="flex flex-wrap items-center justify-end gap-1">
-          <Button size="sm" variant="ghost" title="Ver a relação" onClick={onVerRelacao}>
-            <FileSearch className="h-4 w-4" />
+          <Button size="sm" variant="outline" title="Ver a relação" onClick={onVerRelacao}>
+            <FileSearch className="mr-2 h-4 w-4" />
+            Ver a relação
           </Button>
         {!liberado ? (
           <Badge variant="outline" className="gap-1 text-muted-foreground">
