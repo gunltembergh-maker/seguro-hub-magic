@@ -432,6 +432,7 @@ export default function CanalParceirosTela() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Parceiro</TableHead>
+                  <TableHead>Razão social</TableHead>
                   <TableHead>Contrato</TableHead>
                   <TableHead>Vencimento</TableHead>
                   <TableHead>Benefícios</TableHead>
@@ -444,14 +445,14 @@ export default function CanalParceirosTela() {
               <TableBody>
                 {carregando ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="py-10 text-center text-muted-foreground">
+                    <TableCell colSpan={9} className="py-10 text-center text-muted-foreground">
                       <Loader2 className="mr-2 inline h-4 w-4 animate-spin" />
                       Carregando
                     </TableCell>
                   </TableRow>
                 ) : linhas.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="py-10 text-center text-muted-foreground">
+                    <TableCell colSpan={9} className="py-10 text-center text-muted-foreground">
                       Nenhum parceiro por aqui ainda.
                     </TableCell>
                   </TableRow>
