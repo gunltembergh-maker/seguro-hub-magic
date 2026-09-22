@@ -39,6 +39,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useResponsaveis } from "@/hooks/use-entrada-demandas";
 import { AbaLimites } from "@/components/garantia/aba-limites";
 import { AbaDocumentos } from "@/components/garantia/aba-documentos";
+import { AbaCotacoes } from "@/components/garantia/aba-cotacoes";
+import { AbaCuradoria } from "@/components/garantia/aba-curadoria";
+import { AbaMinuta } from "@/components/garantia/aba-minuta";
+import { useRegistrarAceite } from "@/hooks/use-garantia-crm";
 
 
 import {
