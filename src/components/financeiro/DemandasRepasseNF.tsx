@@ -6,7 +6,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
-import { AlertTriangle, CalendarClock, Check, Loader2, X } from "lucide-react";
+import { AlertTriangle, CalendarClock, Check, FileSearch, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { DetalheRepasseCiclo } from "@/components/repasse/DetalheRepasseCiclo";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -92,6 +93,7 @@ export function DemandasRepasseNF() {
   const [recusar, setRecusar] = useState<DemandaNF | null>(null);
   const [confirmar, setConfirmar] = useState<DemandaNF | null>(null);
   const [naoPagou, setNaoPagou] = useState<DemandaNF | null>(null);
+  const [relacao, setRelacao] = useState<DemandaNF | null>(null);
 
   const aConfirmar = useMemo(
     () =>
@@ -146,7 +148,11 @@ export function DemandasRepasseNF() {
                         <p className="text-sm text-foreground">{d.observacao_solicitante}</p>
                       ) : null}
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
+                      <Button size="sm" variant="outline" onClick={() => setRelacao(d)}>
+                        <FileSearch className="mr-2 h-4 w-4" />
+                        Abrir a relação
+                      </Button>
                       {d.sou_o_aprovador ? (
                         <>
                           <Button size="sm" onClick={() => setAutorizar(d)}>
@@ -193,7 +199,11 @@ export function DemandasRepasseNF() {
                           </span>
                         </p>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
+                        <Button size="sm" variant="outline" onClick={() => setRelacao(d)}>
+                          <FileSearch className="mr-2 h-4 w-4" />
+                          Abrir a relação
+                        </Button>
                         {d.sou_o_aprovador ? (
                           <>
                             <Button size="sm" onClick={() => setConfirmar(d)}>
@@ -251,6 +261,15 @@ export function DemandasRepasseNF() {
           apósDecidir();
           setNaoPagou(null);
         }}
+      />
+      <DetalheRepasseCiclo
+        aberto={relacao !== null}
+        onFechar={() => setRelacao(null)}
+        canal={relacao?.chave_planilha ?? ""}
+        parceiro={relacao?.parceiro ?? ""}
+        ano={relacao?.ciclo_ano ?? 0}
+        mes={relacao?.ciclo_mes ?? 1}
+        valorDoPedido={relacao?.valor_total ?? undefined}
       />
     </>
   );
@@ -340,6 +359,10 @@ function AutorizarDialog({
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
             {demanda?.parceiro} · {BRL(demanda?.valor_total)}
+          </p>
+          <p className="text-sm text-foreground">
+            A data é livre, quem define é o Financeiro. Conte a partir do recebimento da nota
+            fiscal.
           </p>
           <Calendar
             mode="single"

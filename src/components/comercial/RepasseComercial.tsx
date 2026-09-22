@@ -6,11 +6,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
-import { AlertTriangle, Download, Loader2, Lock, Send } from "lucide-react";
+import { AlertTriangle, Download, FileSearch, Loader2, Lock, Send } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useCicloRepasse } from "@/hooks/use-ciclo-repasse";
+import { DetalheRepasseCiclo } from "@/components/repasse/DetalheRepasseCiclo";
 import { chaveCanal, exportarRepasse } from "@/lib/repasse/exportar-repasse";
 import { cicloPadrao } from "@/lib/repasse/ciclo-datas";
 import { Badge } from "@/components/ui/badge";
@@ -149,6 +150,7 @@ export function RepasseComercial({
   const ciclo = useMemo(() => cicloPadrao(new Set<string>()), []);
   const { data: estadoCiclo } = useCicloRepasse(ciclo.ano, ciclo.mes);
   const [exportando, setExportando] = useState<string | null>(null);
+  const [relacao, setRelacao] = useState<string | null>(null);
   const [pedido, setPedido] = useState<{ canal: string; linhas: number; valor: number } | null>(
     null,
   );
@@ -325,6 +327,7 @@ export function RepasseComercial({
                         onPedir={() =>
                           setPedido({ canal: l.canal, linhas: l.parcelas, valor: l.cicloCorrente })
                         }
+                        onVerRelacao={() => setRelacao(l.canal)}
                       />
                     );
                   })
@@ -346,6 +349,18 @@ export function RepasseComercial({
           void queryClient.invalidateQueries({ queryKey: ["canal-repasse-demandas"] });
           setPedido(null);
         }}
+        onVerRelacao={() => setRelacao(pedido?.canal ?? null)}
+      />
+
+      <DetalheRepasseCiclo
+        aberto={relacao !== null}
+        onFechar={() => setRelacao(null)}
+        canal={relacao ?? ""}
+        parceiro={relacao ?? ""}
+        ano={ciclo.ano}
+        mes={ciclo.mes}
+        modoDados="PROVISIONADO"
+        situacaoRepasse={null}
       />
     </Card>
   );
@@ -363,6 +378,7 @@ function LinhaRepasse({
   exportando,
   onExportar,
   onPedir,
+  onVerRelacao,
 }: {
   canal: string;
   cicloCorrente: number;
@@ -375,6 +391,7 @@ function LinhaRepasse({
   exportando: string | null;
   onExportar: () => void;
   onPedir: () => void;
+  onVerRelacao: () => void;
 }) {
   const ref = useRef<HTMLTableRowElement | null>(null);
   const [aceso, setAceso] = useState(false);
@@ -412,13 +429,17 @@ function LinhaRepasse({
         <BadgeFinanceiro d={demanda} />
       </TableCell>
       <TableCell className="text-right">
+        <div className="flex flex-wrap items-center justify-end gap-1">
+          <Button size="sm" variant="ghost" title="Ver a relação" onClick={onVerRelacao}>
+            <FileSearch className="h-4 w-4" />
+          </Button>
         {!liberado ? (
           <Badge variant="outline" className="gap-1 text-muted-foreground">
             <Lock className="h-3 w-3" />
             Sem contrato válido
           </Badge>
         ) : !demanda ? (
-          <Button size="sm" variant="outline" onClick={onPedir} disabled={cicloCorrente <= 0}>
+          <Button size="sm" variant="default" onClick={onPedir} disabled={cicloCorrente <= 0}>
             <Send className="mr-2 h-4 w-4" />
             Enviar ao financeiro
           </Button>
@@ -456,6 +477,7 @@ function LinhaRepasse({
             Exportar ao parceiro
           </Button>
         )}
+        </div>
         {parcelas > 0 ? (
           <p className="mt-1 text-xs text-muted-foreground">{parcelas} parcelas</p>
         ) : null}
@@ -472,6 +494,7 @@ function PedirNFDialog({
   valor,
   onFechar,
   onSucesso,
+  onVerRelacao,
 }: {
   aberto: boolean;
   canal: string;
@@ -480,6 +503,7 @@ function PedirNFDialog({
   valor: number;
   onFechar: () => void;
   onSucesso: () => void;
+  onVerRelacao: () => void;
 }) {
   const [observacao, setObservacao] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -538,7 +562,12 @@ function PedirNFDialog({
           />
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="sm:justify-between">
+          <Button variant="outline" onClick={onVerRelacao} disabled={enviando}>
+            <FileSearch className="mr-2 h-4 w-4" />
+            Ver a relação antes de enviar
+          </Button>
+          <div className="flex gap-2">
           <Button variant="ghost" onClick={onFechar} disabled={enviando}>
             Cancelar
           </Button>
@@ -546,6 +575,7 @@ function PedirNFDialog({
             {enviando ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Enviar ao financeiro
           </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
