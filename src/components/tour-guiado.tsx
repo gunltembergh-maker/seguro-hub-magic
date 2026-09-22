@@ -167,17 +167,30 @@ export function TourGuiado({ popup, onFinalizar }: { popup: TourPopup; onFinaliz
     <div className="fixed inset-0 z-[120]" role="dialog" aria-modal="true" aria-label={popup.titulo}>
       {centralizado ? <div className="absolute inset-0 bg-foreground/70" /> : null}
       {caixa ? (
-        <div
-          aria-hidden="true"
-          className="pointer-events-none fixed rounded-lg ring-2 ring-primary ring-offset-2 ring-offset-background transition-all duration-200"
-          style={{
-            top: caixa.top,
-            left: caixa.left,
-            width: caixa.width,
-            height: caixa.height,
-            boxShadow: "0 0 0 9999px rgb(0 0 0 / 0.68)",
-          }}
-        />
+        <>
+          <div className="fixed inset-x-0 top-0 bg-foreground/70" style={{ height: caixa.top }} />
+          <div
+            className="fixed inset-x-0 bottom-0 bg-foreground/70"
+            style={{ top: caixa.top + caixa.height }}
+          />
+          <div
+            className="fixed left-0 bg-foreground/70"
+            style={{ top: caixa.top, width: caixa.left, height: caixa.height }}
+          />
+          <div
+            className="fixed right-0 bg-foreground/70"
+            style={{
+              top: caixa.top,
+              left: caixa.left + caixa.width,
+              height: caixa.height,
+            }}
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none fixed rounded-lg ring-2 ring-primary ring-offset-2 ring-offset-background transition-all duration-200"
+            style={{ top: caixa.top, left: caixa.left, width: caixa.width, height: caixa.height }}
+          />
+        </>
       ) : null}
 
       <div
@@ -217,14 +230,16 @@ export function TourGuiado({ popup, onFinalizar }: { popup: TourPopup; onFinaliz
                 Anterior
               </Button>
             ) : (
-              <button
+              <Button
                 type="button"
-                className="text-xs text-muted-foreground underline-offset-4 hover:underline"
+                variant="link"
+                size="sm"
+                className="h-auto p-0 text-xs text-muted-foreground"
                 onClick={() => void finalizar()}
                 disabled={finalizando}
               >
                 Pular
-              </button>
+              </Button>
             )}
           </div>
           <Button type="button" size="sm" onClick={avancar} disabled={finalizando}>
@@ -232,14 +247,16 @@ export function TourGuiado({ popup, onFinalizar }: { popup: TourPopup; onFinaliz
             {indice < passos.length - 1 ? <ChevronRight className="ml-1 h-4 w-4" /> : null}
           </Button>
         </div>
-        <button
+        <Button
           type="button"
-          className="mt-4 text-xs text-muted-foreground underline underline-offset-4"
+          variant="link"
+          size="sm"
+          className="mt-4 h-auto p-0 text-xs text-muted-foreground underline"
           onClick={() => void finalizar()}
           disabled={finalizando}
         >
           Não mostrar novamente
-        </button>
+        </Button>
       </div>
     </div>
   );
