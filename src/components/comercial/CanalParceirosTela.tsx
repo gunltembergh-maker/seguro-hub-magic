@@ -1056,10 +1056,12 @@ function VinculosAConfirmar({
   contratos,
   parceiros,
   onResolvido,
+  semCard = false,
 }: {
   contratos: Contrato[];
   parceiros: Parceiro[];
   onResolvido: () => void;
+  semCard?: boolean;
 }) {
   const [escolha, setEscolha] = useState<Record<string, string>>({});
   const [salvando, setSalvando] = useState<string | null>(null);
