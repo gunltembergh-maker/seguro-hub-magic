@@ -58,6 +58,9 @@ const primary = [
 
 const RESERVA_ITEM = { title: "Reserva de Posições", url: "/reserva-posicoes", icon: CalendarCheck };
 
+// Porta compartilhada de todos os ramos: fica no topo, fora de "Ramos".
+const ENTRADA_ITEM = { title: "Entrada de Demandas", url: "/entrada-demandas", icon: Inbox };
+
 const areasAll: AreaItem[] = [
   {
     title: "Financeiro",
