@@ -210,6 +210,30 @@ export function RepasseComercial({
     return m;
   }, [demandas.data]);
 
+  const parceiros = useQuery({
+    queryKey: ["canal-parceiro-lista"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_canal_parceiro_lista" as never, {} as never);
+      if (error) throw error;
+      return (data || []) as {
+        canal_id: string;
+        nome: string | null;
+        razao_social: string | null;
+        chaves_planilha: string[] | null;
+      }[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const razaoPorChave = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const p of parceiros.data ?? []) {
+      if (!p.razao_social) continue;
+      for (const c of p.chaves_planilha ?? []) m.set(chaveCanal(c), p.razao_social);
+    }
+    return m;
+  }, [parceiros.data]);
+
   const linhas = useMemo(() => {
     const map = new Map<
       string,
