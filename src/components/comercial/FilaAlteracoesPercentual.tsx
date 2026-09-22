@@ -164,7 +164,7 @@ export function FilaAlteracoesPercentual({ semCard = false }: { semCard?: boolea
               </Button>
               {a.sou_o_aprovador === true ? (
                 <>
-                  <Button size="sm" onClick={() => setAprovando(a)}>
+                  <Button size="sm" onClick={() => { setErro(null); setAprovando(a); }}>
                     Aprovar
                   </Button>
                   <Button
@@ -172,6 +172,7 @@ export function FilaAlteracoesPercentual({ semCard = false }: { semCard?: boolea
                     variant="outline"
                     onClick={() => {
                       setObservacao("");
+                      setErro(null);
                       setRecusando(a);
                     }}
                   >
