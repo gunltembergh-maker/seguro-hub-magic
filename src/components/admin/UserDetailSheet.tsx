@@ -13,6 +13,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { useSendAuthEmail, useAtividadeUsuario, type AdminUserV2 } from "@/hooks/use-admin-users-v2";
+import { PainelPermissoesUsuario } from "@/components/admin/PermissoesDoUsuario";
 
 function formatDT(iso: string | null | undefined) {
   if (!iso) return "—";
