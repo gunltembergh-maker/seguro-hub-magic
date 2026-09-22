@@ -139,8 +139,11 @@ export async function exportarRepasse(opts: {
   const { canal, ano, mes, modo, modoDados, situacaoRepasse } = opts;
 
   // O banco autoriza (ou recusa) a exportação ANTES de montar o arquivo.
+  // No modo PARCEIRO a autorização depende da demanda aprovada pelo Financeiro.
   const { data: autz, error: erroAutz } = await supabase.rpc(
-    "rpc_canal_parceiro_autorizar_exportacao" as never,
+    (modo === "PARCEIRO"
+      ? "rpc_canal_repasse_autorizar_envio_parceiro"
+      : "rpc_canal_parceiro_autorizar_exportacao") as never,
     {
       p_canal_planilha: canal,
       p_ano: ano,
@@ -151,8 +154,13 @@ export async function exportarRepasse(opts: {
   );
   if (erroAutz) throw new Error(erroAutz.message);
 
-  const autorizacao = (Array.isArray(autz) ? autz[0] : autz) as
-    { base?: string; liberado_por?: string | null; data_prevista?: string | null } | null;
+  const autorizacao = (Array.isArray(autz) ? autz[0] : autz) as {
+    base?: string;
+    liberado_por?: string | null;
+    data_prevista?: string | null;
+    rotulo_status?: string | null;
+    aprovado_por_nome?: string | null;
+  } | null;
   const dataPrevista = autorizacao?.data_prevista ?? null;
 
   const PAGINA = 500;
