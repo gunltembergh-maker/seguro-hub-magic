@@ -31,6 +31,17 @@ import {
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   Table,
   TableBody,
   TableCell,
@@ -199,6 +210,30 @@ export function RepasseComercial({
     return m;
   }, [demandas.data]);
 
+  const parceiros = useQuery({
+    queryKey: ["canal-parceiro-lista"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_canal_parceiro_lista" as never, {} as never);
+      if (error) throw error;
+      return (data || []) as {
+        canal_id: string;
+        nome: string | null;
+        razao_social: string | null;
+        chaves_planilha: string[] | null;
+      }[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const razaoPorChave = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const p of parceiros.data ?? []) {
+      if (!p.razao_social) continue;
+      for (const c of p.chaves_planilha ?? []) m.set(chaveCanal(c), p.razao_social);
+    }
+    return m;
+  }, [parceiros.data]);
+
   const linhas = useMemo(() => {
     const map = new Map<
       string,
@@ -319,6 +354,12 @@ export function RepasseComercial({
                       <LinhaRepasse
                         key={l.canal}
                         canal={l.canal}
+                        razaoSocial={razaoPorChave.get(chave) ?? null}
+                        onCancelado={() =>
+                          void queryClient.invalidateQueries({
+                            queryKey: ["canal-repasse-demandas"],
+                          })
+                        }
                         cicloCorrente={l.cicloCorrente}
                         acumulado={l.acumulado}
                         parcelas={l.parcelas}
@@ -393,6 +434,7 @@ export function RepasseComercial({
 
 function LinhaRepasse({
   canal,
+  razaoSocial,
   cicloCorrente,
   acumulado,
   parcelas,
@@ -406,8 +448,10 @@ function LinhaRepasse({
   onVerRelacao,
   onVerContrato,
   onPedirLiberacao,
+  onCancelado,
 }: {
   canal: string;
+  razaoSocial: string | null;
   cicloCorrente: number;
   acumulado: number;
   parcelas: number;
@@ -421,9 +465,12 @@ function LinhaRepasse({
   onVerRelacao: () => void;
   onVerContrato: () => void;
   onPedirLiberacao: () => void;
+  onCancelado: () => void;
 }) {
   const ref = useRef<HTMLTableRowElement | null>(null);
   const [aceso, setAceso] = useState(false);
+  const [agora, setAgora] = useState(() => Date.now());
+  const [cancelando, setCancelando] = useState(false);
 
   useEffect(() => {
     if (!destacar) return;
@@ -436,10 +483,57 @@ function LinhaRepasse({
   const situacao = demanda?.situacao ?? null;
   const pago = !!demanda?.baixa_data_pagamento;
 
+  const podeCancelarJanela =
+    situacao === "PENDENTE" && demanda?.sou_o_solicitante === true && !!demanda?.solicitado_em;
+  const restanteMs = podeCancelarJanela
+    ? new Date(demanda!.solicitado_em as string).getTime() + 10 * 60 * 1000 - agora
+    : 0;
+  const dentroDaJanela = podeCancelarJanela && restanteMs > 0;
+
+  useEffect(() => {
+    if (!podeCancelarJanela) return;
+    const t = setInterval(() => setAgora(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [podeCancelarJanela]);
+
+  const contador = (() => {
+    const s = Math.max(0, Math.floor(restanteMs / 1000));
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  })();
+
+  const horasParaReenvio =
+    situacao === "RECUSADA" && demanda?.decidido_em
+      ? Math.ceil(
+          (new Date(demanda.decidido_em).getTime() + 24 * 60 * 60 * 1000 - agora) / (60 * 60 * 1000),
+        )
+      : 0;
+  const bloqueado24h = horasParaReenvio > 0;
+
+  async function cancelar() {
+    if (!demanda || cancelando) return;
+    setCancelando(true);
+    try {
+      const { data, error } = await supabase.rpc("rpc_canal_repasse_cancelar_nf" as never, {
+        p_demanda_id: demanda.demanda_id,
+      } as never);
+      if (error) throw error;
+      const r = (Array.isArray(data) ? data[0] : data) as { mensagem?: string } | null;
+      toast.success(r?.mensagem ?? "Envio cancelado.");
+      onCancelado();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setCancelando(false);
+    }
+  }
+
   return (
     <TableRow ref={ref} className={aceso ? "ring-2 ring-primary ring-offset-2" : undefined}>
       <TableCell className="font-medium">
         {canal}
+        {razaoSocial ? (
+          <p className="text-xs text-muted-foreground">{razaoSocial}</p>
+        ) : null}
         {situacao === "RECUSADA" && demanda?.observacao_financeiro ? (
           <p className="mt-1 text-xs text-destructive">{demanda.observacao_financeiro}</p>
         ) : null}
@@ -483,23 +577,54 @@ function LinhaRepasse({
             Enviar ao financeiro
           </Button>
         ) : situacao === "PENDENTE" ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span>
-                <Button size="sm" variant="outline" disabled>
-                  Aguardando o financeiro
-                </Button>
+          <>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button size="sm" variant="outline" disabled>
+                    Aguardando o financeiro
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                Pedido em {fmtDataHora(demanda.solicitado_em)}
+                {demanda.solicitado_por_nome ? ` por ${demanda.solicitado_por_nome}` : ""}
+              </TooltipContent>
+            </Tooltip>
+            {dentroDaJanela ? (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" variant="ghost" disabled={cancelando}>
+                    {cancelando ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Cancelar envio ({contador})
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Cancelar o envio ao Financeiro?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      O pedido de {canal} sai da fila do Financeiro e você pode enviar de novo
+                      depois.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Voltar</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => void cancelar()}>
+                      Cancelar envio
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            ) : demanda.sou_o_solicitante === true ? (
+              <span className="text-xs text-muted-foreground">
+                Só o Financeiro pode desfazer agora
               </span>
-            </TooltipTrigger>
-            <TooltipContent>
-              Pedido em {fmtDataHora(demanda.solicitado_em)}
-              {demanda.solicitado_por_nome ? ` por ${demanda.solicitado_por_nome}` : ""}
-            </TooltipContent>
-          </Tooltip>
+            ) : null}
+          </>
         ) : situacao === "RECUSADA" ? (
-          <Button size="sm" variant="outline" onClick={onPedir}>
+          <Button size="sm" variant="outline" onClick={onPedir} disabled={bloqueado24h}>
             <Send className="mr-2 h-4 w-4" />
-            Pedir de novo
+            {bloqueado24h ? `Novo envio em ${horasParaReenvio}h` : "Pedir de novo"}
           </Button>
         ) : (
           <Button

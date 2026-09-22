@@ -1679,6 +1679,7 @@ export type Database = {
           email_de_acordo: string | null
           id: string
           justificativa: string
+          nome_de_acordo: string | null
           observacao: string | null
           solicitado_em: string
           solicitado_por: string | null
@@ -1696,6 +1697,7 @@ export type Database = {
           email_de_acordo?: string | null
           id?: string
           justificativa: string
+          nome_de_acordo?: string | null
           observacao?: string | null
           solicitado_em?: string
           solicitado_por?: string | null
@@ -1713,6 +1715,7 @@ export type Database = {
           email_de_acordo?: string | null
           id?: string
           justificativa?: string
+          nome_de_acordo?: string | null
           observacao?: string | null
           solicitado_em?: string
           solicitado_por?: string | null
@@ -5781,6 +5784,7 @@ export type Database = {
       permissoes_efetivas: { Args: { p_user?: string }; Returns: Json }
       pode_aprovar_liberacao_repasse: { Args: never; Returns: boolean }
       pode_aprovar_repasse_financeiro: { Args: never; Returns: boolean }
+      pode_atestar_contrato: { Args: never; Returns: boolean }
       pode_beneficios: { Args: never; Returns: boolean }
       pode_cadastros: { Args: never; Returns: boolean }
       pode_definir_data_repasse: { Args: never; Returns: boolean }
@@ -6443,6 +6447,14 @@ export type Database = {
           usuario_email: string
         }[]
       }
+      rpc_canal_parceiro_excluir: {
+        Args: { p_canal_id: string; p_motivo: string }
+        Returns: {
+          canal_id: string
+          mensagem: string
+          parceiro: string
+        }[]
+      }
       rpc_canal_parceiro_liberacoes: {
         Args: { p_status?: string }
         Returns: {
@@ -6458,6 +6470,7 @@ export type Database = {
           email_de_acordo: string
           justificativa: string
           liberacao_id: string
+          nome_de_acordo: string
           observacao: string
           solicitado_em: string
           solicitado_por_nome: string
@@ -6562,6 +6575,7 @@ export type Database = {
           p_email_de_acordo?: string
           p_justificativa: string
           p_mes: number
+          p_nome_de_acordo?: string
         }
         Returns: {
           liberacao_id: string
@@ -6614,6 +6628,14 @@ export type Database = {
           liberado_por: string
           parceiro: string
           rotulo_status: string
+        }[]
+      }
+      rpc_canal_repasse_cancelar_nf: {
+        Args: { p_demanda_id: string }
+        Returns: {
+          demanda_id: string
+          mensagem: string
+          situacao: string
         }[]
       }
       rpc_canal_repasse_confirmar_baixa: {
