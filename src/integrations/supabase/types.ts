@@ -6049,6 +6049,127 @@ export type Database = {
           limite_atualizado: boolean
         }[]
       }
+      rpc_garantia_painel_carteira: {
+        Args: {
+          _canal?: string
+          _modalidade?: string
+          _produto?: string
+          _responsavel?: string
+        }
+        Returns: {
+          agrupamento: string
+          chave: string
+          quantidade: number
+          rotulo: string
+          valor: number
+        }[]
+      }
+      rpc_garantia_painel_conversao: {
+        Args: {
+          _ate?: string
+          _canal?: string
+          _de?: string
+          _modalidade?: string
+          _produto?: string
+          _responsavel?: string
+        }
+        Returns: {
+          abertas: number
+          agrupamento: string
+          chave: string
+          ganhos: number
+          pct_ganho: number
+          perdidos: number
+          rotulo: string
+        }[]
+      }
+      rpc_garantia_painel_em_jogo: {
+        Args: {
+          _ate?: string
+          _canal?: string
+          _de?: string
+          _modalidade?: string
+          _produto?: string
+          _responsavel?: string
+        }
+        Returns: {
+          agrupamento: string
+          chave: string
+          comissao: number
+          premio: number
+          quantidade: number
+          rotulo: string
+        }[]
+      }
+      rpc_garantia_painel_perdas: {
+        Args: {
+          _ate?: string
+          _canal?: string
+          _de?: string
+          _modalidade?: string
+          _produto?: string
+          _responsavel?: string
+        }
+        Returns: {
+          agrupamento: string
+          chave: string
+          comissao: number
+          premio: number
+          quantidade: number
+          rotulo: string
+        }[]
+      }
+      rpc_garantia_painel_resultado: {
+        Args: {
+          _ate?: string
+          _canal?: string
+          _de?: string
+          _modalidade?: string
+          _produto?: string
+          _responsavel?: string
+        }
+        Returns: {
+          apolices: number
+          comissao_prevista: number
+          comissao_recebida: number
+          mes: string
+          premio_emitido: number
+        }[]
+      }
+      rpc_garantia_painel_seguradoras: {
+        Args: {
+          _ate?: string
+          _canal?: string
+          _de?: string
+          _modalidade?: string
+          _produto?: string
+          _responsavel?: string
+        }
+        Returns: {
+          com_limite: number
+          nao_consultado: number
+          seguradora: string
+          sem_limite: number
+        }[]
+      }
+      rpc_garantia_painel_velocidade: {
+        Args: {
+          _ate?: string
+          _canal?: string
+          _de?: string
+          _modalidade?: string
+          _produto?: string
+          _responsavel?: string
+        }
+        Returns: {
+          agrupamento: string
+          amostras: number
+          chave: string
+          horas_media: number
+          relogio: string
+          rotulo: string
+        }[]
+      }
       rpc_garantia_registrar_aceite: {
         Args: { _demanda_id: string }
         Returns: {
