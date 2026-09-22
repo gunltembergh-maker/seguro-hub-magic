@@ -129,9 +129,9 @@ export function DemandasRepasseNF() {
         </CardHeader>
         <CardContent className="space-y-6">
           {listaPendentes.length > 0 ? (
-            <section className="space-y-3">
+            <section className="space-y-3" data-tour="fin-demandas">
               <h3 className="text-sm font-semibold text-foreground">Autorizações pendentes</h3>
-              {listaPendentes.map((d) => (
+               {listaPendentes.map((d, index) => (
                 <BlocoDemanda key={d.demanda_id} destacar={d.demanda_id === destaque}>
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="space-y-1">
@@ -151,7 +151,12 @@ export function DemandasRepasseNF() {
                       ) : null}
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <Button size="sm" variant="outline" onClick={() => setRelacao(d)}>
+                      <Button
+                        data-tour={index === 0 ? "fin-abrir-relacao" : undefined}
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setRelacao(d)}
+                      >
                         <FileSearch className="mr-2 h-4 w-4" />
                         Abrir a relação
                       </Button>
@@ -161,11 +166,20 @@ export function DemandasRepasseNF() {
                       </Button>
                       {d.sou_o_aprovador ? (
                         <>
-                          <Button size="sm" onClick={() => setAutorizar(d)}>
+                          <Button
+                            data-tour={index === 0 ? "fin-autorizar" : undefined}
+                            size="sm"
+                            onClick={() => setAutorizar(d)}
+                          >
                             <Check className="mr-2 h-4 w-4" />
                             Autorizar
                           </Button>
-                          <Button size="sm" variant="outline" onClick={() => setRecusar(d)}>
+                          <Button
+                            data-tour={index === 0 ? "fin-recusar" : undefined}
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setRecusar(d)}
+                          >
                             <X className="mr-2 h-4 w-4" />
                             Recusar
                           </Button>
@@ -183,7 +197,7 @@ export function DemandasRepasseNF() {
           ) : null}
 
           {aConfirmar.length > 0 ? (
-            <section className="space-y-3">
+            <section className="space-y-3" data-tour="fin-pagamentos">
               <h3 className="text-sm font-semibold text-foreground">Pagamentos a confirmar</h3>
               {aConfirmar.map((d) => {
                 const atraso = Math.abs(Number(d.dias_para_a_data ?? 0));

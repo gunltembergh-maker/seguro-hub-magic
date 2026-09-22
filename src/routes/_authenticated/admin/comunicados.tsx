@@ -13,10 +13,13 @@ import {
   CalendarIcon,
   Search,
   ShieldAlert,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMeuPerfil, hasRole } from "@/hooks/use-meu-perfil";
 import { PopupCard } from "@/components/popup-comunicado";
+import type { TourPasso } from "@/components/tour-guiado";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -82,6 +85,8 @@ interface PopupRow {
   mostrar_nome_hub: boolean | null;
   created_at: string | null;
   total_dismiss: number | null;
+  tipo: "COMUNICADO" | "TOUR" | null;
+  passos: TourPasso[] | null;
 }
 
 interface RotaOption {
@@ -100,6 +105,7 @@ type DestMode = "todos" | "perfil" | "especifico";
 const PERFIS = ["ADMIN", "COLABORADOR"];
 
 const defaultForm = {
+  tipo: "COMUNICADO" as "COMUNICADO" | "TOUR",
   titulo: "",
   mensagem: "",
   ativo: true,
@@ -111,7 +117,15 @@ const defaultForm = {
   paginas: ["__all__"] as string[],
   logo_url: "__default__" as string,
   mostrar_nome_hub: true,
+  passos: [] as TourPasso[],
 };
+
+const novoPasso = (): TourPasso => ({
+  alvo: null,
+  titulo: "",
+  texto: "",
+  posicao: "bottom",
+});
 
 function AdminComunicadosPage() {
   const { data: perfil } = useMeuPerfil();
@@ -208,6 +222,7 @@ function AdminComunicadosPage() {
           ? "perfil"
           : "todos";
     setForm({
+      tipo: p.tipo === "TOUR" ? "TOUR" : "COMUNICADO",
       titulo: p.titulo,
       mensagem: p.mensagem,
       ativo: p.ativo ?? true,
@@ -219,6 +234,7 @@ function AdminComunicadosPage() {
       paginas: p.paginas && p.paginas.length > 0 ? p.paginas : ["__all__"],
       logo_url: p.logo_url === null ? "__default__" : p.logo_url === "" ? "__none__" : p.logo_url,
       mostrar_nome_hub: p.mostrar_nome_hub ?? true,
+      passos: Array.isArray(p.passos) ? p.passos : [],
     });
     setUserSearch("");
     setModalOpen(true);
@@ -227,6 +243,13 @@ function AdminComunicadosPage() {
   const handleSave = async () => {
     if (!form.titulo.trim() || !form.mensagem.trim()) {
       toast.error("Título e mensagem são obrigatórios.");
+      return;
+    }
+    if (
+      form.tipo === "TOUR" &&
+      (form.passos.length === 0 || form.passos.some((p) => !p.titulo.trim() || !p.texto.trim()))
+    ) {
+      toast.error("Adicione ao menos um passo e preencha o título e o texto de todos eles.");
       return;
     }
     setSaving(true);
@@ -248,10 +271,12 @@ function AdminComunicadosPage() {
         p_botao_label: "Entendido!",
         p_logo_url: logoValue ?? undefined,
         p_mostrar_nome_hub: form.mostrar_nome_hub,
+        p_tipo: form.tipo,
+        p_passos: form.tipo === "TOUR" ? form.passos : undefined,
       };
       const { error } = await supabase.rpc("rpc_admin_salvar_popup", payload);
       if (error) throw error;
-      toast.success(editId ? "Comunicado atualizado!" : "Comunicado criado!");
+      toast.success(editId ? "Item atualizado!" : "Item criado!");
       setModalOpen(false);
       qc.invalidateQueries({ queryKey: ["admin-popups"] });
     } catch (e) {
@@ -325,6 +350,7 @@ function AdminComunicadosPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Título</TableHead>
+                <TableHead>Tipo</TableHead>
                 <TableHead>Destinatários</TableHead>
                 <TableHead>Páginas</TableHead>
                 <TableHead>Status</TableHead>
@@ -336,14 +362,14 @@ function AdminComunicadosPage() {
             <TableBody>
               {isLoading && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                     Carregando…
                   </TableCell>
                 </TableRow>
               )}
               {!isLoading && (!popups || popups.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                     Nenhum comunicado cadastrado.
                   </TableCell>
                 </TableRow>
@@ -354,6 +380,13 @@ function AdminComunicadosPage() {
                   <TableRow key={p.id}>
                     <TableCell className="font-medium max-w-[220px] truncate">
                       {p.titulo}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="whitespace-nowrap">
+                        {p.tipo === "TOUR"
+                          ? `Tour · ${p.passos?.length ?? 0} passo(s)`
+                          : "Comunicado"}
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-xs">{destLabel(p)}</TableCell>
                     <TableCell className="text-xs max-w-[180px] truncate">
@@ -413,6 +446,23 @@ function AdminComunicadosPage() {
                   Conteúdo
                 </h3>
                 <div className="space-y-2">
+                  <Label>Tipo</Label>
+                  <Select
+                    value={form.tipo}
+                    onValueChange={(tipo) =>
+                      setForm({ ...form, tipo: tipo as "COMUNICADO" | "TOUR" })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="COMUNICADO">Comunicado</SelectItem>
+                      <SelectItem value="TOUR">Tour guiado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
                   <Label>Título *</Label>
                   <Input
                     value={form.titulo}
@@ -421,14 +471,141 @@ function AdminComunicadosPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Mensagem *</Label>
+                  <Label>{form.tipo === "TOUR" ? "Descrição curta *" : "Mensagem *"}</Label>
                   <Textarea
                     value={form.mensagem}
                     onChange={(e) => setForm({ ...form, mensagem: e.target.value })}
-                    placeholder="Mensagem do comunicado"
+                    placeholder={form.tipo === "TOUR" ? "Descrição curta do tour" : "Mensagem do comunicado"}
                     rows={4}
                   />
                 </div>
+                {form.tipo === "TOUR" ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <Label>Passos</Label>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setForm({ ...form, passos: [...form.passos, novoPasso()] })}
+                      >
+                        <Plus className="mr-1 h-4 w-4" /> Adicionar passo
+                      </Button>
+                    </div>
+                    {form.passos.length === 0 ? (
+                      <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+                        Nenhum passo adicionado.
+                      </p>
+                    ) : null}
+                    {form.passos.map((passo, index) => {
+                      const atualizar = (mudanca: Partial<TourPasso>) => {
+                        const passos = form.passos.map((item, i) =>
+                          i === index ? { ...item, ...mudanca } : item,
+                        );
+                        setForm({ ...form, passos });
+                      };
+                      const mover = (destino: number) => {
+                        if (destino < 0 || destino >= form.passos.length) return;
+                        const passos = [...form.passos];
+                        const atual = passos[index];
+                        if (!atual) return;
+                        passos.splice(index, 1);
+                        passos.splice(destino, 0, atual);
+                        setForm({ ...form, passos });
+                      };
+                      return (
+                        <div key={index} className="space-y-3 rounded-md border p-3">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-sm font-semibold">Passo {index + 1}</span>
+                            <div className="flex gap-1">
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8"
+                                onClick={() => mover(index - 1)}
+                                disabled={index === 0}
+                                title="Mover para cima"
+                              >
+                                <ArrowUp className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8"
+                                onClick={() => mover(index + 1)}
+                                disabled={index === form.passos.length - 1}
+                                title="Mover para baixo"
+                              >
+                                <ArrowDown className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8 text-destructive"
+                                onClick={() =>
+                                  setForm({
+                                    ...form,
+                                    passos: form.passos.filter((_, i) => i !== index),
+                                  })
+                                }
+                                title="Remover passo"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Alvo</Label>
+                            <Input
+                              value={passo.alvo ?? ""}
+                              onChange={(e) => atualizar({ alvo: e.target.value.trim() || null })}
+                              placeholder="Ex.: cp-kpis"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                              chave do data-tour na tela, vazio para passo centralizado
+                            </p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Título</Label>
+                            <Input
+                              value={passo.titulo}
+                              onChange={(e) => atualizar({ titulo: e.target.value })}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Texto</Label>
+                            <Textarea
+                              value={passo.texto}
+                              onChange={(e) => atualizar({ texto: e.target.value })}
+                              rows={3}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Posição</Label>
+                            <Select
+                              value={passo.posicao}
+                              onValueChange={(posicao) =>
+                                atualizar({ posicao: posicao as TourPasso["posicao"] })
+                              }
+                            >
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="top">Acima</SelectItem>
+                                <SelectItem value="bottom">Abaixo</SelectItem>
+                                <SelectItem value="left">À esquerda</SelectItem>
+                                <SelectItem value="right">À direita</SelectItem>
+                                <SelectItem value="center">Centralizado</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : null}
               </div>
 
               <div className="space-y-3">
@@ -660,11 +837,25 @@ function AdminComunicadosPage() {
                 <div className="relative w-full flex items-center justify-center pt-4">
                   <div className="absolute inset-0 bg-black/30 rounded-lg" />
                   <div className="relative z-10 w-full max-w-[340px]">
-                    <PopupCard
-                      titulo={form.titulo}
-                      mensagem={form.mensagem}
-                      mostrar_nome_hub={form.mostrar_nome_hub}
-                    />
+                    {form.tipo === "TOUR" ? (
+                      <div className="rounded-lg bg-card p-5 shadow-xl">
+                        <p className="text-xs font-medium text-muted-foreground">
+                          {form.passos.length} passo(s)
+                        </p>
+                        <h2 className="mt-2 text-lg font-semibold text-foreground">
+                          {form.passos[0]?.titulo || form.titulo || "Título do tour"}
+                        </h2>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          {form.passos[0]?.texto || form.mensagem || "Descrição do primeiro passo"}
+                        </p>
+                      </div>
+                    ) : (
+                      <PopupCard
+                        titulo={form.titulo}
+                        mensagem={form.mensagem}
+                        mostrar_nome_hub={form.mostrar_nome_hub}
+                      />
+                    )}
                   </div>
                 </div>
               </div>
@@ -681,7 +872,7 @@ function AdminComunicadosPage() {
               style={{ backgroundColor: "#13405C" }}
               className="text-white hover:opacity-90"
             >
-              {saving ? "Publicando…" : "Publicar Comunicado"}
+              {saving ? "Publicando…" : form.tipo === "TOUR" ? "Publicar Tour" : "Publicar Comunicado"}
             </Button>
           </DialogFooter>
         </DialogContent>

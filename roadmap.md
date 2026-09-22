@@ -1,7 +1,7 @@
 - [x] Tornar a planta da Reserva de Posições fiel à disposição física mostrada na foto, sem alterar comportamento.
-- [ ] Implementar tour guiado para pop-ups do tipo TOUR, com acessibilidade, recorte e posicionamento responsivo.
-- [ ] Adicionar âncoras do tour nas telas Comercial e Financeiro.
-- [ ] Permitir criar e editar tours na tela de Comunicados.
-- [ ] Exibir percentual de repasse na tabela Comercial.
-- [ ] Trocar a assinatura fixa dos e-mails pela pessoa e área devolvidas pelas filas.
-- [ ] Validar tipos, comportamento visual e interações do tour.
+- [x] Implementar tour guiado para pop-ups do tipo TOUR, com acessibilidade, recorte e posicionamento responsivo.
+- [x] Adicionar âncoras do tour nas telas Comercial e Financeiro.
+- [x] Permitir criar e editar tours na tela de Comunicados.
+- [x] Exibir percentual de repasse na tabela Comercial.
+- [x] Trocar a assinatura fixa dos e-mails pela pessoa e área devolvidas pelas filas.
+- [x] Validar tipos, comportamento visual e interações do tour.
