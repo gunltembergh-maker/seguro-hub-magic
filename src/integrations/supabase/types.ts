@@ -4349,6 +4349,39 @@ export type Database = {
         }
         Relationships: []
       }
+      permissoes_catalogo: {
+        Row: {
+          area: string
+          ativo: boolean
+          chave: string
+          criado_em: string
+          descricao: string | null
+          exige_concessao: boolean
+          ordem: number
+          rotulo: string
+        }
+        Insert: {
+          area: string
+          ativo?: boolean
+          chave: string
+          criado_em?: string
+          descricao?: string | null
+          exige_concessao?: boolean
+          ordem?: number
+          rotulo: string
+        }
+        Update: {
+          area?: string
+          ativo?: boolean
+          chave?: string
+          criado_em?: string
+          descricao?: string | null
+          exige_concessao?: boolean
+          ordem?: number
+          rotulo?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           active: boolean
@@ -5004,6 +5037,41 @@ export type Database = {
         }
         Relationships: []
       }
+      usuario_permissoes: {
+        Row: {
+          chave: string
+          definido_em: string
+          definido_por: string | null
+          motivo: string | null
+          permitido: boolean
+          user_id: string
+        }
+        Insert: {
+          chave: string
+          definido_em?: string
+          definido_por?: string | null
+          motivo?: string | null
+          permitido: boolean
+          user_id: string
+        }
+        Update: {
+          chave?: string
+          definido_em?: string
+          definido_por?: string | null
+          motivo?: string | null
+          permitido?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuario_permissoes_chave_fkey"
+            columns: ["chave"]
+            isOneToOne: false
+            referencedRelation: "permissoes_catalogo"
+            referencedColumns: ["chave"]
+          },
+        ]
+      }
       usuarios_convite_externo: {
         Row: {
           aceito_em: string | null
@@ -5511,6 +5579,7 @@ export type Database = {
           pct_beneficios: number
           pct_beneficios_contrato: number
           pct_demais: number
+          pct_demais_contrato: number
           pct_garantia: number
           pct_garantia_contrato: number
           situacao: string
@@ -5700,6 +5769,7 @@ export type Database = {
         Returns: string
       }
       notificar_admin_audit: { Args: never; Returns: undefined }
+      permissoes_efetivas: { Args: { p_user?: string }; Returns: Json }
       pode_aprovar_liberacao_repasse: { Args: never; Returns: boolean }
       pode_aprovar_repasse_financeiro: { Args: never; Returns: boolean }
       pode_beneficios: { Args: never; Returns: boolean }
@@ -5823,6 +5893,19 @@ export type Database = {
       rpc_admin_convidar_externo: {
         Args: { _email: string; _perfil_id: string }
         Returns: string
+      }
+      rpc_admin_definir_permissao_usuario: {
+        Args: {
+          p_chave: string
+          p_motivo?: string
+          p_permitido: boolean
+          p_user_id: string
+        }
+        Returns: {
+          chave: string
+          efetivo: string
+          excecao: boolean
+        }[]
       }
       rpc_admin_delete_perfil: { Args: { _id: string }; Returns: undefined }
       rpc_admin_detalhe_usuario: { Args: { _user_id: string }; Returns: Json }
@@ -5969,6 +6052,33 @@ export type Database = {
           roles: Database["public"]["Enums"]["app_role"][]
           times_receita: string[]
           user_id: string
+        }[]
+      }
+      rpc_admin_permissoes_catalogo: {
+        Args: never
+        Returns: {
+          area: string
+          chave: string
+          descricao: string
+          exige_concessao: boolean
+          ordem: number
+          rotulo: string
+        }[]
+      }
+      rpc_admin_permissoes_usuario: {
+        Args: { p_user_id: string }
+        Returns: {
+          area: string
+          chave: string
+          definido_em: string
+          definido_por_nome: string
+          efetivo: boolean
+          excecao: boolean
+          exige_concessao: boolean
+          motivo: string
+          ordem: number
+          rotulo: string
+          valor_do_perfil: boolean
         }[]
       }
       rpc_admin_precadastrar_usuario: {
@@ -7675,6 +7785,10 @@ export type Database = {
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      tem_permissao: {
+        Args: { p_chave: string; p_user?: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "ADMIN" | "DIRETORIA_GERAL" | "COLABORADOR"
