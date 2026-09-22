@@ -1253,7 +1253,10 @@ function LinhaCanal({
       <TableCell className="text-right font-mono font-semibold tabular-nums" style={{ color: navy }}>
         {valorCell(l.m2avencer + l.m2apurado)}
       </TableCell>
-      <TableCell className="border-l text-right" style={{ borderColor: border }}>{pill(l.situacao)}</TableCell>
+      <TableCell className="border-l text-right" style={{ borderColor: border }}>
+        <BadgeContrato s={situacao} />
+      </TableCell>
+      <TableCell className="text-right">{pill(l.situacao)}</TableCell>
     </TableRow>
   );
 }
