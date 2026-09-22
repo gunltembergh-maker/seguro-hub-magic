@@ -6,7 +6,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
-import { AlertTriangle, CalendarClock, Check, Loader2, X } from "lucide-react";
+import { AlertTriangle, CalendarClock, Check, FileSearch, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { DetalheRepasseCiclo } from "@/components/repasse/DetalheRepasseCiclo";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
