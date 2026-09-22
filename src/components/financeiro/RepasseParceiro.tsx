@@ -401,9 +401,12 @@ export function RepasseParceiro() {
       const info = [
         { rotulo: "Parceiro", valor: canalClicado },
         { rotulo: "Ciclo", valor: `${MESES_LONGOS[mesAncora.mes - 1]} / ${mesAncora.ano}` },
-        { rotulo: "Data prevista de pagamento", valor: dataRepasseLonga },
         { rotulo: "Total a repassar", valor: BRL(totalRepasse) },
         { rotulo: "Parcelas", valor: String(todas.length) },
+        { rotulo: "Data prevista de pagamento", valor: fmtBR(dataPrevista) },
+        ...(autorizacao?.base === "LIBERACAO_EXCEPCIONAL"
+          ? [{ rotulo: "Liberado por", valor: autorizacao.liberado_por ?? "" }]
+          : []),
       ];
 
       let arquivo: string;
