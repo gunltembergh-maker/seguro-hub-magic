@@ -195,7 +195,11 @@ export function DemandasRepasseNF() {
                           </span>
                         </p>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
+                        <Button size="sm" variant="outline" onClick={() => setRelacao(d)}>
+                          <FileSearch className="mr-2 h-4 w-4" />
+                          Abrir a relação
+                        </Button>
                         {d.sou_o_aprovador ? (
                           <>
                             <Button size="sm" onClick={() => setConfirmar(d)}>
