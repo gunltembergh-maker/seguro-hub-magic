@@ -22,6 +22,12 @@ import { useMeuPerfilEfetivo } from "@/contexts/view-as-context";
 import { hasRole } from "@/hooks/use-meu-perfil";
 import EnviarContratoParceiro from "@/components/comercial/EnviarContratoParceiro";
 import { FilaVerificacaoContratos } from "@/components/comercial/FilaVerificacaoContratos";
+import {
+  FilaAlteracoesPercentual,
+  useAlteracoesPercentual,
+  type Alteracao,
+} from "@/components/comercial/FilaAlteracoesPercentual";
+import { SolicitarAlteracaoPercentual } from "@/components/comercial/SolicitarAlteracaoPercentual";
 import { RepasseComercial } from "@/components/comercial/RepasseComercial";
 
 
