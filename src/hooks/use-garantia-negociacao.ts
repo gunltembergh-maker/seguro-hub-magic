@@ -129,6 +129,8 @@ export interface FiltrosNegociacao {
   responsavel_tecnico_id?: string;
   canal_id?: string;
   busca?: string;
+  /** Fase do quadro. Sem valor, a lista é a da negociação. */
+  fase?: string;
 }
 
 export function useDemandasNegociacao(filtros: FiltrosNegociacao) {
