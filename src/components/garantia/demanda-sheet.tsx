@@ -946,6 +946,16 @@ export function DemandaSheet({
   const [triagemAberta, setTriagemAberta] = useState(false);
   const [perdaAberta, setPerdaAberta] = useState(false);
   const trocar = useTrocarStatus();
+  const aceite = useRegistrarAceite();
+
+  const registrarAceite = async (id: string) => {
+    try {
+      const r = await aceite.mutateAsync(id);
+      toast.success(`Aceite registrado. Esta demanda agora é ${r.codigo} e está no CRM, em curadoria.`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível registrar o aceite.");
+    }
+  };
 
   if (!demanda) return null;
 
@@ -1013,10 +1023,26 @@ export function DemandaSheet({
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" disabled title="O aceite abre o CRM, que chega na Parte 4.">
-              <Ban className="mr-2 h-4 w-4" />
-              Registrar aceite (CRM na Parte 4)
-            </Button>
+            {demanda.fase === "negociacao" ? (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={aceite.isPending}
+                onClick={() => registrarAceite(demanda.id)}
+                title="Gera o código GAR e leva a demanda para o CRM, em curadoria."
+              >
+                {aceite.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Check className="mr-2 h-4 w-4" />
+                )}
+                Registrar aceite do cliente
+              </Button>
+            ) : (
+              <Badge variant="outline" className="self-center">
+                {demanda.codigo ? `Aceito · ${demanda.codigo}` : "Aceito"}
+              </Badge>
+            )}
             <Button variant="destructive" size="sm" onClick={() => setPerdaAberta(true)}>
               Registrar perda
             </Button>
