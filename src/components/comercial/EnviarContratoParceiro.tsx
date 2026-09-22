@@ -85,6 +85,25 @@ export interface EnviarContratoParceiroProps {
 const pct = (v?: number | null) =>
   v == null ? "—" : `${(v * 100).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`;
 
+function PctDemais({
+  pctDemais,
+  pctGarantia,
+}: {
+  pctDemais?: number | null;
+  pctGarantia?: number | null;
+}) {
+  if (pctDemais != null) return <>{pct(pctDemais)}</>;
+  if (pctGarantia != null) {
+    return (
+      <>
+        {pct(pctGarantia)}{" "}
+        <span className="text-muted-foreground">(herdado de Garantia)</span>
+      </>
+    );
+  }
+  return <>—</>;
+}
+
 const dia = (v?: string | null) =>
   v ? new Date(`${v.slice(0, 10)}T12:00:00`).toLocaleDateString("pt-BR") : "—";
 
@@ -591,14 +610,14 @@ export default function EnviarContratoParceiro({
             {situacao === "ATIVO" && (
               <Alert className="border-emerald-600/40 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-100">
                 <CheckCircle2 className="h-4 w-4" />
-                <AlertTitle>Contrato validado, repasse liberado</AlertTitle>
-                <AlertDescription>
-                  Vigência de {dia(e?.vigencia_inicio)} a {dia(e?.vigencia_fim)}. Benefícios{" "}
-                  {pct(e?.pct_beneficios)}, Garantia {pct(e?.pct_garantia)}, Demais ramos{" "}
-                  {pct(e?.pct_demais)}.
-                </AlertDescription>
-              </Alert>
-            )}
+              <AlertTitle>Contrato validado, repasse liberado</AlertTitle>
+              <AlertDescription>
+                Vigência de {dia(e?.vigencia_inicio)} a {dia(e?.vigencia_fim)}. Benefícios{" "}
+                {pct(e?.pct_beneficios)}, Garantia {pct(e?.pct_garantia)}, Demais ramos{" "}
+                <PctDemais pctDemais={e?.pct_demais} pctGarantia={e?.pct_garantia} />.
+              </AlertDescription>
+            </Alert>
+          )}
 
             {situacao === "VINCULO_A_CONFIRMAR" && (
               <Alert className="border-amber-600/40 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
@@ -630,17 +649,33 @@ export default function EnviarContratoParceiro({
               <p>
                 Leitura:{" "}
                 {origem === "OCR"
-                  ? "reconhecimento por imagem"
+                  ? "OCR (reconhecimento por imagem)"
                   : origem === "MANUAL"
-                    ? "informada à mão"
-                    : "camada de texto do PDF"}
+                    ? "Informado manualmente"
+                    : "Texto do PDF"}
               </p>
-              <p>Nomes: {e?.nomes?.length ? e.nomes.join(" · ") : "—"}</p>
+              <p>
+                Nomes:{" "}
+                {e?.nomes?.length ? (
+                  <>
+                    {e.nomes[0]}
+                    {e.nomes.length > 1 ? (
+                      <span className="text-muted-foreground">
+                        {" "}
+                        e mais {e.nomes.length - 1}{" "}
+                        {e.nomes.length - 1 === 1 ? "variação" : "variações"}
+                      </span>
+                    ) : null}
+                  </>
+                ) : (
+                  "—"
+                )}
+              </p>
               <p>CNPJ: {e?.cnpj ?? "—"}</p>
               <p>Vigência: {dia(e?.vigencia_inicio)} a {dia(e?.vigencia_fim)}</p>
               <p>
                 Percentuais: Benefícios {pct(e?.pct_beneficios)}, Garantia {pct(e?.pct_garantia)},
-                Demais ramos {pct(e?.pct_demais)}
+                Demais ramos <PctDemais pctDemais={e?.pct_demais} pctGarantia={e?.pct_garantia} />
               </p>
               <p>
                 Assinatura: {e?.assinado ? "encontrada" : "não encontrada"}

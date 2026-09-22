@@ -74,6 +74,7 @@ interface Situacao {
   dias_para_vencer: number | null;
   pct_beneficios: number | null;
   pct_garantia: number | null;
+  pct_demais: number | null;
   pct_demais_efetivo: number | null;
   minimo_repasse: number | null;
 }
@@ -103,6 +104,7 @@ interface Contrato {
   pct_beneficios?: number | null;
   pct_garantia?: number | null;
   pct_demais?: number | null;
+  pct_demais_efetivo?: number | null;
   hash_sha256?: string | null;
   hash?: string | null;
   situacao?: string | null;
@@ -403,10 +405,7 @@ export default function CanalParceirosTela() {
                   </TableRow>
                 ) : (
                   linhas.map((l) => {
-                    const herdado =
-                      l.s?.pct_demais_efetivo != null &&
-                      l.s?.pct_garantia != null &&
-                      l.s.pct_demais_efetivo === l.s.pct_garantia;
+                    const demaisHerdado = l.s?.pct_demais == null && l.s?.pct_garantia != null;
                     const dias = l.s?.dias_para_vencer ?? null;
                     return (
                       <TableRow
@@ -450,7 +449,7 @@ export default function CanalParceirosTela() {
                         <TableCell className="tabular-nums">{pct(l.s?.pct_garantia)}</TableCell>
                         <TableCell className="tabular-nums">
                           {pct(l.s?.pct_demais_efetivo)}
-                          {herdado ? (
+                          {demaisHerdado ? (
                             <div className="text-xs text-muted-foreground">herdado de Garantia</div>
                           ) : null}
                         </TableCell>
@@ -994,7 +993,12 @@ function DetalheParceiro({
                     <Info rotulo="Vigência" valor={`${dia(c.vigencia_inicio)} a ${dia(c.vigencia_fim)}`} />
                     <Info rotulo="Benefícios" valor={pct(c.pct_beneficios)} />
                     <Info rotulo="Garantia" valor={pct(c.pct_garantia)} />
-                    <Info rotulo="Demais ramos" valor={pct(c.pct_demais)} />
+                    <InfoDemais
+                      rotulo="Demais ramos"
+                      pctDemais={c.pct_demais}
+                      pctDemaisEfetivo={c.pct_demais_efetivo}
+                      pctGarantia={c.pct_garantia}
+                    />
                     <Info rotulo="Hash" valor={hash ? `${hash.slice(0, 12)}…` : "—"} />
                   </dl>
 
@@ -1120,6 +1124,36 @@ function Info({ rotulo, valor }: { rotulo: string; valor: string }) {
     <div>
       <dt className="text-muted-foreground">{rotulo}</dt>
       <dd className="font-medium text-foreground">{valor}</dd>
+    </div>
+  );
+}
+
+function InfoDemais({
+  rotulo,
+  pctDemais,
+  pctDemaisEfetivo,
+  pctGarantia,
+}: {
+  rotulo: string;
+  pctDemais?: number | null;
+  pctDemaisEfetivo?: number | null;
+  pctGarantia?: number | null;
+}) {
+  return (
+    <div>
+      <dt className="text-muted-foreground">{rotulo}</dt>
+      <dd className="font-medium text-foreground">
+        {pctDemais != null ? (
+          pct(pctDemais)
+        ) : pctGarantia != null ? (
+          <>
+            {pct(pctDemaisEfetivo ?? pctGarantia)}{" "}
+            <span className="text-muted-foreground">(herdado de Garantia)</span>
+          </>
+        ) : (
+          "—"
+        )}
+      </dd>
     </div>
   );
 }
