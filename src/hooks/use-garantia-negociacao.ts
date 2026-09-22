@@ -10,6 +10,8 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { pendenciasEtapa2, pendenciasEtapa3b } from "@/lib/garantia/documentos-regra";
+
 
 export type ProdutoGarantia = "seguro_garantia" | "fianca_locaticia";
 
