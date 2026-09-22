@@ -150,6 +150,7 @@ export function RepasseComercial({
   const ciclo = useMemo(() => cicloPadrao(new Set<string>()), []);
   const { data: estadoCiclo } = useCicloRepasse(ciclo.ano, ciclo.mes);
   const [exportando, setExportando] = useState<string | null>(null);
+  const [relacao, setRelacao] = useState<string | null>(null);
   const [pedido, setPedido] = useState<{ canal: string; linhas: number; valor: number } | null>(
     null,
   );
