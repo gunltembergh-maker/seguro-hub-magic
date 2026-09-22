@@ -434,6 +434,7 @@ export function RepasseComercial({
 
 function LinhaRepasse({
   canal,
+  razaoSocial,
   cicloCorrente,
   acumulado,
   parcelas,
@@ -447,8 +448,10 @@ function LinhaRepasse({
   onVerRelacao,
   onVerContrato,
   onPedirLiberacao,
+  onCancelado,
 }: {
   canal: string;
+  razaoSocial: string | null;
   cicloCorrente: number;
   acumulado: number;
   parcelas: number;
@@ -462,9 +465,12 @@ function LinhaRepasse({
   onVerRelacao: () => void;
   onVerContrato: () => void;
   onPedirLiberacao: () => void;
+  onCancelado: () => void;
 }) {
   const ref = useRef<HTMLTableRowElement | null>(null);
   const [aceso, setAceso] = useState(false);
+  const [agora, setAgora] = useState(() => Date.now());
+  const [cancelando, setCancelando] = useState(false);
 
   useEffect(() => {
     if (!destacar) return;
