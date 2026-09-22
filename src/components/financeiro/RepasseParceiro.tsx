@@ -130,6 +130,56 @@ function slugCanal(canal: string) {
     .replace(/^_+|_+$/g, "");
 }
 
+/** Mesma normalização do banco: sem acento e em maiúsculas. */
+function chaveCanal(canal: string) {
+  return canal
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+    .trim();
+}
+
+type SituacaoContrato = {
+  chave_planilha: string;
+  canal_id: string | null;
+  nome: string | null;
+  situacao: "ATIVO" | "SEM_CONTRATO" | "VENCIDO" | "VINCULO_A_CONFIRMAR";
+  pode_exportar: boolean;
+  vigencia_fim: string | null;
+  dias_para_vencer: number | null;
+  pct_beneficios: number | null;
+  pct_garantia: number | null;
+  pct_demais_efetivo: number | null;
+  minimo_repasse: number | null;
+};
+
+const fmtBR = (iso: string | null | undefined) =>
+  iso ? new Date(`${String(iso).slice(0, 10)}T12:00:00`).toLocaleDateString("pt-BR") : "";
+
+function motivoBloqueio(s?: SituacaoContrato | null) {
+  if (!s) return "Parceiro sem contrato assinado no Hub";
+  if (s.situacao === "VENCIDO") return `Contrato vencido em ${fmtBR(s.vigencia_fim)}`;
+  if (s.situacao === "VINCULO_A_CONFIRMAR")
+    return "Contrato recebido, aguardando um administrador confirmar o vínculo";
+  return "Parceiro sem contrato assinado no Hub";
+}
+
+function BadgeContrato({ s }: { s?: SituacaoContrato | null }) {
+  const situacao = s?.situacao ?? "SEM_CONTRATO";
+  const estilos: Record<string, { bg: string; color: string; label: string }> = {
+    ATIVO: { bg: "#DCFCE7", color: "#166534", label: "Ativo" },
+    VINCULO_A_CONFIRMAR: { bg: "#FEF3C7", color: "#92400E", label: "A confirmar" },
+    SEM_CONTRATO: { bg: "#FEE2E2", color: "#991B1B", label: "Sem contrato" },
+    VENCIDO: { bg: "#FEE2E2", color: "#991B1B", label: "Vencido" },
+  };
+  const st = estilos[situacao] ?? estilos.SEM_CONTRATO;
+  return (
+    <Badge variant="outline" style={{ background: st.bg, color: st.color, borderColor: "transparent" }}>
+      {st.label}
+    </Badge>
+  );
+}
+
 const BRL = (v: number | null | undefined) =>
   Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
