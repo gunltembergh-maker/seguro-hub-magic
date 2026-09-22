@@ -169,6 +169,32 @@ export const nomeSeguradoraCotacao = (
     ? (seguradoras.find((s) => s.chave_mercado === c.chave_mercado)?.rotulo ?? c.chave_mercado)
     : (c.seguradora_livre ?? "Seguradora não informada");
 
+/**
+ * Seguradora da cotação escolhida de várias demandas de uma vez — o quadro do
+ * CRM mostra isso no cartão sem uma consulta por cartão.
+ */
+export function useSeguradorasEscolhidas(demandaIds: string[]) {
+  const { data: seguradoras = [] } = useSeguradorasGarantia();
+  const chaves = [...demandaIds].sort();
+  return useQuery({
+    queryKey: ["garantia", "crm", "escolhidas", chaves],
+    enabled: chaves.length > 0,
+    queryFn: async (): Promise<Record<string, string>> => {
+      const { data, error } = await supabase
+        .from("garantia_cotacoes")
+        .select("demanda_id, chave_mercado, seguradora_livre, premio, comissao_pct, comissao_valor, taxa, cosseguro, recebida_em, observacao, escolhida, id")
+        .in("demanda_id", chaves)
+        .eq("escolhida", true);
+      if (error) throw error;
+      const mapa: Record<string, string> = {};
+      for (const c of (data ?? []) as CotacaoDemanda[]) {
+        mapa[c.demanda_id] = nomeSeguradoraCotacao(c, seguradoras);
+      }
+      return mapa;
+    },
+  });
+}
+
 /* ------------------------------------------------------------------ */
 /* Aceite                                                             */
 /* ------------------------------------------------------------------ */
