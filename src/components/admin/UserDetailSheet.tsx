@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { User, ClipboardList, History, Activity, Loader2 } from "lucide-react";
+import { User, ClipboardList, History, Activity, Loader2, ShieldCheck } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { useSendAuthEmail, useAtividadeUsuario, type AdminUserV2 } from "@/hooks/use-admin-users-v2";
+import { PainelPermissoesUsuario } from "@/components/admin/PermissoesDoUsuario";
 
 function formatDT(iso: string | null | undefined) {
   if (!iso) return "—";
@@ -51,12 +52,13 @@ interface Props {
   user: AdminUserV2 | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  abaInicial?: string;
   onEdit?: (u: AdminUserV2) => void;
   onBlock?: (u: AdminUserV2) => void;
   onDelete?: (u: AdminUserV2) => void;
 }
 
-export function UserDetailSheet({ user, open, onOpenChange, onEdit, onBlock, onDelete }: Props) {
+export function UserDetailSheet({ user, open, onOpenChange, abaInicial, onEdit, onBlock, onDelete }: Props) {
   const qc = useQueryClient();
   const sendEmail = useSendAuthEmail();
 
@@ -121,10 +123,11 @@ export function UserDetailSheet({ user, open, onOpenChange, onEdit, onBlock, onD
           </SheetHeader>
         </div>
 
-        <Tabs defaultValue="perfil" className="mt-4">
+        <Tabs key={user.user_id + (abaInicial ?? "")} defaultValue={abaInicial ?? "perfil"} className="mt-4">
           <div className="px-6">
-            <TabsList className="w-full grid grid-cols-4">
+            <TabsList className="w-full grid grid-cols-5">
               <TabsTrigger value="perfil" className="text-xs gap-1"><User className="h-3.5 w-3.5" /> Perfil</TabsTrigger>
+              <TabsTrigger value="permissoes" className="text-xs gap-1"><ShieldCheck className="h-3.5 w-3.5" /> Permissões</TabsTrigger>
               <TabsTrigger value="convites" className="text-xs gap-1"><ClipboardList className="h-3.5 w-3.5" /> Convites</TabsTrigger>
               <TabsTrigger value="sessoes" className="text-xs gap-1"><History className="h-3.5 w-3.5" /> Sessões</TabsTrigger>
               <TabsTrigger value="atividade" className="text-xs gap-1"><Activity className="h-3.5 w-3.5" /> Atividade</TabsTrigger>
@@ -161,6 +164,16 @@ export function UserDetailSheet({ user, open, onOpenChange, onEdit, onBlock, onD
                 <Button size="sm" variant="destructive" onClick={() => onDelete(user)}>Excluir</Button>
               )}
             </div>
+          </TabsContent>
+
+          <TabsContent value="permissoes" className="px-6 pb-6 mt-4 space-y-4">
+            <div className="space-y-1">
+              <h3 className="text-sm font-semibold">Permissões deste usuário</h3>
+              <p className="text-xs text-muted-foreground">
+                Exceções valem só para ele e ganham do perfil. Herda significa seguir o perfil.
+              </p>
+            </div>
+            <PainelPermissoesUsuario userId={user.user_id} userNome={user.full_name ?? user.email} />
           </TabsContent>
 
           <TabsContent value="convites" className="px-6 pb-6 mt-4">

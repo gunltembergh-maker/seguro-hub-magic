@@ -17,7 +17,6 @@ import {
 import { UserFormModal, type UserFormInitial } from "@/components/admin/UserFormModal";
 import { UserDetailSheet } from "@/components/admin/UserDetailSheet";
 import { ImportUsuariosModal } from "@/components/admin/ImportUsuariosModal";
-import { PermissoesDoUsuario } from "@/components/admin/PermissoesDoUsuario";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -127,7 +126,7 @@ function AdminUsuariosPage() {
 
   const [approving, setApproving] = useState<AdminUserV2 | null>(null);
   const [detailUser, setDetailUser] = useState<AdminUserV2 | null>(null);
-  const [permissoesUser, setPermissoesUser] = useState<AdminUserV2 | null>(null);
+  const [detailAba, setDetailAba] = useState("perfil");
   const [deletingUser, setDeletingUser] = useState<AdminUserV2 | null>(null);
   const [convidarOpen, setConvidarOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
@@ -354,7 +353,7 @@ function AdminUsuariosPage() {
                     </TableHeader>
                     <TableBody>
                       {filtered.map(u => (
-                        <TableRow key={u.user_id} className="cursor-pointer" onClick={() => setDetailUser(u)}>
+                        <TableRow key={u.user_id} className="cursor-pointer" onClick={() => { setDetailUser(u); setDetailAba("perfil"); }}>
                           <TableCell className="font-medium">{u.full_name ?? "—"}</TableCell>
                           <TableCell className="text-muted-foreground">{u.email}</TableCell>
                           <TableCell><TipoBadge u={u} /></TableCell>
@@ -378,7 +377,7 @@ function AdminUsuariosPage() {
                               <Button size="sm" variant="ghost" title="Editar" onClick={() => openEdit(u)}>
                                 <Pencil className="h-4 w-4" />
                               </Button>
-                              <Button size="sm" variant="ghost" title="Permissões" onClick={() => setPermissoesUser(u)}>
+                              <Button size="sm" variant="ghost" title="Permissões deste usuário" onClick={() => { setDetailUser(u); setDetailAba("permissoes"); }}>
                                 <ShieldCheck className="h-4 w-4" />
                               </Button>
                               <Button
@@ -439,16 +438,10 @@ function AdminUsuariosPage() {
       <UserDetailSheet
         user={detailUser}
         open={!!detailUser}
+        abaInicial={detailAba}
         onOpenChange={(o) => !o && setDetailUser(null)}
         onEdit={(u) => { setDetailUser(null); openEdit(u); }}
         onDelete={(u) => { setDetailUser(null); setDeletingUser(u); }}
-      />
-
-      <PermissoesDoUsuario
-        aberto={!!permissoesUser}
-        userId={permissoesUser?.user_id ?? null}
-        userNome={permissoesUser?.full_name ?? permissoesUser?.email ?? ""}
-        onFechar={() => setPermissoesUser(null)}
       />
 
       {convidarOpen && (
