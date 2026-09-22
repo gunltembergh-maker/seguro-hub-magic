@@ -216,7 +216,19 @@ const rotuloEvento: Record<string, string> = {
   LIBERACAO_SOLICITADA: "Liberação solicitada",
   LIBERACAO_DECIDIDA: "Liberação decidida",
   EXPORTACAO: "Relatório exportado",
+  CONTRATO_CORRIGIDO: "Contrato corrigido",
+  ASSINATURA_ATESTADA: "Assinatura atestada",
 };
+
+/** Campos do CONTRATO_CORRIGIDO, com o rótulo que a pessoa reconhece. */
+const CAMPOS_CORRECAO: Array<{ chave: string; rotulo: string; tipo: "pct" | "data" | "valor" }> = [
+  { chave: "vigencia_inicio", rotulo: "Início da vigência", tipo: "data" },
+  { chave: "vigencia_fim", rotulo: "Fim da vigência", tipo: "data" },
+  { chave: "pct_beneficios", rotulo: "Benefícios", tipo: "pct" },
+  { chave: "pct_garantia", rotulo: "Garantia", tipo: "pct" },
+  { chave: "pct_demais", rotulo: "Demais ramos", tipo: "pct" },
+  { chave: "minimo_repasse", rotulo: "Mínimo por ciclo", tipo: "valor" },
+];
 
 /* ------------------------------------------------------------------ dados */
 
