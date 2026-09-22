@@ -39,6 +39,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useResponsaveis } from "@/hooks/use-entrada-demandas";
 import { AbaLimites } from "@/components/garantia/aba-limites";
 import { AbaDocumentos } from "@/components/garantia/aba-documentos";
+import { AbaCotacoes } from "@/components/garantia/aba-cotacoes";
+import { AbaCuradoria } from "@/components/garantia/aba-curadoria";
+import { AbaMinuta } from "@/components/garantia/aba-minuta";
+import { useRegistrarAceite } from "@/hooks/use-garantia-crm";
 
 
 import {
@@ -942,6 +946,16 @@ export function DemandaSheet({
   const [triagemAberta, setTriagemAberta] = useState(false);
   const [perdaAberta, setPerdaAberta] = useState(false);
   const trocar = useTrocarStatus();
+  const aceite = useRegistrarAceite();
+
+  const registrarAceite = async (id: string) => {
+    try {
+      const r = await aceite.mutateAsync(id);
+      toast.success(`Aceite registrado. Esta demanda agora é ${r.codigo} e está no CRM, em curadoria.`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível registrar o aceite.");
+    }
+  };
 
   if (!demanda) return null;
 
@@ -1009,10 +1023,26 @@ export function DemandaSheet({
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" disabled title="O aceite abre o CRM, que chega na Parte 4.">
-              <Ban className="mr-2 h-4 w-4" />
-              Registrar aceite (CRM na Parte 4)
-            </Button>
+            {demanda.fase === "negociacao" ? (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={aceite.isPending}
+                onClick={() => registrarAceite(demanda.id)}
+                title="Gera o código GAR e leva a demanda para o CRM, em curadoria."
+              >
+                {aceite.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Check className="mr-2 h-4 w-4" />
+                )}
+                Registrar aceite do cliente
+              </Button>
+            ) : (
+              <Badge variant="outline" className="self-center">
+                {demanda.codigo ? `Aceito · ${demanda.codigo}` : "Aceito"}
+              </Badge>
+            )}
             <Button variant="destructive" size="sm" onClick={() => setPerdaAberta(true)}>
               Registrar perda
             </Button>
@@ -1022,13 +1052,17 @@ export function DemandaSheet({
         <Separator className="my-4" />
 
         <Tabs defaultValue="dados" className="flex-1">
-          <TabsList>
+          <TabsList className="flex-wrap">
             <TabsTrigger value="dados">Dados</TabsTrigger>
             <TabsTrigger value="documentos">Documentos</TabsTrigger>
             {/* Fiança locatícia não faz consulta a mercado: a aba nem aparece. */}
             {demanda.produto === "seguro_garantia" && (
               <TabsTrigger value="limites">Limites</TabsTrigger>
             )}
+            <TabsTrigger value="cotacoes">Cotações</TabsTrigger>
+            {/* Abas do CRM: mesma demanda, outra fase — o detalhe é o mesmo. */}
+            {demanda.fase === "crm" && <TabsTrigger value="curadoria">Curadoria</TabsTrigger>}
+            {demanda.fase === "crm" && <TabsTrigger value="minuta">Minuta</TabsTrigger>}
             <TabsTrigger value="origem">Origem</TabsTrigger>
             <TabsTrigger value="historico">Histórico</TabsTrigger>
           </TabsList>
@@ -1036,8 +1070,23 @@ export function DemandaSheet({
             <AbaDados demanda={demanda} />
           </TabsContent>
           <TabsContent value="documentos" className="mt-4">
-            <AbaDocumentos demanda={demanda} />
+            {/* Na etapa da minuta, a aba já abre com o tipo "Minuta" escolhido. */}
+            <AbaDocumentos demanda={demanda} tipoInicial={demanda.etapa === "7" ? "minuta" : undefined} />
           </TabsContent>
+          <TabsContent value="cotacoes" className="mt-4">
+            <AbaCotacoes demanda={demanda} />
+          </TabsContent>
+          {demanda.fase === "crm" && (
+            <TabsContent value="curadoria" className="mt-4">
+              <AbaCuradoria demanda={demanda} />
+            </TabsContent>
+          )}
+          {demanda.fase === "crm" && (
+            <TabsContent value="minuta" className="mt-4">
+              <AbaMinuta demanda={demanda} catalogo={catalogo} />
+            </TabsContent>
+          )}
+
 
           {demanda.produto === "seguro_garantia" && (
             <TabsContent value="limites" className="mt-4">

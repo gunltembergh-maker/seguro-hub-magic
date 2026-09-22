@@ -11,6 +11,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { pendenciasEtapa2, pendenciasEtapa3b } from "@/lib/garantia/documentos-regra";
+// Só o tipo: o contexto do CRM é carregado pelo hook do CRM, que por sua vez
+// reusa `carregarTiposPresentes` daqui. Import de tipo não cria ciclo.
+import type { ContextoCrm } from "@/hooks/use-garantia-crm";
 
 
 export type ProdutoGarantia = "seguro_garantia" | "fianca_locaticia";
@@ -126,6 +129,8 @@ export interface FiltrosNegociacao {
   responsavel_tecnico_id?: string;
   canal_id?: string;
   busca?: string;
+  /** Fase do quadro. Sem valor, a lista é a da negociação. */
+  fase?: string;
 }
 
 export function useDemandasNegociacao(filtros: FiltrosNegociacao) {
@@ -135,7 +140,7 @@ export function useDemandasNegociacao(filtros: FiltrosNegociacao) {
       let q = supabase
         .from("garantia_demandas")
         .select(CAMPOS_DEMANDA)
-        .eq("fase", "negociacao")
+        .eq("fase", filtros.fase ?? "negociacao")
         .order("cadastrado_em", { ascending: false })
         .limit(500);
       if (filtros.produto) q = q.eq("produto", filtros.produto);
@@ -355,7 +360,19 @@ export function impedimentoDaTransicao(
   contexto?: ContextoMercado,
   /** Tipos de documento com versão vigente na demanda (checklists das etapas 2 e 3b). */
   tiposPresentes?: Set<string>,
+  /** Cotação escolhida, minuta e aprovações — travas das etapas 4, 6 e 7. */
+  crm?: ContextoCrm,
 ): string | null {
+  // O aceite não é troca de status: ele é o RPC que gera o código GAR-xxxxx.
+  // Arrastar o cartão para o CRM pularia a geração do código.
+  if (demanda.fase !== "crm" && destino.fase === "crm") {
+    return "A entrada no CRM é feita pelo botão “Registrar aceite do cliente”, no detalhe da demanda: é ele que gera o código GAR e garante que não saiam dois códigos para o mesmo caso.";
+  }
+  // Depois do aceite não há volta pelo quadro: o caminho de saída é perda ou emissão.
+  if (demanda.fase === "crm" && destino.fase === "negociacao") {
+    return "Esta demanda já foi aceita pelo cliente e está no CRM. Ela não volta para a negociação pelo quadro: o caminho de saída é registrar a perda (desistência depois do aceite) ou seguir para a emissão.";
+  }
+
 
   if (!demanda.triagem_completa && destino.codigo !== demanda.status_atual) {
     return "A triagem ainda não foi completada. Use “Completar triagem” no detalhe da demanda: sem os dados da etapa 1 as etapas seguintes não têm o que analisar.";
@@ -398,6 +415,25 @@ export function impedimentoDaTransicao(
       return `Para montar a proposta faltam: ${faltando.join(" e ")}. Preencha na aba Dados do detalhe da demanda.`;
     }
   }
+
+  if (crm && demanda.etapa !== etapaDestino) {
+    // Etapa 4: a proposta é montada em cima da cotação aceita.
+    if (demanda.etapa === "4" && !crm.temCotacaoEscolhida) {
+      return "Nenhuma cotação foi marcada como escolhida. Lance as cotações recebidas na aba Cotações e marque a aceita: é ela que define prêmio e comissão da proposta.";
+    }
+    // Etapa 7: minuta e aprovações antes da emissão.
+    if (demanda.etapa === "7") {
+      if (!crm.temMinuta) {
+        return "A minuta ainda não foi anexada. Anexe o documento do tipo Minuta na aba Documentos: sem o texto conferido a emissão não pode ser pedida.";
+      }
+      if (!crm.aprovouCliente) {
+        return "Falta registrar a aprovação da minuta pelo cliente (data e forma), na aba Minuta. Motivo: a emissão só é pedida com o texto aprovado por quem contrata.";
+      }
+      if (crm.seguradoExigeTexto && !crm.aprovouSegurado) {
+        return "Falta o aceite do texto pelo segurado, na aba Minuta. Motivo: este segurado está cadastrado como exigindo texto próprio, então a apólice só é emitida com o aceite dele.";
+      }
+    }
+  }
   return null;
 }
 
@@ -413,6 +449,9 @@ function pendenciasDaEtapa(demanda: DemandaLista, tipos: Set<string>, etapa: str
   };
   if (etapa === "2") return pendenciasEtapa2(alvo, tipos);
   if (etapa === "3b") return pendenciasEtapa3b(alvo, tipos);
+  // Etapa 6 (curadoria): a única exigência documental é o CCG, e só quando o
+  // caso foi marcado como precisando dele. Reusa a MESMA função da etapa 3b.
+  if (etapa === "6") return pendenciasEtapa3b(alvo, tipos).filter((p) => p.texto.includes("CCG"));
   return [];
 }
 
@@ -474,7 +513,11 @@ export function useTrocarStatus() {
       const contexto = precisaMercado ? await carregarContextoMercado(demanda.cliente_id) : undefined;
       const mudaEtapa = etapaDestino !== demanda.etapa;
       const tipos = mudaEtapa ? await carregarTiposPresentes(demanda.id) : undefined;
-      const impedimento = impedimentoDaTransicao(demanda, destino, contexto, tipos);
+      // Cotação escolhida, minuta e aprovações: só é lido quando a etapa muda.
+      const crm = mudaEtapa
+        ? await (await import("@/hooks/use-garantia-crm")).carregarContextoCrm(demanda)
+        : undefined;
+      const impedimento = impedimentoDaTransicao(demanda, destino, contexto, tipos, crm);
       if (impedimento) throw new Error(impedimento);
 
       const { error } = await supabase

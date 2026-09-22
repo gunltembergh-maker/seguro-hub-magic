@@ -2,9 +2,12 @@ import type { ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 
-// Uma aba só por enquanto. CRM e Painel entram quando as telas existirem:
-// aba apontando para rota inexistente é link quebrado.
-const ABAS = [{ label: "Negociação", to: "/garantia/negociacao" }] as const;
+// O Painel entra quando a tela existir: aba apontando para rota inexistente é
+// link quebrado.
+const ABAS = [
+  { label: "Negociação", to: "/garantia/negociacao" },
+  { label: "CRM", to: "/garantia/crm" },
+] as const;
 
 export function GarantiaShell({
   titulo,

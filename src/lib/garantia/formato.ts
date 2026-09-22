@@ -80,6 +80,10 @@ export const ROTULO_ETAPA: Record<string, string> = {
   "3b": "3b Documentos de cadastro",
   "4": "4 Cotação",
   "5": "5 Proposta",
+  "6": "6 Curadoria",
+  "7": "7 Minuta",
+  "8": "8 Emissão",
+  "9": "9 Financeiro",
 };
 
 export const rotuloEtapa = (etapa: string) => ROTULO_ETAPA[etapa] ?? `Etapa ${etapa}`;

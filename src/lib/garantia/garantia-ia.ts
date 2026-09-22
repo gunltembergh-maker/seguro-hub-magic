@@ -31,6 +31,33 @@ export interface CamposSugeridosIA {
   percentual_garantia?: number | null;
 }
 
+/**
+ * Campos que a leitura da MINUTA poderá sugerir. É outra leitura: além dos
+ * dados da apólice, ela aponta o que diverge do edital ou do contrato.
+ */
+export interface CamposSugeridosMinutaIA {
+  /** Importância segurada escrita na minuta. */
+  importancia_segurada?: number | null;
+  /** Início da vigência (ISO yyyy-mm-dd). */
+  vigencia_inicial?: string | null;
+  /** Fim da vigência (ISO yyyy-mm-dd). */
+  vigencia_final?: string | null;
+  /** Objeto conforme a minuta. */
+  objeto?: string | null;
+  /** Segurado nomeado na minuta. */
+  segurado?: string | null;
+  /** Cláusulas obrigatórias presentes no texto. */
+  clausulas_obrigatorias?: string[] | null;
+  /** Divergências em relação ao edital ou contrato, uma por item. */
+  divergencias?: string[] | null;
+}
+
+/** Resultado da leitura da minuta, quando o motor for ligado. */
+export interface ResultadoMinutaIA {
+  resumo: string;
+  campos_sugeridos: CamposSugeridosMinutaIA;
+}
+
 /** Resultado completo que o motor devolverá quando for ligado. */
 export interface ResultadoIA {
   /** Resumo em linguagem corrente, para leitura humana. */

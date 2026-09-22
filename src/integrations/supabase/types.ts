@@ -6011,6 +6011,13 @@ export type Database = {
           status_nome: string
         }[]
       }
+      rpc_garantia_registrar_aceite: {
+        Args: { _demanda_id: string }
+        Returns: {
+          codigo: string
+          legenda: string
+        }[]
+      }
       rpc_garantia_status_abertos: {
         Args: never
         Returns: {
