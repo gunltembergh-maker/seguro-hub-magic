@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
-  CheckCircle2, Loader2, ShieldAlert, Pencil, UserCheck, Users, UserX,
+  CheckCircle2, Loader2, ShieldAlert, ShieldCheck, Pencil, UserCheck, Users, UserX,
   Clock, ShieldOff, Search, Plus, Trash2, Activity, Lock, Unlock, Mail, Upload,
 } from "lucide-react";
 
@@ -17,6 +17,7 @@ import {
 import { UserFormModal, type UserFormInitial } from "@/components/admin/UserFormModal";
 import { UserDetailSheet } from "@/components/admin/UserDetailSheet";
 import { ImportUsuariosModal } from "@/components/admin/ImportUsuariosModal";
+import { PermissoesDoUsuario } from "@/components/admin/PermissoesDoUsuario";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -126,6 +127,7 @@ function AdminUsuariosPage() {
 
   const [approving, setApproving] = useState<AdminUserV2 | null>(null);
   const [detailUser, setDetailUser] = useState<AdminUserV2 | null>(null);
+  const [permissoesUser, setPermissoesUser] = useState<AdminUserV2 | null>(null);
   const [deletingUser, setDeletingUser] = useState<AdminUserV2 | null>(null);
   const [convidarOpen, setConvidarOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
@@ -376,6 +378,9 @@ function AdminUsuariosPage() {
                               <Button size="sm" variant="ghost" title="Editar" onClick={() => openEdit(u)}>
                                 <Pencil className="h-4 w-4" />
                               </Button>
+                              <Button size="sm" variant="ghost" title="Permissões" onClick={() => setPermissoesUser(u)}>
+                                <ShieldCheck className="h-4 w-4" />
+                              </Button>
                               <Button
                                 size="sm" variant="ghost"
                                 title={u.blocked ? "Desbloquear" : "Bloquear"}
@@ -437,6 +442,13 @@ function AdminUsuariosPage() {
         onOpenChange={(o) => !o && setDetailUser(null)}
         onEdit={(u) => { setDetailUser(null); openEdit(u); }}
         onDelete={(u) => { setDetailUser(null); setDeletingUser(u); }}
+      />
+
+      <PermissoesDoUsuario
+        aberto={!!permissoesUser}
+        userId={permissoesUser?.user_id ?? null}
+        userNome={permissoesUser?.full_name ?? permissoesUser?.email ?? ""}
+        onFechar={() => setPermissoesUser(null)}
       />
 
       {convidarOpen && (
