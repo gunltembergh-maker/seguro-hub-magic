@@ -437,45 +437,91 @@ export default function CanalParceirosTela() {
         </Alert>
       ) : null}
 
-      {/* KPIs */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Kpi
-          titulo="Canais com repasse na base"
-          valor={totalCanais}
-          icone={<Users className="h-4 w-4" />}
-        />
-        <Kpi
-          titulo="Com contrato assinado e ativo"
-          valor={ativos}
-          icone={<CheckCircle2 className="h-4 w-4 text-emerald-600" />}
-        />
+      {/* faixa de números */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Kpi titulo="Parceiros com repasse no ciclo" valor={String(resumoCiclo.parceiros)} />
+        <Kpi titulo="Com contrato assinado e ativo" valor={String(ativos)} />
         <Kpi
           titulo="Sem contrato assinado"
-          valor={semContrato}
-          icone={<AlertTriangle className="h-4 w-4 text-destructive" />}
+          valor={String(semContrato)}
+          className={semContrato > 0 ? "text-destructive" : undefined}
+        />
+        <Kpi
+          titulo="Valor do ciclo corrente"
+          valor={resumoCiclo.valor.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          })}
+          className="font-mono text-primary"
         />
       </div>
 
-      {/* vínculos a confirmar — só ADMIN */}
-      {isAdmin && vinculosPendentes.length > 0 ? (
-        <VinculosAConfirmar
-          contratos={vinculosPendentes}
-          parceiros={lista.data ?? []}
-          onResolvido={recarregarTudo}
-        />
+      {/* precisa de você — as três filas juntas, some quando não há nada */}
+      {filasAtivas > 0 ? (
+        <Card className="border-amber-600/40">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
+              <AlertTriangle className="h-4 w-4" />
+              Precisa de você
+            </CardTitle>
+            <CardDescription>
+              Pendências que travam contrato ou repasse até alguém resolver.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {nVinculos > 0 ? (
+              <section className="space-y-3">
+                {umaFilaSo ? null : (
+                  <h3 className="text-sm font-semibold text-foreground">
+                    Vínculos a confirmar · {nVinculos}
+                  </h3>
+                )}
+                <VinculosAConfirmar
+                  semCard
+                  contratos={vinculosPendentes}
+                  parceiros={lista.data ?? []}
+                  onResolvido={recarregarTudo}
+                />
+              </section>
+            ) : null}
+
+            {nVerificacao > 0 ? (
+              <section className="space-y-3">
+                {umaFilaSo ? null : (
+                  <h3 className="text-sm font-semibold text-foreground">
+                    Conferência de contratos · {nVerificacao}
+                  </h3>
+                )}
+                <FilaVerificacaoContratos semCard />
+              </section>
+            ) : null}
+
+            {nAlteracoes > 0 ? (
+              <section className="space-y-3">
+                {umaFilaSo ? null : (
+                  <h3 className="text-sm font-semibold text-foreground">
+                    Alterações de percentual · {nAlteracoes}
+                  </h3>
+                )}
+                <FilaAlteracoesPercentual semCard />
+              </section>
+            ) : null}
+          </CardContent>
+        </Card>
       ) : null}
 
-      {/* fila de conferência humana — só aparece quando há pendência */}
-      <FilaVerificacaoContratos />
+      <Tabs defaultValue="repasse" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="repasse">Repasse do ciclo</TabsTrigger>
+          <TabsTrigger value="parceiros">Parceiros</TabsTrigger>
+          <TabsTrigger value="vigencias">Vigências</TabsTrigger>
+        </TabsList>
 
-      {/* alterações de percentual aguardando o De Acordo da diretoria */}
-      <FilaAlteracoesPercentual />
+        <TabsContent value="repasse">
+          <RepasseComercial podeExportarPorChave={podeExportarPorChave} />
+        </TabsContent>
 
-      {/* repasse do ciclo por parceiro */}
-      <RepasseComercial podeExportarPorChave={podeExportarPorChave} />
-
-
-      {/* tabela principal */}
+        <TabsContent value="parceiros">
       <Card>
         <CardHeader>
           <CardTitle>Parceiros</CardTitle>
