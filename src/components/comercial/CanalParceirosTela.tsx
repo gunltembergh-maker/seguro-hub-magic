@@ -482,6 +482,18 @@ export default function CanalParceirosTela() {
                           ) : null}
                         </TableCell>
                         <TableCell>
+                          {l.razaoSocial ? (
+                            <div>
+                              <div className="text-sm text-foreground">{l.razaoSocial}</div>
+                              {l.cnpj ? (
+                                <div className="text-xs text-muted-foreground">{l.cnpj}</div>
+                              ) : null}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
                           <BadgeContrato situacao={l.s?.situacao ?? "SEM_CONTRATO"} />
                         </TableCell>
                         <TableCell>
