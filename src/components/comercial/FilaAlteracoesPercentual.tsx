@@ -207,8 +207,27 @@ export function FilaAlteracoesPercentual({ semCard = false }: { semCard?: boolea
               </p>
             </div>
           ))}
-        </CardContent>
-      </Card>
+    </div>
+  );
+
+  return (
+    <>
+      {semCard ? (
+        conteudo
+      ) : (
+        <Card className="border-amber-600/40">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
+              <AlertTriangle className="h-4 w-4" />
+              Alterações de percentual aguardando aprovação
+            </CardTitle>
+            <CardDescription>
+              Percentual diferente do contrato só vale depois do De Acordo da diretoria.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>{conteudo}</CardContent>
+        </Card>
+      )}
 
       {/* aprovar — exige a senha do super administrador */}
       <Dialog open={!!aprovando} onOpenChange={(v) => { if (!v) setAprovando(null); }}>
