@@ -1004,17 +1004,24 @@ function VinculosAConfirmar({
 function DetalheParceiro({
   canalId,
   nome,
+  situacao,
   onFechar,
 }: {
   canalId: string | null;
   nome: string;
+  situacao?: Situacao | null;
   onFechar: () => void;
 }) {
+  const [pedirAlteracao, setPedirAlteracao] = useState(false);
+
   const contratos = useQuery({
     queryKey: ["canal-parceiro-contratos", canalId],
     queryFn: () => rpc<Contrato>("rpc_canal_parceiro_contratos", { p_canal_id: canalId }),
     enabled: !!canalId,
   });
+
+  const todasAlteracoes = useAlteracoesPercentual(null);
+  const alteracoesDoCanal = (todasAlteracoes.data ?? []).filter((a) => a.canal_id === canalId);
 
   const linhas = contratos.data ?? [];
 
