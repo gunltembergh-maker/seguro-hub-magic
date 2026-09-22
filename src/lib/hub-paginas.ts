@@ -20,6 +20,7 @@ export const HUB_PAGINAS: GrupoPaginas[] = [
       { rota: "/inicio", nome: "Início" },
       { rota: "/hub", nome: "Hub (visão geral)" },
       { rota: "/reserva-posicoes", nome: "Reserva de Posições" },
+      { rota: "/entrada-demandas", nome: "Entrada de Demandas" },
     ],
   },
   {
