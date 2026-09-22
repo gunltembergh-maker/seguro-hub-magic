@@ -109,7 +109,17 @@ interface Contrato {
   motivo_bloqueio?: string | null;
   vigente?: boolean | null;
   substituido_por?: string | null;
+  declarado_assinado?: boolean | null;
+  origem_leitura?: string | null;
   [k: string]: unknown;
+}
+
+interface Evento {
+  tipo: string | null;
+  detalhe: Record<string, unknown> | null;
+  usuario: string | null;
+  usuario_email: string | null;
+  criado_em: string | null;
 }
 
 interface Vigencia {
