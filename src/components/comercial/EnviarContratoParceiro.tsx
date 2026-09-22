@@ -85,6 +85,25 @@ export interface EnviarContratoParceiroProps {
 const pct = (v?: number | null) =>
   v == null ? "—" : `${(v * 100).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`;
 
+function PctDemais({
+  pctDemais,
+  pctGarantia,
+}: {
+  pctDemais?: number | null;
+  pctGarantia?: number | null;
+}) {
+  if (pctDemais != null) return <>{pct(pctDemais)}</>;
+  if (pctGarantia != null) {
+    return (
+      <>
+        {pct(pctGarantia)}{" "}
+        <span className="text-muted-foreground">(herdado de Garantia)</span>
+      </>
+    );
+  }
+  return <>—</>;
+}
+
 const dia = (v?: string | null) =>
   v ? new Date(`${v.slice(0, 10)}T12:00:00`).toLocaleDateString("pt-BR") : "—";
 
