@@ -54,6 +54,7 @@ type LiberacaoPendente = {
   ano?: number | null;
   mes?: number | null;
   justificativa?: string | null;
+  nome_de_acordo?: string | null;
   email_de_acordo?: string | null;
   anexo_path?: string | null;
   anexo_nome?: string | null;
@@ -1126,7 +1127,9 @@ function PainelLiberacoes({ pendentes }: { pendentes: LiberacaoPendente[] }) {
                   <p className="mt-2 text-sm">
                     <span className="text-xs text-gray-500">De Acordo de </span>
                     <span className="font-semibold" style={{ color: NAVY }}>
-                      {p.email_de_acordo ?? "—"}
+                      {p.nome_de_acordo
+                        ? `${p.nome_de_acordo}${p.email_de_acordo ? ` (${p.email_de_acordo})` : ""}`
+                        : (p.email_de_acordo ?? "—")}
                     </span>
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">

@@ -98,6 +98,7 @@ export function PedirLiberacaoSemContrato({
           p_ano: ano,
           p_mes: mes,
           p_justificativa: justificativa.trim(),
+          p_nome_de_acordo: nome.trim(),
           p_email_de_acordo: email.trim(),
           p_anexo_path: path,
           p_anexo_nome: arquivo.name,
@@ -127,8 +128,8 @@ export function PedirLiberacaoSemContrato({
         </DialogHeader>
 
         <p className="text-sm text-muted-foreground">
-          Este parceiro não tem contrato assinado no Hub. Para liberar o envio, anexe o De Acordo do
-          Jurídico ou da diretoria. O Financeiro confere e aprova.
+          Este parceiro não tem contrato assinado no Hub. Anexe o De Acordo do Jurídico ou da
+          diretoria. O Financeiro analisa e pode aprovar ou não aprovar.
         </p>
 
         <div className="space-y-1 text-sm">
@@ -153,10 +154,23 @@ export function PedirLiberacaoSemContrato({
               onChange={(e) => setJustificativa(e.target.value)}
               placeholder="Explique por que este repasse precisa sair sem contrato assinado."
             />
+            <p className="text-xs text-muted-foreground">
+              Explique por que este parceiro precisa ser liberado sem contrato.
+            </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="lib-email">E-mail de quem deu o De Acordo</Label>
+            <Label htmlFor="lib-nome">Nome de quem deu o De Acordo</Label>
+            <Input
+              id="lib-nome"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              placeholder="Nome completo"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="lib-email">E-mail comprobatório do De Acordo</Label>
             <Input
               id="lib-email"
               type="email"
