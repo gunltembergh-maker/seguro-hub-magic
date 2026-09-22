@@ -166,6 +166,16 @@ export function UserDetailSheet({ user, open, onOpenChange, abaInicial, onEdit, 
             </div>
           </TabsContent>
 
+          <TabsContent value="permissoes" className="px-6 pb-6 mt-4 space-y-4">
+            <div className="space-y-1">
+              <h3 className="text-sm font-semibold">Permissões deste usuário</h3>
+              <p className="text-xs text-muted-foreground">
+                Exceções valem só para ele e ganham do perfil. Herda significa seguir o perfil.
+              </p>
+            </div>
+            <PainelPermissoesUsuario userId={user.user_id} userNome={user.full_name ?? user.email} />
+          </TabsContent>
+
           <TabsContent value="convites" className="px-6 pb-6 mt-4">
             <div className="mb-4 space-y-1">
               <h3 className="text-sm font-semibold">Ações de convite</h3>
