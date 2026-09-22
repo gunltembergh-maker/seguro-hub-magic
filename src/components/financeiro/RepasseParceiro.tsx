@@ -897,6 +897,11 @@ export function RepasseParceiro() {
         </div>
       )}
 
+      {/* Liberações excepcionais pendentes: só para o aprovador designado */}
+      {pendentesDoAprovador.length > 0 && (
+        <PainelLiberacoes pendentes={pendentesDoAprovador} />
+      )}
+
       {/* BLOCO 2 + 3: quadro e rodapé */}
       <div className="rounded-xl border bg-white shadow-sm" style={{ borderColor: BORDER }}>
         <div className="border-b px-5 py-4" style={{ borderColor: BORDER }}>
