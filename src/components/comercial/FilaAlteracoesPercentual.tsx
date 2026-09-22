@@ -317,6 +317,12 @@ export function FilaAlteracoesPercentual({ semCard = false }: { semCard?: boolea
             />
           </div>
 
+          {erro ? (
+            <Alert variant="destructive">
+              <AlertDescription>{erro}</AlertDescription>
+            </Alert>
+          ) : null}
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setRecusando(null)} disabled={salvando}>
               Cancelar
