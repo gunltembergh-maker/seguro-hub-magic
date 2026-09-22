@@ -296,6 +296,12 @@ export default function CanalParceirosTela() {
     staleTime: 60_000,
   });
 
+  const percentuais = useQuery({
+    queryKey: ["canal-parceiro-percentuais"],
+    queryFn: () => rpc<PercentualCanal>("rpc_canal_parceiro_percentuais"),
+    staleTime: 60_000,
+  });
+
   const contratosTodos = useQuery({
     queryKey: ["canal-parceiro-contratos", null],
     queryFn: () => rpc<Contrato>("rpc_canal_parceiro_contratos", { p_canal_id: null }),
