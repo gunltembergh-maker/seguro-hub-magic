@@ -51,6 +51,7 @@ interface Props {
   user: AdminUserV2 | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  abaInicial?: string;
   onEdit?: (u: AdminUserV2) => void;
   onBlock?: (u: AdminUserV2) => void;
   onDelete?: (u: AdminUserV2) => void;
