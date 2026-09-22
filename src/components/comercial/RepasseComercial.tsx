@@ -6,7 +6,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
-import { AlertTriangle, Download, FileSearch, FileText, Loader2, Lock, Send } from "lucide-react";
+import {
+  AlertTriangle,
+  Download,
+  FileSearch,
+  FileText,
+  Loader2,
+  Lock,
+  MoreHorizontal,
+  Send,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -39,8 +48,13 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -471,6 +485,7 @@ function LinhaRepasse({
   const [aceso, setAceso] = useState(false);
   const [agora, setAgora] = useState(() => Date.now());
   const [cancelando, setCancelando] = useState(false);
+  const [confirmarCancelar, setConfirmarCancelar] = useState(false);
 
   useEffect(() => {
     if (!destacar) return;
