@@ -37,8 +37,10 @@ export function useMeuPerfil() {
 
 export function hasPermission(perfil: MeuPerfil | null | undefined, key: string) {
   if (!perfil) return false;
-  if (perfil.roles.includes("ADMIN")) return true;
-  return perfil.permissoes[key] === true;
+  const valor = perfil.permissoes[key];
+  // Chave fora do catálogo: mantém o comportamento antigo, ADMIN vê tudo.
+  if (valor === undefined) return perfil.roles.includes("ADMIN");
+  return valor === true;
 }
 
 export function hasRole(perfil: MeuPerfil | null | undefined, role: AppRole) {
