@@ -262,6 +262,15 @@ export function DemandasRepasseNF() {
           setNaoPagou(null);
         }}
       />
+      <DetalheRepasseCiclo
+        aberto={relacao !== null}
+        onFechar={() => setRelacao(null)}
+        canal={relacao?.chave_planilha ?? ""}
+        parceiro={relacao?.parceiro ?? ""}
+        ano={relacao?.ciclo_ano ?? 0}
+        mes={relacao?.ciclo_mes ?? 1}
+        valorDoPedido={relacao?.valor_total ?? undefined}
+      />
     </>
   );
 }
