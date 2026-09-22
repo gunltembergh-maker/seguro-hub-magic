@@ -208,10 +208,20 @@ async function handle(request: Request): Promise<Response> {
     if (podeVer !== true) return json({ erro: "Sem permissao para enviar contrato" }, 403);
 
     const body = await request.json().catch(() => null) as
-      { path?: string; arquivo_nome?: string; canal_id?: string | null } | null;
+      {
+        path?: string;
+        arquivo_nome?: string;
+        canal_id?: string | null;
+        declarado_assinado?: boolean;
+        texto_ocr?: string;
+        dados_manuais?: DadosManuais;
+      } | null;
     const path = body?.path;
     const arquivoNome: string = body?.arquivo_nome ?? path?.split("/").pop() ?? "contrato.pdf";
     const canalId: string | null = body?.canal_id ?? null;
+    const declaradoAssinado = body?.declarado_assinado === true;
+    const textoOcr = typeof body?.texto_ocr === "string" ? body.texto_ocr : null;
+    const manuais = body?.dados_manuais ?? null;
     if (!path) return json({ erro: "Informe o path do arquivo" }, 400);
 
     const { lavoroAdmin } = await import("@/integrations/supabase/lavoro-admin.server");
