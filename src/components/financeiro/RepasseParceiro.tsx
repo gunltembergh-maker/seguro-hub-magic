@@ -1133,15 +1133,43 @@ function mesAnoISO(iso: string) {
 
 function ExportBtn({
   canal,
+  situacao,
   exportando,
   bloqueado,
   onExport,
+  onBloqueado,
 }: {
   canal: string;
+  situacao?: SituacaoContrato | null;
   exportando: boolean;
   bloqueado: boolean;
   onExport: (canal: string, modo: ModoExport) => void;
+  onBloqueado: (canal: string) => void;
 }) {
+  const travado = situacao?.pode_exportar !== true;
+
+  if (travado) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => onBloqueado(canal)}
+              className="h-6 gap-1 border-amber-500/60 px-2 text-[11px] font-semibold text-amber-700 hover:bg-amber-50 hover:text-amber-800"
+            >
+              <Lock className="h-3 w-3" />
+              Sem contrato
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{motivoBloqueio(situacao)}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
