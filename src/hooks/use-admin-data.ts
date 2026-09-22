@@ -77,12 +77,23 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
     ],
   },
   {
+    title: "Entrada de Demandas",
+    items: [
+      { key: "menu_entrada_demandas", label: "Entrada de Demandas", desc: "Porta única de registro de demandas de todos os ramos" },
+      { key: "entrada_cadastrar_canal", label: "↳ Cadastrar canal novo", desc: "Incluir canal/parceiro novo na lista", child: true },
+      { key: "entrada_definir_responsavel", label: "↳ Definir responsável pelo cliente", desc: "Atribuir ou trocar o responsável de um cliente", child: true },
+    ],
+  },
+  {
     title: "Ramos",
     items: [
       { key: "menu_ramo_garantia", label: "Garantia", desc: "Controle mestre do grupo Garantia" },
       { key: "menu_garantia_operacional", label: "↳ Operacional", desc: "Análise de limite / auditoria T&C", child: true },
       { key: "menu_garantia_analise_processos", label: "↳ Análise de Processos", desc: "Fila de originação por processo (requer também Originação (Garantia))", child: true },
       { key: "menu_garantia_formulario_admin", label: "↳ Formulário Admin", desc: "Sub-item de Garantia — consulta das demandas recebidas pelo formulário público de Garantia Judicial", child: true },
+      { key: "menu_garantia_negociacao", label: "↳ Negociação", desc: "Pipeline de negociação do ramo Garantia", child: true },
+      { key: "menu_garantia_crm", label: "↳ CRM", desc: "CRM pós-aceite e apólices de Garantia", child: true },
+      { key: "menu_garantia_painel", label: "↳ Painel da Gerência", desc: "Gargalos, tempos e conversão — restrito à gerência", child: true },
       { key: "menu_ramo_beneficios", label: "Benefícios" },
       { key: "menu_ramo_demais", label: "Demais Ramos" },
     ],
