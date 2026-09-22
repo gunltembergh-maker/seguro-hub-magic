@@ -1123,7 +1123,26 @@ function PainelLiberacoes({ pendentes }: { pendentes: LiberacaoPendente[] }) {
                     Pedido por {p.solicitado_por_nome ?? p.solicitado_por_email ?? "—"}
                   </p>
                   <p className="mt-2 text-sm text-gray-700">{p.justificativa ?? "Sem justificativa."}</p>
-                  <div className="mt-3 flex gap-2">
+                  <p className="mt-2 text-sm">
+                    <span className="text-xs text-gray-500">De Acordo de </span>
+                    <span className="font-semibold" style={{ color: NAVY }}>
+                      {p.email_de_acordo ?? "—"}
+                    </span>
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {p.anexo_path ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => verDeAcordo(p)}
+                        disabled={abrindoAnexo !== null}
+                      >
+                        {abrindoAnexo === p.liberacao_id && (
+                          <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                        )}
+                        Ver o De Acordo
+                      </Button>
+                    ) : null}
                     <Button
                       size="sm"
                       onClick={() => decidir(p.liberacao_id, true)}
