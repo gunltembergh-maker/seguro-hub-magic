@@ -7841,6 +7841,10 @@ export type Database = {
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      super_admin_liberado: {
+        Args: { p_area?: string; p_minutos?: number }
+        Returns: boolean
+      }
       tem_permissao: {
         Args: { p_chave: string; p_user?: string }
         Returns: boolean

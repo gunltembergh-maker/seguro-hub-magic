@@ -27,7 +27,6 @@ import {
 import {
   FilaAlteracoesPercentual,
   useAlteracoesPercentual,
-  type Alteracao,
 } from "@/components/comercial/FilaAlteracoesPercentual";
 import { SolicitarAlteracaoPercentual } from "@/components/comercial/SolicitarAlteracaoPercentual";
 import { RepasseComercial } from "@/components/comercial/RepasseComercial";
@@ -148,6 +147,21 @@ interface Vigencia {
   dias_para_vencer: number | null;
   situacao: string | null;
   aviso_60_enviado_em: string | null;
+}
+
+/** Percentuais já resolvidos no banco — a mesma fonte que a exportação usa. */
+interface PercentualCanal {
+  chave_planilha: string | null;
+  canal_id: string | null;
+  parceiro: string | null;
+  pct_beneficios: number | null;
+  pct_garantia: number | null;
+  pct_demais: number | null;
+  origem_beneficios: string | null;
+  origem_garantia: string | null;
+  origem_demais: string | null;
+  autorizado_em: string | null;
+  minimo_repasse: number | null;
 }
 
 /* --------------------------------------------------------------- formatos */
@@ -282,6 +296,12 @@ export default function CanalParceirosTela() {
     staleTime: 60_000,
   });
 
+  const percentuais = useQuery({
+    queryKey: ["canal-parceiro-percentuais"],
+    queryFn: () => rpc<PercentualCanal>("rpc_canal_parceiro_percentuais"),
+    staleTime: 60_000,
+  });
+
   const contratosTodos = useQuery({
     queryKey: ["canal-parceiro-contratos", null],
     queryFn: () => rpc<Contrato>("rpc_canal_parceiro_contratos", { p_canal_id: null }),
@@ -335,6 +355,7 @@ export default function CanalParceirosTela() {
     queryClient.invalidateQueries({ queryKey: ["canal-parceiro-lista"] });
     queryClient.invalidateQueries({ queryKey: ["canal-parceiro-vigencias"] });
     queryClient.invalidateQueries({ queryKey: ["canal-parceiro-contratos"] });
+    queryClient.invalidateQueries({ queryKey: ["canal-parceiro-percentuais"] });
   }
 
   const linhasSituacao = situacoes.data ?? [];
@@ -357,29 +378,39 @@ export default function CanalParceirosTela() {
     return m;
   }, [linhasSituacao]);
 
+  /** Percentuais resolvidos no banco (contrato ou diretoria), por canal_id. */
+  const pctPorCanalId = useMemo(() => {
+    const m = new Map<string, PercentualCanal>();
+    for (const p of percentuais.data ?? []) if (p.canal_id) m.set(p.canal_id, p);
+    return m;
+  }, [percentuais.data]);
+
+  /** Mesmos percentuais, por chave normalizada do canal — alimenta a tabela de repasse. */
   const pctPorChave = useMemo(() => {
     const m = new Map<
       string,
-      { beneficios: number | null; garantia: number | null; demais: number | null }
+      {
+        beneficios: number | null;
+        garantia: number | null;
+        demais: number | null;
+        origemBeneficios: string | null;
+        origemGarantia: string | null;
+        origemDemais: string | null;
+      }
     >();
-    for (const s of linhasSituacao) {
-      if (!s.chave_planilha) continue;
-      m.set(chaveCanal(s.chave_planilha), {
-        beneficios: s.pct_beneficios,
-        garantia: s.pct_garantia,
-        demais: s.pct_demais_efetivo,
+    for (const p of percentuais.data ?? []) {
+      if (!p.chave_planilha) continue;
+      m.set(chaveCanal(p.chave_planilha), {
+        beneficios: p.pct_beneficios,
+        garantia: p.pct_garantia,
+        demais: p.pct_demais,
+        origemBeneficios: p.origem_beneficios,
+        origemGarantia: p.origem_garantia,
+        origemDemais: p.origem_demais,
       });
     }
     return m;
-  }, [linhasSituacao]);
-
-  /** Autorizações da diretoria em vigor: é o percentual que a exportação usa. */
-  const alteracoesAprovadas = useAlteracoesPercentual("APROVADA");
-  const aprovadaPorCanal = useMemo(() => {
-    const m = new Map<string, Alteracao>();
-    for (const a of alteracoesAprovadas.data ?? []) if (a.canal_id) m.set(a.canal_id, a);
-    return m;
-  }, [alteracoesAprovadas.data]);
+  }, [percentuais.data]);
 
   /** Base da tabela: parceiros cadastrados + canais da planilha ainda sem parceiro. */
   const linhas = useMemo(() => {
@@ -580,9 +611,8 @@ export default function CanalParceirosTela() {
                       </TableRow>
                     ) : (
                       linhas.map((l) => {
-                        const demaisHerdado = l.s?.pct_demais == null && l.s?.pct_garantia != null;
                         const dias = l.s?.dias_para_vencer ?? null;
-                        const aut = l.canalId ? (aprovadaPorCanal.get(l.canalId) ?? null) : null;
+                        const pcts = l.canalId ? (pctPorCanalId.get(l.canalId) ?? null) : null;
                         return (
                           <TableRow
                             key={l.chave}
@@ -638,35 +668,20 @@ export default function CanalParceirosTela() {
                               )}
                             </TableCell>
                             <CelulaPct
-                              contrato={l.s?.pct_beneficios}
-                              autorizado={aut?.pct_beneficios ?? null}
-                              autorizadoEm={aut?.aprovado_em ?? null}
+                              valor={pcts?.pct_beneficios}
+                              origem={pcts?.origem_beneficios}
+                              autorizadoEm={pcts?.autorizado_em}
                             />
                             <CelulaPct
-                              contrato={l.s?.pct_garantia}
-                              autorizado={aut?.pct_garantia ?? null}
-                              autorizadoEm={aut?.aprovado_em ?? null}
+                              valor={pcts?.pct_garantia}
+                              origem={pcts?.origem_garantia}
+                              autorizadoEm={pcts?.autorizado_em}
                             />
-                            {(() => {
-                              const autorizadoDemais = aut?.pct_demais ?? aut?.pct_garantia ?? null;
-                              const herdadoDeGarantia =
-                                autorizadoDemais != null &&
-                                aut?.pct_demais == null &&
-                                aut?.pct_garantia != null;
-                              return (
-                                <CelulaPct
-                                  contrato={l.s?.pct_demais_efetivo}
-                                  autorizado={autorizadoDemais}
-                                  autorizadoEm={aut?.aprovado_em ?? null}
-                                  herdadoDeGarantia={herdadoDeGarantia}
-                                  rodape={
-                                    autorizadoDemais == null && demaisHerdado
-                                      ? "herdado de Garantia"
-                                      : null
-                                  }
-                                />
-                              );
-                            })()}
+                            <CelulaPct
+                              valor={pcts?.pct_demais}
+                              origem={pcts?.origem_demais}
+                              autorizadoEm={pcts?.autorizado_em}
+                            />
                             <TableCell className="text-sm text-muted-foreground">
                               {l.origem}
                             </TableCell>
@@ -796,39 +811,31 @@ const rotuloStatusAlteracao: Record<string, string> = {
   SUPERADA: "Superada",
 };
 
-/** Percentual do contrato — ou o autorizado pela diretoria, que é o que vale. */
+/** Percentual já resolvido no banco; o selo marca o que veio da diretoria. */
 function CelulaPct({
-  contrato,
-  autorizado,
+  valor,
+  origem,
   autorizadoEm,
-  herdadoDeGarantia,
-  rodape,
 }: {
-  contrato?: number | null;
-  autorizado?: number | null;
+  valor?: number | null;
+  origem?: string | null;
   autorizadoEm?: string | null;
-  herdadoDeGarantia?: boolean;
-  rodape?: string | null;
 }) {
-  const temAutorizacao = autorizado != null;
-  const title = herdadoDeGarantia
-    ? `Autorizado pela diretoria em ${dia(autorizadoEm)} (percentual de Garantia, herdado para Demais ramos) · contrato: ${pct(contrato)}`
-    : `Autorizado pela diretoria em ${dia(autorizadoEm)} · contrato: ${pct(contrato)}`;
+  const diretoria = origem === "DIRETORIA";
   return (
     <TableCell className="tabular-nums">
       <span className="inline-flex items-center gap-1.5">
-        {pct(temAutorizacao ? autorizado : contrato)}
-        {temAutorizacao ? (
+        {pct(valor)}
+        {diretoria ? (
           <Badge
             variant="outline"
             className="border-amber-600/40 bg-amber-50 px-1.5 py-0 text-[10px] text-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
-            title={title}
+            title={`Autorizado pela diretoria em ${dia(autorizadoEm)}`}
           >
             diretoria
           </Badge>
         ) : null}
       </span>
-      {rodape ? <div className="text-xs text-muted-foreground">{rodape}</div> : null}
     </TableCell>
   );
 }

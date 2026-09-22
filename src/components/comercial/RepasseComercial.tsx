@@ -177,7 +177,14 @@ export function RepasseComercial({
   podeExportarPorChave: Map<string, boolean>;
   pctPorChave: Map<
     string,
-    { beneficios: number | null; garantia: number | null; demais: number | null }
+    {
+      beneficios: number | null;
+      garantia: number | null;
+      demais: number | null;
+      origemBeneficios: string | null;
+      origemGarantia: string | null;
+      origemDemais: string | null;
+    }
   >;
 }) {
   const ciclo = useMemo(() => cicloPadrao(new Set<string>()), []);
@@ -491,7 +498,14 @@ function LinhaRepasse({
   canal: string;
   razaoSocial: string | null;
   percentuais:
-    | { beneficios: number | null; garantia: number | null; demais: number | null }
+    | {
+        beneficios: number | null;
+        garantia: number | null;
+        demais: number | null;
+        origemBeneficios: string | null;
+        origemGarantia: string | null;
+        origemDemais: string | null;
+      }
     | undefined;
   primeiraLinha: boolean;
   cicloCorrente: number;
@@ -714,7 +728,14 @@ function PercentualRepasse({
   percentuais,
 }: {
   percentuais:
-    | { beneficios: number | null; garantia: number | null; demais: number | null }
+    | {
+        beneficios: number | null;
+        garantia: number | null;
+        demais: number | null;
+        origemBeneficios: string | null;
+        origemGarantia: string | null;
+        origemDemais: string | null;
+      }
     | undefined;
 }) {
   if (!percentuais) return <span className="text-muted-foreground">—</span>;
@@ -722,22 +743,51 @@ function PercentualRepasse({
     valor == null
       ? "—"
       : `${(valor * 100).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`;
+  const rotuloOrigem = (origem: string | null) =>
+    origem === "DIRETORIA" ? " (diretoria)" : origem === "CONTRATO" ? " (contrato)" : "";
   const valores = [percentuais.beneficios, percentuais.garantia, percentuais.demais];
   const disponiveis = valores.filter((v): v is number => v != null);
   if (disponiveis.length === 0) return <span className="text-muted-foreground">—</span>;
   const unicos = Array.from(new Set(disponiveis));
   const resumo = unicos.map(formatar).join(" / ");
-  if (unicos.length === 1 && disponiveis.length === 3) return <span>{resumo}</span>;
+  const temDiretoria =
+    percentuais.origemBeneficios === "DIRETORIA" ||
+    percentuais.origemGarantia === "DIRETORIA" ||
+    percentuais.origemDemais === "DIRETORIA";
+  const seloDiretoria = temDiretoria ? (
+    <Badge
+      variant="outline"
+      className="border-amber-600/40 bg-amber-50 px-1.5 py-0 text-[10px] text-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
+      title="Percentual autorizado pela diretoria"
+    >
+      diretoria
+    </Badge>
+  ) : null;
+  if (unicos.length === 1 && disponiveis.length === 3) {
+    return (
+      <span className="inline-flex items-center justify-end gap-1.5">
+        {resumo}
+        {seloDiretoria}
+      </span>
+    );
+  }
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span className="cursor-help underline decoration-dotted underline-offset-4">{resumo}</span>
-      </TooltipTrigger>
-      <TooltipContent>
-        Benefícios {formatar(percentuais.beneficios)}, Garantia {formatar(percentuais.garantia)},
-        Demais ramos {formatar(percentuais.demais)}
-      </TooltipContent>
-    </Tooltip>
+    <span className="inline-flex items-center justify-end gap-1.5">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="cursor-help underline decoration-dotted underline-offset-4">
+            {resumo}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>
+          Benefícios {formatar(percentuais.beneficios)}
+          {rotuloOrigem(percentuais.origemBeneficios)}, Garantia {formatar(percentuais.garantia)}
+          {rotuloOrigem(percentuais.origemGarantia)}, Demais ramos {formatar(percentuais.demais)}
+          {rotuloOrigem(percentuais.origemDemais)}
+        </TooltipContent>
+      </Tooltip>
+      {seloDiretoria}
+    </span>
   );
 }
 
