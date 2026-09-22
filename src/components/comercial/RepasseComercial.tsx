@@ -327,6 +327,7 @@ export function RepasseComercial({
                         onPedir={() =>
                           setPedido({ canal: l.canal, linhas: l.parcelas, valor: l.cicloCorrente })
                         }
+                        onVerRelacao={() => setRelacao(l.canal)}
                       />
                     );
                   })
@@ -348,6 +349,18 @@ export function RepasseComercial({
           void queryClient.invalidateQueries({ queryKey: ["canal-repasse-demandas"] });
           setPedido(null);
         }}
+        onVerRelacao={() => setRelacao(pedido?.canal ?? null)}
+      />
+
+      <DetalheRepasseCiclo
+        aberto={relacao !== null}
+        onFechar={() => setRelacao(null)}
+        canal={relacao ?? ""}
+        parceiro={relacao ?? ""}
+        ano={ciclo.ano}
+        mes={ciclo.mes}
+        modoDados="PROVISIONADO"
+        situacaoRepasse={null}
       />
     </Card>
   );
