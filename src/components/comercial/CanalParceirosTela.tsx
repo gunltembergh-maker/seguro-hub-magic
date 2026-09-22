@@ -1008,6 +1008,8 @@ function DetalheParceiro({
             })
           )}
         </div>
+
+        <Historico canalId={canalId} />
       </SheetContent>
     </Sheet>
   );
