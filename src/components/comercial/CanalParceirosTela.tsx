@@ -633,6 +633,13 @@ export default function CanalParceirosTela() {
 
 /* ------------------------------------------------------------------- KPI */
 
+const rotuloStatusAlteracao: Record<string, string> = {
+  PENDENTE: "Aguardando aprovação",
+  APROVADA: "Aprovada",
+  RECUSADA: "Recusada",
+  SUPERADA: "Superada",
+};
+
 /** Percentual do contrato — ou o autorizado pela diretoria, que é o que vale. */
 function CelulaPct({
   contrato,
