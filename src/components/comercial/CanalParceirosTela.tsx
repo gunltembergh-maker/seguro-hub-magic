@@ -377,29 +377,39 @@ export default function CanalParceirosTela() {
     return m;
   }, [linhasSituacao]);
 
+  /** Percentuais resolvidos no banco (contrato ou diretoria), por canal_id. */
+  const pctPorCanalId = useMemo(() => {
+    const m = new Map<string, PercentualCanal>();
+    for (const p of percentuais.data ?? []) if (p.canal_id) m.set(p.canal_id, p);
+    return m;
+  }, [percentuais.data]);
+
+  /** Mesmos percentuais, por chave normalizada do canal — alimenta a tabela de repasse. */
   const pctPorChave = useMemo(() => {
     const m = new Map<
       string,
-      { beneficios: number | null; garantia: number | null; demais: number | null }
+      {
+        beneficios: number | null;
+        garantia: number | null;
+        demais: number | null;
+        origemBeneficios: string | null;
+        origemGarantia: string | null;
+        origemDemais: string | null;
+      }
     >();
-    for (const s of linhasSituacao) {
-      if (!s.chave_planilha) continue;
-      m.set(chaveCanal(s.chave_planilha), {
-        beneficios: s.pct_beneficios,
-        garantia: s.pct_garantia,
-        demais: s.pct_demais_efetivo,
+    for (const p of percentuais.data ?? []) {
+      if (!p.chave_planilha) continue;
+      m.set(chaveCanal(p.chave_planilha), {
+        beneficios: p.pct_beneficios,
+        garantia: p.pct_garantia,
+        demais: p.pct_demais,
+        origemBeneficios: p.origem_beneficios,
+        origemGarantia: p.origem_garantia,
+        origemDemais: p.origem_demais,
       });
     }
     return m;
-  }, [linhasSituacao]);
-
-  /** Autorizações da diretoria em vigor: é o percentual que a exportação usa. */
-  const alteracoesAprovadas = useAlteracoesPercentual("APROVADA");
-  const aprovadaPorCanal = useMemo(() => {
-    const m = new Map<string, Alteracao>();
-    for (const a of alteracoesAprovadas.data ?? []) if (a.canal_id) m.set(a.canal_id, a);
-    return m;
-  }, [alteracoesAprovadas.data]);
+  }, [percentuais.data]);
 
   /** Base da tabela: parceiros cadastrados + canais da planilha ainda sem parceiro. */
   const linhas = useMemo(() => {
