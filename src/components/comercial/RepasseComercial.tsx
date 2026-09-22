@@ -8,7 +8,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
 import {
-  AlertTriangle,
   Download,
   FileSearch,
   FileText,
@@ -29,7 +28,7 @@ import { cicloPadrao } from "@/lib/repasse/ciclo-datas";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -332,20 +331,15 @@ export function RepasseComercial({
       </CardHeader>
       <CardContent className="space-y-4">
         {estadoCiclo && !estadoCiclo.data_prevista ? (
-          <Alert className="border-amber-600/40 bg-amber-50 text-amber-900">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Ciclo sem data de pagamento</AlertTitle>
-            <AlertDescription>
-              O Financeiro ainda não definiu a data prevista deste ciclo. Sem ela a relação não pode
-              ser enviada aos parceiros.
-            </AlertDescription>
-          </Alert>
+          <p className="text-sm text-muted-foreground">
+            A data prevista de pagamento é definida pelo Financeiro ao autorizar cada envio.
+          </p>
         ) : estadoCiclo ? (
           <p className="text-sm text-muted-foreground">
             Pagamento previsto para{" "}
             <strong className="text-foreground">{fmtBR(estadoCiclo.data_prevista)}</strong>
             {estadoCiclo.definida_por_nome ? `, definido por ${estadoCiclo.definida_por_nome}` : ""}
-            .
+            , usada como padrão quando o Financeiro não informar outra.
           </p>
         ) : null}
 
