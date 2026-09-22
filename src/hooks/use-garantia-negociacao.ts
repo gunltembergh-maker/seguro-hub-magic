@@ -11,6 +11,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { pendenciasEtapa2, pendenciasEtapa3b } from "@/lib/garantia/documentos-regra";
+// Só o tipo: o contexto do CRM é carregado pelo hook do CRM, que por sua vez
+// reusa `carregarTiposPresentes` daqui. Import de tipo não cria ciclo.
+import type { ContextoCrm } from "@/hooks/use-garantia-crm";
 
 
 export type ProdutoGarantia = "seguro_garantia" | "fianca_locaticia";
