@@ -103,6 +103,7 @@ interface Contrato {
   pct_beneficios?: number | null;
   pct_garantia?: number | null;
   pct_demais?: number | null;
+  pct_demais_efetivo?: number | null;
   hash_sha256?: string | null;
   hash?: string | null;
   situacao?: string | null;
