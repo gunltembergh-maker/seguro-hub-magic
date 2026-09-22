@@ -197,6 +197,12 @@ export async function exportarRepasse(opts: {
     ...(dataPrevista
       ? [{ rotulo: "Data prevista de pagamento", valor: fmtBR(dataPrevista) }]
       : []),
+    ...(modo === "PARCEIRO" && autorizacao?.rotulo_status
+      ? [{ rotulo: "Status do repasse", valor: autorizacao.rotulo_status }]
+      : []),
+    ...(modo === "PARCEIRO" && autorizacao?.aprovado_por_nome
+      ? [{ rotulo: "Autorizado por", valor: autorizacao.aprovado_por_nome }]
+      : []),
     ...(autorizacao?.base === "LIBERACAO_EXCEPCIONAL"
       ? [{ rotulo: "Liberado por", valor: autorizacao.liberado_por ?? "" }]
       : []),
