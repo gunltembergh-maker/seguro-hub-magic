@@ -665,8 +665,9 @@ export default function CanalParceirosTela() {
           </div>
         </CardContent>
       </Card>
+        </TabsContent>
 
-      {/* vigências */}
+        <TabsContent value="vigencias">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -728,6 +729,8 @@ export default function CanalParceirosTela() {
           </div>
         </CardContent>
       </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* diálogos */}
       <NovoParceiro
