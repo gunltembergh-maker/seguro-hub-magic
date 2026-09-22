@@ -553,31 +553,17 @@ function LinhaRepasse({
       </TableCell>
       <TableCell className="text-right">
         <div className="flex flex-wrap items-center justify-end gap-1">
-          <Button size="sm" variant="outline" title="Ver a relação" onClick={onVerRelacao}>
-            <FileSearch className="mr-2 h-4 w-4" />
-            Ver a relação
-          </Button>
-          <Button size="sm" variant="outline" title="Ver o contrato" onClick={onVerContrato}>
-            <FileText className="mr-2 h-4 w-4" />
-            Ver o contrato
-          </Button>
-        {!liberado ? (
-          <>
+          {!liberado ? (
             <Badge variant="outline" className="gap-1 text-muted-foreground">
               <Lock className="h-3 w-3" />
               Sem contrato válido
             </Badge>
-            <Button size="sm" variant="outline" onClick={onPedirLiberacao}>
-              Pedir liberação sem contrato
+          ) : !demanda ? (
+            <Button size="sm" variant="default" onClick={onPedir} disabled={cicloCorrente <= 0}>
+              <Send className="mr-2 h-4 w-4" />
+              Enviar ao financeiro
             </Button>
-          </>
-        ) : !demanda ? (
-          <Button size="sm" variant="default" onClick={onPedir} disabled={cicloCorrente <= 0}>
-            <Send className="mr-2 h-4 w-4" />
-            Enviar ao financeiro
-          </Button>
-        ) : situacao === "PENDENTE" ? (
-          <>
+          ) : situacao === "PENDENTE" ? (
             <Tooltip>
               <TooltipTrigger asChild>
                 <span>
@@ -591,57 +577,85 @@ function LinhaRepasse({
                 {demanda.solicitado_por_nome ? ` por ${demanda.solicitado_por_nome}` : ""}
               </TooltipContent>
             </Tooltip>
-            {dentroDaJanela ? (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button size="sm" variant="ghost" disabled={cancelando}>
-                    {cancelando ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Cancelar envio ({contador})
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Cancelar o envio ao Financeiro?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      O pedido de {canal} sai da fila do Financeiro e você pode enviar de novo
-                      depois.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Voltar</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => void cancelar()}>
-                      Cancelar envio
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            ) : demanda.sou_o_solicitante === true ? (
-              <span className="text-xs text-muted-foreground">
-                Só o Financeiro pode desfazer agora
-              </span>
-            ) : null}
-          </>
-        ) : situacao === "RECUSADA" ? (
-          <Button size="sm" variant="outline" onClick={onPedir} disabled={bloqueado24h}>
-            <Send className="mr-2 h-4 w-4" />
-            {bloqueado24h ? `Novo envio em ${horasParaReenvio}h` : "Pedir de novo"}
-          </Button>
-        ) : (
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={exportando !== null || pago}
-            onClick={onExportar}
-          >
-            {exportando === canal ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Download className="mr-2 h-4 w-4" />
-            )}
-            Exportar ao parceiro
-          </Button>
-        )}
+          ) : situacao === "RECUSADA" ? (
+            <Button size="sm" variant="outline" onClick={onPedir} disabled={bloqueado24h}>
+              <Send className="mr-2 h-4 w-4" />
+              {bloqueado24h ? `Novo envio em ${horasParaReenvio}h` : "Pedir de novo"}
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={exportando !== null || pago}
+              onClick={onExportar}
+            >
+              {exportando === canal ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="mr-2 h-4 w-4" />
+              )}
+              Exportar ao parceiro
+            </Button>
+          )}
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="ghost" title="Mais ações">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={onVerRelacao}>
+                <FileSearch className="mr-2 h-4 w-4" />
+                Ver a relação
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={onVerContrato}>
+                <FileText className="mr-2 h-4 w-4" />
+                Ver o contrato
+              </DropdownMenuItem>
+              {!liberado ? (
+                <DropdownMenuItem onSelect={onPedirLiberacao}>
+                  <Lock className="mr-2 h-4 w-4" />
+                  Pedir liberação sem contrato
+                </DropdownMenuItem>
+              ) : null}
+              {dentroDaJanela ? (
+                <DropdownMenuItem
+                  disabled={cancelando}
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setConfirmarCancelar(true);
+                  }}
+                >
+                  {cancelando ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Cancelar envio ({contador})
+                </DropdownMenuItem>
+              ) : null}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <AlertDialog open={confirmarCancelar} onOpenChange={setConfirmarCancelar}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Cancelar o envio ao Financeiro?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  O pedido de {canal} sai da fila do Financeiro e você pode enviar de novo depois.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Voltar</AlertDialogCancel>
+                <AlertDialogAction onClick={() => void cancelar()}>
+                  Cancelar envio
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
+        {situacao === "PENDENTE" && !dentroDaJanela && demanda?.sou_o_solicitante === true ? (
+          <p className="mt-1 text-xs text-muted-foreground">
+            Só o Financeiro pode desfazer agora
+          </p>
+        ) : null}
         {parcelas > 0 ? (
           <p className="mt-1 text-xs text-muted-foreground">{parcelas} parcelas</p>
         ) : null}
