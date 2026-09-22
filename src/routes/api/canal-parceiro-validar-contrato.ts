@@ -239,7 +239,62 @@ async function handle(request: Request): Promise<Response> {
     const { text } = await extractText(pdf, { mergePages: true });
     const texto = Array.isArray(text) ? text.join("\n") : text;
 
-    const e = extrair(texto);
+    // Leitura do proprio servidor: e a UNICA fonte de assinatura, data e
+    // signatarios. Nada disso vem do navegador, em nenhum dos tres modos.
+    const leituraServidor = extrair(texto);
+
+    const legivel = textoLegivel(texto) &&
+      Boolean(
+        leituraServidor.vigencia_inicio ||
+        leituraServidor.pct_beneficios ||
+        leituraServidor.pct_garantia ||
+        leituraServidor.pct_demais,
+      );
+
+    let e = leituraServidor;
+    let origem: "TEXTO" | "OCR" | "MANUAL" = "TEXTO";
+
+    if (!legivel) {
+      if (textoOcr) {
+        const o = extrair(textoOcr);
+        origem = "OCR";
+        e = {
+          ...o,
+          // assinatura sempre da leitura do servidor
+          assinado: leituraServidor.assinado,
+          assinado_em: leituraServidor.assinado_em,
+          signatarios: leituraServidor.signatarios,
+        };
+      } else if (manuais) {
+        origem = "MANUAL";
+        e = {
+          ...leituraServidor,
+          nomes: manuais.razao_social
+            ? [manuais.razao_social, ...leituraServidor.nomes]
+            : leituraServidor.nomes,
+          cnpj: manuais.cnpj ?? leituraServidor.cnpj,
+          vigencia_inicio: manuais.vigencia_inicio ?? leituraServidor.vigencia_inicio,
+          vigencia_fim: manuais.vigencia_fim ?? leituraServidor.vigencia_fim,
+          pct_beneficios: manuais.pct_beneficios ?? leituraServidor.pct_beneficios,
+          pct_garantia: manuais.pct_garantia ?? leituraServidor.pct_garantia,
+          pct_demais: manuais.pct_demais ?? leituraServidor.pct_demais,
+          minimo: manuais.minimo ?? leituraServidor.minimo,
+          assinado: leituraServidor.assinado,
+          assinado_em: leituraServidor.assinado_em,
+          signatarios: leituraServidor.signatarios,
+        };
+      } else {
+        return json(
+          {
+            precisa_ocr: true,
+            paginas: pdf.numPages,
+            motivo:
+              "A camada de texto deste PDF está corrompida. Vou tentar reconhecer as páginas por imagem.",
+          },
+          200,
+        );
+      }
+    }
 
     const { data, error } = await admin.rpc("canal_parceiro_registrar_contrato", {
       p_nomes_do_contrato: e.nomes,
@@ -256,15 +311,20 @@ async function handle(request: Request): Promise<Response> {
       p_pct_garantia: e.pct_garantia,
       p_pct_demais: e.pct_demais,
       p_minimo: e.minimo,
-      p_extracao: { ...e, cnpj: e.cnpj, paginas: pdf.numPages },
+      p_extracao: { ...e, cnpj: e.cnpj, paginas: pdf.numPages, origem_leitura: origem },
       // sempre da sessão do servidor, nunca do corpo da requisição
       p_enviado_por: quem.user.id,
       p_canal_id: canalId,
-    });
+      p_declarado_assinado: declaradoAssinado,
+      p_origem_leitura: origem,
+    } as never);
     if (error) return json({ erro: error.message }, 400);
 
     const r = Array.isArray(data) ? data[0] : data;
-    return json({ resultado: r, extracao: e, hash, paginas: pdf.numPages }, 200);
+    return json(
+      { resultado: r, extracao: e, hash, paginas: pdf.numPages, origem_leitura: origem },
+      200,
+    );
   } catch (err) {
     return json({ erro: String(err) }, 500);
   }
