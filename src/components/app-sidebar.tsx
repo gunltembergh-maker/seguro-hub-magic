@@ -396,6 +396,20 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              {(isAdmin || hasPermission(meuPerfil, "menu_entrada_demandas")) && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(ENTRADA_ITEM.url)}
+                    tooltip={ENTRADA_ITEM.title}
+                  >
+                    <Link to={ENTRADA_ITEM.url}>
+                      <ENTRADA_ITEM.icon />
+                      <span>{ENTRADA_ITEM.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
               {(isAdmin || hasPermission(meuPerfil, "menu_reserva_posicoes")) && (
                 <SidebarMenuItem>
                   <SidebarMenuButton
