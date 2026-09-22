@@ -1124,6 +1124,8 @@ function Historico({ canalId }: { canalId: string | null }) {
                       <span className="text-muted-foreground">{String(d["arquivo_nome"])}</span>
                     ) : null}
                   </div>
+                ) : ev.tipo === "CONTRATO_CORRIGIDO" ? (
+                  <Correcao detalhe={d} />
                 ) : (
                   (() => {
                     const t = textoDetalhe(ev);
