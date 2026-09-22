@@ -377,7 +377,7 @@ function AdminUsuariosPage() {
                               <Button size="sm" variant="ghost" title="Editar" onClick={() => openEdit(u)}>
                                 <Pencil className="h-4 w-4" />
                               </Button>
-                              <Button size="sm" variant="ghost" title="Permissões" onClick={() => setPermissoesUser(u)}>
+                              <Button size="sm" variant="ghost" title="Permissões deste usuário" onClick={() => { setDetailUser(u); setDetailAba("permissoes"); }}>
                                 <ShieldCheck className="h-4 w-4" />
                               </Button>
                               <Button
