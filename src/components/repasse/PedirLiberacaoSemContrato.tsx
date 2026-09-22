@@ -61,6 +61,7 @@ export function PedirLiberacaoSemContrato({
   const queryClient = useQueryClient();
 
   const [justificativa, setJustificativa] = useState("");
+  const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [arquivo, setArquivo] = useState<File | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -68,12 +69,17 @@ export function PedirLiberacaoSemContrato({
   useEffect(() => {
     if (aberto) return;
     setJustificativa("");
+    setNome("");
     setEmail("");
     setArquivo(null);
   }, [aberto]);
 
   const podeEnviar =
-    justificativa.trim().length > 0 && emailValido(email) && arquivo !== null && !enviando;
+    justificativa.trim().length > 0 &&
+    nome.trim().length > 0 &&
+    emailValido(email) &&
+    arquivo !== null &&
+    !enviando;
 
   async function enviar() {
     if (!arquivo || !podeEnviar) return;
