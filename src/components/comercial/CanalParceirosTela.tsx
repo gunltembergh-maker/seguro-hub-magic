@@ -114,6 +114,10 @@ interface Contrato {
   substituido_por?: string | null;
   declarado_assinado?: boolean | null;
   origem_leitura?: string | null;
+  assinatura_atestada_por?: string | null;
+  assinatura_atestada_em?: string | null;
+  corrigido_por_nome?: string | null;
+  corrigido_em?: string | null;
   [k: string]: unknown;
 }
 
