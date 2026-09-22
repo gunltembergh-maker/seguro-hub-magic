@@ -1201,6 +1201,8 @@ function LinhaCanal({
   exportando,
   bloqueado,
   onExport,
+  situacao,
+  onBloqueado,
 }: {
   l: Linha;
   info?: { parcelas: number; maiorOrdem: number; maisAntigo: string | null };
@@ -1211,13 +1213,22 @@ function LinhaCanal({
   exportando: boolean;
   bloqueado: boolean;
   onExport: (canal: string, modo: ModoExport) => void;
+  situacao?: SituacaoContrato | null;
+  onBloqueado: (canal: string) => void;
 }) {
   return (
     <TableRow>
       <TableCell className="font-medium" style={{ color: navy }}>
         <div className="flex items-center gap-2">
           {l.canal}
-          <ExportBtn canal={l.canal} exportando={exportando} bloqueado={bloqueado} onExport={onExport} />
+          <ExportBtn
+            canal={l.canal}
+            situacao={situacao}
+            exportando={exportando}
+            bloqueado={bloqueado}
+            onExport={onExport}
+            onBloqueado={onBloqueado}
+          />
           {info && info.maiorOrdem >= 3 && info.maisAntigo && (
             <span
               className="inline-block h-2 w-2 rounded-full"
