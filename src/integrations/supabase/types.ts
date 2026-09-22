@@ -1376,7 +1376,9 @@ export type Database = {
           mensagem: string
           mostrar_nome_hub: boolean | null
           paginas: string[] | null
+          passos: Json | null
           perfis: string[] | null
+          tipo: string
           titulo: string
           updated_at: string
         }
@@ -1395,7 +1397,9 @@ export type Database = {
           mensagem: string
           mostrar_nome_hub?: boolean | null
           paginas?: string[] | null
+          passos?: Json | null
           perfis?: string[] | null
+          tipo?: string
           titulo: string
           updated_at?: string
         }
@@ -1414,7 +1418,9 @@ export type Database = {
           mensagem?: string
           mostrar_nome_hub?: boolean | null
           paginas?: string[] | null
+          passos?: Json | null
           perfis?: string[] | null
+          tipo?: string
           titulo?: string
           updated_at?: string
         }
@@ -5576,12 +5582,15 @@ export type Database = {
       ab_minha_area: { Args: never; Returns: string }
       ab_pode: { Args: { p_chave: string }; Returns: boolean }
       ab_seed_demo: { Args: never; Returns: string }
+      assinatura_area_do_usuario: { Args: { p_user: string }; Returns: string }
       canal_parceiro_alteracoes_para_email: {
         Args: never
         Returns: {
           alteracao_id: string
           anexo_nome: string
           aprovador_nome: string
+          assinatura_area: string
+          assinatura_nome: string
           destinatarios: string[]
           diretor_email: string
           justificativa: string
@@ -5696,7 +5705,9 @@ export type Database = {
         Args: never
         Returns: {
           arquivo_nome: string
+          assinatura_area: string
           assinatura_lida: boolean
+          assinatura_nome: string
           contrato_id: string
           declarado_assinado: boolean
           destinatarios: string[]
@@ -5712,6 +5723,8 @@ export type Database = {
       canal_repasse_emails_pendentes: {
         Args: never
         Returns: {
+          assinatura_area: string
+          assinatura_nome: string
           ciclo: string
           ciclo_ano: number
           ciclo_mes: number
@@ -6036,7 +6049,9 @@ export type Database = {
           mensagem: string
           mostrar_nome_hub: boolean
           paginas: string[]
+          passos: Json
           perfis: string[]
+          tipo: string
           titulo: string
           total_dismiss: number
           total_views: number
@@ -6132,7 +6147,9 @@ export type Database = {
           p_mensagem?: string
           p_mostrar_nome_hub?: boolean
           p_paginas?: string[]
+          p_passos?: Json
           p_perfis?: string[]
+          p_tipo?: string
           p_titulo?: string
         }
         Returns: string
@@ -6995,6 +7012,8 @@ export type Database = {
           mensagem: string
           mostrar_nome_hub: boolean
           paginas: string[]
+          passos: Json
+          tipo: string
           titulo: string
         }[]
       }
