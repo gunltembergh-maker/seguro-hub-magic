@@ -21,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMeuPerfilEfetivo } from "@/contexts/view-as-context";
 import { hasRole } from "@/hooks/use-meu-perfil";
 import EnviarContratoParceiro from "@/components/comercial/EnviarContratoParceiro";
+import { FilaVerificacaoContratos } from "@/components/comercial/FilaVerificacaoContratos";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -113,6 +114,10 @@ interface Contrato {
   substituido_por?: string | null;
   declarado_assinado?: boolean | null;
   origem_leitura?: string | null;
+  assinatura_atestada_por?: string | null;
+  assinatura_atestada_em?: string | null;
+  corrigido_por_nome?: string | null;
+  corrigido_em?: string | null;
   [k: string]: unknown;
 }
 
@@ -211,7 +216,19 @@ const rotuloEvento: Record<string, string> = {
   LIBERACAO_SOLICITADA: "Liberação solicitada",
   LIBERACAO_DECIDIDA: "Liberação decidida",
   EXPORTACAO: "Relatório exportado",
+  CONTRATO_CORRIGIDO: "Contrato corrigido",
+  ASSINATURA_ATESTADA: "Assinatura atestada",
 };
+
+/** Campos do CONTRATO_CORRIGIDO, com o rótulo que a pessoa reconhece. */
+const CAMPOS_CORRECAO: Array<{ chave: string; rotulo: string; tipo: "pct" | "data" | "valor" }> = [
+  { chave: "vigencia_inicio", rotulo: "Início da vigência", tipo: "data" },
+  { chave: "vigencia_fim", rotulo: "Fim da vigência", tipo: "data" },
+  { chave: "pct_beneficios", rotulo: "Benefícios", tipo: "pct" },
+  { chave: "pct_garantia", rotulo: "Garantia", tipo: "pct" },
+  { chave: "pct_demais", rotulo: "Demais ramos", tipo: "pct" },
+  { chave: "minimo_repasse", rotulo: "Mínimo por ciclo", tipo: "valor" },
+];
 
 /* ------------------------------------------------------------------ dados */
 
@@ -365,6 +382,9 @@ export default function CanalParceirosTela() {
           onResolvido={recarregarTudo}
         />
       ) : null}
+
+      {/* fila de conferência humana — só aparece quando há pendência */}
+      <FilaVerificacaoContratos />
 
       {/* tabela principal */}
       <Card>
@@ -988,7 +1008,7 @@ function DetalheParceiro({
 
 
                   <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                    <Info rotulo="Assinatura" valor={c.assinado_em ? dataHora(c.assinado_em) : c.assinado ? "encontrada" : "não encontrada"} />
+                    <InfoAssinatura contrato={c} />
                     <Info rotulo="Signatários" valor={c.signatarios != null ? String(c.signatarios) : "—"} />
                     <Info rotulo="Vigência" valor={`${dia(c.vigencia_inicio)} a ${dia(c.vigencia_fim)}`} />
                     <Info rotulo="Benefícios" valor={pct(c.pct_beneficios)} />
@@ -1000,6 +1020,7 @@ function DetalheParceiro({
                       pctGarantia={c.pct_garantia}
                     />
                     <Info rotulo="Hash" valor={hash ? `${hash.slice(0, 12)}…` : "—"} />
+                    <InfoCorrecao contrato={c} />
                   </dl>
 
                   {c.motivo_bloqueio ? (
@@ -1103,6 +1124,8 @@ function Historico({ canalId }: { canalId: string | null }) {
                       <span className="text-muted-foreground">{String(d["arquivo_nome"])}</span>
                     ) : null}
                   </div>
+                ) : ev.tipo === "CONTRATO_CORRIGIDO" ? (
+                  <Correcao detalhe={d} />
                 ) : (
                   (() => {
                     const t = textoDetalhe(ev);
@@ -1118,6 +1141,88 @@ function Historico({ canalId }: { canalId: string | null }) {
   );
 }
 
+
+/** Correção do contrato: só o que mudou, no formato "Garantia: 20% → 25%".
+ *  Campo que ficou igual não entra — numa conferência ele só atrapalha. */
+function Correcao({ detalhe }: { detalhe: Record<string, unknown> }) {
+  const antes = (detalhe["antes"] ?? {}) as Record<string, unknown>;
+  const depois = (detalhe["depois"] ?? {}) as Record<string, unknown>;
+  const motivo = detalhe["motivo"] == null ? null : String(detalhe["motivo"]);
+
+  const mostrar = (v: unknown, tipo: "pct" | "data" | "valor") => {
+    if (v == null || v === "") return "—";
+    if (tipo === "pct") return pct(Number(v));
+    if (tipo === "data") return dia(String(v));
+    return Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  };
+
+  const mudancas = CAMPOS_CORRECAO.filter(
+    (c) => JSON.stringify(antes[c.chave] ?? null) !== JSON.stringify(depois[c.chave] ?? null),
+  );
+
+  return (
+    <div className="mt-1 space-y-1">
+      {mudancas.length === 0 ? (
+        <p className="text-muted-foreground">Nenhum campo foi alterado.</p>
+      ) : (
+        <ul className="space-y-0.5">
+          {mudancas.map((c) => (
+            <li key={c.chave} className="text-foreground">
+              {c.rotulo}: <span className="text-muted-foreground">{mostrar(antes[c.chave], c.tipo)}</span>{" "}
+              → <span className="font-medium">{mostrar(depois[c.chave], c.tipo)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {motivo ? <p className="text-muted-foreground">{motivo}</p> : null}
+    </div>
+  );
+}
+
+/** Assinatura lida do arquivo e assinatura atestada por gente são informações
+ *  diferentes: quando existirem as duas, as duas aparecem. */
+function InfoAssinatura({ contrato }: { contrato: Contrato }) {
+  const atestada = contrato.assinatura_atestada_por
+    ? `atestada por ${contrato.assinatura_atestada_por} em ${dia(contrato.assinatura_atestada_em)}`
+    : null;
+  return (
+    <div>
+      <dt className="text-muted-foreground">Assinatura</dt>
+      <dd className="space-y-1 font-medium text-foreground">
+        {contrato.assinado ? (
+          <div>
+            {contrato.assinado_em ? dataHora(contrato.assinado_em) : "encontrada"}{" "}
+            <span className="text-muted-foreground">lida do arquivo</span>
+          </div>
+        ) : atestada ? null : (
+          <div className="text-muted-foreground">não encontrada</div>
+        )}
+        {atestada ? (
+          <Badge className="border-amber-600/40 bg-amber-50 text-amber-800 hover:bg-amber-50 dark:bg-amber-950/40 dark:text-amber-200">
+            {atestada}
+          </Badge>
+        ) : null}
+      </dd>
+    </div>
+  );
+}
+
+function InfoCorrecao({ contrato }: { contrato: Contrato }) {
+  if (!contrato.corrigido_em) return null;
+  return (
+    <div>
+      <dt className="text-muted-foreground">Correção</dt>
+      <dd>
+        <Badge
+          variant="outline"
+          title={`Corrigido por ${contrato.corrigido_por_nome ?? "—"} em ${dataHora(contrato.corrigido_em)}`}
+        >
+          corrigido
+        </Badge>
+      </dd>
+    </div>
+  );
+}
 
 function Info({ rotulo, valor }: { rotulo: string; valor: string }) {
   return (

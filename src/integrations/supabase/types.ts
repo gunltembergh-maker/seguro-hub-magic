@@ -1551,8 +1551,12 @@ export type Database = {
           arquivo_path: string
           assinado: boolean
           assinado_em: string | null
+          assinatura_confirmada_em: string | null
+          assinatura_confirmada_por: string | null
           base_calculo: string
           canal_id: string | null
+          corrigido_em: string | null
+          corrigido_por: string | null
           declarado_assinado: boolean | null
           declarado_por: string | null
           enviado_em: string
@@ -1578,8 +1582,12 @@ export type Database = {
           arquivo_path: string
           assinado?: boolean
           assinado_em?: string | null
+          assinatura_confirmada_em?: string | null
+          assinatura_confirmada_por?: string | null
           base_calculo?: string
           canal_id?: string | null
+          corrigido_em?: string | null
+          corrigido_por?: string | null
           declarado_assinado?: boolean | null
           declarado_por?: string | null
           enviado_em?: string
@@ -1605,8 +1613,12 @@ export type Database = {
           arquivo_path?: string
           assinado?: boolean
           assinado_em?: string | null
+          assinatura_confirmada_em?: string | null
+          assinatura_confirmada_por?: string | null
           base_calculo?: string
           canal_id?: string | null
+          corrigido_em?: string | null
+          corrigido_por?: string | null
           declarado_assinado?: boolean | null
           declarado_por?: string | null
           enviado_em?: string
@@ -5773,9 +5785,13 @@ export type Database = {
           arquivo_path: string
           assinado: boolean
           assinado_em: string
+          assinatura_atestada_em: string
+          assinatura_atestada_por: string
           canal_id: string
           canal_nome: string
           contrato_id: string
+          corrigido_em: string
+          corrigido_por_nome: string
           declarado_assinado: boolean
           dias_para_vencer: number
           enviado_em: string
@@ -5784,6 +5800,7 @@ export type Database = {
           motivo_bloqueio: string
           origem_leitura: string
           pct_beneficios: number
+          pct_demais: number
           pct_demais_efetivo: number
           pct_garantia: number
           signatarios: number
@@ -5792,6 +5809,25 @@ export type Database = {
           validado_em: string
           vigencia_fim: string
           vigencia_inicio: string
+        }[]
+      }
+      rpc_canal_parceiro_corrigir_contrato: {
+        Args: {
+          p_confirmar_assinatura?: boolean
+          p_contrato_id: string
+          p_minimo?: number
+          p_motivo: string
+          p_pct_beneficios?: number
+          p_pct_demais?: number
+          p_pct_garantia?: number
+          p_vigencia_fim?: string
+          p_vigencia_inicio?: string
+        }
+        Returns: {
+          contrato_id: string
+          motivo: string
+          pode_exportar: boolean
+          situacao: string
         }[]
       }
       rpc_canal_parceiro_decidir_liberacao: {
@@ -5850,6 +5886,29 @@ export type Database = {
           motivo_sem_contrato: string
           nome: string
           razao_social: string
+        }[]
+      }
+      rpc_canal_parceiro_pendencias_verificacao: {
+        Args: never
+        Returns: {
+          arquivo_nome: string
+          arquivo_path: string
+          assinatura_lida: boolean
+          canal_id: string
+          contrato_id: string
+          declarado_assinado: boolean
+          enviado_em: string
+          enviado_por_nome: string
+          ja_avisado_em: string
+          motivo_bloqueio: string
+          origem_leitura: string
+          parceiro: string
+          pct_beneficios: number
+          pct_garantia: number
+          repasse_acumulado: number
+          situacao: string
+          vigencia_fim: string
+          vigencia_inicio: string
         }[]
       }
       rpc_canal_parceiro_resolver_vinculo: {
