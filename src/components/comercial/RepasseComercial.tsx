@@ -332,6 +332,10 @@ export function RepasseComercial({
                           setPedido({ canal: l.canal, linhas: l.parcelas, valor: l.cicloCorrente })
                         }
                         onVerRelacao={() => setRelacao(l.canal)}
+                        onVerContrato={() => setContrato(l.canal)}
+                        onPedirLiberacao={() =>
+                          setLiberacao({ canal: l.canal, valor: l.cicloCorrente })
+                        }
                       />
                     );
                   })
@@ -343,7 +347,7 @@ export function RepasseComercial({
       </CardContent>
 
       <PedirNFDialog
-        aberto={pedido !== null && relacao === null}
+        aberto={pedido !== null && relacao === null && contrato === null && liberacao === null}
         canal={pedido?.canal ?? ""}
         ciclo={ciclo}
         linhas={pedido?.linhas ?? 0}
@@ -365,6 +369,23 @@ export function RepasseComercial({
         mes={ciclo.mes}
         modoDados="PROVISIONADO"
         situacaoRepasse={null}
+      />
+
+      <ContratoDoParceiro
+        aberto={contrato !== null}
+        onFechar={() => setContrato(null)}
+        canal={contrato ?? ""}
+        parceiro={contrato ?? ""}
+      />
+
+      <PedirLiberacaoSemContrato
+        aberto={liberacao !== null}
+        onFechar={() => setLiberacao(null)}
+        canal={liberacao?.canal ?? ""}
+        parceiro={liberacao?.canal ?? ""}
+        ano={ciclo.ano}
+        mes={ciclo.mes}
+        valor={liberacao?.valor}
       />
     </Card>
   );
