@@ -4,9 +4,8 @@ import { RepasseParceiro } from "@/components/financeiro/RepasseParceiro";
 import { DemandasRepasseNF } from "@/components/financeiro/DemandasRepasseNF";
 
 export const Route = createFileRoute("/_authenticated/financeiro_/fluxo-diario")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    demanda: typeof search.demanda === "string" ? search.demanda : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { demanda?: string } =>
+    typeof search.demanda === "string" ? { demanda: search.demanda } : {},
   head: () => ({
     meta: [
       { title: "Fluxo Diário | Financeiro | Hub Lavoro Seguros" },

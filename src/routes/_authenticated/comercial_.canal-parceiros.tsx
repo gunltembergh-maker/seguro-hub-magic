@@ -2,9 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import CanalParceirosTela from "@/components/comercial/CanalParceirosTela";
 
 export const Route = createFileRoute("/_authenticated/comercial_/canal-parceiros")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    demanda: typeof search.demanda === "string" ? search.demanda : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { demanda?: string } =>
+    typeof search.demanda === "string" ? { demanda: search.demanda } : {},
   head: () => ({
     meta: [
       { title: "Canal Parceiros | Comercial | Hub Lavoro Seguros" },
