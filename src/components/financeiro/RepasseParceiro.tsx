@@ -456,6 +456,37 @@ export function RepasseParceiro() {
     }
   };
 
+  /** Clique no Exportar de um parceiro liberado: primeiro escolhe a data. */
+  const pedirExport = (canalClicado: string, modo: ModoExport) => {
+    if (exportando) return;
+    setPendente({ canal: canalClicado, modo });
+  };
+
+  /** Clique no botão "Sem contrato". */
+  const abrirBloqueio = (canalClicado: string, valor: number) => {
+    setBloqueado({ canal: canalClicado, valor });
+  };
+
+  // Pedidos de liberação excepcional pendentes (só o aprovador vê o painel)
+  const { data: liberacoes } = useQuery({
+    queryKey: ["canal-parceiro-liberacoes", "PENDENTE"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc(
+        "rpc_canal_parceiro_liberacoes" as never,
+        { p_status: "PENDENTE" } as never,
+      );
+      if (error) throw error;
+      return (data ?? []) as LiberacaoPendente[];
+    },
+    staleTime: 60_000,
+  });
+
+  const pendentesDoAprovador = useMemo(
+    () => (liberacoes ?? []).filter((l) => l.sou_o_aprovador === true),
+    [liberacoes],
+  );
+
+
   const mesSeguinte = useMemo(() => {
     const d = new Date(mesAncora.ano, mesAncora.mes, 1);
     return { ano: d.getFullYear(), mes: d.getMonth() + 1 };
