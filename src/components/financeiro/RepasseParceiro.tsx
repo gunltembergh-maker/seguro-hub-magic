@@ -346,6 +346,25 @@ export function RepasseParceiro() {
     setExportando(canalClicado);
     const toastId = toast.loading("Gerando planilha…");
     try {
+      // O banco autoriza (ou recusa) a exportação ANTES de montar o arquivo.
+      const { data: autz, error: erroAutz } = await supabase.rpc(
+        "rpc_canal_parceiro_autorizar_exportacao" as never,
+        {
+          p_canal_planilha: canalClicado,
+          p_ano: mesAncora.ano,
+          p_mes: mesAncora.mes,
+          p_data_prevista: dataPrevista,
+          p_linhas: null,
+          p_valor: null,
+        } as never,
+      );
+      if (erroAutz) {
+        toast.error(erroAutz.message, { id: toastId });
+        return;
+      }
+      const autorizacao = (Array.isArray(autz) ? autz[0] : autz) as
+        { base?: string; liberado_por?: string | null } | null;
+
       const PAGINA = 500;
       let offset = 0;
       const todas: any[] = [];
