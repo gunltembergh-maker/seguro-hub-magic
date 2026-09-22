@@ -26,6 +26,8 @@ import {
   CalendarCheck,
   UserSquare2,
   ClipboardList,
+  Handshake,
+  FileSignature,
   type LucideIcon,
 } from "lucide-react";
 
@@ -68,6 +70,20 @@ const areasAll: AreaItem[] = [
         url: "/financeiro/fluxo-diario",
         icon: CalendarClock,
         perms: ["menu_financeiro_fluxo_diario"],
+      },
+    ],
+  },
+  {
+    title: "Comercial",
+    icon: Handshake,
+    tooltip: "Comercial",
+    perm: "menu_area_comercial",
+    children: [
+      {
+        title: "Canal Parceiros",
+        url: "/comercial/canal-parceiros",
+        icon: FileSignature,
+        perms: ["menu_comercial_canal_parceiros"],
       },
     ],
   },

@@ -4215,6 +4215,23 @@ export type Database = {
           parceiro: string
         }[]
       }
+      rpc_canal_parceiro_cadastrar_manual: {
+        Args: {
+          p_canal_id?: string
+          p_cnpj?: string
+          p_contato_email?: string
+          p_contato_nome?: string
+          p_email_financeiro?: string
+          p_motivo?: string
+          p_nome?: string
+          p_razao_social?: string
+        }
+        Returns: {
+          canal_id: string
+          criado: boolean
+          nome: string
+        }[]
+      }
       rpc_canal_parceiro_contratos: {
         Args: { p_canal_id?: string }
         Returns: {
@@ -4270,6 +4287,29 @@ export type Database = {
           sou_o_aprovador: boolean
           status: string
           usada_em: string
+        }[]
+      }
+      rpc_canal_parceiro_lista: {
+        Args: never
+        Returns: {
+          cadastro_origem: string
+          canal_id: string
+          chaves_planilha: string[]
+          cnpj: string
+          eh_parceiro: boolean
+          motivo_sem_contrato: string
+          nome: string
+          razao_social: string
+        }[]
+      }
+      rpc_canal_parceiro_resolver_vinculo: {
+        Args: { p_canal_id: string; p_contrato_id: string }
+        Returns: {
+          canal_id: string
+          contrato_id: string
+          motivo: string
+          pode_exportar: boolean
+          situacao: string
         }[]
       }
       rpc_canal_parceiro_situacao: {

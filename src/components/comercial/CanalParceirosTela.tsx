@@ -1,0 +1,961 @@
+// Canal Parceiros — cadastro único de parceiro do grupo.
+//
+// Tudo que decide situação, vigência e liberação de repasse vem do banco.
+// A tela só mostra e chama as RPCs; nunca calcula regra por conta própria.
+import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import {
+  AlertTriangle,
+  CalendarClock,
+  CheckCircle2,
+  FileSignature,
+  FileText,
+  Loader2,
+  Plus,
+  Upload,
+  Users,
+} from "lucide-react";
+
+import { supabase } from "@/integrations/supabase/client";
+import { useMeuPerfilEfetivo } from "@/contexts/view-as-context";
+import { hasRole } from "@/hooks/use-meu-perfil";
+import EnviarContratoParceiro from "@/components/comercial/EnviarContratoParceiro";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+
+/* ------------------------------------------------------------------ tipos */
+
+interface Situacao {
+  chave_planilha: string | null;
+  canal_id: string | null;
+  nome: string | null;
+  situacao: string | null;
+  pode_exportar: boolean | null;
+  vigencia_inicio: string | null;
+  vigencia_fim: string | null;
+  dias_para_vencer: number | null;
+  pct_beneficios: number | null;
+  pct_garantia: number | null;
+  pct_demais_efetivo: number | null;
+  minimo_repasse: number | null;
+}
+
+interface Parceiro {
+  canal_id: string;
+  nome: string | null;
+  razao_social: string | null;
+  cnpj: string | null;
+  eh_parceiro: boolean | null;
+  cadastro_origem: string | null;
+  motivo_sem_contrato: string | null;
+  chaves_planilha: string[] | null;
+}
+
+interface Contrato {
+  contrato_id?: string | null;
+  canal_id?: string | null;
+  parceiro?: string | null;
+  arquivo_nome?: string | null;
+  tipo?: string | null;
+  assinado?: boolean | null;
+  assinado_em?: string | null;
+  signatarios?: number | null;
+  vigencia_inicio?: string | null;
+  vigencia_fim?: string | null;
+  pct_beneficios?: number | null;
+  pct_garantia?: number | null;
+  pct_demais?: number | null;
+  hash_sha256?: string | null;
+  hash?: string | null;
+  situacao?: string | null;
+  motivo_bloqueio?: string | null;
+  vigente?: boolean | null;
+  substituido_por?: string | null;
+  [k: string]: unknown;
+}
+
+interface Vigencia {
+  parceiro: string | null;
+  vigencia_fim: string | null;
+  dias_para_vencer: number | null;
+  situacao: string | null;
+  aviso_60_enviado_em: string | null;
+}
+
+/* --------------------------------------------------------------- formatos */
+
+const dia = (v?: string | null) =>
+  v ? new Date(`${String(v).slice(0, 10)}T12:00:00`).toLocaleDateString("pt-BR") : "—";
+
+const dataHora = (v?: string | null) => (v ? new Date(v).toLocaleString("pt-BR") : "—");
+
+const pct = (v?: number | null) =>
+  v == null ? "—" : `${(v * 100).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`;
+
+const rotuloSituacao: Record<string, string> = {
+  ATIVO: "Ativo",
+  VINCULO_A_CONFIRMAR: "Vínculo a confirmar",
+  SEM_CONTRATO: "Sem contrato",
+  VENCIDO: "Vencido",
+};
+
+function BadgeContrato({ situacao }: { situacao?: string | null }) {
+  const s = situacao ?? "SEM_CONTRATO";
+  const texto = rotuloSituacao[s] ?? s;
+  if (s === "ATIVO") {
+    return (
+      <Badge className="border-emerald-600/40 bg-emerald-50 text-emerald-700 hover:bg-emerald-50 dark:bg-emerald-950/40 dark:text-emerald-200">
+        {texto}
+      </Badge>
+    );
+  }
+  if (s === "VINCULO_A_CONFIRMAR") {
+    return (
+      <Badge className="border-amber-600/40 bg-amber-50 text-amber-800 hover:bg-amber-50 dark:bg-amber-950/40 dark:text-amber-200">
+        {texto}
+      </Badge>
+    );
+  }
+  return <Badge variant="destructive">{texto}</Badge>;
+}
+
+/* ------------------------------------------------------------------ dados */
+
+async function rpc<T>(nome: string, args?: Record<string, unknown>): Promise<T[]> {
+  const { data, error } = await supabase.rpc(nome as never, (args ?? {}) as never);
+  if (error) throw error;
+  return (data ?? []) as T[];
+}
+
+/* ------------------------------------------------------------------ tela */
+
+export default function CanalParceirosTela() {
+  const queryClient = useQueryClient();
+  const meuPerfil = useMeuPerfilEfetivo();
+  const isAdmin = hasRole(meuPerfil, "ADMIN");
+
+  const [novoAberto, setNovoAberto] = useState(false);
+  const [enviarPara, setEnviarPara] = useState<{ canalId: string | null; nome?: string } | null>(
+    null,
+  );
+  const [detalhe, setDetalhe] = useState<{ canalId: string; nome: string } | null>(null);
+
+  const situacoes = useQuery({
+    queryKey: ["canal-parceiro-situacao"],
+    queryFn: () => rpc<Situacao>("rpc_canal_parceiro_situacao"),
+    staleTime: 60_000,
+  });
+
+  const lista = useQuery({
+    queryKey: ["canal-parceiro-lista"],
+    queryFn: () => rpc<Parceiro>("rpc_canal_parceiro_lista"),
+    staleTime: 60_000,
+  });
+
+  const vigencias = useQuery({
+    queryKey: ["canal-parceiro-vigencias"],
+    queryFn: () => rpc<Vigencia>("rpc_canal_parceiro_vigencias"),
+    staleTime: 60_000,
+  });
+
+  const contratosTodos = useQuery({
+    queryKey: ["canal-parceiro-contratos", null],
+    queryFn: () => rpc<Contrato>("rpc_canal_parceiro_contratos", { p_canal_id: null }),
+    staleTime: 60_000,
+    enabled: isAdmin,
+  });
+
+  function recarregarTudo() {
+    queryClient.invalidateQueries({ queryKey: ["canal-parceiro-situacao"] });
+    queryClient.invalidateQueries({ queryKey: ["canal-parceiro-lista"] });
+    queryClient.invalidateQueries({ queryKey: ["canal-parceiro-vigencias"] });
+    queryClient.invalidateQueries({ queryKey: ["canal-parceiro-contratos"] });
+  }
+
+  const linhasSituacao = situacoes.data ?? [];
+  const totalCanais = linhasSituacao.length;
+  const ativos = linhasSituacao.filter((s) => s.situacao === "ATIVO").length;
+  const semContrato = totalCanais - ativos;
+
+  const situacaoPorCanal = useMemo(() => {
+    const m = new Map<string, Situacao>();
+    for (const s of linhasSituacao) if (s.canal_id) m.set(s.canal_id, s);
+    return m;
+  }, [linhasSituacao]);
+
+  /** Base da tabela: parceiros cadastrados + canais da planilha ainda sem parceiro. */
+  const linhas = useMemo(() => {
+    const parceiros = lista.data ?? [];
+    const usados = new Set(parceiros.map((p) => p.canal_id));
+    const base = parceiros.map((p) => ({
+      chave: p.canal_id,
+      canalId: p.canal_id as string | null,
+      nome: p.nome ?? p.razao_social ?? "—",
+      chaves: p.chaves_planilha ?? [],
+      origem: p.cadastro_origem ?? "—",
+      s: situacaoPorCanal.get(p.canal_id) ?? null,
+    }));
+    const soltos = linhasSituacao
+      .filter((s) => !s.canal_id || !usados.has(s.canal_id))
+      .map((s) => ({
+        chave: `planilha:${s.chave_planilha ?? s.nome ?? ""}`,
+        canalId: s.canal_id ?? null,
+        nome: s.nome ?? s.chave_planilha ?? "—",
+        chaves: s.chave_planilha ? [s.chave_planilha] : [],
+        origem: "Planilha de repasse",
+        s,
+      }));
+    return [...base, ...soltos].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+  }, [lista.data, linhasSituacao, situacaoPorCanal]);
+
+  const vinculosPendentes = (contratosTodos.data ?? []).filter(
+    (c) => c.situacao === "VINCULO_A_CONFIRMAR",
+  );
+
+  const carregando = situacoes.isLoading || lista.isLoading;
+  const erro = situacoes.error ?? lista.error ?? vigencias.error;
+
+  return (
+    <div className="space-y-6">
+      {/* cabeçalho */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+            Canal Parceiros
+          </h1>
+          <p className="mt-1 max-w-3xl text-muted-foreground">
+            Cadastro único de parceiro do grupo, universal para todos os ramos. É ele que libera ou
+            trava o repasse.
+          </p>
+        </div>
+        <Button onClick={() => setNovoAberto(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Novo parceiro
+        </Button>
+      </div>
+
+      {erro ? (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Não deu para carregar</AlertTitle>
+          <AlertDescription>
+            {erro instanceof Error ? erro.message : String(erro)}
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      {/* KPIs */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Kpi
+          titulo="Canais com repasse na base"
+          valor={totalCanais}
+          icone={<Users className="h-4 w-4" />}
+        />
+        <Kpi
+          titulo="Com contrato assinado e ativo"
+          valor={ativos}
+          icone={<CheckCircle2 className="h-4 w-4 text-emerald-600" />}
+        />
+        <Kpi
+          titulo="Sem contrato assinado"
+          valor={semContrato}
+          icone={<AlertTriangle className="h-4 w-4 text-destructive" />}
+        />
+      </div>
+
+      {/* vínculos a confirmar — só ADMIN */}
+      {isAdmin && vinculosPendentes.length > 0 ? (
+        <VinculosAConfirmar
+          contratos={vinculosPendentes}
+          parceiros={lista.data ?? []}
+          onResolvido={recarregarTudo}
+        />
+      ) : null}
+
+      {/* tabela principal */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Parceiros</CardTitle>
+          <CardDescription>
+            Clique na linha para ver contratos e aditivos do parceiro.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Parceiro</TableHead>
+                  <TableHead>Contrato</TableHead>
+                  <TableHead>Vencimento</TableHead>
+                  <TableHead>Benefícios</TableHead>
+                  <TableHead>Garantia</TableHead>
+                  <TableHead>Demais ramos</TableHead>
+                  <TableHead>Origem</TableHead>
+                  <TableHead className="text-right">Ação</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {carregando ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="py-10 text-center text-muted-foreground">
+                      <Loader2 className="mr-2 inline h-4 w-4 animate-spin" />
+                      Carregando
+                    </TableCell>
+                  </TableRow>
+                ) : linhas.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="py-10 text-center text-muted-foreground">
+                      Nenhum parceiro por aqui ainda.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  linhas.map((l) => {
+                    const herdado =
+                      l.s?.pct_demais_efetivo != null &&
+                      l.s?.pct_garantia != null &&
+                      l.s.pct_demais_efetivo === l.s.pct_garantia;
+                    const dias = l.s?.dias_para_vencer ?? null;
+                    return (
+                      <TableRow
+                        key={l.chave}
+                        className={l.canalId ? "cursor-pointer" : undefined}
+                        onClick={() =>
+                          l.canalId && setDetalhe({ canalId: l.canalId, nome: l.nome })
+                        }
+                      >
+                        <TableCell>
+                          <div className="font-medium text-foreground">{l.nome}</div>
+                          {l.chaves.length > 0 ? (
+                            <div className="text-xs text-muted-foreground">
+                              {l.chaves.join(" · ")}
+                            </div>
+                          ) : null}
+                        </TableCell>
+                        <TableCell>
+                          <BadgeContrato situacao={l.s?.situacao ?? "SEM_CONTRATO"} />
+                        </TableCell>
+                        <TableCell>
+                          {l.s?.vigencia_fim ? (
+                            <div>
+                              <div className="text-sm">{dia(l.s.vigencia_fim)}</div>
+                              {dias != null ? (
+                                <div
+                                  className={cn(
+                                    "text-xs",
+                                    dias < 30 ? "font-medium text-destructive" : "text-muted-foreground",
+                                  )}
+                                >
+                                  {dias < 0 ? `vencido há ${Math.abs(dias)} dias` : `${dias} dias`}
+                                </div>
+                              ) : null}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="tabular-nums">{pct(l.s?.pct_beneficios)}</TableCell>
+                        <TableCell className="tabular-nums">{pct(l.s?.pct_garantia)}</TableCell>
+                        <TableCell className="tabular-nums">
+                          {pct(l.s?.pct_demais_efetivo)}
+                          {herdado ? (
+                            <div className="text-xs text-muted-foreground">herdado de Garantia</div>
+                          ) : null}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{l.origem}</TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(ev) => {
+                              ev.stopPropagation();
+                              setEnviarPara({ canalId: l.canalId, nome: l.nome });
+                            }}
+                          >
+                            <Upload className="mr-2 h-4 w-4" />
+                            Enviar contrato
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* vigências */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CalendarClock className="h-4 w-4" />
+            Vigências
+          </CardTitle>
+          <CardDescription>
+            O jurídico é avisado automaticamente 60 dias antes do vencimento.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Parceiro</TableHead>
+                  <TableHead>Fim da vigência</TableHead>
+                  <TableHead>Dias restantes</TableHead>
+                  <TableHead>Situação</TableHead>
+                  <TableHead>Aviso ao jurídico</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(vigencias.data ?? []).length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
+                      Nenhuma vigência registrada.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  (vigencias.data ?? []).map((v, i) => {
+                    const critico = (v.dias_para_vencer ?? 999) < 30;
+                    return (
+                      <TableRow key={`${v.parceiro}-${v.vigencia_fim}-${i}`}>
+                        <TableCell className="font-medium">{v.parceiro ?? "—"}</TableCell>
+                        <TableCell>{dia(v.vigencia_fim)}</TableCell>
+                        <TableCell
+                          className={cn(
+                            "tabular-nums",
+                            critico ? "font-semibold text-destructive" : undefined,
+                          )}
+                        >
+                          {v.dias_para_vencer ?? "—"}
+                        </TableCell>
+                        <TableCell>
+                          <BadgeContrato situacao={v.situacao} />
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {v.aviso_60_enviado_em
+                            ? `Enviado em ${dataHora(v.aviso_60_enviado_em)}`
+                            : "Não enviado"}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* diálogos */}
+      <NovoParceiro
+        aberto={novoAberto}
+        onFechar={() => setNovoAberto(false)}
+        onFeito={recarregarTudo}
+      />
+
+      <EnviarContratoParceiro
+        aberto={!!enviarPara}
+        canalId={enviarPara?.canalId ?? null}
+        canalNome={enviarPara?.nome}
+        onFechar={() => setEnviarPara(null)}
+        onSucesso={() => {
+          recarregarTudo();
+          setEnviarPara(null);
+        }}
+      />
+
+      <DetalheParceiro
+        canalId={detalhe?.canalId ?? null}
+        nome={detalhe?.nome ?? ""}
+        onFechar={() => setDetalhe(null)}
+      />
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------- KPI */
+
+function Kpi({ titulo, valor, icone }: { titulo: string; valor: number; icone: React.ReactNode }) {
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          {icone}
+          {titulo}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-3xl font-bold tabular-nums text-foreground">{valor}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+/* --------------------------------------------------------- novo parceiro */
+
+function NovoParceiro({
+  aberto,
+  onFechar,
+  onFeito,
+}: {
+  aberto: boolean;
+  onFechar: () => void;
+  onFeito: () => void;
+}) {
+  const [caminho, setCaminho] = useState<"escolha" | "manual">("escolha");
+  const [enviarAberto, setEnviarAberto] = useState(false);
+  const [salvando, setSalvando] = useState(false);
+  const [form, setForm] = useState({
+    nome: "",
+    razao_social: "",
+    cnpj: "",
+    contato_nome: "",
+    contato_email: "",
+    email_financeiro: "",
+    motivo: "",
+  });
+
+  function fechar() {
+    setCaminho("escolha");
+    setForm({
+      nome: "",
+      razao_social: "",
+      cnpj: "",
+      contato_nome: "",
+      contato_email: "",
+      email_financeiro: "",
+      motivo: "",
+    });
+    onFechar();
+  }
+
+  async function salvar() {
+    if (!form.nome.trim() || !form.motivo.trim() || salvando) return;
+    setSalvando(true);
+    try {
+      const { error } = await supabase.rpc("rpc_canal_parceiro_cadastrar_manual" as never, {
+        p_canal_id: null,
+        p_nome: form.nome.trim(),
+        p_razao_social: form.razao_social.trim() || null,
+        p_cnpj: form.cnpj.trim() || null,
+        p_contato_nome: form.contato_nome.trim() || null,
+        p_contato_email: form.contato_email.trim() || null,
+        p_email_financeiro: form.email_financeiro.trim() || null,
+        p_motivo: form.motivo.trim(),
+      } as never);
+      if (error) throw error;
+      toast.success("Parceiro cadastrado. A exportação de repasse segue travada até o contrato.");
+      onFeito();
+      fechar();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  return (
+    <>
+      <Dialog open={aberto && !enviarAberto} onOpenChange={(v) => { if (!v) fechar(); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Novo parceiro</DialogTitle>
+            <DialogDescription>
+              O cadastro é único para todo o grupo, vale para todos os ramos.
+            </DialogDescription>
+          </DialogHeader>
+
+          {caminho === "escolha" ? (
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={() => setEnviarAberto(true)}
+                className="w-full rounded-lg border border-emerald-600/40 bg-emerald-50 p-4 text-left transition hover:bg-emerald-100 dark:bg-emerald-950/30 dark:hover:bg-emerald-950/50"
+              >
+                <div className="flex items-center gap-2 font-medium text-emerald-900 dark:text-emerald-100">
+                  <FileSignature className="h-4 w-4" />
+                  Subir o contrato assinado
+                  <Badge className="ml-auto border-emerald-600/40 bg-white text-emerald-700 hover:bg-white">
+                    recomendado
+                  </Badge>
+                </div>
+                <p className="mt-1 text-sm text-emerald-900/80 dark:text-emerald-100/80">
+                  O sistema lê o PDF, cadastra o parceiro e libera o repasse.
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCaminho("manual")}
+                className="w-full rounded-lg border p-4 text-left transition hover:bg-muted/50"
+              >
+                <div className="flex items-center gap-2 font-medium">
+                  <FileText className="h-4 w-4" />
+                  Cadastro manual
+                </div>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Registra o parceiro para consulta. <strong>Não libera a exportação de
+                  repasse</strong> — isso só acontece com o contrato assinado no Hub.
+                </p>
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <Alert className="border-amber-600/40 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Este caminho não libera repasse</AlertTitle>
+                <AlertDescription>
+                  O parceiro fica cadastrado, mas a exportação continua travada até o contrato
+                  assinado ser enviado.
+                </AlertDescription>
+              </Alert>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Campo
+                  id="np-nome"
+                  rotulo="Nome do parceiro"
+                  valor={form.nome}
+                  onChange={(v) => setForm((f) => ({ ...f, nome: v }))}
+                />
+                <Campo
+                  id="np-razao"
+                  rotulo="Razão social"
+                  valor={form.razao_social}
+                  onChange={(v) => setForm((f) => ({ ...f, razao_social: v }))}
+                />
+                <Campo
+                  id="np-cnpj"
+                  rotulo="CNPJ"
+                  valor={form.cnpj}
+                  onChange={(v) => setForm((f) => ({ ...f, cnpj: v }))}
+                />
+                <Campo
+                  id="np-contato"
+                  rotulo="Contato"
+                  valor={form.contato_nome}
+                  onChange={(v) => setForm((f) => ({ ...f, contato_nome: v }))}
+                />
+                <Campo
+                  id="np-contato-email"
+                  rotulo="E-mail do contato"
+                  valor={form.contato_email}
+                  onChange={(v) => setForm((f) => ({ ...f, contato_email: v }))}
+                />
+                <Campo
+                  id="np-financeiro"
+                  rotulo="E-mail do financeiro"
+                  valor={form.email_financeiro}
+                  onChange={(v) => setForm((f) => ({ ...f, email_financeiro: v }))}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="np-motivo">Motivo do cadastro sem contrato</Label>
+                <Textarea
+                  id="np-motivo"
+                  rows={3}
+                  value={form.motivo}
+                  onChange={(ev) => setForm((f) => ({ ...f, motivo: ev.target.value }))}
+                  placeholder="Obrigatório. Explique por que o parceiro está sendo cadastrado sem contrato."
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={fechar} disabled={salvando}>
+              Cancelar
+            </Button>
+            {caminho === "manual" ? (
+              <Button onClick={salvar} disabled={!form.nome.trim() || !form.motivo.trim() || salvando}>
+                {salvando && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Cadastrar
+              </Button>
+            ) : null}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <EnviarContratoParceiro
+        aberto={enviarAberto}
+        canalId={null}
+        onFechar={() => setEnviarAberto(false)}
+        onSucesso={() => {
+          onFeito();
+          setEnviarAberto(false);
+          fechar();
+        }}
+      />
+    </>
+  );
+}
+
+function Campo({
+  id,
+  rotulo,
+  valor,
+  onChange,
+}: {
+  id: string;
+  rotulo: string;
+  valor: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={id}>{rotulo}</Label>
+      <Input id={id} value={valor} onChange={(ev) => onChange(ev.target.value)} />
+    </div>
+  );
+}
+
+/* --------------------------------------------------- vínculos a confirmar */
+
+function VinculosAConfirmar({
+  contratos,
+  parceiros,
+  onResolvido,
+}: {
+  contratos: Contrato[];
+  parceiros: Parceiro[];
+  onResolvido: () => void;
+}) {
+  const [escolha, setEscolha] = useState<Record<string, string>>({});
+  const [salvando, setSalvando] = useState<string | null>(null);
+
+  async function resolver(contratoId: string) {
+    const canalId = escolha[contratoId];
+    if (!canalId) return;
+    setSalvando(contratoId);
+    try {
+      const { data, error } = await supabase.rpc("rpc_canal_parceiro_resolver_vinculo" as never, {
+        p_contrato_id: contratoId,
+        p_canal_id: canalId,
+      } as never);
+      if (error) throw error;
+      const r = (Array.isArray(data) ? data[0] : data) as
+        | { situacao?: string; pode_exportar?: boolean }
+        | null;
+      toast.success(
+        r?.pode_exportar
+          ? "Vínculo confirmado. Repasse liberado."
+          : `Vínculo confirmado. Situação: ${r?.situacao ?? "—"}.`,
+      );
+      onResolvido();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSalvando(null);
+    }
+  }
+
+  return (
+    <Card className="border-amber-600/40">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
+          <AlertTriangle className="h-4 w-4" />
+          Vínculos a confirmar
+        </CardTitle>
+        <CardDescription>
+          Contratos recebidos que o sistema não conseguiu ligar a um parceiro. Escolha a quem cada
+          documento pertence.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {contratos.map((c) => {
+          const id = String(c.contrato_id ?? "");
+          return (
+            <div
+              key={id}
+              className="flex flex-col gap-3 rounded-lg border bg-muted/30 p-3 md:flex-row md:items-center"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <span className="truncate">{c.arquivo_nome ?? "Contrato"}</span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {c.motivo_bloqueio ?? "Sem motivo informado."}
+                </p>
+              </div>
+              <Select
+                value={escolha[id] ?? ""}
+                onValueChange={(v) => setEscolha((e) => ({ ...e, [id]: v }))}
+              >
+                <SelectTrigger className="md:w-72">
+                  <SelectValue placeholder="Escolha o parceiro" />
+                </SelectTrigger>
+                <SelectContent>
+                  {parceiros.map((p) => (
+                    <SelectItem key={p.canal_id} value={p.canal_id}>
+                      {p.nome ?? p.razao_social ?? p.canal_id}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                onClick={() => resolver(id)}
+                disabled={!escolha[id] || salvando === id}
+                size="sm"
+              >
+                {salvando === id && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Confirmar
+              </Button>
+            </div>
+          );
+        })}
+      </CardContent>
+    </Card>
+  );
+}
+
+/* -------------------------------------------------------- detalhe parceiro */
+
+function DetalheParceiro({
+  canalId,
+  nome,
+  onFechar,
+}: {
+  canalId: string | null;
+  nome: string;
+  onFechar: () => void;
+}) {
+  const contratos = useQuery({
+    queryKey: ["canal-parceiro-contratos", canalId],
+    queryFn: () => rpc<Contrato>("rpc_canal_parceiro_contratos", { p_canal_id: canalId }),
+    enabled: !!canalId,
+  });
+
+  const linhas = contratos.data ?? [];
+
+  return (
+    <Sheet open={!!canalId} onOpenChange={(v) => { if (!v) onFechar(); }}>
+      <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
+        <SheetHeader>
+          <SheetTitle>{nome}</SheetTitle>
+          <SheetDescription>
+            Contratos e aditivos deste parceiro. A versão antiga nunca é apagada: fica guardada como
+            histórico.
+          </SheetDescription>
+        </SheetHeader>
+
+        <div className="mt-4 space-y-3">
+          {contratos.isLoading ? (
+            <p className="text-sm text-muted-foreground">
+              <Loader2 className="mr-2 inline h-4 w-4 animate-spin" />
+              Carregando
+            </p>
+          ) : contratos.error ? (
+            <Alert variant="destructive">
+              <AlertDescription>
+                {contratos.error instanceof Error
+                  ? contratos.error.message
+                  : String(contratos.error)}
+              </AlertDescription>
+            </Alert>
+          ) : linhas.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Nenhum contrato enviado para este parceiro ainda.
+            </p>
+          ) : (
+            linhas.map((c, i) => {
+              const vigente = c.situacao === "ATIVO" || c.vigente === true;
+              const hash = (c.hash_sha256 ?? c.hash ?? null) as string | null;
+              return (
+                <div
+                  key={String(c.contrato_id ?? i)}
+                  className={cn(
+                    "rounded-lg border p-3 text-sm",
+                    vigente
+                      ? "border-emerald-600/40 bg-emerald-50/60 dark:bg-emerald-950/20"
+                      : "bg-muted/40 text-muted-foreground",
+                  )}
+                >
+                  <div className="flex items-start gap-2">
+                    <FileText className="mt-0.5 h-4 w-4 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium text-foreground">
+                        {c.arquivo_nome ?? "Documento"}
+                      </p>
+                      <p className="text-xs">
+                        {c.tipo ?? "Contrato"}
+                        {vigente ? " · vigente" : " · substituído"}
+                      </p>
+                    </div>
+                    <BadgeContrato situacao={c.situacao} />
+                  </div>
+
+                  <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                    <Info rotulo="Assinatura" valor={c.assinado_em ? dataHora(c.assinado_em) : c.assinado ? "encontrada" : "não encontrada"} />
+                    <Info rotulo="Signatários" valor={c.signatarios != null ? String(c.signatarios) : "—"} />
+                    <Info rotulo="Vigência" valor={`${dia(c.vigencia_inicio)} a ${dia(c.vigencia_fim)}`} />
+                    <Info rotulo="Benefícios" valor={pct(c.pct_beneficios)} />
+                    <Info rotulo="Garantia" valor={pct(c.pct_garantia)} />
+                    <Info rotulo="Demais ramos" valor={pct(c.pct_demais)} />
+                    <Info rotulo="Hash" valor={hash ? `${hash.slice(0, 12)}…` : "—"} />
+                  </dl>
+
+                  {c.motivo_bloqueio ? (
+                    <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">
+                      {c.motivo_bloqueio}
+                    </p>
+                  ) : null}
+                </div>
+              );
+            })
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function Info({ rotulo, valor }: { rotulo: string; valor: string }) {
+  return (
+    <div>
+      <dt className="text-muted-foreground">{rotulo}</dt>
+      <dd className="font-medium text-foreground">{valor}</dd>
+    </div>
+  );
+}
