@@ -1020,6 +1020,7 @@ function DetalheParceiro({
                       pctGarantia={c.pct_garantia}
                     />
                     <Info rotulo="Hash" valor={hash ? `${hash.slice(0, 12)}…` : "—"} />
+                    <InfoCorrecao contrato={c} />
                   </dl>
 
                   {c.motivo_bloqueio ? (
