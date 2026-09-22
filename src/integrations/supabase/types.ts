@@ -5997,6 +5997,27 @@ export type Database = {
         Args: { p_ano: number; p_gran: string; p_periodo: number }
         Returns: Json
       }
+      rpc_garantia_historico_demanda: {
+        Args: { _demanda_id: string }
+        Returns: {
+          com_quem: string
+          duracao_segundos: number
+          fim: string
+          id: string
+          inicio: string
+          observacao: string
+          relogio: string
+          status_codigo: string
+          status_nome: string
+        }[]
+      }
+      rpc_garantia_status_abertos: {
+        Args: never
+        Returns: {
+          demanda_id: string
+          inicio: string
+        }[]
+      }
       rpc_get_meta_anual: { Args: { _ano: number }; Returns: number }
       rpc_get_popups_ativos: {
         Args: { p_pagina?: string }
