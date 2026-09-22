@@ -668,35 +668,20 @@ export default function CanalParceirosTela() {
                               )}
                             </TableCell>
                             <CelulaPct
-                              contrato={l.s?.pct_beneficios}
-                              autorizado={aut?.pct_beneficios ?? null}
-                              autorizadoEm={aut?.aprovado_em ?? null}
+                              valor={pcts?.pct_beneficios}
+                              origem={pcts?.origem_beneficios}
+                              autorizadoEm={pcts?.autorizado_em}
                             />
                             <CelulaPct
-                              contrato={l.s?.pct_garantia}
-                              autorizado={aut?.pct_garantia ?? null}
-                              autorizadoEm={aut?.aprovado_em ?? null}
+                              valor={pcts?.pct_garantia}
+                              origem={pcts?.origem_garantia}
+                              autorizadoEm={pcts?.autorizado_em}
                             />
-                            {(() => {
-                              const autorizadoDemais = aut?.pct_demais ?? aut?.pct_garantia ?? null;
-                              const herdadoDeGarantia =
-                                autorizadoDemais != null &&
-                                aut?.pct_demais == null &&
-                                aut?.pct_garantia != null;
-                              return (
-                                <CelulaPct
-                                  contrato={l.s?.pct_demais_efetivo}
-                                  autorizado={autorizadoDemais}
-                                  autorizadoEm={aut?.aprovado_em ?? null}
-                                  herdadoDeGarantia={herdadoDeGarantia}
-                                  rodape={
-                                    autorizadoDemais == null && demaisHerdado
-                                      ? "herdado de Garantia"
-                                      : null
-                                  }
-                                />
-                              );
-                            })()}
+                            <CelulaPct
+                              valor={pcts?.pct_demais}
+                              origem={pcts?.origem_demais}
+                              autorizadoEm={pcts?.autorizado_em}
+                            />
                             <TableCell className="text-sm text-muted-foreground">
                               {l.origem}
                             </TableCell>
