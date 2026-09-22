@@ -1092,19 +1092,8 @@ function VinculosAConfirmar({
     }
   }
 
-  return (
-    <Card className="border-amber-600/40">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
-          <AlertTriangle className="h-4 w-4" />
-          Vínculos a confirmar
-        </CardTitle>
-        <CardDescription>
-          Contratos recebidos que o sistema não conseguiu ligar a um parceiro. Escolha a quem cada
-          documento pertence.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
+  const conteudo = (
+    <div className="space-y-3">
         {contratos.map((c) => {
           const id = String(c.contrato_id ?? "");
           return (
