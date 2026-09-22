@@ -4,6 +4,7 @@ import { template as receitaTemplate } from './receita-diaria'
 import { template as executivoTemplate } from './resumo-executivo-semanal'
 import { template as fechamentoTemplate } from './fechamento'
 import { template as garantiaNovaDemandaTemplate } from './garantia-judicial-nova-demanda'
+import { template as canalParceiroVencimentoTemplate } from './canal-parceiro-vencimento'
 
 export interface TemplateEntry {
   component: ComponentType<any>
