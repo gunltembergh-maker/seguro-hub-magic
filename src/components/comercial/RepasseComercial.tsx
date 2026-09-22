@@ -575,6 +575,7 @@ function PedirNFDialog({
             {enviando ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Enviar ao financeiro
           </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
