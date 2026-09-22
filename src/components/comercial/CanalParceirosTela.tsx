@@ -1140,6 +1140,51 @@ function Historico({ canalId }: { canalId: string | null }) {
 }
 
 
+/** Assinatura lida do arquivo e assinatura atestada por gente são informações
+ *  diferentes: quando existirem as duas, as duas aparecem. */
+function InfoAssinatura({ contrato }: { contrato: Contrato }) {
+  const atestada = contrato.assinatura_atestada_por
+    ? `atestada por ${contrato.assinatura_atestada_por} em ${dia(contrato.assinatura_atestada_em)}`
+    : null;
+  return (
+    <div>
+      <dt className="text-muted-foreground">Assinatura</dt>
+      <dd className="space-y-1 font-medium text-foreground">
+        {contrato.assinado ? (
+          <div>
+            {contrato.assinado_em ? dataHora(contrato.assinado_em) : "encontrada"}{" "}
+            <span className="text-muted-foreground">lida do arquivo</span>
+          </div>
+        ) : atestada ? null : (
+          <div className="text-muted-foreground">não encontrada</div>
+        )}
+        {atestada ? (
+          <Badge className="border-amber-600/40 bg-amber-50 text-amber-800 hover:bg-amber-50 dark:bg-amber-950/40 dark:text-amber-200">
+            {atestada}
+          </Badge>
+        ) : null}
+      </dd>
+    </div>
+  );
+}
+
+function InfoCorrecao({ contrato }: { contrato: Contrato }) {
+  if (!contrato.corrigido_em) return null;
+  return (
+    <div>
+      <dt className="text-muted-foreground">Correção</dt>
+      <dd>
+        <Badge
+          variant="outline"
+          title={`Corrigido por ${contrato.corrigido_por_nome ?? "—"} em ${dataHora(contrato.corrigido_em)}`}
+        >
+          corrigido
+        </Badge>
+      </dd>
+    </div>
+  );
+}
+
 function Info({ rotulo, valor }: { rotulo: string; valor: string }) {
   return (
     <div>
