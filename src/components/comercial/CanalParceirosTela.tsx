@@ -498,14 +498,24 @@ export default function CanalParceirosTela() {
                             <span className="text-muted-foreground">—</span>
                           )}
                         </TableCell>
-                        <TableCell className="tabular-nums">{pct(l.s?.pct_beneficios)}</TableCell>
-                        <TableCell className="tabular-nums">{pct(l.s?.pct_garantia)}</TableCell>
-                        <TableCell className="tabular-nums">
-                          {pct(l.s?.pct_demais_efetivo)}
-                          {demaisHerdado ? (
-                            <div className="text-xs text-muted-foreground">herdado de Garantia</div>
-                          ) : null}
-                        </TableCell>
+                        <CelulaPct
+                          contrato={l.s?.pct_beneficios}
+                          autorizado={aut?.pct_beneficios ?? null}
+                          autorizadoEm={aut?.aprovado_em ?? null}
+                        />
+                        <CelulaPct
+                          contrato={l.s?.pct_garantia}
+                          autorizado={aut?.pct_garantia ?? null}
+                          autorizadoEm={aut?.aprovado_em ?? null}
+                        />
+                        <CelulaPct
+                          contrato={l.s?.pct_demais_efetivo}
+                          autorizado={aut?.pct_demais ?? null}
+                          autorizadoEm={aut?.aprovado_em ?? null}
+                          rodape={
+                            demaisHerdado && aut?.pct_demais == null ? "herdado de Garantia" : null
+                          }
+                        />
                         <TableCell className="text-sm text-muted-foreground">{l.origem}</TableCell>
                         <TableCell className="text-right">
                           <Button
