@@ -155,6 +155,8 @@ const ramosAll: CollapsibleItem[] = [
         perms: ["menu_garantia_formulario_admin"] },
       { title: "Negociação", url: "/garantia/negociacao", icon: ClipboardList,
         perms: ["menu_garantia_negociacao"] },
+      { title: "CRM", url: "/garantia/crm", icon: ClipboardList,
+        perms: ["menu_garantia_crm"] },
     ],
   },
   { title: "Benefícios", url: "/beneficios", icon: HeartPulse, tooltip: "Benefícios", perm: "menu_ramo_beneficios" },
