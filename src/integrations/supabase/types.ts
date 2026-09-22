@@ -1729,6 +1729,10 @@ export type Database = {
           canal_id: string
           contrato_id: string | null
           diretor_email: string
+          email_decisao_em: string | null
+          email_decisao_id: string | null
+          email_pedido_em: string | null
+          email_pedido_id: string | null
           id: string
           justificativa: string
           minimo: number | null
@@ -1751,6 +1755,10 @@ export type Database = {
           canal_id: string
           contrato_id?: string | null
           diretor_email: string
+          email_decisao_em?: string | null
+          email_decisao_id?: string | null
+          email_pedido_em?: string | null
+          email_pedido_id?: string | null
           id?: string
           justificativa: string
           minimo?: number | null
@@ -1773,6 +1781,10 @@ export type Database = {
           canal_id?: string
           contrato_id?: string | null
           diretor_email?: string
+          email_decisao_em?: string | null
+          email_decisao_id?: string | null
+          email_pedido_em?: string | null
+          email_pedido_id?: string | null
           id?: string
           justificativa?: string
           minimo?: number | null
@@ -5484,6 +5496,31 @@ export type Database = {
       ab_minha_area: { Args: never; Returns: string }
       ab_pode: { Args: { p_chave: string }; Returns: boolean }
       ab_seed_demo: { Args: never; Returns: string }
+      canal_parceiro_alteracoes_para_email: {
+        Args: never
+        Returns: {
+          alteracao_id: string
+          anexo_nome: string
+          aprovador_nome: string
+          destinatarios: string[]
+          diretor_email: string
+          justificativa: string
+          minimo: number
+          observacao: string
+          parceiro: string
+          pct_beneficios: number
+          pct_beneficios_contrato: number
+          pct_demais: number
+          pct_garantia: number
+          pct_garantia_contrato: number
+          situacao: string
+          solicitado_em: string
+          solicitante_nome: string
+          tipo: string
+          vigencia_fim: string
+        }[]
+      }
+      canal_parceiro_aprovadores_emails: { Args: never; Returns: string[] }
       canal_parceiro_casar: {
         Args: { p_nomes: string[] }
         Returns: {
@@ -5528,6 +5565,10 @@ export type Database = {
         }
         Returns: string
       }
+      canal_parceiro_marcar_email_alteracao: {
+        Args: { p_alteracao_id: string; p_message_id?: string; p_tipo: string }
+        Returns: boolean
+      }
       canal_parceiro_percentual: {
         Args: { p_canal_planilha: string; p_tipo_de_ramo: string }
         Returns: number
@@ -5569,6 +5610,23 @@ export type Database = {
       canal_parceiro_superar_alteracoes: {
         Args: { p_canal_id: string; p_contrato_id: string }
         Returns: number
+      }
+      canal_parceiro_verificacoes_para_email: {
+        Args: never
+        Returns: {
+          arquivo_nome: string
+          assinatura_lida: boolean
+          contrato_id: string
+          declarado_assinado: boolean
+          destinatarios: string[]
+          enviado_em: string
+          enviado_por_nome: string
+          motivo: string
+          origem_leitura: string
+          parceiro: string
+          repasse_acumulado: number
+          situacao: string
+        }[]
       }
       canal_repasse_emails_pendentes: {
         Args: never

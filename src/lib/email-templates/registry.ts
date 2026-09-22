@@ -5,6 +5,14 @@ import { template as executivoTemplate } from './resumo-executivo-semanal'
 import { template as fechamentoTemplate } from './fechamento'
 import { template as garantiaNovaDemandaTemplate } from './garantia-judicial-nova-demanda'
 import { template as canalParceiroVencimentoTemplate } from './canal-parceiro-vencimento'
+import {
+  templateSolicitacao,
+  templateResposta,
+  templateCobranca,
+  templateConferencia,
+  templateAlteracaoPedido,
+  templateAlteracaoDecisao,
+} from './canal-parceiro-avisos'
 
 export interface TemplateEntry {
   component: ComponentType<any>
@@ -24,6 +32,12 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   // src/lib/garantia/garantia-judicial-email.server.ts (precisa de anexos).
   'garantia-judicial-nova-demanda': garantiaNovaDemandaTemplate,
   'canal-parceiro-vencimento': canalParceiroVencimentoTemplate,
+  'canal-repasse-solicitacao': templateSolicitacao,
+  'canal-repasse-resposta': templateResposta,
+  'canal-repasse-cobranca': templateCobranca,
+  'canal-parceiro-conferencia': templateConferencia,
+  'canal-parceiro-alteracao-pedido': templateAlteracaoPedido,
+  'canal-parceiro-alteracao-decisao': templateAlteracaoDecisao,
   // Aliases legados (compat)
   'receita-diaria': receitaTemplate,
   'resumo-executivo-semanal': executivoTemplate,
