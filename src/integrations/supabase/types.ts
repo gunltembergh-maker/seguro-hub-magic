@@ -6028,6 +6028,13 @@ export type Database = {
           total_sucessos: number
         }[]
       }
+      rpc_hub_listar_pessoas: {
+        Args: never
+        Returns: {
+          nome: string
+          user_id: string
+        }[]
+      }
       rpc_inicio_lavoro_resumo: {
         Args: never
         Returns: {

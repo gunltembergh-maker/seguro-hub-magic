@@ -62,7 +62,9 @@ import {
   useDuplicidadeCliente,
   useEntradas,
   useResponsaveis,
+  useRotearEntradaGarantia,
   type ClienteHub,
+  type EntradaLista,
   type FiltrosEntradas,
   type ProdutoGarantia,
   type RamoEntrada,
@@ -259,6 +261,8 @@ export default function EntradaDemandas() {
                       <TableCell>
                         {e.destino === "roteada" ? (
                           <Badge className="bg-[#338B85] hover:bg-[#338B85]">Roteada</Badge>
+                        ) : e.destino === "retida" && e.ramo === "garantia" ? (
+                          <CelulaPendencia entrada={e} />
                         ) : e.destino === "retida" ? (
                           <Badge variant="outline" className="border-amber-500 text-amber-700">
                             Retida · ramo sem fluxo no Hub
@@ -277,6 +281,54 @@ export default function EntradaDemandas() {
       </Card>
 
       <DialogRegistro aberto={aberto} onFechar={() => setAberto(false)} />
+    </div>
+  );
+}
+
+// ───────────────────── Pendência de roteamento (Garantia) ─────────────────
+
+/**
+ * Entrada de Garantia que ficou retida: a demanda não chegou a abrir.
+ * Nada foi perdido — o botão refaz só a etapa da demanda, sem criar entrada
+ * nova.
+ */
+function CelulaPendencia({ entrada }: { entrada: EntradaLista }) {
+  const rotear = useRotearEntradaGarantia();
+
+  async function tentar() {
+    if (!entrada.cliente?.id || !entrada.produto) {
+      return toast.error("Entrada sem cliente ou produto: não dá para abrir a demanda.");
+    }
+    try {
+      await rotear.mutateAsync({
+        entrada_id: entrada.id,
+        produto: entrada.produto as ProdutoGarantia,
+        cliente_id: entrada.cliente.id,
+        chegada_em: entrada.chegada_em,
+        canal_id: entrada.canal?.id ?? null,
+      });
+      toast.success(`Entrada ${entrada.protocolo} roteada para Garantia.`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  return (
+    <div className="space-y-1">
+      <Badge variant="outline" className="border-destructive text-destructive">
+        Retida · demanda não aberta
+      </Badge>
+      {entrada.motivo_retencao && (
+        <p className="max-w-[240px] text-xs text-muted-foreground">{entrada.motivo_retencao}</p>
+      )}
+      <Button size="sm" variant="outline" onClick={tentar} disabled={rotear.isPending}>
+        {rotear.isPending ? (
+          <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+        ) : (
+          <ArrowRight className="mr-1 h-3 w-3" />
+        )}
+        Tentar rotear de novo
+      </Button>
     </div>
   );
 }
@@ -559,7 +611,7 @@ function BlocoCliente({
   const responsaveis = useResponsaveis();
 
   const nomeResponsavel = (id: string | null) =>
-    responsaveis.data?.find((r) => r.user_id === id)?.full_name ?? (id ? "—" : "não definido");
+    responsaveis.data?.find((r) => r.user_id === id)?.nome ?? (id ? "—" : "não definido");
 
   if (cliente) {
     return (
@@ -919,8 +971,8 @@ function CadastroCliente({
               <SelectTrigger><SelectValue placeholder="Sem responsável definido" /></SelectTrigger>
               <SelectContent>
                 {(responsaveis.data ?? []).map((r) => (
-                  <SelectItem key={r.user_id!} value={r.user_id!}>
-                    {r.full_name ?? r.email}
+                  <SelectItem key={r.user_id} value={r.user_id}>
+                    {r.nome}
                   </SelectItem>
                 ))}
               </SelectContent>

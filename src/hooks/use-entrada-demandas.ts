@@ -92,18 +92,27 @@ export function useCanais() {
   });
 }
 
+export interface PessoaHub {
+  user_id: string;
+  nome: string;
+}
+
+/**
+ * Lista de pessoas para os seletores de responsável.
+ *
+ * Não lê `profiles` direto: as policies de SELECT de lá só deixam o usuário
+ * ver o próprio registro (ou tudo, se for admin/diretoria), então um
+ * COLABORADOR veria um nome só. O RPC security definer devolve apenas
+ * user_id e nome — sem e-mail — e vazio para quem não opera a Entrada nem o
+ * pipeline de Garantia.
+ */
 export function useResponsaveis() {
   return useQuery({
     queryKey: ["entrada", "responsaveis"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("user_id, full_name, email")
-        .eq("active", true)
-        .or("blocked.is.null,blocked.eq.false")
-        .order("full_name");
+    queryFn: async (): Promise<PessoaHub[]> => {
+      const { data, error } = await supabase.rpc("rpc_hub_listar_pessoas");
       if (error) throw error;
-      return (data ?? []).filter((p) => !!p.user_id);
+      return ((data ?? []) as PessoaHub[]).filter((p) => !!p.user_id);
     },
   });
 }
@@ -215,11 +224,74 @@ export interface NovaEntrada {
   observacao: string | null;
 }
 
+export interface DadosRoteamento {
+  entrada_id: string;
+  produto: ProdutoGarantia;
+  cliente_id: string;
+  chegada_em: string;
+  canal_id: string | null;
+}
+
 /**
- * Grava a entrada e, quando for Garantia, a demanda em Triagem.
- * Se a demanda falhar, a entrada criada é desfeita: entrada "roteada" sem
- * demanda é registro órfão, e ninguém acharia depois.
+ * Abre a demanda de Garantia em Triagem e só então marca a entrada como
+ * roteada. A ordem importa: a entrada nunca fica "roteada" antes de existir
+ * a demanda que justifica esse destino.
+ *
+ * Se algo falhar, NÃO se apaga a entrada. A policy de DELETE de hub_entradas
+ * é só de ADMIN: para os demais o delete não apaga nada e também não devolve
+ * erro, e um delete que não apaga e não reclama é pior que nenhum delete.
+ * Em vez disso a entrada continua "retida", com o motivo escrito — estado se
+ * corrige, não se deleta.
  * Nada é escrito em garantia_status_historico — o trigger do banco cuida.
+ */
+async function abrirDemandaGarantia(d: DadosRoteamento, uid: string | null): Promise<string> {
+  try {
+    const { data: demanda, error: erroDemanda } = await supabase
+      .from("garantia_demandas")
+      .insert({
+        produto: d.produto,
+        entrada_id: d.entrada_id,
+        cliente_id: d.cliente_id,
+        chegada_em: d.chegada_em,
+        canal_id: d.canal_id,
+        fase: "negociacao",
+        etapa: "1",
+        status_atual: "triagem",
+        triagem_completa: false,
+        cadastrado_por: uid,
+        modalidade: d.produto === "fianca_locaticia" ? "locaticia" : null,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any)
+      .select("id")
+      .single();
+    if (erroDemanda) throw erroDemanda;
+
+    const { error: erroVinculo } = await supabase
+      .from("hub_entradas")
+      .update({ destino: "roteada", demanda_id: demanda.id, motivo_retencao: null })
+      .eq("id", d.entrada_id);
+    if (erroVinculo) throw erroVinculo;
+
+    return demanda.id as string;
+  } catch (err) {
+    const quando = new Date().toLocaleString("pt-BR");
+    const { error: erroCompensacao } = await supabase
+      .from("hub_entradas")
+      .update({
+        destino: "retida",
+        motivo_retencao: `Falha ao abrir a demanda de Garantia em ${quando}; a entrada ficou registrada e pode ser roteada de novo.`,
+      })
+      .eq("id", d.entrada_id);
+    // Se nem a compensação passou, o erro original é o que interessa na tela.
+    if (erroCompensacao) console.error("Falha ao registrar a retenção da entrada", erroCompensacao);
+    throw err;
+  }
+}
+
+/**
+ * Grava a entrada e, quando for Garantia, abre a demanda em Triagem.
+ * A entrada sempre nasce "retida": só vira "roteada" depois que a demanda
+ * existe de fato.
  */
 export function useCriarEntrada() {
   const qc = useQueryClient();
@@ -240,9 +312,9 @@ export function useCriarEntrada() {
           canal_id: v.canal_id,
           assunto: v.assunto,
           observacao: v.observacao,
-          destino: ehGarantia ? "roteada" : "retida",
+          destino: "retida",
           motivo_retencao: ehGarantia
-            ? null
+            ? "Aguardando a abertura da demanda de Garantia."
             : "Ramo ainda sem pipeline próprio no Hub: a demanda fica registrada e retida.",
           registrado_por: uid,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -253,41 +325,41 @@ export function useCriarEntrada() {
 
       if (!ehGarantia) return { entrada, demandaId: null as string | null };
 
-      try {
-        const { data: demanda, error: erroDemanda } = await supabase
-          .from("garantia_demandas")
-          .insert({
-            produto: v.produto!,
-            entrada_id: entrada.id,
-            cliente_id: v.cliente_id,
-            chegada_em: v.chegada_em,
-            canal_id: v.canal_id,
-            fase: "negociacao",
-            etapa: "1",
-            status_atual: "triagem",
-            triagem_completa: false,
-            cadastrado_por: uid,
-            modalidade: v.produto === "fianca_locaticia" ? "locaticia" : null,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          } as any)
-          .select("id")
-          .single();
-        if (erroDemanda) throw erroDemanda;
-
-        const { error: erroVinculo } = await supabase
-          .from("hub_entradas")
-          .update({ destino: "roteada", demanda_id: demanda.id })
-          .eq("id", entrada.id);
-        if (erroVinculo) throw erroVinculo;
-
-        return { entrada, demandaId: demanda.id as string };
-      } catch (err) {
-        // Desfaz a entrada para não sobrar registro roteado sem demanda.
-        await supabase.from("hub_entradas").delete().eq("id", entrada.id);
-        throw err;
-      }
+      const demandaId = await abrirDemandaGarantia(
+        {
+          entrada_id: entrada.id,
+          produto: v.produto!,
+          cliente_id: v.cliente_id,
+          chegada_em: v.chegada_em,
+          canal_id: v.canal_id,
+        },
+        uid,
+      );
+      return { entrada, demandaId };
     },
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["entrada", "lista"] });
+      qc.invalidateQueries({ queryKey: ["entrada", "duplicidade"] });
+    },
+    onError: () => {
+      // A entrada ficou gravada como retida: a lista precisa mostrar a pendência.
+      qc.invalidateQueries({ queryKey: ["entrada", "lista"] });
+    },
+  });
+}
+
+/**
+ * Refaz só a etapa da demanda para uma entrada de Garantia que ficou retida.
+ * Não cria entrada nova: reaproveita a que já existe, com o mesmo protocolo.
+ */
+export function useRotearEntradaGarantia() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (d: DadosRoteamento) => {
+      const { data: sessao } = await supabase.auth.getUser();
+      return abrirDemandaGarantia(d, sessao.user?.id ?? null);
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: ["entrada", "lista"] });
       qc.invalidateQueries({ queryKey: ["entrada", "duplicidade"] });
     },
