@@ -632,6 +632,38 @@ export default function CanalParceirosTela() {
 
 /* ------------------------------------------------------------------- KPI */
 
+/** Percentual do contrato — ou o autorizado pela diretoria, que é o que vale. */
+function CelulaPct({
+  contrato,
+  autorizado,
+  autorizadoEm,
+  rodape,
+}: {
+  contrato?: number | null;
+  autorizado?: number | null;
+  autorizadoEm?: string | null;
+  rodape?: string | null;
+}) {
+  const temAutorizacao = autorizado != null;
+  return (
+    <TableCell className="tabular-nums">
+      <span className="inline-flex items-center gap-1.5">
+        {pct(temAutorizacao ? autorizado : contrato)}
+        {temAutorizacao ? (
+          <Badge
+            variant="outline"
+            className="border-amber-600/40 bg-amber-50 px-1.5 py-0 text-[10px] text-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
+            title={`Autorizado pela diretoria em ${dia(autorizadoEm)} · contrato: ${pct(contrato)}`}
+          >
+            diretoria
+          </Badge>
+        ) : null}
+      </span>
+      {rodape ? <div className="text-xs text-muted-foreground">{rodape}</div> : null}
+    </TableCell>
+  );
+}
+
 function Kpi({ titulo, valor, icone }: { titulo: string; valor: number; icone: React.ReactNode }) {
   return (
     <Card>
