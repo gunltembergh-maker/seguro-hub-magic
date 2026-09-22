@@ -196,6 +196,7 @@ export function SolicitarAlteracaoPercentual({
             atual={pctAtuais.beneficios}
             valor={beneficios}
             onChange={setBeneficios}
+            erro={pctBeneficiosInvalido}
           />
           <CampoPct
             id="alt-garantia"
@@ -203,6 +204,7 @@ export function SolicitarAlteracaoPercentual({
             atual={pctAtuais.garantia}
             valor={garantia}
             onChange={setGarantia}
+            erro={pctGarantiaInvalido}
           />
           <CampoPct
             id="alt-demais"
@@ -210,6 +212,7 @@ export function SolicitarAlteracaoPercentual({
             atual={pctAtuais.demais}
             valor={demais}
             onChange={setDemais}
+            erro={pctDemaisInvalido}
           />
 
           <div className="space-y-1.5">
@@ -221,6 +224,11 @@ export function SolicitarAlteracaoPercentual({
               value={minimo}
               onChange={(e) => setMinimo(e.target.value)}
             />
+            {minimoInvalido ? (
+              <p className="text-xs text-destructive">
+                Informe apenas números nos percentuais, por exemplo 30 ou 27,5.
+              </p>
+            ) : null}
           </div>
 
           <div className="space-y-1.5">
