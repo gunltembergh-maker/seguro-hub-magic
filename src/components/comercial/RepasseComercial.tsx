@@ -1,11 +1,12 @@
 // Repasse por parceiro na visão do Comercial.
 //
 // Os números vêm das mesmas RPCs do Fluxo Diário e a planilha é gerada pelo
-// mesmo módulo (`@/lib/repasse/exportar-repasse`). A data prevista é a do
-// ciclo, definida pelo Financeiro — aqui ela só é exibida.
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, Download, Loader2, Lock } from "lucide-react";
+// mesmo módulo (`@/lib/repasse/exportar-repasse`). O Comercial pede a
+// autorização ao Financeiro e só exporta ao parceiro depois de aprovado.
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSearch } from "@tanstack/react-router";
+import { AlertTriangle, Download, Loader2, Lock, Send } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +17,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Table,
   TableBody,
@@ -33,6 +44,17 @@ const BRL = (v: number | null | undefined) =>
 const fmtBR = (iso: string | null | undefined) =>
   iso ? new Date(`${String(iso).slice(0, 10)}T12:00:00`).toLocaleDateString("pt-BR") : "—";
 
+const fmtCurto = (iso: string | null | undefined) =>
+  iso
+    ? new Date(`${String(iso).slice(0, 10)}T12:00:00`).toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+      })
+    : "—";
+
+const fmtDataHora = (iso: string | null | undefined) =>
+  iso ? new Date(iso).toLocaleString("pt-BR") : "—";
+
 type CanalRow = {
   ciclo_ano: number;
   ciclo_mes: number;
@@ -43,12 +65,80 @@ type CanalRow = {
   situacao: "A_PAGAR" | "RETIDO_MINIMO" | "PAGO";
 };
 
+export type DemandaNF = {
+  demanda_id: string;
+  canal_id: string | null;
+  chave_planilha: string;
+  parceiro: string;
+  ciclo_ano: number;
+  ciclo_mes: number;
+  linhas: number | null;
+  valor_total: number | null;
+  situacao: string;
+  solicitado_por_nome: string | null;
+  solicitado_em: string | null;
+  decidido_por_nome: string | null;
+  decidido_em: string | null;
+  data_prevista_pagamento: string | null;
+  dias_para_a_data: number | null;
+  baixa_data_pagamento: string | null;
+  baixa_confirmada_por: string | null;
+  baixa_confirmada_em: string | null;
+  observacao_solicitante: string | null;
+  observacao_financeiro: string | null;
+  sou_o_aprovador: boolean | null;
+  sou_o_solicitante: boolean | null;
+};
+
 const PILL: Record<string, { bg: string; color: string; label: string }> = {
   A_PAGAR: { bg: "#DCFCE7", color: "#166534", label: "A pagar" },
   RETIDO_MINIMO: { bg: "#FEF3C7", color: "#92400E", label: "Retido pelo mínimo de R$ 100" },
   PAGO: { bg: "#E5E7EB", color: "#4B5563", label: "Pago" },
   SEM_VALOR: { bg: "#F3F4F6", color: "#6B7280", label: "Sem valor" },
 };
+
+function BadgeFinanceiro({ d }: { d: DemandaNF | undefined }) {
+  if (!d) {
+    return (
+      <Badge variant="outline" className="text-muted-foreground">
+        Sem pedido
+      </Badge>
+    );
+  }
+  if (d.baixa_data_pagamento) {
+    return (
+      <Badge variant="outline" className="border-transparent bg-blue-100 text-blue-800">
+        Pago em {fmtCurto(d.baixa_data_pagamento)}
+      </Badge>
+    );
+  }
+  if (d.situacao === "APROVADA") {
+    return (
+      <div className="space-y-0.5">
+        <Badge variant="outline" className="border-transparent bg-emerald-100 text-emerald-800">
+          Aprovado pelo financeiro
+        </Badge>
+        {d.data_prevista_pagamento ? (
+          <p className="text-xs text-muted-foreground">
+            pagamento previsto para {fmtBR(d.data_prevista_pagamento)}
+          </p>
+        ) : null}
+      </div>
+    );
+  }
+  if (d.situacao === "RECUSADA") {
+    return (
+      <Badge variant="outline" className="border-transparent bg-red-100 text-red-800">
+        Recusado pelo financeiro
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="outline" className="border-transparent bg-amber-100 text-amber-900">
+      Aguardando o financeiro
+    </Badge>
+  );
+}
 
 export function RepasseComercial({
   podeExportarPorChave,
@@ -59,6 +149,13 @@ export function RepasseComercial({
   const ciclo = useMemo(() => cicloPadrao(new Set<string>()), []);
   const { data: estadoCiclo } = useCicloRepasse(ciclo.ano, ciclo.mes);
   const [exportando, setExportando] = useState<string | null>(null);
+  const [pedido, setPedido] = useState<{ canal: string; linhas: number; valor: number } | null>(
+    null,
+  );
+  const queryClient = useQueryClient();
+
+  const search = useSearch({ strict: false }) as { demanda?: string };
+  const demandaDestaque = search?.demanda;
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["lavoro-repasse-por-canal", ciclo.ano, ciclo.mes, "PROVISIONADO", null, null],
@@ -76,10 +173,30 @@ export function RepasseComercial({
     staleTime: 5 * 60 * 1000,
   });
 
+  const demandas = useQuery({
+    queryKey: ["canal-repasse-demandas", ciclo.ano, ciclo.mes],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_canal_repasse_demandas" as never, {
+        p_situacao: null,
+        p_ano: ciclo.ano,
+        p_mes: ciclo.mes,
+      } as never);
+      if (error) throw error;
+      return (data || []) as DemandaNF[];
+    },
+    staleTime: 60_000,
+  });
+
+  const demandaPorChave = useMemo(() => {
+    const m = new Map<string, DemandaNF>();
+    for (const d of demandas.data ?? []) m.set(chaveCanal(d.chave_planilha ?? d.parceiro), d);
+    return m;
+  }, [demandas.data]);
+
   const linhas = useMemo(() => {
     const map = new Map<
       string,
-      { canal: string; cicloCorrente: number; acumulado: number; situacao: string }
+      { canal: string; cicloCorrente: number; acumulado: number; situacao: string; parcelas: number }
     >();
     for (const r of data || []) {
       const cur = map.get(r.canal_repasse) ?? {
@@ -87,12 +204,14 @@ export function RepasseComercial({
         cicloCorrente: 0,
         acumulado: 0,
         situacao: "SEM_VALOR",
+        parcelas: 0,
       };
       const v = Number(r.valor || 0);
       cur.acumulado += v;
       if (r.ciclo_ano === ciclo.ano && r.ciclo_mes === ciclo.mes) {
         cur.cicloCorrente += v;
         cur.situacao = r.situacao;
+        cur.parcelas += 1;
       }
       map.set(r.canal_repasse, cur);
     }
@@ -158,82 +277,278 @@ export function RepasseComercial({
         ) : null}
 
         <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Parceiro</TableHead>
-                <TableHead className="text-right">Ciclo corrente</TableHead>
-                <TableHead className="text-right">Acumulado</TableHead>
-                <TableHead>Situação</TableHead>
-                <TableHead className="text-right">Envio</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
+          <TooltipProvider>
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={5} className="text-sm text-muted-foreground">
-                    <Loader2 className="mr-2 inline h-4 w-4 animate-spin" />
-                    Carregando
-                  </TableCell>
+                  <TableHead>Parceiro</TableHead>
+                  <TableHead className="text-right">Ciclo corrente</TableHead>
+                  <TableHead className="text-right">Acumulado</TableHead>
+                  <TableHead>Situação</TableHead>
+                  <TableHead>Financeiro</TableHead>
+                  <TableHead className="text-right">Envio</TableHead>
                 </TableRow>
-              ) : linhas.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-sm text-muted-foreground">
-                    Nenhum repasse neste ciclo.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                linhas.map((l) => {
-                  const liberado = podeExportarPorChave.get(chaveCanal(l.canal)) === true;
-                  const pill = PILL[l.situacao] ?? PILL.SEM_VALOR;
-                  return (
-                    <TableRow key={l.canal}>
-                      <TableCell className="font-medium">{l.canal}</TableCell>
-                      <TableCell className="text-right font-mono tabular-nums">
-                        {BRL(l.cicloCorrente)}
-                      </TableCell>
-                      <TableCell className="text-right font-mono tabular-nums">
-                        {BRL(l.acumulado)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          style={{ background: pill.bg, color: pill.color, borderColor: "transparent" }}
-                        >
-                          {pill.label}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {liberado ? (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={exportando !== null}
-                            onClick={() => void exportar(l.canal)}
-                          >
-                            {exportando === l.canal ? (
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                              <Download className="mr-2 h-4 w-4" />
-                            )}
-                            Exportar e enviar
-                          </Button>
-                        ) : (
-                          <Badge variant="outline" className="gap-1 text-muted-foreground">
-                            <Lock className="h-3 w-3" />
-                            Sem contrato válido
-                          </Badge>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-sm text-muted-foreground">
+                      <Loader2 className="mr-2 inline h-4 w-4 animate-spin" />
+                      Carregando
+                    </TableCell>
+                  </TableRow>
+                ) : linhas.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-sm text-muted-foreground">
+                      Nenhum repasse neste ciclo.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  linhas.map((l) => {
+                    const chave = chaveCanal(l.canal);
+                    const liberado = podeExportarPorChave.get(chave) === true;
+                    const pill = PILL[l.situacao] ?? PILL.SEM_VALOR;
+                    const d = demandaPorChave.get(chave);
+                    return (
+                      <LinhaRepasse
+                        key={l.canal}
+                        canal={l.canal}
+                        cicloCorrente={l.cicloCorrente}
+                        acumulado={l.acumulado}
+                        parcelas={l.parcelas}
+                        pill={pill}
+                        demanda={d}
+                        liberado={liberado}
+                        destacar={!!d && d.demanda_id === demandaDestaque}
+                        exportando={exportando}
+                        onExportar={() => void exportar(l.canal)}
+                        onPedir={() =>
+                          setPedido({ canal: l.canal, linhas: l.parcelas, valor: l.cicloCorrente })
+                        }
+                      />
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </TooltipProvider>
         </div>
       </CardContent>
+
+      <PedirNFDialog
+        aberto={pedido !== null}
+        canal={pedido?.canal ?? ""}
+        ciclo={ciclo}
+        linhas={pedido?.linhas ?? 0}
+        valor={pedido?.valor ?? 0}
+        onFechar={() => setPedido(null)}
+        onSucesso={() => {
+          void queryClient.invalidateQueries({ queryKey: ["canal-repasse-demandas"] });
+          setPedido(null);
+        }}
+      />
     </Card>
+  );
+}
+
+function LinhaRepasse({
+  canal,
+  cicloCorrente,
+  acumulado,
+  parcelas,
+  pill,
+  demanda,
+  liberado,
+  destacar,
+  exportando,
+  onExportar,
+  onPedir,
+}: {
+  canal: string;
+  cicloCorrente: number;
+  acumulado: number;
+  parcelas: number;
+  pill: { bg: string; color: string; label: string };
+  demanda: DemandaNF | undefined;
+  liberado: boolean;
+  destacar: boolean;
+  exportando: string | null;
+  onExportar: () => void;
+  onPedir: () => void;
+}) {
+  const ref = useRef<HTMLTableRowElement | null>(null);
+  const [aceso, setAceso] = useState(false);
+
+  useEffect(() => {
+    if (!destacar) return;
+    ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    setAceso(true);
+    const t = setTimeout(() => setAceso(false), 6000);
+    return () => clearTimeout(t);
+  }, [destacar]);
+
+  const situacao = demanda?.situacao ?? null;
+  const pago = !!demanda?.baixa_data_pagamento;
+
+  return (
+    <TableRow ref={ref} className={aceso ? "ring-2 ring-primary ring-offset-2" : undefined}>
+      <TableCell className="font-medium">
+        {canal}
+        {situacao === "RECUSADA" && demanda?.observacao_financeiro ? (
+          <p className="mt-1 text-xs text-destructive">{demanda.observacao_financeiro}</p>
+        ) : null}
+      </TableCell>
+      <TableCell className="text-right font-mono tabular-nums">{BRL(cicloCorrente)}</TableCell>
+      <TableCell className="text-right font-mono tabular-nums">{BRL(acumulado)}</TableCell>
+      <TableCell>
+        <Badge
+          variant="outline"
+          style={{ background: pill.bg, color: pill.color, borderColor: "transparent" }}
+        >
+          {pill.label}
+        </Badge>
+      </TableCell>
+      <TableCell>
+        <BadgeFinanceiro d={demanda} />
+      </TableCell>
+      <TableCell className="text-right">
+        {!liberado ? (
+          <Badge variant="outline" className="gap-1 text-muted-foreground">
+            <Lock className="h-3 w-3" />
+            Sem contrato válido
+          </Badge>
+        ) : !demanda ? (
+          <Button size="sm" variant="outline" onClick={onPedir} disabled={cicloCorrente <= 0}>
+            <Send className="mr-2 h-4 w-4" />
+            Enviar ao financeiro
+          </Button>
+        ) : situacao === "PENDENTE" ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>
+                <Button size="sm" variant="outline" disabled>
+                  Aguardando o financeiro
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              Pedido em {fmtDataHora(demanda.solicitado_em)}
+              {demanda.solicitado_por_nome ? ` por ${demanda.solicitado_por_nome}` : ""}
+            </TooltipContent>
+          </Tooltip>
+        ) : situacao === "RECUSADA" ? (
+          <Button size="sm" variant="outline" onClick={onPedir}>
+            <Send className="mr-2 h-4 w-4" />
+            Pedir de novo
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={exportando !== null || pago}
+            onClick={onExportar}
+          >
+            {exportando === canal ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="mr-2 h-4 w-4" />
+            )}
+            Exportar ao parceiro
+          </Button>
+        )}
+        {parcelas > 0 ? (
+          <p className="mt-1 text-xs text-muted-foreground">{parcelas} parcelas</p>
+        ) : null}
+      </TableCell>
+    </TableRow>
+  );
+}
+
+function PedirNFDialog({
+  aberto,
+  canal,
+  ciclo,
+  linhas,
+  valor,
+  onFechar,
+  onSucesso,
+}: {
+  aberto: boolean;
+  canal: string;
+  ciclo: { ano: number; mes: number };
+  linhas: number;
+  valor: number;
+  onFechar: () => void;
+  onSucesso: () => void;
+}) {
+  const [observacao, setObservacao] = useState("");
+  const [enviando, setEnviando] = useState(false);
+
+  useEffect(() => {
+    if (aberto) setObservacao("");
+  }, [aberto]);
+
+  async function enviar() {
+    setEnviando(true);
+    try {
+      const { data, error } = await supabase.rpc("rpc_canal_repasse_solicitar_nf" as never, {
+        p_canal_planilha: canal,
+        p_ano: ciclo.ano,
+        p_mes: ciclo.mes,
+        p_linhas: linhas,
+        p_valor: valor,
+        p_observacao: observacao.trim() || null,
+      } as never);
+      if (error) throw error;
+      const row = (Array.isArray(data) ? data[0] : data) as { mensagem?: string } | null;
+      toast.success(row?.mensagem ?? "Pedido enviado ao Financeiro.");
+      onSucesso();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  return (
+    <Dialog open={aberto} onOpenChange={(o) => (!o ? onFechar() : undefined)}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Enviar ao financeiro</DialogTitle>
+          <DialogDescription>
+            O Financeiro vai conferir o valor e autorizar a emissão da nota fiscal. Você recebe um
+            aviso assim que ele responder.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3 text-sm">
+          <div>
+            <p className="font-medium text-foreground">{canal}</p>
+            <p className="text-muted-foreground">
+              Ciclo de {MESES[ciclo.mes - 1]}/{ciclo.ano} · {linhas} parcelas
+            </p>
+          </div>
+          <p className="font-mono text-2xl font-semibold tabular-nums text-foreground">
+            {BRL(valor)}
+          </p>
+          <Textarea
+            placeholder="Observação para o Financeiro (opcional)"
+            value={observacao}
+            onChange={(e) => setObservacao(e.target.value)}
+          />
+        </div>
+
+        <DialogFooter>
+          <Button variant="ghost" onClick={onFechar} disabled={enviando}>
+            Cancelar
+          </Button>
+          <Button onClick={() => void enviar()} disabled={enviando}>
+            {enviando ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            Enviar ao financeiro
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
