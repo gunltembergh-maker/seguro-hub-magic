@@ -359,7 +359,7 @@ export function impedimentoDaTransicao(
   crm?: ContextoCrm,
 ): string | null {
   // O aceite não é troca de status: ele é o RPC que gera o código GAR-xxxxx.
-  // Arrastar o cartão para o CRM puluaria a geração do código.
+  // Arrastar o cartão para o CRM pularia a geração do código.
   if (demanda.fase !== "crm" && destino.fase === "crm") {
     return "A entrada no CRM é feita pelo botão “Registrar aceite do cliente”, no detalhe da demanda: é ele que gera o código GAR e garante que não saiam dois códigos para o mesmo caso.";
   }
@@ -410,6 +410,25 @@ export function impedimentoDaTransicao(
       return `Para montar a proposta faltam: ${faltando.join(" e ")}. Preencha na aba Dados do detalhe da demanda.`;
     }
   }
+
+  if (crm && demanda.etapa !== etapaDestino) {
+    // Etapa 4: a proposta é montada em cima da cotação aceita.
+    if (demanda.etapa === "4" && !crm.temCotacaoEscolhida) {
+      return "Nenhuma cotação foi marcada como escolhida. Lance as cotações recebidas na aba Cotações e marque a aceita: é ela que define prêmio e comissão da proposta.";
+    }
+    // Etapa 7: minuta e aprovações antes da emissão.
+    if (demanda.etapa === "7") {
+      if (!crm.temMinuta) {
+        return "A minuta ainda não foi anexada. Anexe o documento do tipo Minuta na aba Documentos: sem o texto conferido a emissão não pode ser pedida.";
+      }
+      if (!crm.aprovouCliente) {
+        return "Falta registrar a aprovação da minuta pelo cliente (data e forma), na aba Minuta. Motivo: a emissão só é pedida com o texto aprovado por quem contrata.";
+      }
+      if (crm.seguradoExigeTexto && !crm.aprovouSegurado) {
+        return "Falta o aceite do texto pelo segurado, na aba Minuta. Motivo: este segurado está cadastrado como exigindo texto próprio, então a apólice só é emitida com o aceite dele.";
+      }
+    }
+  }
   return null;
 }
 
@@ -425,6 +444,9 @@ function pendenciasDaEtapa(demanda: DemandaLista, tipos: Set<string>, etapa: str
   };
   if (etapa === "2") return pendenciasEtapa2(alvo, tipos);
   if (etapa === "3b") return pendenciasEtapa3b(alvo, tipos);
+  // Etapa 6 (curadoria): a única exigência documental é o CCG, e só quando o
+  // caso foi marcado como precisando dele. Reusa a MESMA função da etapa 3b.
+  if (etapa === "6") return pendenciasEtapa3b(alvo, tipos).filter((p) => p.texto.includes("CCG"));
   return [];
 }
 
