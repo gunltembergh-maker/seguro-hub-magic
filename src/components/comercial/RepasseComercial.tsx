@@ -404,6 +404,8 @@ function LinhaRepasse({
   onExportar,
   onPedir,
   onVerRelacao,
+  onVerContrato,
+  onPedirLiberacao,
 }: {
   canal: string;
   cicloCorrente: number;
@@ -417,6 +419,8 @@ function LinhaRepasse({
   onExportar: () => void;
   onPedir: () => void;
   onVerRelacao: () => void;
+  onVerContrato: () => void;
+  onPedirLiberacao: () => void;
 }) {
   const ref = useRef<HTMLTableRowElement | null>(null);
   const [aceso, setAceso] = useState(false);
