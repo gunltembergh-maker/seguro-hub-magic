@@ -502,32 +502,36 @@ export function useReabrirPerda() {
         .eq("id", perda.demanda_id);
       if (erroDemanda) throw erroDemanda;
 
+      // A demanda já foi reaberta acima. Se o carimbo falhar, o que se perdeu
+      // foi o registro de reabertura — não a reabertura. Propagar o erro faria
+      // o usuário tentar de novo e reabrir duas vezes.
       const { error: erroPerda } = await supabase
         .from("garantia_perdas")
         .update({ reaberta_em: new Date().toISOString(), reaberta_por: sessao.user?.id ?? null })
         .eq("id", perda.id);
-      if (erroPerda) throw erroPerda;
+      if (erroPerda) {
+        console.error("Demanda reaberta, mas o carimbo de reabertura não foi gravado:", erroPerda);
+      }
+      return { carimboGravado: !erroPerda };
     },
     onSuccess: () => invalidarPipeline(qc),
   });
 }
 
 /**
- * Início do status atual de cada demanda, lido do registro em aberto do
- * histórico. Só é consultado para quem tem `menu_garantia_painel`: sem essa
- * permissão a tela não mostra tempo nenhum, então nem busca.
+ * Início do status atual de cada demanda, lido do RPC dos status em aberto. O
+ * RPC só devolve linhas para quem tem `menu_garantia_painel` — o `enabled`
+ * abaixo é conveniência; o portão é o banco.
  */
 export function useInicioDoStatus(ativo: boolean) {
   return useQuery({
     queryKey: ["garantia", "historico", "abertos"],
     enabled: ativo,
     queryFn: async (): Promise<Record<string, string>> => {
-      const { data, error } = await supabase
-        .from("garantia_status_historico")
-        .select("demanda_id, inicio")
-        .is("fim", null)
-        .limit(1000);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase.rpc as any)("rpc_garantia_status_abertos");
       if (error) throw error;
+
       const mapa: Record<string, string> = {};
       for (const linha of data ?? []) mapa[linha.demanda_id as string] = linha.inicio as string;
       return mapa;
