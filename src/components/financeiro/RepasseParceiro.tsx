@@ -324,7 +324,6 @@ export function RepasseParceiro() {
     [mesAncora, feriados],
   );
   const dataRepasseCurta = `${pad2(dataRepasse.getDate())}/${pad2(dataRepasse.getMonth() + 1)}`;
-  const dataRepasseLonga = `${dataRepasseCurta}/${dataRepasse.getFullYear()}`;
 
   const sit = SITUACOES.find((s) => s.key === situacaoKey)!;
   const isHistorico = sit.modo === "HISTORICO";
