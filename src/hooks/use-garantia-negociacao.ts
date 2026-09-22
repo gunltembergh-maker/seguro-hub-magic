@@ -140,7 +140,7 @@ export function useDemandasNegociacao(filtros: FiltrosNegociacao) {
       let q = supabase
         .from("garantia_demandas")
         .select(CAMPOS_DEMANDA)
-        .eq("fase", "negociacao")
+        .eq("fase", filtros.fase ?? "negociacao")
         .order("cadastrado_em", { ascending: false })
         .limit(500);
       if (filtros.produto) q = q.eq("produto", filtros.produto);

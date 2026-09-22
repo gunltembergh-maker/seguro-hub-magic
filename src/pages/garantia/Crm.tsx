@@ -81,8 +81,7 @@ function Cartao({
         {demanda.legenda ?? demanda.cliente?.nome ?? "—"}
       </p>
       <p className="mt-1 text-xs text-muted-foreground">
-        {demanda.seguradora_escolhida ?? "Seguradora a confirmar"} ·{" "}
-        {rotuloModalidade(demanda.modalidade)}
+        {seguradora ?? "Seguradora a confirmar"} · {rotuloModalidade(demanda.modalidade)}
       </p>
       <p className="mt-1 text-xs text-muted-foreground">
         Prêmio: {moeda(demanda.premio_estimado)} · Comissão: {moeda(demanda.comissao_estimada)}
