@@ -277,6 +277,12 @@ export function DemandasRepasseNF() {
         mes={relacao?.ciclo_mes ?? 1}
         valorDoPedido={relacao?.valor_total ?? undefined}
       />
+      <ContratoDoParceiro
+        aberto={contrato !== null}
+        onFechar={() => setContrato(null)}
+        canal={contrato?.chave_planilha ?? ""}
+        parceiro={contrato?.parceiro ?? ""}
+      />
     </>
   );
 }
