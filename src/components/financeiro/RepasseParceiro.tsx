@@ -139,6 +139,20 @@ function chaveCanal(canal: string) {
     .trim();
 }
 
+type LiberacaoPendente = {
+  liberacao_id: string;
+  canal_planilha?: string | null;
+  parceiro?: string | null;
+  nome?: string | null;
+  ano?: number | null;
+  mes?: number | null;
+  justificativa?: string | null;
+  solicitado_por_nome?: string | null;
+  solicitado_por_email?: string | null;
+  sou_o_aprovador?: boolean | null;
+  status?: string | null;
+};
+
 type SituacaoContrato = {
   chave_planilha: string;
   canal_id: string | null;
