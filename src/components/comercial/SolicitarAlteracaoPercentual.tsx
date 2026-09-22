@@ -51,6 +51,18 @@ function paraNumero(v: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+function campoPctInvalido(v: string): boolean {
+  const t = v.trim();
+  if (!t) return false;
+  return !Number.isFinite(Number(t.replace(",", ".")));
+}
+
+function campoMonetarioInvalido(v: string): boolean {
+  const t = v.trim();
+  if (!t) return false;
+  return !Number.isFinite(Number(t.replace(/\./g, "").replace(",", ".")));
+}
+
 const emailValido = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim());
 
 const sanitizar = (nome: string) =>
@@ -107,11 +119,19 @@ export function SolicitarAlteracaoPercentual({
     minimo.trim() !== "" ||
     vigenciaFim.trim() !== "";
 
+  const pctBeneficiosInvalido = campoPctInvalido(beneficios);
+  const pctGarantiaInvalido = campoPctInvalido(garantia);
+  const pctDemaisInvalido = campoPctInvalido(demais);
+  const minimoInvalido = campoMonetarioInvalido(minimo);
+  const algumNumeroInvalido =
+    pctBeneficiosInvalido || pctGarantiaInvalido || pctDemaisInvalido || minimoInvalido;
+
   const podeEnviar =
     justificativa.trim().length > 0 &&
     emailValido(diretor) &&
     arquivo !== null &&
     temValor &&
+    !algumNumeroInvalido &&
     !enviando;
 
   async function enviar() {
@@ -176,6 +196,7 @@ export function SolicitarAlteracaoPercentual({
             atual={pctAtuais.beneficios}
             valor={beneficios}
             onChange={setBeneficios}
+            erro={pctBeneficiosInvalido}
           />
           <CampoPct
             id="alt-garantia"
@@ -183,6 +204,7 @@ export function SolicitarAlteracaoPercentual({
             atual={pctAtuais.garantia}
             valor={garantia}
             onChange={setGarantia}
+            erro={pctGarantiaInvalido}
           />
           <CampoPct
             id="alt-demais"
@@ -190,6 +212,7 @@ export function SolicitarAlteracaoPercentual({
             atual={pctAtuais.demais}
             valor={demais}
             onChange={setDemais}
+            erro={pctDemaisInvalido}
           />
 
           <div className="space-y-1.5">
@@ -201,6 +224,11 @@ export function SolicitarAlteracaoPercentual({
               value={minimo}
               onChange={(e) => setMinimo(e.target.value)}
             />
+            {minimoInvalido ? (
+              <p className="text-xs text-destructive">
+                Informe apenas números nos percentuais, por exemplo 30 ou 27,5.
+              </p>
+            ) : null}
           </div>
 
           <div className="space-y-1.5">
@@ -278,12 +306,14 @@ function CampoPct({
   atual,
   valor,
   onChange,
+  erro,
 }: {
   id: string;
   rotulo: string;
   atual?: number | null;
   valor: string;
   onChange: (v: string) => void;
+  erro?: boolean;
 }) {
   return (
     <div className="space-y-1.5">
@@ -298,6 +328,11 @@ function CampoPct({
         />
         <span className="shrink-0 text-xs text-muted-foreground">{hoje(atual)}</span>
       </div>
+      {erro ? (
+        <p className="text-xs text-destructive">
+          Informe apenas números nos percentuais, por exemplo 30 ou 27,5.
+        </p>
+      ) : null}
     </div>
   );
 }

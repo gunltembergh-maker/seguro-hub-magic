@@ -508,14 +508,24 @@ export default function CanalParceirosTela() {
                           autorizado={aut?.pct_garantia ?? null}
                           autorizadoEm={aut?.aprovado_em ?? null}
                         />
-                        <CelulaPct
-                          contrato={l.s?.pct_demais_efetivo}
-                          autorizado={aut?.pct_demais ?? null}
-                          autorizadoEm={aut?.aprovado_em ?? null}
-                          rodape={
-                            demaisHerdado && aut?.pct_demais == null ? "herdado de Garantia" : null
-                          }
-                        />
+                        {(() => {
+                          const autorizadoDemais = aut?.pct_demais ?? aut?.pct_garantia ?? null;
+                          const herdadoDeGarantia =
+                            autorizadoDemais != null &&
+                            aut?.pct_demais == null &&
+                            aut?.pct_garantia != null;
+                          return (
+                            <CelulaPct
+                              contrato={l.s?.pct_demais_efetivo}
+                              autorizado={autorizadoDemais}
+                              autorizadoEm={aut?.aprovado_em ?? null}
+                              herdadoDeGarantia={herdadoDeGarantia}
+                              rodape={
+                                autorizadoDemais == null && demaisHerdado ? "herdado de Garantia" : null
+                              }
+                            />
+                          );
+                        })()}
                         <TableCell className="text-sm text-muted-foreground">{l.origem}</TableCell>
                         <TableCell className="text-right">
                           <Button
@@ -645,14 +655,19 @@ function CelulaPct({
   contrato,
   autorizado,
   autorizadoEm,
+  herdadoDeGarantia,
   rodape,
 }: {
   contrato?: number | null;
   autorizado?: number | null;
   autorizadoEm?: string | null;
+  herdadoDeGarantia?: boolean;
   rodape?: string | null;
 }) {
   const temAutorizacao = autorizado != null;
+  const title = herdadoDeGarantia
+    ? `Autorizado pela diretoria em ${dia(autorizadoEm)} (percentual de Garantia, herdado para Demais ramos) · contrato: ${pct(contrato)}`
+    : `Autorizado pela diretoria em ${dia(autorizadoEm)} · contrato: ${pct(contrato)}`;
   return (
     <TableCell className="tabular-nums">
       <span className="inline-flex items-center gap-1.5">
@@ -661,7 +676,7 @@ function CelulaPct({
           <Badge
             variant="outline"
             className="border-amber-600/40 bg-amber-50 px-1.5 py-0 text-[10px] text-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
-            title={`Autorizado pela diretoria em ${dia(autorizadoEm)} · contrato: ${pct(contrato)}`}
+            title={title}
           >
             diretoria
           </Badge>
