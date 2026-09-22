@@ -498,7 +498,14 @@ function LinhaRepasse({
   canal: string;
   razaoSocial: string | null;
   percentuais:
-    | { beneficios: number | null; garantia: number | null; demais: number | null }
+    | {
+        beneficios: number | null;
+        garantia: number | null;
+        demais: number | null;
+        origemBeneficios: string | null;
+        origemGarantia: string | null;
+        origemDemais: string | null;
+      }
     | undefined;
   primeiraLinha: boolean;
   cicloCorrente: number;
