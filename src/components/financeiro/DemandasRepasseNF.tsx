@@ -6,7 +6,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
-import { AlertTriangle, CalendarClock, Check, FileSearch, Loader2, X } from "lucide-react";
+import { AlertTriangle, CalendarClock, Check, FileSearch, FileText, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +16,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { DetalheRepasseCiclo } from "@/components/repasse/DetalheRepasseCiclo";
+import { ContratoDoParceiro } from "@/components/repasse/ContratoDoParceiro";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -94,6 +95,7 @@ export function DemandasRepasseNF() {
   const [confirmar, setConfirmar] = useState<DemandaNF | null>(null);
   const [naoPagou, setNaoPagou] = useState<DemandaNF | null>(null);
   const [relacao, setRelacao] = useState<DemandaNF | null>(null);
+  const [contrato, setContrato] = useState<DemandaNF | null>(null);
 
   const aConfirmar = useMemo(
     () =>
@@ -152,6 +154,10 @@ export function DemandasRepasseNF() {
                       <Button size="sm" variant="outline" onClick={() => setRelacao(d)}>
                         <FileSearch className="mr-2 h-4 w-4" />
                         Abrir a relação
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setContrato(d)}>
+                        <FileText className="mr-2 h-4 w-4" />
+                        Ver o contrato
                       </Button>
                       {d.sou_o_aprovador ? (
                         <>
@@ -270,6 +276,12 @@ export function DemandasRepasseNF() {
         ano={relacao?.ciclo_ano ?? 0}
         mes={relacao?.ciclo_mes ?? 1}
         valorDoPedido={relacao?.valor_total ?? undefined}
+      />
+      <ContratoDoParceiro
+        aberto={contrato !== null}
+        onFechar={() => setContrato(null)}
+        canal={contrato?.chave_planilha ?? ""}
+        parceiro={contrato?.parceiro ?? ""}
       />
     </>
   );

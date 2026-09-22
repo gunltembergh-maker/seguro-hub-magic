@@ -6,12 +6,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
-import { AlertTriangle, Download, FileSearch, Loader2, Lock, Send } from "lucide-react";
+import { AlertTriangle, Download, FileSearch, FileText, Loader2, Lock, Send } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useCicloRepasse } from "@/hooks/use-ciclo-repasse";
 import { DetalheRepasseCiclo } from "@/components/repasse/DetalheRepasseCiclo";
+import { ContratoDoParceiro } from "@/components/repasse/ContratoDoParceiro";
+import { PedirLiberacaoSemContrato } from "@/components/repasse/PedirLiberacaoSemContrato";
 import { chaveCanal, exportarRepasse } from "@/lib/repasse/exportar-repasse";
 import { cicloPadrao } from "@/lib/repasse/ciclo-datas";
 import { Badge } from "@/components/ui/badge";
@@ -151,6 +153,8 @@ export function RepasseComercial({
   const { data: estadoCiclo } = useCicloRepasse(ciclo.ano, ciclo.mes);
   const [exportando, setExportando] = useState<string | null>(null);
   const [relacao, setRelacao] = useState<string | null>(null);
+  const [contrato, setContrato] = useState<string | null>(null);
+  const [liberacao, setLiberacao] = useState<{ canal: string; valor: number } | null>(null);
   const [pedido, setPedido] = useState<{ canal: string; linhas: number; valor: number } | null>(
     null,
   );
@@ -328,6 +332,10 @@ export function RepasseComercial({
                           setPedido({ canal: l.canal, linhas: l.parcelas, valor: l.cicloCorrente })
                         }
                         onVerRelacao={() => setRelacao(l.canal)}
+                        onVerContrato={() => setContrato(l.canal)}
+                        onPedirLiberacao={() =>
+                          setLiberacao({ canal: l.canal, valor: l.cicloCorrente })
+                        }
                       />
                     );
                   })
@@ -339,7 +347,7 @@ export function RepasseComercial({
       </CardContent>
 
       <PedirNFDialog
-        aberto={pedido !== null && relacao === null}
+        aberto={pedido !== null && relacao === null && contrato === null && liberacao === null}
         canal={pedido?.canal ?? ""}
         ciclo={ciclo}
         linhas={pedido?.linhas ?? 0}
@@ -362,6 +370,23 @@ export function RepasseComercial({
         modoDados="PROVISIONADO"
         situacaoRepasse={null}
       />
+
+      <ContratoDoParceiro
+        aberto={contrato !== null}
+        onFechar={() => setContrato(null)}
+        canal={contrato ?? ""}
+        parceiro={contrato ?? ""}
+      />
+
+      <PedirLiberacaoSemContrato
+        aberto={liberacao !== null}
+        onFechar={() => setLiberacao(null)}
+        canal={liberacao?.canal ?? ""}
+        parceiro={liberacao?.canal ?? ""}
+        ano={ciclo.ano}
+        mes={ciclo.mes}
+        valor={liberacao?.valor}
+      />
     </Card>
   );
 }
@@ -379,6 +404,8 @@ function LinhaRepasse({
   onExportar,
   onPedir,
   onVerRelacao,
+  onVerContrato,
+  onPedirLiberacao,
 }: {
   canal: string;
   cicloCorrente: number;
@@ -392,6 +419,8 @@ function LinhaRepasse({
   onExportar: () => void;
   onPedir: () => void;
   onVerRelacao: () => void;
+  onVerContrato: () => void;
+  onPedirLiberacao: () => void;
 }) {
   const ref = useRef<HTMLTableRowElement | null>(null);
   const [aceso, setAceso] = useState(false);
@@ -434,11 +463,20 @@ function LinhaRepasse({
             <FileSearch className="mr-2 h-4 w-4" />
             Ver a relação
           </Button>
+          <Button size="sm" variant="outline" title="Ver o contrato" onClick={onVerContrato}>
+            <FileText className="mr-2 h-4 w-4" />
+            Ver o contrato
+          </Button>
         {!liberado ? (
-          <Badge variant="outline" className="gap-1 text-muted-foreground">
-            <Lock className="h-3 w-3" />
-            Sem contrato válido
-          </Badge>
+          <>
+            <Badge variant="outline" className="gap-1 text-muted-foreground">
+              <Lock className="h-3 w-3" />
+              Sem contrato válido
+            </Badge>
+            <Button size="sm" variant="outline" onClick={onPedirLiberacao}>
+              Pedir liberação sem contrato
+            </Button>
+          </>
         ) : !demanda ? (
           <Button size="sm" variant="default" onClick={onPedir} disabled={cicloCorrente <= 0}>
             <Send className="mr-2 h-4 w-4" />

@@ -1,17 +1,14 @@
 // Trava da exportação de repasse: o parceiro não tem contrato válido no Hub.
 //
 // Dá duas saídas ao usuário: enviar o contrato assinado, ou pedir liberação
-// excepcional — que só Alessandro Oliveira aprova.
+// sem contrato anexando o De Acordo — que só Alessandro Oliveira aprova.
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, Lock, Upload } from "lucide-react";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { Lock, Upload } from "lucide-react";
 import EnviarContratoParceiro from "@/components/comercial/EnviarContratoParceiro";
+import { PedirLiberacaoSemContrato } from "@/components/repasse/PedirLiberacaoSemContrato";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -52,46 +49,21 @@ export function ExportacaoBloqueada({
 }: ExportacaoBloqueadaProps) {
   const queryClient = useQueryClient();
   const [enviarAberto, setEnviarAberto] = useState(false);
-  const [pedindo, setPedindo] = useState(false);
-  const [mostrarPedido, setMostrarPedido] = useState(false);
-  const [justificativa, setJustificativa] = useState("");
-  const [enviando, setEnviando] = useState(false);
+  const [pedirAberto, setPedirAberto] = useState(false);
 
   function fechar() {
-    setMostrarPedido(false);
-    setJustificativa("");
-    setPedindo(false);
+    setPedirAberto(false);
     onFechar();
-  }
-
-  async function solicitar() {
-    if (!justificativa.trim() || enviando) return;
-    setEnviando(true);
-    try {
-      const { data, error } = await supabase.rpc(
-        "rpc_canal_parceiro_solicitar_liberacao" as never,
-        {
-          p_canal_planilha: chavePlanilha,
-          p_ano: ano,
-          p_mes: mes,
-          p_justificativa: justificativa.trim(),
-        } as never,
-      );
-      if (error) throw error;
-      const r = (Array.isArray(data) ? data[0] : data) as { mensagem?: string } | null;
-      toast.success(r?.mensagem ?? "Pedido registrado.");
-      queryClient.invalidateQueries({ queryKey: ["canal-parceiro-liberacoes"] });
-      fechar();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
-    } finally {
-      setEnviando(false);
-    }
   }
 
   return (
     <>
-      <Dialog open={aberto && !enviarAberto} onOpenChange={(v) => { if (!v) fechar(); }}>
+      <Dialog
+        open={aberto && !enviarAberto && !pedirAberto}
+        onOpenChange={(v) => {
+          if (!v) fechar();
+        }}
+      >
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -117,46 +89,32 @@ export function ExportacaoBloqueada({
             </AlertDescription>
           </Alert>
 
-          {mostrarPedido ? (
-            <div className="space-y-2">
-              <Label htmlFor="justificativa-liberacao">Justificativa</Label>
-              <Textarea
-                id="justificativa-liberacao"
-                rows={4}
-                value={justificativa}
-                onChange={(ev) => setJustificativa(ev.target.value)}
-                placeholder="Explique por que este repasse precisa sair sem contrato válido."
-              />
-              <p className="text-xs text-muted-foreground">
-                O pedido vai para Alessandro Oliveira. Somente ele aprova liberações excepcionais.
-              </p>
-            </div>
-          ) : null}
-
           <DialogFooter className="flex-col gap-2 sm:flex-row">
-            <Button variant="outline" onClick={fechar} disabled={enviando}>
+            <Button variant="outline" onClick={fechar}>
               Cancelar
             </Button>
-            <Button variant="outline" onClick={() => setEnviarAberto(true)} disabled={enviando}>
+            <Button variant="outline" onClick={() => setEnviarAberto(true)}>
               <Upload className="mr-2 h-4 w-4" />
               Enviar contrato
             </Button>
-            {mostrarPedido ? (
-              <Button onClick={solicitar} disabled={!justificativa.trim() || enviando}>
-                {enviando && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Enviar pedido
-              </Button>
-            ) : (
-              <Button
-                onClick={() => { setMostrarPedido(true); setPedindo(true); }}
-                disabled={pedindo}
-              >
-                Solicitar liberação excepcional
-              </Button>
-            )}
+            <Button onClick={() => setPedirAberto(true)}>Pedir liberação sem contrato</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <PedirLiberacaoSemContrato
+        aberto={pedirAberto}
+        onFechar={() => setPedirAberto(false)}
+        onSucesso={() => {
+          setPedirAberto(false);
+          onFechar();
+        }}
+        canal={chavePlanilha}
+        parceiro={parceiro}
+        ano={ano}
+        mes={mes}
+        valor={valor}
+      />
 
       <EnviarContratoParceiro
         aberto={enviarAberto}

@@ -1669,11 +1669,14 @@ export type Database = {
       }
       canal_liberacoes_excepcionais: {
         Row: {
+          anexo_nome: string | null
+          anexo_path: string | null
           aprovado_em: string | null
           aprovado_por: string | null
           canal_id: string
           ciclo_ano: number
           ciclo_mes: number
+          email_de_acordo: string | null
           id: string
           justificativa: string
           observacao: string | null
@@ -1683,11 +1686,14 @@ export type Database = {
           usada_em: string | null
         }
         Insert: {
+          anexo_nome?: string | null
+          anexo_path?: string | null
           aprovado_em?: string | null
           aprovado_por?: string | null
           canal_id: string
           ciclo_ano: number
           ciclo_mes: number
+          email_de_acordo?: string | null
           id?: string
           justificativa: string
           observacao?: string | null
@@ -1697,11 +1703,14 @@ export type Database = {
           usada_em?: string | null
         }
         Update: {
+          anexo_nome?: string | null
+          anexo_path?: string | null
           aprovado_em?: string | null
           aprovado_por?: string | null
           canal_id?: string
           ciclo_ano?: number
           ciclo_mes?: number
+          email_de_acordo?: string | null
           id?: string
           justificativa?: string
           observacao?: string | null
@@ -6437,6 +6446,8 @@ export type Database = {
       rpc_canal_parceiro_liberacoes: {
         Args: { p_status?: string }
         Returns: {
+          anexo_nome: string
+          anexo_path: string
           aprovado_em: string
           aprovado_por_nome: string
           canal_id: string
@@ -6444,6 +6455,7 @@ export type Database = {
           chave_planilha: string
           ciclo_ano: number
           ciclo_mes: number
+          email_de_acordo: string
           justificativa: string
           liberacao_id: string
           observacao: string
@@ -6543,8 +6555,11 @@ export type Database = {
       }
       rpc_canal_parceiro_solicitar_liberacao: {
         Args: {
+          p_anexo_nome?: string
+          p_anexo_path?: string
           p_ano: number
           p_canal_planilha: string
+          p_email_de_acordo?: string
           p_justificativa: string
           p_mes: number
         }
