@@ -126,7 +126,7 @@ function AdminUsuariosPage() {
 
   const [approving, setApproving] = useState<AdminUserV2 | null>(null);
   const [detailUser, setDetailUser] = useState<AdminUserV2 | null>(null);
-  const [permissoesUser, setPermissoesUser] = useState<AdminUserV2 | null>(null);
+  const [detailAba, setDetailAba] = useState("perfil");
   const [deletingUser, setDeletingUser] = useState<AdminUserV2 | null>(null);
   const [convidarOpen, setConvidarOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
