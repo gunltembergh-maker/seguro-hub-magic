@@ -624,6 +624,7 @@ export default function CanalParceirosTela() {
       <DetalheParceiro
         canalId={detalhe?.canalId ?? null}
         nome={detalhe?.nome ?? ""}
+        situacao={detalhe?.canalId ? situacaoPorCanal.get(detalhe.canalId) ?? null : null}
         onFechar={() => setDetalhe(null)}
       />
     </div>
