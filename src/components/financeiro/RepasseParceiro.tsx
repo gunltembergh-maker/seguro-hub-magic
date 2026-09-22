@@ -907,6 +907,9 @@ export function RepasseParceiro() {
                       </>
                     )}
                     <TableHead rowSpan={2} className="border-l text-right align-bottom" style={{ borderColor: BORDER }}>
+                      Contrato
+                    </TableHead>
+                    <TableHead rowSpan={2} className="text-right align-bottom">
                       Situação
                     </TableHead>
                   </TableRow>
