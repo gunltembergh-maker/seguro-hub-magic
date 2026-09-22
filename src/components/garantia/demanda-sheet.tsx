@@ -37,6 +37,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 
 import { useResponsaveis } from "@/hooks/use-entrada-demandas";
+import { AbaLimites } from "@/components/garantia/aba-limites";
+
 import {
   MOTIVOS_PERDA,
   impedimentoDaTransicao,
@@ -1020,12 +1022,21 @@ export function DemandaSheet({
         <Tabs defaultValue="dados" className="flex-1">
           <TabsList>
             <TabsTrigger value="dados">Dados</TabsTrigger>
+            {/* Fiança locatícia não faz consulta a mercado: a aba nem aparece. */}
+            {demanda.produto === "seguro_garantia" && (
+              <TabsTrigger value="limites">Limites</TabsTrigger>
+            )}
             <TabsTrigger value="origem">Origem</TabsTrigger>
             <TabsTrigger value="historico">Histórico</TabsTrigger>
           </TabsList>
           <TabsContent value="dados" className="mt-4">
             <AbaDados demanda={demanda} />
           </TabsContent>
+          {demanda.produto === "seguro_garantia" && (
+            <TabsContent value="limites" className="mt-4">
+              <AbaLimites demanda={demanda} />
+            </TabsContent>
+          )}
           <TabsContent value="origem" className="mt-4">
             <AbaOrigem demanda={demanda} />
           </TabsContent>
@@ -1033,6 +1044,7 @@ export function DemandaSheet({
             <AbaHistorico demanda={demanda} catalogo={catalogo} podeVerTempo={podeVerTempo} />
           </TabsContent>
         </Tabs>
+
 
         <div className="mt-4 text-xs text-muted-foreground">
           Importância segurada: {moeda(demanda.importancia_segurada)} · Data limite:{" "}
