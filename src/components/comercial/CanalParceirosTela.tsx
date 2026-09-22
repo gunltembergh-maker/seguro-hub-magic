@@ -22,6 +22,12 @@ import { useMeuPerfilEfetivo } from "@/contexts/view-as-context";
 import { hasRole } from "@/hooks/use-meu-perfil";
 import EnviarContratoParceiro from "@/components/comercial/EnviarContratoParceiro";
 import { FilaVerificacaoContratos } from "@/components/comercial/FilaVerificacaoContratos";
+import {
+  FilaAlteracoesPercentual,
+  useAlteracoesPercentual,
+  type Alteracao,
+} from "@/components/comercial/FilaAlteracoesPercentual";
+import { SolicitarAlteracaoPercentual } from "@/components/comercial/SolicitarAlteracaoPercentual";
 import { RepasseComercial } from "@/components/comercial/RepasseComercial";
 
 
@@ -305,6 +311,13 @@ export default function CanalParceirosTela() {
     return m;
   }, [linhasSituacao]);
 
+  /** Autorizações da diretoria em vigor: é o percentual que a exportação usa. */
+  const alteracoesAprovadas = useAlteracoesPercentual("APROVADA");
+  const aprovadaPorCanal = useMemo(() => {
+    const m = new Map<string, Alteracao>();
+    for (const a of alteracoesAprovadas.data ?? []) if (a.canal_id) m.set(a.canal_id, a);
+    return m;
+  }, [alteracoesAprovadas.data]);
 
   /** Base da tabela: parceiros cadastrados + canais da planilha ainda sem parceiro. */
   const linhas = useMemo(() => {
@@ -398,6 +411,9 @@ export default function CanalParceirosTela() {
       {/* fila de conferência humana — só aparece quando há pendência */}
       <FilaVerificacaoContratos />
 
+      {/* alterações de percentual aguardando o De Acordo da diretoria */}
+      <FilaAlteracoesPercentual />
+
       {/* repasse do ciclo por parceiro */}
       <RepasseComercial podeExportarPorChave={podeExportarPorChave} />
 
@@ -443,6 +459,7 @@ export default function CanalParceirosTela() {
                   linhas.map((l) => {
                     const demaisHerdado = l.s?.pct_demais == null && l.s?.pct_garantia != null;
                     const dias = l.s?.dias_para_vencer ?? null;
+                    const aut = l.canalId ? aprovadaPorCanal.get(l.canalId) ?? null : null;
                     return (
                       <TableRow
                         key={l.chave}
@@ -481,14 +498,24 @@ export default function CanalParceirosTela() {
                             <span className="text-muted-foreground">—</span>
                           )}
                         </TableCell>
-                        <TableCell className="tabular-nums">{pct(l.s?.pct_beneficios)}</TableCell>
-                        <TableCell className="tabular-nums">{pct(l.s?.pct_garantia)}</TableCell>
-                        <TableCell className="tabular-nums">
-                          {pct(l.s?.pct_demais_efetivo)}
-                          {demaisHerdado ? (
-                            <div className="text-xs text-muted-foreground">herdado de Garantia</div>
-                          ) : null}
-                        </TableCell>
+                        <CelulaPct
+                          contrato={l.s?.pct_beneficios}
+                          autorizado={aut?.pct_beneficios ?? null}
+                          autorizadoEm={aut?.aprovado_em ?? null}
+                        />
+                        <CelulaPct
+                          contrato={l.s?.pct_garantia}
+                          autorizado={aut?.pct_garantia ?? null}
+                          autorizadoEm={aut?.aprovado_em ?? null}
+                        />
+                        <CelulaPct
+                          contrato={l.s?.pct_demais_efetivo}
+                          autorizado={aut?.pct_demais ?? null}
+                          autorizadoEm={aut?.aprovado_em ?? null}
+                          rodape={
+                            demaisHerdado && aut?.pct_demais == null ? "herdado de Garantia" : null
+                          }
+                        />
                         <TableCell className="text-sm text-muted-foreground">{l.origem}</TableCell>
                         <TableCell className="text-right">
                           <Button
@@ -597,6 +624,7 @@ export default function CanalParceirosTela() {
       <DetalheParceiro
         canalId={detalhe?.canalId ?? null}
         nome={detalhe?.nome ?? ""}
+        situacao={detalhe?.canalId ? situacaoPorCanal.get(detalhe.canalId) ?? null : null}
         onFechar={() => setDetalhe(null)}
       />
     </div>
@@ -604,6 +632,45 @@ export default function CanalParceirosTela() {
 }
 
 /* ------------------------------------------------------------------- KPI */
+
+const rotuloStatusAlteracao: Record<string, string> = {
+  PENDENTE: "Aguardando aprovação",
+  APROVADA: "Aprovada",
+  RECUSADA: "Recusada",
+  SUPERADA: "Superada",
+};
+
+/** Percentual do contrato — ou o autorizado pela diretoria, que é o que vale. */
+function CelulaPct({
+  contrato,
+  autorizado,
+  autorizadoEm,
+  rodape,
+}: {
+  contrato?: number | null;
+  autorizado?: number | null;
+  autorizadoEm?: string | null;
+  rodape?: string | null;
+}) {
+  const temAutorizacao = autorizado != null;
+  return (
+    <TableCell className="tabular-nums">
+      <span className="inline-flex items-center gap-1.5">
+        {pct(temAutorizacao ? autorizado : contrato)}
+        {temAutorizacao ? (
+          <Badge
+            variant="outline"
+            className="border-amber-600/40 bg-amber-50 px-1.5 py-0 text-[10px] text-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
+            title={`Autorizado pela diretoria em ${dia(autorizadoEm)} · contrato: ${pct(contrato)}`}
+          >
+            diretoria
+          </Badge>
+        ) : null}
+      </span>
+      {rodape ? <div className="text-xs text-muted-foreground">{rodape}</div> : null}
+    </TableCell>
+  );
+}
 
 function Kpi({ titulo, valor, icone }: { titulo: string; valor: number; icone: React.ReactNode }) {
   return (
@@ -944,17 +1011,24 @@ function VinculosAConfirmar({
 function DetalheParceiro({
   canalId,
   nome,
+  situacao,
   onFechar,
 }: {
   canalId: string | null;
   nome: string;
+  situacao?: Situacao | null;
   onFechar: () => void;
 }) {
+  const [pedirAlteracao, setPedirAlteracao] = useState(false);
+
   const contratos = useQuery({
     queryKey: ["canal-parceiro-contratos", canalId],
     queryFn: () => rpc<Contrato>("rpc_canal_parceiro_contratos", { p_canal_id: canalId }),
     enabled: !!canalId,
   });
+
+  const todasAlteracoes = useAlteracoesPercentual(null);
+  const alteracoesDoCanal = (todasAlteracoes.data ?? []).filter((a) => a.canal_id === canalId);
 
   const linhas = contratos.data ?? [];
 
@@ -968,6 +1042,64 @@ function DetalheParceiro({
             histórico.
           </SheetDescription>
         </SheetHeader>
+
+        {/* alteração de percentual com De Acordo da diretoria */}
+        <div className="mt-4 space-y-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!canalId}
+            onClick={() => setPedirAlteracao(true)}
+          >
+            <FileSignature className="mr-2 h-4 w-4" />
+            Solicitar alteração de percentual
+          </Button>
+
+          {alteracoesDoCanal.map((a) => (
+            <div
+              key={a.alteracao_id}
+              className={cn(
+                "rounded-md border p-2 text-xs",
+                a.status === "SUPERADA" ? "text-muted-foreground opacity-60" : "",
+              )}
+            >
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <Badge variant="outline">{rotuloStatusAlteracao[a.status ?? ""] ?? a.status}</Badge>
+                <span className="tabular-nums">
+                  {[
+                    a.pct_beneficios != null ? `Benefícios ${pct(a.pct_beneficios)}` : null,
+                    a.pct_garantia != null ? `Garantia ${pct(a.pct_garantia)}` : null,
+                    a.pct_demais != null ? `Demais ramos ${pct(a.pct_demais)}` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ") || "—"}
+                </span>
+                <span className="text-muted-foreground">
+                  pedido por {a.solicitado_por_nome ?? "—"}
+                </span>
+                <span className="text-muted-foreground">
+                  {a.aprovado_por_nome ? `aprovado por ${a.aprovado_por_nome}` : "sem aprovação"}
+                </span>
+                {a.status === "SUPERADA" ? <span>substituída pelo contrato</span> : null}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {canalId ? (
+          <SolicitarAlteracaoPercentual
+            aberto={pedirAlteracao}
+            canalId={canalId}
+            canalNome={nome}
+            pctAtuais={{
+              beneficios: situacao?.pct_beneficios ?? null,
+              garantia: situacao?.pct_garantia ?? null,
+              demais: situacao?.pct_demais_efetivo ?? null,
+              minimo: situacao?.minimo_repasse ?? null,
+            }}
+            onFechar={() => setPedirAlteracao(false)}
+          />
+        ) : null}
 
         <div className="mt-4 space-y-3">
           {contratos.isLoading ? (
