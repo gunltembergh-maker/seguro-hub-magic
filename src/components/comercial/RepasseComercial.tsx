@@ -339,7 +339,7 @@ export function RepasseComercial({
       </CardContent>
 
       <PedirNFDialog
-        aberto={pedido !== null}
+        aberto={pedido !== null && relacao === null}
         canal={pedido?.canal ?? ""}
         ciclo={ciclo}
         linhas={pedido?.linhas ?? 0}
