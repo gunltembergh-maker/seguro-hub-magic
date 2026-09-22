@@ -24,7 +24,12 @@ interface PermissaoUsuario {
   definido_em: string | null;
 }
 
-interface Props {
+interface PainelProps {
+  userId: string | null;
+  userNome: string;
+}
+
+interface DialogProps {
   aberto: boolean;
   userId: string | null;
   userNome: string;
@@ -36,13 +41,13 @@ function formatDT(iso: string | null) {
   return new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 }
 
-export function PermissoesDoUsuario({ aberto, userId, userNome, onFechar }: Props) {
+export function PainelPermissoesUsuario({ userId, userNome }: PainelProps) {
   const qc = useQueryClient();
   const [busca, setBusca] = useState("");
 
   const { data: permissoes, isLoading } = useQuery({
     queryKey: ["admin-permissoes-usuario", userId],
-    enabled: aberto && !!userId,
+    enabled: !!userId,
     queryFn: async (): Promise<PermissaoUsuario[]> => {
       const { data, error } = await supabase.rpc("rpc_admin_permissoes_usuario" as never, {
         p_user_id: userId,
@@ -94,6 +99,48 @@ export function PermissoesDoUsuario({ aberto, userId, userNome, onFechar }: Prop
     };
   }, [permissoes]);
 
+  if (!userId) return null;
+
+  return (
+    <>
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative min-w-[220px] flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por rótulo ou chave..."
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <p className="text-xs text-muted-foreground whitespace-nowrap">
+          {resumo.total} permissões no total · {resumo.excecoes} com exceção
+        </p>
+      </div>
+
+      {isLoading ? (
+        <div className="grid place-items-center py-10"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+      ) : areas.length === 0 ? (
+        <p className="py-8 text-center text-sm text-muted-foreground">Nenhuma permissão encontrada.</p>
+      ) : (
+        <div className="space-y-5">
+          {areas.map(([area, itens]) => (
+            <div key={area}>
+              <div className="mb-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">{area}</div>
+              <div className="space-y-1.5">
+                {itens.map((p) => (
+                  <LinhaPermissao key={p.chave} p={p} definir={definir} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+export function PermissoesDoUsuario({ aberto, userId, userNome, onFechar }: DialogProps) {
   return (
     <Dialog open={aberto} onOpenChange={(o) => !o && onFechar()}>
       <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
@@ -103,40 +150,7 @@ export function PermissoesDoUsuario({ aberto, userId, userNome, onFechar }: Prop
             Exceções por cima do perfil. A exceção ganha de tudo, inclusive de Administrador.
           </DialogDescription>
         </DialogHeader>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative min-w-[220px] flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por rótulo ou chave..."
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          <p className="text-xs text-muted-foreground whitespace-nowrap">
-            {resumo.total} permissões no total · {resumo.excecoes} com exceção
-          </p>
-        </div>
-
-        {isLoading ? (
-          <div className="grid place-items-center py-10"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
-        ) : areas.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">Nenhuma permissão encontrada.</p>
-        ) : (
-          <div className="space-y-5">
-            {areas.map(([area, itens]) => (
-              <div key={area}>
-                <div className="mb-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">{area}</div>
-                <div className="space-y-1.5">
-                  {itens.map((p) => (
-                    <LinhaPermissao key={p.chave} p={p} definir={definir} />
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <PainelPermissoesUsuario userId={userId} userNome={userNome} />
       </DialogContent>
     </Dialog>
   );
