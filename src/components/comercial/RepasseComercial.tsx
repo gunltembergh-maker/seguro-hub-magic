@@ -429,13 +429,17 @@ function LinhaRepasse({
         <BadgeFinanceiro d={demanda} />
       </TableCell>
       <TableCell className="text-right">
+        <div className="flex flex-wrap items-center justify-end gap-1">
+          <Button size="sm" variant="ghost" title="Ver a relação" onClick={onVerRelacao}>
+            <FileSearch className="h-4 w-4" />
+          </Button>
         {!liberado ? (
           <Badge variant="outline" className="gap-1 text-muted-foreground">
             <Lock className="h-3 w-3" />
             Sem contrato válido
           </Badge>
         ) : !demanda ? (
-          <Button size="sm" variant="outline" onClick={onPedir} disabled={cicloCorrente <= 0}>
+          <Button size="sm" variant="default" onClick={onPedir} disabled={cicloCorrente <= 0}>
             <Send className="mr-2 h-4 w-4" />
             Enviar ao financeiro
           </Button>
@@ -473,6 +477,7 @@ function LinhaRepasse({
             Exportar ao parceiro
           </Button>
         )}
+        </div>
         {parcelas > 0 ? (
           <p className="mt-1 text-xs text-muted-foreground">{parcelas} parcelas</p>
         ) : null}
