@@ -26,7 +26,7 @@ import { DemandaSheet, SeloProduto } from "@/components/garantia/demanda-sheet";
 import { GarantiaShell } from "@/components/garantia/garantia-shell";
 import { useMeuPerfilEfetivo } from "@/contexts/view-as-context";
 import { useResponsaveis } from "@/hooks/use-entrada-demandas";
-import { useStatusCrm } from "@/hooks/use-garantia-crm";
+import { useSeguradorasEscolhidas, useStatusCrm } from "@/hooks/use-garantia-crm";
 import {
   colunasDoCatalogo,
   useDemandasNegociacao,
