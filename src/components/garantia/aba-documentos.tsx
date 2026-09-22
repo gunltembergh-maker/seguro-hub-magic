@@ -37,6 +37,7 @@ import {
   ROTULO_GRUPO_DOC,
   TAMANHO_MAXIMO_BYTES,
   pendenciasDaDemanda,
+  perguntaIA,
   podeAnalisarPorIA,
   rotuloTipoDocumento,
   tiposDisponiveis,
@@ -130,14 +131,21 @@ function TresEstados({
   );
 }
 
-export function AbaDocumentos({ demanda }: { demanda: DemandaLista }) {
+export function AbaDocumentos({
+  demanda,
+  tipoInicial,
+}: {
+  demanda: DemandaLista;
+  /** Tipo pré-selecionado (a etapa 7 abre a aba já com "Minuta" escolhida). */
+  tipoInicial?: string;
+}) {
   const { data: docs = [] } = useDocumentosDaDemanda(demanda.id);
   const { data: analises = [] } = useAnalisesDaDemanda(demanda.id);
   const enviar = useEnviarDocumento(demanda.id);
   const vincular = useVincularAnexosJudiciais(demanda.id, demanda.solicitacao_id);
   const atualizar = useAtualizarDemanda();
 
-  const [tipo, setTipo] = useState<string>("");
+  const [tipo, setTipo] = useState<string>(tipoInicial ?? "");
   const [comIA, setComIA] = useState(false);
   const [arrastando, setArrastando] = useState(false);
   const [expandido, setExpandido] = useState<Record<string, boolean>>({});
@@ -294,7 +302,7 @@ export function AbaDocumentos({ demanda }: { demanda: DemandaLista }) {
           <label className="flex items-start gap-2">
             <Checkbox checked={comIA} onCheckedChange={(v) => setComIA(v === true)} />
             <span>
-              Deseja que a IA analise o contrato e já te dê um resumo?
+              {perguntaIA(tipo)}
               <span className="block text-xs text-muted-foreground">
                 O pedido fica registrado; o motor de leitura será ligado na próxima etapa.
               </span>
