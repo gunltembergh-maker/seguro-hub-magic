@@ -1008,7 +1008,72 @@ export function RepasseParceiro() {
   );
 }
 
+/** Data prevista de pagamento do ciclo — quem define é o Financeiro. */
+function BlocoDataCiclo({
+  ano,
+  mes,
+  onDefinir,
+}: {
+  ano: number;
+  mes: number;
+  onDefinir: () => void;
+}) {
+  const { data: ciclo } = useCicloRepasse(ano, mes);
+  const cicloLabel = `${pad2(mes)}/${ano}`;
+  const podeDefinir = ciclo?.posso_definir === true;
+
+  if (!ciclo) return null;
+
+  if (!ciclo.data_prevista) {
+    return (
+      <Alert className="border-amber-600/40 bg-amber-50 text-amber-900">
+        <ShieldAlert className="h-4 w-4" />
+        <AlertTitle>Ciclo sem data de pagamento</AlertTitle>
+        <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <span>
+            O ciclo de {cicloLabel} ainda não tem data prevista de pagamento. Sem ela o Comercial
+            não consegue enviar a relação aos parceiros.
+          </span>
+          {podeDefinir && (
+            <Button size="sm" onClick={onDefinir}>
+              Definir data do ciclo
+            </Button>
+          )}
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  const definidaEm = ciclo.definida_em
+    ? new Date(ciclo.definida_em).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
+    : null;
+
+  return (
+    <div
+      className="flex flex-wrap items-center gap-3 rounded-xl border bg-white px-5 py-3 text-sm"
+      style={{ borderColor: BORDER }}
+    >
+      <span style={{ color: NAVY }}>
+        Pagamento previsto para <strong>{fmtBR(ciclo.data_prevista)}</strong>
+        {ciclo.definida_por_nome ? `, definido por ${ciclo.definida_por_nome}` : ""}
+        {definidaEm ? ` em ${definidaEm}` : ""}.
+      </span>
+      {Number(ciclo.excecoes || 0) > 0 && (
+        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+          {ciclo.excecoes} {Number(ciclo.excecoes) === 1 ? "exceção" : "exceções"}
+        </span>
+      )}
+      {podeDefinir && (
+        <Button size="sm" variant="outline" onClick={onDefinir}>
+          Alterar
+        </Button>
+      )}
+    </div>
+  );
+}
+
 function PainelLiberacoes({ pendentes }: { pendentes: LiberacaoPendente[] }) {
+
   const queryClient = useQueryClient();
   const [aberto, setAberto] = useState(false);
   const [decidindo, setDecidindo] = useState<string | null>(null);
