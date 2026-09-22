@@ -87,10 +87,22 @@ export const TIPOS_ANALISAVEIS = [
   "contrato_locacao",
   "processo_judicial",
   "aditivo",
+  // A minuta entra com fluxo próprio: a leitura compara o texto com o edital.
+  "minuta",
 ] as const;
 
 export const podeAnalisarPorIA = (tipo: string) =>
   (TIPOS_ANALISAVEIS as readonly string[]).includes(tipo);
+
+/** Pergunta da caixa de IA — a da minuta é outra leitura, com outro convite. */
+export const perguntaIA = (tipo: string) =>
+  tipo === "minuta"
+    ? "Deseja que a IA analise a minuta e traga os dados?"
+    : "Deseja que a IA analise o contrato e já te dê um resumo?";
+
+/** Fluxo gravado em garantia_analises_ia para o tipo enviado. */
+export const fluxoIADoTipo = (tipo: string, produto: string) =>
+  tipo === "minuta" ? "minuta" : produto === "fianca_locaticia" ? "fianca_locaticia" : "seguro_garantia";
 
 export const TAMANHO_MAXIMO_BYTES = 20 * 1024 * 1024;
 export const BUCKET_PIPELINE = "garantia-pipeline-anexos";
