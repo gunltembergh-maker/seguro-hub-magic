@@ -977,8 +977,16 @@ function DetalheParceiro({
                         {vigente ? " · vigente" : " · substituído"}
                       </p>
                     </div>
-                    <BadgeContrato situacao={c.situacao} />
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                      <BadgeContrato situacao={c.situacao} />
+                      <BadgeLeitura
+                        origem={c.origem_leitura}
+                        declarado={c.declarado_assinado}
+                        assinado={c.assinado}
+                      />
+                    </div>
                   </div>
+
 
                   <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
                     <Info rotulo="Assinatura" valor={c.assinado_em ? dataHora(c.assinado_em) : c.assinado ? "encontrada" : "não encontrada"} />
