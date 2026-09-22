@@ -472,8 +472,11 @@ export function useTrocarStatus() {
       const precisaMercado =
         demanda.produto !== "fianca_locaticia" && demanda.etapa === "3" && etapaDestino !== "3";
       const contexto = precisaMercado ? await carregarContextoMercado(demanda.cliente_id) : undefined;
-      const impedimento = impedimentoDaTransicao(demanda, destino, contexto);
+      const mudaEtapa = etapaDestino !== demanda.etapa;
+      const tipos = mudaEtapa ? await carregarTiposPresentes(demanda.id) : undefined;
+      const impedimento = impedimentoDaTransicao(demanda, destino, contexto, tipos);
       if (impedimento) throw new Error(impedimento);
+
       const { error } = await supabase
         .from("garantia_demandas")
         .update({
