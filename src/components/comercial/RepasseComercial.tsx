@@ -577,23 +577,54 @@ function LinhaRepasse({
             Enviar ao financeiro
           </Button>
         ) : situacao === "PENDENTE" ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span>
-                <Button size="sm" variant="outline" disabled>
-                  Aguardando o financeiro
-                </Button>
+          <>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button size="sm" variant="outline" disabled>
+                    Aguardando o financeiro
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                Pedido em {fmtDataHora(demanda.solicitado_em)}
+                {demanda.solicitado_por_nome ? ` por ${demanda.solicitado_por_nome}` : ""}
+              </TooltipContent>
+            </Tooltip>
+            {dentroDaJanela ? (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" variant="ghost" disabled={cancelando}>
+                    {cancelando ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Cancelar envio ({contador})
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Cancelar o envio ao Financeiro?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      O pedido de {canal} sai da fila do Financeiro e você pode enviar de novo
+                      depois.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Voltar</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => void cancelar()}>
+                      Cancelar envio
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            ) : demanda.sou_o_solicitante === true ? (
+              <span className="text-xs text-muted-foreground">
+                Só o Financeiro pode desfazer agora
               </span>
-            </TooltipTrigger>
-            <TooltipContent>
-              Pedido em {fmtDataHora(demanda.solicitado_em)}
-              {demanda.solicitado_por_nome ? ` por ${demanda.solicitado_por_nome}` : ""}
-            </TooltipContent>
-          </Tooltip>
+            ) : null}
+          </>
         ) : situacao === "RECUSADA" ? (
-          <Button size="sm" variant="outline" onClick={onPedir}>
+          <Button size="sm" variant="outline" onClick={onPedir} disabled={bloqueado24h}>
             <Send className="mr-2 h-4 w-4" />
-            Pedir de novo
+            {bloqueado24h ? `Novo envio em ${horasParaReenvio}h` : "Pedir de novo"}
           </Button>
         ) : (
           <Button
