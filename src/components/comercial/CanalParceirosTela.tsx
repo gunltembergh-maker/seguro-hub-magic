@@ -1036,6 +1036,64 @@ function DetalheParceiro({
           </SheetDescription>
         </SheetHeader>
 
+        {/* alteração de percentual com De Acordo da diretoria */}
+        <div className="mt-4 space-y-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!canalId}
+            onClick={() => setPedirAlteracao(true)}
+          >
+            <FileSignature className="mr-2 h-4 w-4" />
+            Solicitar alteração de percentual
+          </Button>
+
+          {alteracoesDoCanal.map((a) => (
+            <div
+              key={a.alteracao_id}
+              className={cn(
+                "rounded-md border p-2 text-xs",
+                a.status === "SUPERADA" ? "text-muted-foreground opacity-60" : "",
+              )}
+            >
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <Badge variant="outline">{rotuloStatusAlteracao[a.status ?? ""] ?? a.status}</Badge>
+                <span className="tabular-nums">
+                  {[
+                    a.pct_beneficios != null ? `Benefícios ${pct(a.pct_beneficios)}` : null,
+                    a.pct_garantia != null ? `Garantia ${pct(a.pct_garantia)}` : null,
+                    a.pct_demais != null ? `Demais ramos ${pct(a.pct_demais)}` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ") || "—"}
+                </span>
+                <span className="text-muted-foreground">
+                  pedido por {a.solicitado_por_nome ?? "—"}
+                </span>
+                <span className="text-muted-foreground">
+                  {a.aprovado_por_nome ? `aprovado por ${a.aprovado_por_nome}` : "sem aprovação"}
+                </span>
+                {a.status === "SUPERADA" ? <span>substituída pelo contrato</span> : null}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {canalId ? (
+          <SolicitarAlteracaoPercentual
+            aberto={pedirAlteracao}
+            canalId={canalId}
+            canalNome={nome}
+            pctAtuais={{
+              beneficios: situacao?.pct_beneficios ?? null,
+              garantia: situacao?.pct_garantia ?? null,
+              demais: situacao?.pct_demais_efetivo ?? null,
+              minimo: situacao?.minimo_repasse ?? null,
+            }}
+            onFechar={() => setPedirAlteracao(false)}
+          />
+        ) : null}
+
         <div className="mt-4 space-y-3">
           {contratos.isLoading ? (
             <p className="text-sm text-muted-foreground">
