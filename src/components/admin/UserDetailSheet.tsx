@@ -57,7 +57,7 @@ interface Props {
   onDelete?: (u: AdminUserV2) => void;
 }
 
-export function UserDetailSheet({ user, open, onOpenChange, onEdit, onBlock, onDelete }: Props) {
+export function UserDetailSheet({ user, open, onOpenChange, abaInicial, onEdit, onBlock, onDelete }: Props) {
   const qc = useQueryClient();
   const sendEmail = useSendAuthEmail();
 
