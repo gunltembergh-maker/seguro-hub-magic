@@ -113,6 +113,7 @@ export function FilaAlteracoesPercentual({ semCard = false }: { semCard?: boolea
   const [recusando, setRecusando] = useState<Alteracao | null>(null);
   const [observacao, setObservacao] = useState("");
   const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
 
   const linhas = pendentes.data ?? [];
   if (pendentes.isLoading || linhas.length === 0) return null;
