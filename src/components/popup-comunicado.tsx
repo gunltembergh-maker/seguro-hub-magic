@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { TourGuiado, type TourPasso } from "@/components/tour-guiado";
 import logoBranca from "@/assets/logo-branca.png.asset.json";
 
 const DEFAULT_LOGO_URL = logoBranca.url;
@@ -15,6 +16,8 @@ interface PopupData {
   botao_label: string | null;
   logo_url: string | null;
   mostrar_nome_hub: boolean | null;
+  tipo: "COMUNICADO" | "TOUR" | null;
+  passos: TourPasso[] | null;
 }
 
 /** Card reutilizável — usado tanto no live preview do admin quanto no popup real */
@@ -164,6 +167,18 @@ export function PopupComunicado() {
 
   if (!visible || popups.length === 0) return null;
   const popup = popups[currentIndex];
+
+  if (popup.tipo === "TOUR") {
+    return (
+      <TourGuiado
+        popup={popup}
+        onFinalizar={() => {
+          dismissedThisSession.current.add(popup.id);
+          closeOne();
+        }}
+      />
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">

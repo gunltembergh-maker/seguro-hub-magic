@@ -40,6 +40,8 @@ type RepassePendente = {
   situacao?: string | null;
   observacao: string | null;
   destinatarios: Destinatarios;
+  assinatura_nome: string | null;
+  assinatura_area: string | null;
 };
 
 type VerificacaoPendente = {
@@ -55,6 +57,8 @@ type VerificacaoPendente = {
   enviado_em: string | null;
   repasse_acumulado: number | null;
   destinatarios: Destinatarios;
+  assinatura_nome: string | null;
+  assinatura_area: string | null;
 };
 
 type AlteracaoPendente = {
@@ -78,6 +82,8 @@ type AlteracaoPendente = {
   aprovador_nome: string | null;
   observacao: string | null;
   destinatarios: Destinatarios;
+  assinatura_nome: string | null;
+  assinatura_area: string | null;
 };
 
 type Envio = {
@@ -188,6 +194,8 @@ export async function enviarAvisosCanalParceiro(): Promise<
         assunto: `Autorizar repasse de ${parceiro}, ciclo ${ciclo}`,
         destinatarios: r.destinatarios ?? [],
         dados: {
+          assinaturaNome: r.assinatura_nome,
+          assinaturaArea: r.assinatura_area,
           titulo: "Autorização de repasse",
           paragrafos: [
             `${r.solicitante_nome ?? "O Comercial"} conferiu a relação de repasse de **${parceiro}** do ciclo ${ciclo} e pede sua autorização para o envio ao parceiro, para emissão da nota fiscal.`,
@@ -211,6 +219,8 @@ export async function enviarAvisosCanalParceiro(): Promise<
         assunto: `Financeiro respondeu o repasse de ${parceiro}, ciclo ${ciclo}`,
         destinatarios: r.destinatarios ?? [],
         dados: {
+          assinaturaNome: r.assinatura_nome,
+          assinaturaArea: r.assinatura_area,
           titulo: "Resposta do Financeiro",
           paragrafos: [
             aprovada
@@ -231,6 +241,8 @@ export async function enviarAvisosCanalParceiro(): Promise<
         assunto: `O repasse de ${parceiro} foi pago?`,
         destinatarios: r.destinatarios ?? [],
         dados: {
+          assinaturaNome: r.assinatura_nome,
+          assinaturaArea: r.assinatura_area,
           titulo: "O pagamento foi feito?",
           paragrafos: [
             `A data prevista de pagamento de **${parceiro}**, ciclo ${ciclo}, era ${dataBR(r.data_prevista)}, e já se passaram ${Number(r.dias_de_atraso ?? 0)} dia(s). O pagamento foi feito?`,
@@ -264,6 +276,8 @@ export async function enviarAvisosCanalParceiro(): Promise<
       assunto: `Conferir contrato de ${parceiro}`,
       destinatarios: v.destinatarios ?? [],
       dados: {
+        assinaturaNome: v.assinatura_nome,
+        assinaturaArea: v.assinatura_area,
         titulo: "Contrato para conferência",
         paragrafos: [
           `Um contrato precisa da sua conferência. ${v.enviado_por_nome ?? "Alguém do Comercial"} enviou **${v.arquivo_nome ?? "o arquivo"}** em ${dataHoraBR(v.enviado_em)}.`,
@@ -314,6 +328,8 @@ export async function enviarAvisosCanalParceiro(): Promise<
         assunto: `Aprovar alteração de percentual de ${parceiro}`,
         destinatarios: a.destinatarios ?? [],
         dados: {
+          assinaturaNome: a.assinatura_nome,
+          assinaturaArea: a.assinatura_area,
           titulo: "Alteração de percentual",
           paragrafos: [
             `${a.solicitante_nome ?? "O Comercial"} pediu alteração de percentual de **${parceiro}**, com De Acordo de ${a.diretor_email ?? "—"}.`,
@@ -332,6 +348,8 @@ export async function enviarAvisosCanalParceiro(): Promise<
         assunto: `Alteração de percentual de ${parceiro}: ${a.situacao ?? "decidida"}`,
         destinatarios: a.destinatarios ?? [],
         dados: {
+          assinaturaNome: a.assinatura_nome,
+          assinaturaArea: a.assinatura_area,
           titulo: "Alteração de percentual decidida",
           paragrafos: [
             `${a.aprovador_nome ?? "A diretoria"} ${aprovada ? "aprovou" : "recusou"} a alteração de percentual de **${parceiro}**.`,

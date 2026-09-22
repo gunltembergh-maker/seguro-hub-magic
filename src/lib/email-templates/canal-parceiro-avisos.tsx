@@ -19,6 +19,8 @@ export interface AvisoCanalParceiroProps {
   observacao?: { rotulo: string; texto: string } | null
   botao?: { rotulo: string; href: string } | null
   notaFinal?: string | null
+  assinaturaNome?: string | null
+  assinaturaArea?: string | null
   rodape: string
   preview: string
 }
@@ -74,6 +76,8 @@ export const AvisoCanalParceiroEmail = ({
   observacao = null,
   botao = null,
   notaFinal = null,
+  assinaturaNome = null,
+  assinaturaArea = null,
   rodape = 'aviso automático do Canal Parceiros',
   preview = 'Aviso do Hub Lavoro',
 }: Partial<AvisoCanalParceiroProps>) => (
@@ -151,11 +155,14 @@ export const AvisoCanalParceiroEmail = ({
             </Text>
           ) : null}
 
-          <Section style={divider}>&nbsp;</Section>
-
-          <Text style={{ fontSize: '14px', color: NAVY, margin: 0, lineHeight: '21px' }}>
-            Alessandro Oliveira, Equipe de Dados &amp; AI
-          </Text>
+          {assinaturaNome || assinaturaArea ? (
+            <>
+              <Section style={divider}>&nbsp;</Section>
+              <Text style={{ fontSize: '14px', color: NAVY, margin: 0, lineHeight: '21px' }}>
+                {[assinaturaNome, assinaturaArea].filter(Boolean).join(', ')}
+              </Text>
+            </>
+          ) : null}
         </Section>
         <Section style={{ ...divider, margin: 0, borderTop: `1px solid ${BORDER}` }}>&nbsp;</Section>
         <Section style={footer}>
