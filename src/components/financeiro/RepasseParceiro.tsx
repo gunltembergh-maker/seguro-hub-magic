@@ -1298,6 +1298,7 @@ function SubtotalRow({
         {BRL(s((l) => l.m2avencer + l.m2apurado))}
       </TableCell>
       <TableCell className="border-l" style={{ borderColor: border, borderTop: top }} />
+      <TableCell style={{ borderTop: top }} />
     </TableRow>
   );
 }
