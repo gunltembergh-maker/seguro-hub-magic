@@ -938,13 +938,23 @@ export function RepasseParceiro() {
                           <TableCell className="font-medium" style={{ color: NAVY }}>
                             <div className="flex items-center gap-2">
                             {l.canal}
-                            <ExportBtn canal={l.canal} exportando={exportando === l.canal} bloqueado={exportando !== null} onExport={exportar} />
+                            <ExportBtn
+                              canal={l.canal}
+                              situacao={situacaoDe(l.canal)}
+                              exportando={exportando === l.canal}
+                              bloqueado={exportando !== null}
+                              onExport={pedirExport}
+                              onBloqueado={() => abrirBloqueio(l.canal, l.pago)}
+                            />
                             </div>
                           </TableCell>
                           <TableCell className="border-l text-right font-mono tabular-nums" style={{ borderColor: BORDER }}>
                             {valorCell(l.pago)}
                           </TableCell>
-                          <TableCell className="border-l text-right" style={{ borderColor: BORDER }}>{pill(l.situacao)}</TableCell>
+                          <TableCell className="border-l text-right" style={{ borderColor: BORDER }}>
+                            <BadgeContrato s={situacaoDe(l.canal)} />
+                          </TableCell>
+                          <TableCell className="text-right">{pill(l.situacao)}</TableCell>
                         </TableRow>
                       ))}
                       <TableRow className="bg-gray-50">
@@ -958,6 +968,7 @@ export function RepasseParceiro() {
                           {BRL(totalPago)}
                         </TableCell>
                         <TableCell className="border-l" style={{ borderColor: BORDER, borderTop: `2px solid ${NAVY}` }} />
+                        <TableCell style={{ borderTop: `2px solid ${NAVY}` }} />
                       </TableRow>
                     </>
                   ) : (
