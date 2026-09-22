@@ -411,6 +411,9 @@ export default function CanalParceirosTela() {
       {/* fila de conferência humana — só aparece quando há pendência */}
       <FilaVerificacaoContratos />
 
+      {/* alterações de percentual aguardando o De Acordo da diretoria */}
+      <FilaAlteracoesPercentual />
+
       {/* repasse do ciclo por parceiro */}
       <RepasseComercial podeExportarPorChave={podeExportarPorChave} />
 
