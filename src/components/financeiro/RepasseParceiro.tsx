@@ -1177,16 +1177,13 @@ export function RepasseParceiro() {
       )}
 
       <DataPrevistaPagamento
-        aberto={pendente !== null}
-        parceiro={pendente?.canal}
+        aberto={definindoData}
+        ano={mesAncora.ano}
+        mes={mesAncora.mes}
         sugestao={`${dataRepasse.getFullYear()}-${pad2(dataRepasse.getMonth() + 1)}-${pad2(dataRepasse.getDate())}`}
-        onFechar={() => setPendente(null)}
-        onConfirmar={(dataISO) => {
-          const alvo = pendente;
-          setPendente(null);
-          if (alvo) void exportar(alvo.canal, alvo.modo, dataISO);
-        }}
+        onFechar={() => setDefinindoData(false)}
       />
+
     </div>
   );
 }
