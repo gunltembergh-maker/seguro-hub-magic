@@ -139,6 +139,7 @@ export function FilaAlteracoesPercentual({ semCard = false }: { semCard?: boolea
       setRecusando(null);
       setObservacao("");
     } catch (e) {
+      setErro(mensagemDeErro(e));
       toast.error(mensagemDeErro(e));
     } finally {
       setSalvando(false);
