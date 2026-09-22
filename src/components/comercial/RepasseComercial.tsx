@@ -339,7 +339,7 @@ export function RepasseComercial({
       </CardContent>
 
       <PedirNFDialog
-        aberto={pedido !== null}
+        aberto={pedido !== null && relacao === null}
         canal={pedido?.canal ?? ""}
         ciclo={ciclo}
         linhas={pedido?.linhas ?? 0}
@@ -509,8 +509,8 @@ function PedirNFDialog({
   const [enviando, setEnviando] = useState(false);
 
   useEffect(() => {
-    if (aberto) setObservacao("");
-  }, [aberto]);
+    setObservacao("");
+  }, [canal]);
 
   async function enviar() {
     setEnviando(true);
