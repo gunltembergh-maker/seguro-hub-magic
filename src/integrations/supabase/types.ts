@@ -1891,6 +1891,90 @@ export type Database = {
           },
         ]
       }
+      canal_repasse_aprovadores_financeiro: {
+        Row: {
+          ativo: boolean
+          incluido_em: string
+          incluido_por: string | null
+          observacao: string | null
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          incluido_em?: string
+          incluido_por?: string | null
+          observacao?: string | null
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          incluido_em?: string
+          incluido_por?: string | null
+          observacao?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      canal_repasse_baixas: {
+        Row: {
+          canal_id: string
+          chave_planilha: string
+          ciclo_ano: number
+          ciclo_mes: number
+          confirmado_em: string
+          confirmado_por: string | null
+          data_pagamento: string
+          demanda_id: string | null
+          id: string
+          levado_ao_gerencial_em: string | null
+          observacao: string | null
+          valor_pago: number | null
+        }
+        Insert: {
+          canal_id: string
+          chave_planilha: string
+          ciclo_ano: number
+          ciclo_mes: number
+          confirmado_em?: string
+          confirmado_por?: string | null
+          data_pagamento: string
+          demanda_id?: string | null
+          id?: string
+          levado_ao_gerencial_em?: string | null
+          observacao?: string | null
+          valor_pago?: number | null
+        }
+        Update: {
+          canal_id?: string
+          chave_planilha?: string
+          ciclo_ano?: number
+          ciclo_mes?: number
+          confirmado_em?: string
+          confirmado_por?: string | null
+          data_pagamento?: string
+          demanda_id?: string | null
+          id?: string
+          levado_ao_gerencial_em?: string | null
+          observacao?: string | null
+          valor_pago?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canal_repasse_baixas_canal_id_fkey"
+            columns: ["canal_id"]
+            isOneToOne: false
+            referencedRelation: "canais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "canal_repasse_baixas_demanda_id_fkey"
+            columns: ["demanda_id"]
+            isOneToOne: false
+            referencedRelation: "canal_repasse_demandas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       canal_repasse_ciclo_datas: {
         Row: {
           canal_id: string | null
@@ -1932,6 +2016,86 @@ export type Database = {
           },
         ]
       }
+      canal_repasse_demandas: {
+        Row: {
+          canal_id: string
+          chave_planilha: string
+          ciclo_ano: number
+          ciclo_mes: number
+          data_prevista_pagamento: string | null
+          decidido_em: string | null
+          decidido_por: string | null
+          email_cobranca_em: string | null
+          email_cobranca_id: string | null
+          email_resposta_em: string | null
+          email_resposta_id: string | null
+          email_solicitacao_em: string | null
+          email_solicitacao_id: string | null
+          id: string
+          linhas: number | null
+          observacao_financeiro: string | null
+          observacao_solicitante: string | null
+          solicitado_em: string
+          solicitado_por: string | null
+          status: string
+          valor_total: number | null
+        }
+        Insert: {
+          canal_id: string
+          chave_planilha: string
+          ciclo_ano: number
+          ciclo_mes: number
+          data_prevista_pagamento?: string | null
+          decidido_em?: string | null
+          decidido_por?: string | null
+          email_cobranca_em?: string | null
+          email_cobranca_id?: string | null
+          email_resposta_em?: string | null
+          email_resposta_id?: string | null
+          email_solicitacao_em?: string | null
+          email_solicitacao_id?: string | null
+          id?: string
+          linhas?: number | null
+          observacao_financeiro?: string | null
+          observacao_solicitante?: string | null
+          solicitado_em?: string
+          solicitado_por?: string | null
+          status?: string
+          valor_total?: number | null
+        }
+        Update: {
+          canal_id?: string
+          chave_planilha?: string
+          ciclo_ano?: number
+          ciclo_mes?: number
+          data_prevista_pagamento?: string | null
+          decidido_em?: string | null
+          decidido_por?: string | null
+          email_cobranca_em?: string | null
+          email_cobranca_id?: string | null
+          email_resposta_em?: string | null
+          email_resposta_id?: string | null
+          email_solicitacao_em?: string | null
+          email_solicitacao_id?: string | null
+          id?: string
+          linhas?: number | null
+          observacao_financeiro?: string | null
+          observacao_solicitante?: string | null
+          solicitado_em?: string
+          solicitado_por?: string | null
+          status?: string
+          valor_total?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canal_repasse_demandas_canal_id_fkey"
+            columns: ["canal_id"]
+            isOneToOne: false
+            referencedRelation: "canais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       canal_repasse_exportacoes: {
         Row: {
           base: string
@@ -1941,6 +2105,7 @@ export type Database = {
           ciclo_mes: number
           contrato_id: string | null
           data_prevista_pagamento: string
+          demanda_id: string | null
           exportado_em: string
           exportado_por: string | null
           id: string
@@ -1956,6 +2121,7 @@ export type Database = {
           ciclo_mes: number
           contrato_id?: string | null
           data_prevista_pagamento: string
+          demanda_id?: string | null
           exportado_em?: string
           exportado_por?: string | null
           id?: string
@@ -1971,6 +2137,7 @@ export type Database = {
           ciclo_mes?: number
           contrato_id?: string | null
           data_prevista_pagamento?: string
+          demanda_id?: string | null
           exportado_em?: string
           exportado_por?: string | null
           id?: string
@@ -1991,6 +2158,13 @@ export type Database = {
             columns: ["contrato_id"]
             isOneToOne: false
             referencedRelation: "canal_contratos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "canal_repasse_exportacoes_demanda_id_fkey"
+            columns: ["demanda_id"]
+            isOneToOne: false
+            referencedRelation: "canal_repasse_demandas"
             referencedColumns: ["id"]
           },
           {
@@ -5396,6 +5570,32 @@ export type Database = {
         Args: { p_canal_id: string; p_contrato_id: string }
         Returns: number
       }
+      canal_repasse_emails_pendentes: {
+        Args: never
+        Returns: {
+          ciclo: string
+          ciclo_ano: number
+          ciclo_mes: number
+          data_prevista: string
+          demanda_id: string
+          destinatarios: string[]
+          dias_de_atraso: number
+          financeiro_nome: string
+          linhas: number
+          observacao: string
+          parceiro: string
+          situacao: string
+          solicitante_email: string
+          solicitante_nome: string
+          tipo: string
+          valor_total: number
+        }[]
+      }
+      canal_repasse_financeiro_emails: { Args: never; Returns: string[] }
+      canal_repasse_marcar_email: {
+        Args: { p_demanda_id: string; p_message_id?: string; p_tipo: string }
+        Returns: boolean
+      }
       divide_safe: {
         Args: { denominador: number; numerador: number }
         Returns: number
@@ -5443,6 +5643,7 @@ export type Database = {
       }
       notificar_admin_audit: { Args: never; Returns: undefined }
       pode_aprovar_liberacao_repasse: { Args: never; Returns: boolean }
+      pode_aprovar_repasse_financeiro: { Args: never; Returns: boolean }
       pode_beneficios: { Args: never; Returns: boolean }
       pode_cadastros: { Args: never; Returns: boolean }
       pode_definir_data_repasse: { Args: never; Returns: boolean }
@@ -5461,6 +5662,7 @@ export type Database = {
       }
       pode_ver_canal_parceiro: { Args: never; Returns: boolean }
       pode_ver_garantia_formulario: { Args: never; Returns: boolean }
+      pode_ver_repasse_demanda: { Args: never; Returns: boolean }
       retry_lavoro_sync_if_needed: { Args: never; Returns: undefined }
       rp_expirar_reservas: { Args: never; Returns: number }
       rp_pode_controle: { Args: never; Returns: boolean }
@@ -6210,6 +6412,110 @@ export type Database = {
           situacao: string
           vigencia_fim: string
           vigencia_inicio: string
+        }[]
+      }
+      rpc_canal_repasse_autorizar_envio_parceiro: {
+        Args: {
+          p_ano: number
+          p_canal_planilha: string
+          p_linhas?: number
+          p_mes: number
+          p_valor?: number
+        }
+        Returns: {
+          aprovado_por_nome: string
+          base: string
+          data_prevista: string
+          demanda: string
+          exportacao_id: string
+          liberado_por: string
+          parceiro: string
+          rotulo_status: string
+        }[]
+      }
+      rpc_canal_repasse_confirmar_baixa: {
+        Args: {
+          p_data_pagamento?: string
+          p_demanda_id: string
+          p_nova_data_prevista?: string
+          p_observacao?: string
+          p_pago: boolean
+        }
+        Returns: {
+          baixa_id: string
+          mensagem: string
+          situacao: string
+        }[]
+      }
+      rpc_canal_repasse_decidir_nf: {
+        Args: {
+          p_aprovar: boolean
+          p_data_prevista?: string
+          p_demanda_id: string
+          p_observacao?: string
+        }
+        Returns: {
+          demanda_id: string
+          mensagem: string
+          situacao: string
+        }[]
+      }
+      rpc_canal_repasse_demandas: {
+        Args: { p_ano?: number; p_mes?: number; p_situacao?: string }
+        Returns: {
+          baixa_confirmada_em: string
+          baixa_confirmada_por: string
+          baixa_data_pagamento: string
+          canal_id: string
+          chave_planilha: string
+          ciclo_ano: number
+          ciclo_mes: number
+          data_prevista_pagamento: string
+          decidido_em: string
+          decidido_por_nome: string
+          demanda_id: string
+          dias_para_a_data: number
+          linhas: number
+          observacao_financeiro: string
+          observacao_solicitante: string
+          parceiro: string
+          situacao: string
+          solicitado_em: string
+          solicitado_por_nome: string
+          sou_o_aprovador: boolean
+          sou_o_solicitante: boolean
+          valor_total: number
+        }[]
+      }
+      rpc_canal_repasse_situacao_ciclo: {
+        Args: { p_ano: number; p_canal_planilha: string; p_mes: number }
+        Returns: {
+          aprovado_em: string
+          aprovado_por_nome: string
+          data_pagamento: string
+          data_prevista: string
+          demanda_id: string
+          observacao_financeiro: string
+          pago: boolean
+          rotulo: string
+          situacao: string
+          solicitado_em: string
+          solicitado_por_nome: string
+        }[]
+      }
+      rpc_canal_repasse_solicitar_nf: {
+        Args: {
+          p_ano: number
+          p_canal_planilha: string
+          p_linhas?: number
+          p_mes: number
+          p_observacao?: string
+          p_valor?: number
+        }
+        Returns: {
+          demanda_id: string
+          mensagem: string
+          situacao: string
         }[]
       }
       rpc_comissao_vencida_por_canal:
