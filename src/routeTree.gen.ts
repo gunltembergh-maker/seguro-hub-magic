@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthSenhaRouteImport } from './routes/auth.senha'
+import { Route as ApiCanalParceiroValidarContratoRouteImport } from './routes/api/canal-parceiro-validar-contrato'
 import { Route as AuthenticatedReservaPosicoesRouteImport } from './routes/_authenticated/reserva-posicoes'
 import { Route as AuthenticatedOperacionalRouteImport } from './routes/_authenticated/operacional'
 import { Route as AuthenticatedMiddleRouteImport } from './routes/_authenticated/middle'
@@ -99,6 +100,12 @@ const AuthSenhaRoute = AuthSenhaRouteImport.update({
   path: '/senha',
   getParentRoute: () => AuthRoute,
 } as any)
+const ApiCanalParceiroValidarContratoRoute =
+  ApiCanalParceiroValidarContratoRouteImport.update({
+    id: '/api/canal-parceiro-validar-contrato',
+    path: '/api/canal-parceiro-validar-contrato',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedReservaPosicoesRoute =
   AuthenticatedReservaPosicoesRouteImport.update({
     id: '/reserva-posicoes',
@@ -456,6 +463,7 @@ export interface FileRoutesByFullPath {
   '/middle': typeof AuthenticatedMiddleRoute
   '/operacional': typeof AuthenticatedOperacionalRoute
   '/reserva-posicoes': typeof AuthenticatedReservaPosicoesRoute
+  '/api/canal-parceiro-validar-contrato': typeof ApiCanalParceiroValidarContratoRoute
   '/auth/senha': typeof AuthSenhaRoute
   '/admin/comunicados': typeof AuthenticatedAdminComunicadosRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
@@ -521,6 +529,7 @@ export interface FileRoutesByTo {
   '/middle': typeof AuthenticatedMiddleRoute
   '/operacional': typeof AuthenticatedOperacionalRoute
   '/reserva-posicoes': typeof AuthenticatedReservaPosicoesRoute
+  '/api/canal-parceiro-validar-contrato': typeof ApiCanalParceiroValidarContratoRoute
   '/auth/senha': typeof AuthSenhaRoute
   '/admin/comunicados': typeof AuthenticatedAdminComunicadosRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
@@ -589,6 +598,7 @@ export interface FileRoutesById {
   '/_authenticated/middle': typeof AuthenticatedMiddleRoute
   '/_authenticated/operacional': typeof AuthenticatedOperacionalRoute
   '/_authenticated/reserva-posicoes': typeof AuthenticatedReservaPosicoesRoute
+  '/api/canal-parceiro-validar-contrato': typeof ApiCanalParceiroValidarContratoRoute
   '/auth/senha': typeof AuthSenhaRoute
   '/_authenticated/admin/comunicados': typeof AuthenticatedAdminComunicadosRoute
   '/_authenticated/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
@@ -657,6 +667,7 @@ export interface FileRouteTypes {
     | '/middle'
     | '/operacional'
     | '/reserva-posicoes'
+    | '/api/canal-parceiro-validar-contrato'
     | '/auth/senha'
     | '/admin/comunicados'
     | '/admin/configuracoes'
@@ -722,6 +733,7 @@ export interface FileRouteTypes {
     | '/middle'
     | '/operacional'
     | '/reserva-posicoes'
+    | '/api/canal-parceiro-validar-contrato'
     | '/auth/senha'
     | '/admin/comunicados'
     | '/admin/configuracoes'
@@ -789,6 +801,7 @@ export interface FileRouteTypes {
     | '/_authenticated/middle'
     | '/_authenticated/operacional'
     | '/_authenticated/reserva-posicoes'
+    | '/api/canal-parceiro-validar-contrato'
     | '/auth/senha'
     | '/_authenticated/admin/comunicados'
     | '/_authenticated/admin/configuracoes'
@@ -845,6 +858,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiCanalParceiroValidarContratoRoute: typeof ApiCanalParceiroValidarContratoRoute
   ApiAbBgcheckRoute: typeof ApiAbBgcheckRoute
   ApiAbCotaRoute: typeof ApiAbCotaRoute
   ApiAbExecutarRoute: typeof ApiAbExecutarRoute
@@ -904,6 +918,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/senha'
       preLoaderRoute: typeof AuthSenhaRouteImport
       parentRoute: typeof AuthRoute
+    }
+    '/api/canal-parceiro-validar-contrato': {
+      id: '/api/canal-parceiro-validar-contrato'
+      path: '/api/canal-parceiro-validar-contrato'
+      fullPath: '/api/canal-parceiro-validar-contrato'
+      preLoaderRoute: typeof ApiCanalParceiroValidarContratoRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/reserva-posicoes': {
       id: '/_authenticated/reserva-posicoes'
@@ -1501,6 +1522,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiCanalParceiroValidarContratoRoute: ApiCanalParceiroValidarContratoRoute,
   ApiAbBgcheckRoute: ApiAbBgcheckRoute,
   ApiAbCotaRoute: ApiAbCotaRoute,
   ApiAbExecutarRoute: ApiAbExecutarRoute,
