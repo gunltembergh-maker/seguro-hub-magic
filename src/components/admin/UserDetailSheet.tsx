@@ -122,10 +122,11 @@ export function UserDetailSheet({ user, open, onOpenChange, abaInicial, onEdit, 
           </SheetHeader>
         </div>
 
-        <Tabs defaultValue="perfil" className="mt-4">
+        <Tabs key={user.user_id + (abaInicial ?? "")} defaultValue={abaInicial ?? "perfil"} className="mt-4">
           <div className="px-6">
-            <TabsList className="w-full grid grid-cols-4">
+            <TabsList className="w-full grid grid-cols-5">
               <TabsTrigger value="perfil" className="text-xs gap-1"><User className="h-3.5 w-3.5" /> Perfil</TabsTrigger>
+              <TabsTrigger value="permissoes" className="text-xs gap-1"><ShieldCheck className="h-3.5 w-3.5" /> Permissões</TabsTrigger>
               <TabsTrigger value="convites" className="text-xs gap-1"><ClipboardList className="h-3.5 w-3.5" /> Convites</TabsTrigger>
               <TabsTrigger value="sessoes" className="text-xs gap-1"><History className="h-3.5 w-3.5" /> Sessões</TabsTrigger>
               <TabsTrigger value="atividade" className="text-xs gap-1"><Activity className="h-3.5 w-3.5" /> Atividade</TabsTrigger>
