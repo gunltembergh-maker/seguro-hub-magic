@@ -17,7 +17,6 @@ import {
 import { UserFormModal, type UserFormInitial } from "@/components/admin/UserFormModal";
 import { UserDetailSheet } from "@/components/admin/UserDetailSheet";
 import { ImportUsuariosModal } from "@/components/admin/ImportUsuariosModal";
-import { PermissoesDoUsuario } from "@/components/admin/PermissoesDoUsuario";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
