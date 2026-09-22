@@ -321,13 +321,27 @@ export function useAtualizarDemanda() {
   });
 }
 
+/** Situação da consulta a mercado do cliente, usada pela trava da etapa 3. */
+export interface ContextoMercado {
+  consultaValida: boolean;
+  completa: boolean;
+  /** Nomes das seguradoras com portal que ainda não têm resposta registrada. */
+  faltantes: string[];
+}
+
 /**
  * Travas de negócio da movimentação. Devolve a mensagem do impedimento
  * (explicando o motivo) ou null quando a transição é permitida.
+ *
+ * `contexto` só é conhecido depois de ler a consulta a mercado do cliente.
+ * Quando não é informado (pré-checagem na tela), a trava da etapa 3 não é
+ * avaliada aqui — quem sempre avalia é useTrocarStatus, que busca o contexto
+ * antes de gravar.
  */
 export function impedimentoDaTransicao(
   demanda: DemandaLista,
   destino: StatusCatalogo,
+  contexto?: ContextoMercado,
 ): string | null {
   if (!demanda.triagem_completa && destino.codigo !== demanda.status_atual) {
     return "A triagem ainda não foi completada. Use “Completar triagem” no detalhe da demanda: sem os dados da etapa 1 as etapas seguintes não têm o que analisar.";
@@ -340,6 +354,22 @@ export function impedimentoDaTransicao(
   if (etapaDestino === "3b" && !["3", "3b"].includes(demanda.etapa)) {
     return "Os documentos de cadastro só são pedidos depois da consulta a mercado (etapa 3). Leve a demanda à consulta antes.";
   }
+  // Sair da consulta a mercado exige consulta válida e completa. Fiança
+  // locatícia nem passa pela etapa 3, então não é alcançada por esta regra.
+  if (
+    demanda.produto !== "fianca_locaticia" &&
+    demanda.etapa === "3" &&
+    etapaDestino !== "3" &&
+    contexto
+  ) {
+    if (!contexto.consultaValida) {
+      return "A consulta a mercado deste cliente não existe ou já venceu (ela vale 12 meses). Refaça a consulta na aba Limites antes de avançar.";
+    }
+    if (!contexto.completa) {
+      const qtd = contexto.faltantes.length;
+      return `Faltam ${qtd} das 18 seguradoras com portal sem resposta registrada: ${contexto.faltantes.join(", ")}. Lance o resultado delas na aba Limites para avançar.`;
+    }
+  }
   if (etapaDestino === "5") {
     const faltando: string[] = [];
     if (demanda.importancia_segurada == null) faltando.push("importância segurada");
@@ -349,6 +379,38 @@ export function impedimentoDaTransicao(
     }
   }
   return null;
+}
+
+/** Lê a consulta a mercado vigente do cliente para alimentar a trava da etapa 3. */
+export async function carregarContextoMercado(clienteId: string): Promise<ContextoMercado> {
+  const { resumirConsulta } = await import("@/lib/garantia/limites-regra");
+  const { data: consultas } = await supabase
+    .from("garantia_consultas_mercado")
+    .select("id, valida_ate")
+    .eq("cliente_id", clienteId)
+    .is("substituida_por_id", null)
+    .order("consultada_em", { ascending: false })
+    .limit(1);
+  const consulta = consultas?.[0];
+  if (!consulta || new Date(consulta.valida_ate).getTime() <= Date.now()) {
+    return { consultaValida: false, completa: false, faltantes: [] };
+  }
+  const [{ data: config }, { data: limites }] = await Promise.all([
+    supabase
+      .from("garantia_seguradoras_config")
+      .select("chave_mercado, rotulo, identificador_api, tem_portal, ativa_garantia, observacao"),
+    supabase
+      .from("garantia_limites_tomador")
+      .select("id, consulta_id, cliente_id, chave_mercado, status_mercado, grupo_mercado, limite_total, limite_disponivel, taxa, modalidades, data_ultimo_cadastro, nomeacao, mensagem, origem, atualizado_em")
+      .eq("consulta_id", consulta.id),
+  ]);
+  const resumo = resumirConsulta(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (config ?? []) as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (limites ?? []) as any,
+  );
+  return { consultaValida: true, completa: resumo.completa, faltantes: resumo.faltantes };
 }
 
 export function useTrocarStatus() {
@@ -361,7 +423,11 @@ export function useTrocarStatus() {
       demanda: DemandaLista;
       destino: StatusCatalogo;
     }) => {
-      const impedimento = impedimentoDaTransicao(demanda, destino);
+      const etapaDestino = destino.etapa === "qualquer" ? demanda.etapa : destino.etapa;
+      const precisaMercado =
+        demanda.produto !== "fianca_locaticia" && demanda.etapa === "3" && etapaDestino !== "3";
+      const contexto = precisaMercado ? await carregarContextoMercado(demanda.cliente_id) : undefined;
+      const impedimento = impedimentoDaTransicao(demanda, destino, contexto);
       if (impedimento) throw new Error(impedimento);
       const { error } = await supabase
         .from("garantia_demandas")
@@ -376,6 +442,7 @@ export function useTrocarStatus() {
     onSuccess: () => invalidarPipeline(qc),
   });
 }
+
 
 export interface DadosTriagem {
   segurado_id: string | null;
