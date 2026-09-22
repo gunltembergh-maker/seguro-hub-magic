@@ -355,6 +355,7 @@ export default function CanalParceirosTela() {
     queryClient.invalidateQueries({ queryKey: ["canal-parceiro-lista"] });
     queryClient.invalidateQueries({ queryKey: ["canal-parceiro-vigencias"] });
     queryClient.invalidateQueries({ queryKey: ["canal-parceiro-contratos"] });
+    queryClient.invalidateQueries({ queryKey: ["canal-parceiro-percentuais"] });
   }
 
   const linhasSituacao = situacoes.data ?? [];
@@ -610,9 +611,8 @@ export default function CanalParceirosTela() {
                       </TableRow>
                     ) : (
                       linhas.map((l) => {
-                        const demaisHerdado = l.s?.pct_demais == null && l.s?.pct_garantia != null;
                         const dias = l.s?.dias_para_vencer ?? null;
-                        const aut = l.canalId ? (aprovadaPorCanal.get(l.canalId) ?? null) : null;
+                        const pcts = l.canalId ? (pctPorCanalId.get(l.canalId) ?? null) : null;
                         return (
                           <TableRow
                             key={l.chave}
