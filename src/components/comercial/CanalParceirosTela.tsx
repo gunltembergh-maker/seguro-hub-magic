@@ -1208,6 +1208,25 @@ function DetalheParceiro({
                       {c.motivo_bloqueio}
                     </p>
                   ) : null}
+
+                  {typeof c.arquivo_path === "string" && c.arquivo_path ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mt-3"
+                      disabled={abrindo === String(c.contrato_id ?? i)}
+                      onClick={() =>
+                        void abrirDocumento(String(c.contrato_id ?? i), c.arquivo_path as string)
+                      }
+                    >
+                      {abrindo === String(c.contrato_id ?? i) ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <FileText className="mr-2 h-4 w-4" />
+                      )}
+                      Abrir o documento
+                    </Button>
+                  ) : null}
                 </div>
               );
             })
@@ -1215,8 +1234,115 @@ function DetalheParceiro({
         </div>
 
         <Historico canalId={canalId} />
+
+        {isAdmin && canalId ? (
+          <div className="mt-6 border-t pt-4">
+            <Button size="sm" variant="destructive" onClick={() => setExcluirAberto(true)}>
+              Excluir parceiro
+            </Button>
+          </div>
+        ) : null}
+
+        <ExcluirParceiroDialog
+          aberto={excluirAberto}
+          canalId={canalId}
+          nome={nome}
+          onFechar={() => setExcluirAberto(false)}
+          onExcluido={() => {
+            setExcluirAberto(false);
+            queryClient.invalidateQueries({ queryKey: ["canal-parceiro-situacao"] });
+            queryClient.invalidateQueries({ queryKey: ["canal-parceiro-lista"] });
+            queryClient.invalidateQueries({ queryKey: ["canal-parceiro-vigencias"] });
+            queryClient.invalidateQueries({ queryKey: ["canal-parceiro-contratos"] });
+            onFechar();
+          }}
+        />
       </SheetContent>
     </Sheet>
+  );
+}
+
+/* ------------------------------------------------- excluir parceiro (ADMIN) */
+
+function ExcluirParceiroDialog({
+  aberto,
+  canalId,
+  nome,
+  onFechar,
+  onExcluido,
+}: {
+  aberto: boolean;
+  canalId: string | null;
+  nome: string;
+  onFechar: () => void;
+  onExcluido: () => void;
+}) {
+  const [motivo, setMotivo] = useState("");
+  const [excluindo, setExcluindo] = useState(false);
+
+  async function excluir() {
+    if (!canalId || !motivo.trim() || excluindo) return;
+    setExcluindo(true);
+    try {
+      const { data, error } = await supabase.rpc("rpc_canal_parceiro_excluir" as never, {
+        p_canal_id: canalId,
+        p_motivo: motivo.trim(),
+      } as never);
+      if (error) throw error;
+      const r = (Array.isArray(data) ? data[0] : data) as { mensagem?: string } | null;
+      toast.success(r?.mensagem ?? "Parceiro excluído.");
+      setMotivo("");
+      onExcluido();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setExcluindo(false);
+    }
+  }
+
+  return (
+    <Dialog open={aberto} onOpenChange={(v) => { if (!v) onFechar(); }}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Excluir parceiro</DialogTitle>
+          <DialogDescription>{nome}</DialogDescription>
+        </DialogHeader>
+
+        <SuperAdminGate area="canal-parceiro-excluir" titulo="Excluir parceiro do cadastro">
+          <div className="space-y-3">
+            <Alert>
+              <AlertDescription>
+                O parceiro sai do cadastro e perde o vínculo com a planilha. Contratos e histórico
+                ficam guardados.
+              </AlertDescription>
+            </Alert>
+            <div className="space-y-2">
+              <Label htmlFor="excluir-motivo">Motivo</Label>
+              <Textarea
+                id="excluir-motivo"
+                rows={3}
+                value={motivo}
+                onChange={(e) => setMotivo(e.target.value)}
+                placeholder="Explique por que este parceiro está saindo do cadastro."
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={onFechar} disabled={excluindo}>
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => void excluir()}
+                disabled={!motivo.trim() || excluindo}
+              >
+                {excluindo ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Excluir
+              </Button>
+            </DialogFooter>
+          </div>
+        </SuperAdminGate>
+      </DialogContent>
+    </Dialog>
   );
 }
 
