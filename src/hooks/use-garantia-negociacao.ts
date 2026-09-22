@@ -195,6 +195,7 @@ export function usePerdas(filtros: FiltrosPerdas, ativo: boolean) {
 export interface HistoricoItem {
   id: string;
   status_codigo: string;
+  status_nome: string | null;
   relogio: string;
   com_quem: string | null;
   inicio: string;
@@ -203,21 +204,27 @@ export interface HistoricoItem {
   observacao: string | null;
 }
 
+/**
+ * A linha do tempo vem de um RPC, não da tabela: a leitura direta de
+ * `garantia_status_historico` é restrita a quem tem o painel. O RPC devolve a
+ * sequência de status para quem opera o pipeline e só entrega
+ * `duracao_segundos` para a gerência — o portão é o banco, não a tela.
+ */
 export function useHistoricoDemanda(demandaId: string | null) {
   return useQuery({
     queryKey: ["garantia", "historico", demandaId],
     enabled: !!demandaId,
     queryFn: async (): Promise<HistoricoItem[]> => {
-      const { data, error } = await supabase
-        .from("garantia_status_historico")
-        .select("id, status_codigo, relogio, com_quem, inicio, fim, duracao_segundos, observacao")
-        .eq("demanda_id", demandaId!)
-        .order("inicio", { ascending: true });
+      const { data, error } = await supabase.rpc("rpc_garantia_historico_demanda", {
+        _demanda_id: demandaId!,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
       if (error) throw error;
-      return (data ?? []) as HistoricoItem[];
+      return (data ?? []) as unknown as HistoricoItem[];
     },
   });
 }
+
 
 export interface OrigemEntrada {
   id: string;
