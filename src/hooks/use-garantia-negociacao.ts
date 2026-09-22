@@ -351,7 +351,10 @@ export function impedimentoDaTransicao(
   demanda: DemandaLista,
   destino: StatusCatalogo,
   contexto?: ContextoMercado,
+  /** Tipos de documento com versão vigente na demanda (checklists das etapas 2 e 3b). */
+  tiposPresentes?: Set<string>,
 ): string | null {
+
   if (!demanda.triagem_completa && destino.codigo !== demanda.status_atual) {
     return "A triagem ainda não foi completada. Use “Completar triagem” no detalhe da demanda: sem os dados da etapa 1 as etapas seguintes não têm o que analisar.";
   }
@@ -379,6 +382,12 @@ export function impedimentoDaTransicao(
       return `Faltam ${qtd} das 18 seguradoras com portal sem resposta registrada: ${contexto.faltantes.join(", ")}. Lance o resultado delas na aba Limites para avançar.`;
     }
   }
+  // Checklists de documento das etapas 2 e 3b. Só travam o que uma condição
+  // explícita tornou obrigatório — a mensagem diz o documento E a condição.
+  if (tiposPresentes && demanda.etapa !== etapaDestino) {
+    const bloqueio = pendenciasDaEtapa(demanda, tiposPresentes, demanda.etapa).find((p) => p.bloqueia);
+    if (bloqueio) return `${bloqueio.texto} Motivo: ${bloqueio.motivo}.`;
+  }
   if (etapaDestino === "5") {
     const faltando: string[] = [];
     if (demanda.importancia_segurada == null) faltando.push("importância segurada");
@@ -389,6 +398,31 @@ export function impedimentoDaTransicao(
   }
   return null;
 }
+
+/** Pendências de documento da etapa em que a demanda está hoje. */
+function pendenciasDaEtapa(demanda: DemandaLista, tipos: Set<string>, etapa: string) {
+  const alvo = {
+    produto: demanda.produto,
+    exige_cadastro: demanda.exige_cadastro,
+    balancos_assinados: demanda.balancos_assinados,
+    dre_assinados: demanda.dre_assinados,
+    precisa_nomeacao: demanda.precisa_nomeacao,
+    precisa_ccg: demanda.precisa_ccg,
+  };
+  if (etapa === "2") return pendenciasEtapa2(alvo, tipos);
+  if (etapa === "3b") return pendenciasEtapa3b(alvo, tipos);
+  return [];
+}
+
+/** Tipos de documento com versão vigente — alimenta os checklists na gravação. */
+export async function carregarTiposPresentes(demandaId: string): Promise<Set<string>> {
+  const { data } = await supabase
+    .from("garantia_documentos")
+    .select("tipo, substituido_por_id")
+    .eq("demanda_id", demandaId);
+  return new Set((data ?? []).filter((d) => !d.substituido_por_id).map((d) => d.tipo));
+}
+
 
 /** Lê a consulta a mercado vigente do cliente para alimentar a trava da etapa 3. */
 export async function carregarContextoMercado(clienteId: string): Promise<ContextoMercado> {
