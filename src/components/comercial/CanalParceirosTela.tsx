@@ -21,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMeuPerfilEfetivo } from "@/contexts/view-as-context";
 import { hasRole } from "@/hooks/use-meu-perfil";
 import EnviarContratoParceiro from "@/components/comercial/EnviarContratoParceiro";
+import { FilaVerificacaoContratos } from "@/components/comercial/FilaVerificacaoContratos";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
