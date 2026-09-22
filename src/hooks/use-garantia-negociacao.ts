@@ -57,6 +57,13 @@ export interface DemandaLista {
   comissao_estimada: number | null;
   numero_processo: string | null;
   observacao: string | null;
+  exige_cadastro: boolean;
+  balancos_assinados: boolean | null;
+  dre_assinados: boolean | null;
+  precisa_nomeacao: boolean;
+  precisa_ccg: boolean;
+  ia_analise_solicitada: boolean;
+
   atualizado_em: string;
   cliente: { id: string; nome: string; cpf_cnpj: string } | null;
   segurado: { id: string; nome: string; cpf_cnpj: string } | null;
@@ -68,7 +75,9 @@ const CAMPOS_DEMANDA =
   "chegada_em, cadastrado_em, cadastrado_por, cliente_id, segurado_id, modalidade, publico_privado, " +
   "tipo_movimento, tipo_alteracao, importancia_segurada, percentual_garantia, objeto, vigencia_exigida, " +
   "data_limite, canal_id, responsavel_cliente_id, responsavel_tecnico_id, premio_estimado, comissao_estimada, " +
-  "numero_processo, observacao, atualizado_em, " +
+  "numero_processo, observacao, atualizado_em, exige_cadastro, balancos_assinados, dre_assinados, " +
+  "precisa_nomeacao, precisa_ccg, ia_analise_solicitada, " +
+
   "cliente:hub_clientes(id, nome, cpf_cnpj), segurado:garantia_segurados(id, nome, cpf_cnpj), canal:canais(id, nome)";
 
 /** Catálogo de status da fase de negociação — origem única das colunas. */
