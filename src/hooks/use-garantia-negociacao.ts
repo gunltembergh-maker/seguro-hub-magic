@@ -450,20 +450,27 @@ export function useRegistrarPerda() {
   return useMutation({
     mutationFn: async ({ demanda, perda }: { demanda: DemandaLista; perda: NovaPerda }) => {
       const { data: sessao } = await supabase.auth.getUser();
-      const { error: erroPerda } = await supabase.from("garantia_perdas").insert({
-        demanda_id: demanda.id,
-        motivo: perda.motivo,
-        etapa_perdida: demanda.etapa,
-        status_perdido: demanda.status_atual,
-        premio_estimado: perda.premio_estimado,
-        comissao_estimada: perda.comissao_estimada,
-        concorrente: perda.concorrente,
-        data_retomar: perda.data_retomar,
-        observacao: perda.observacao,
-        criado_por: sessao.user?.id ?? null,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any);
+      // Upsert, não insert: `demanda_id` é unique. Se a perda gravar e o UPDATE
+      // da fase falhar, a demanda fica em negociação com a linha já criada — a
+      // retentativa tem que atualizar a linha existente, não colidir na chave.
+      const { error: erroPerda } = await supabase.from("garantia_perdas").upsert(
+        {
+          demanda_id: demanda.id,
+          motivo: perda.motivo,
+          etapa_perdida: demanda.etapa,
+          status_perdido: demanda.status_atual,
+          premio_estimado: perda.premio_estimado,
+          comissao_estimada: perda.comissao_estimada,
+          concorrente: perda.concorrente,
+          data_retomar: perda.data_retomar,
+          observacao: perda.observacao,
+          criado_por: sessao.user?.id ?? null,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any,
+        { onConflict: "demanda_id" },
+      );
       if (erroPerda) throw erroPerda;
+
 
       const { error: erroDemanda } = await supabase
         .from("garantia_demandas")
