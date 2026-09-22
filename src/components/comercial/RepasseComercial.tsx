@@ -562,7 +562,12 @@ function PedirNFDialog({
           />
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="sm:justify-between">
+          <Button variant="outline" onClick={onVerRelacao} disabled={enviando}>
+            <FileSearch className="mr-2 h-4 w-4" />
+            Ver a relação antes de enviar
+          </Button>
+          <div className="flex gap-2">
           <Button variant="ghost" onClick={onFechar} disabled={enviando}>
             Cancelar
           </Button>
