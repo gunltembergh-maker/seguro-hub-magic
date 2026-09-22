@@ -26,6 +26,8 @@ import {
   CalendarCheck,
   UserSquare2,
   ClipboardList,
+  Handshake,
+  FileSignature,
   type LucideIcon,
 } from "lucide-react";
 
