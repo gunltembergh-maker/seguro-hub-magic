@@ -283,6 +283,54 @@ export default function EntradaDemandas() {
   );
 }
 
+// ───────────────────── Pendência de roteamento (Garantia) ─────────────────
+
+/**
+ * Entrada de Garantia que ficou retida: a demanda não chegou a abrir.
+ * Nada foi perdido — o botão refaz só a etapa da demanda, sem criar entrada
+ * nova.
+ */
+function CelulaPendencia({ entrada }: { entrada: EntradaLista }) {
+  const rotear = useRotearEntradaGarantia();
+
+  async function tentar() {
+    if (!entrada.cliente?.id || !entrada.produto) {
+      return toast.error("Entrada sem cliente ou produto: não dá para abrir a demanda.");
+    }
+    try {
+      await rotear.mutateAsync({
+        entrada_id: entrada.id,
+        produto: entrada.produto as ProdutoGarantia,
+        cliente_id: entrada.cliente.id,
+        chegada_em: entrada.chegada_em,
+        canal_id: entrada.canal?.id ?? null,
+      });
+      toast.success(`Entrada ${entrada.protocolo} roteada para Garantia.`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  return (
+    <div className="space-y-1">
+      <Badge variant="outline" className="border-destructive text-destructive">
+        Retida · demanda não aberta
+      </Badge>
+      {entrada.motivo_retencao && (
+        <p className="max-w-[240px] text-xs text-muted-foreground">{entrada.motivo_retencao}</p>
+      )}
+      <Button size="sm" variant="outline" onClick={tentar} disabled={rotear.isPending}>
+        {rotear.isPending ? (
+          <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+        ) : (
+          <ArrowRight className="mr-1 h-3 w-3" />
+        )}
+        Tentar rotear de novo
+      </Button>
+    </div>
+  );
+}
+
 // ───────────────────────── Formulário de registro ─────────────────────────
 
 function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () => void }) {
