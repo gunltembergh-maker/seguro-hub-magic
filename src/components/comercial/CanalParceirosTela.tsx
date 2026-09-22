@@ -29,6 +29,7 @@ import {
 } from "@/components/comercial/FilaAlteracoesPercentual";
 import { SolicitarAlteracaoPercentual } from "@/components/comercial/SolicitarAlteracaoPercentual";
 import { RepasseComercial } from "@/components/comercial/RepasseComercial";
+import { SuperAdminGate } from "@/components/admin/SuperAdminGate";
 
 
 import { Badge } from "@/components/ui/badge";
@@ -1052,6 +1053,27 @@ function DetalheParceiro({
   onFechar: () => void;
 }) {
   const [pedirAlteracao, setPedirAlteracao] = useState(false);
+  const [excluirAberto, setExcluirAberto] = useState(false);
+  const [abrindo, setAbrindo] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const meuPerfil = useMeuPerfilEfetivo();
+  const isAdmin = hasRole(meuPerfil, "ADMIN");
+
+  async function abrirDocumento(id: string, path: string) {
+    if (abrindo) return;
+    setAbrindo(id);
+    try {
+      const { data, error } = await supabase.storage
+        .from("canal-parceiros-contratos")
+        .createSignedUrl(path, 300);
+      if (error) throw new Error(error.message);
+      window.open(data?.signedUrl, "_blank", "noopener");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setAbrindo(null);
+    }
+  }
 
   const contratos = useQuery({
     queryKey: ["canal-parceiro-contratos", canalId],
