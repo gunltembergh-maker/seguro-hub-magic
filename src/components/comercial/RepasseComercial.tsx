@@ -509,8 +509,8 @@ function PedirNFDialog({
   const [enviando, setEnviando] = useState(false);
 
   useEffect(() => {
-    if (aberto) setObservacao("");
-  }, [aberto]);
+    setObservacao("");
+  }, [canal]);
 
   async function enviar() {
     setEnviando(true);
