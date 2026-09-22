@@ -806,17 +806,27 @@ function CelulaPct({
   );
 }
 
-function Kpi({ titulo, valor, icone }: { titulo: string; valor: number; icone: React.ReactNode }) {
+function Kpi({
+  titulo,
+  valor,
+  className,
+}: {
+  titulo: string;
+  valor: string;
+  className?: string;
+}) {
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-          {icone}
-          {titulo}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-3xl font-bold tabular-nums text-foreground">{valor}</p>
+      <CardContent className="p-4">
+        <p className="text-xs font-medium text-muted-foreground">{titulo}</p>
+        <p
+          className={cn(
+            "mt-1 text-2xl font-semibold tabular-nums text-foreground",
+            className,
+          )}
+        >
+          {valor}
+        </p>
       </CardContent>
     </Card>
   );
