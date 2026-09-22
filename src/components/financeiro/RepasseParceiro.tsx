@@ -1161,7 +1161,127 @@ export function RepasseParceiro() {
           </div>
         </div>
       )}
+
+      {bloqueado && (
+        <ExportacaoBloqueada
+          aberto
+          parceiro={bloqueado.canal}
+          chavePlanilha={chaveCanal(bloqueado.canal)}
+          canalId={situacaoDe(bloqueado.canal)?.canal_id ?? null}
+          situacao={situacaoDe(bloqueado.canal)?.situacao ?? null}
+          motivo={motivoBloqueio(situacaoDe(bloqueado.canal))}
+          valor={bloqueado.valor}
+          ano={mesAncora.ano}
+          mes={mesAncora.mes}
+          onFechar={() => setBloqueado(null)}
+        />
+      )}
+
+      <DataPrevistaPagamento
+        aberto={pendente !== null}
+        parceiro={pendente?.canal}
+        sugestao={`${dataRepasse.getFullYear()}-${pad2(dataRepasse.getMonth() + 1)}-${pad2(dataRepasse.getDate())}`}
+        onFechar={() => setPendente(null)}
+        onConfirmar={(dataISO) => {
+          const alvo = pendente;
+          setPendente(null);
+          if (alvo) void exportar(alvo.canal, alvo.modo, dataISO);
+        }}
+      />
     </div>
+  );
+}
+
+function PainelLiberacoes({ pendentes }: { pendentes: LiberacaoPendente[] }) {
+  const queryClient = useQueryClient();
+  const [aberto, setAberto] = useState(false);
+  const [decidindo, setDecidindo] = useState<string | null>(null);
+
+  const decidir = async (id: string, aprovar: boolean) => {
+    if (decidindo) return;
+    setDecidindo(id);
+    try {
+      const { error } = await supabase.rpc(
+        "rpc_canal_parceiro_decidir_liberacao" as never,
+        { p_liberacao_id: id, p_aprovar: aprovar, p_observacao: null } as never,
+      );
+      if (error) throw error;
+      toast.success(aprovar ? "Liberação aprovada." : "Pedido recusado.");
+      queryClient.invalidateQueries({ queryKey: ["canal-parceiro-liberacoes"] });
+      queryClient.invalidateQueries({ queryKey: ["canal-parceiro-situacao"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setDecidindo(null);
+    }
+  };
+
+  return (
+    <>
+      <Alert className="border-amber-600/40 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+        <ShieldAlert className="h-4 w-4" />
+        <AlertTitle>
+          {pendentes.length === 1
+            ? "1 pedido de liberação excepcional aguardando sua decisão"
+            : `${pendentes.length} pedidos de liberação excepcional aguardando sua decisão`}
+        </AlertTitle>
+        <AlertDescription className="mt-2">
+          <Button size="sm" variant="outline" onClick={() => setAberto(true)}>
+            Ver pedidos
+          </Button>
+        </AlertDescription>
+      </Alert>
+
+      <Dialog open={aberto} onOpenChange={setAberto}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Liberações excepcionais pendentes</DialogTitle>
+            <DialogDescription>
+              Aprovar libera a exportação do repasse sem contrato válido no Hub.
+            </DialogDescription>
+          </DialogHeader>
+
+          <SuperAdminGate area="canal-parceiro-liberacoes" titulo="Aprovar liberações de repasse">
+            <div className="max-h-[60vh] space-y-3 overflow-y-auto">
+              {pendentes.map((p) => (
+                <div key={p.liberacao_id} className="rounded-lg border p-3" style={{ borderColor: BORDER }}>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="text-sm font-semibold" style={{ color: NAVY }}>
+                      {p.parceiro ?? p.nome ?? p.canal_planilha ?? "Parceiro"}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Ciclo {p.mes ? `${MESES[p.mes - 1]}/${p.ano}` : "—"}
+                    </div>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Pedido por {p.solicitado_por_nome ?? p.solicitado_por_email ?? "—"}
+                  </p>
+                  <p className="mt-2 text-sm text-gray-700">{p.justificativa ?? "Sem justificativa."}</p>
+                  <div className="mt-3 flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => decidir(p.liberacao_id, true)}
+                      disabled={decidindo !== null}
+                    >
+                      {decidindo === p.liberacao_id && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+                      Aprovar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => decidir(p.liberacao_id, false)}
+                      disabled={decidindo !== null}
+                    >
+                      Recusar
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </SuperAdminGate>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
