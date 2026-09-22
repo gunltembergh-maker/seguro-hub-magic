@@ -92,18 +92,27 @@ export function useCanais() {
   });
 }
 
+export interface PessoaHub {
+  user_id: string;
+  nome: string;
+}
+
+/**
+ * Lista de pessoas para os seletores de responsável.
+ *
+ * Não lê `profiles` direto: as policies de SELECT de lá só deixam o usuário
+ * ver o próprio registro (ou tudo, se for admin/diretoria), então um
+ * COLABORADOR veria um nome só. O RPC security definer devolve apenas
+ * user_id e nome — sem e-mail — e vazio para quem não opera a Entrada nem o
+ * pipeline de Garantia.
+ */
 export function useResponsaveis() {
   return useQuery({
     queryKey: ["entrada", "responsaveis"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("user_id, full_name, email")
-        .eq("active", true)
-        .or("blocked.is.null,blocked.eq.false")
-        .order("full_name");
+    queryFn: async (): Promise<PessoaHub[]> => {
+      const { data, error } = await supabase.rpc("rpc_hub_listar_pessoas");
       if (error) throw error;
-      return (data ?? []).filter((p) => !!p.user_id);
+      return ((data ?? []) as PessoaHub[]).filter((p) => !!p.user_id);
     },
   });
 }
