@@ -483,10 +483,57 @@ function LinhaRepasse({
   const situacao = demanda?.situacao ?? null;
   const pago = !!demanda?.baixa_data_pagamento;
 
+  const podeCancelarJanela =
+    situacao === "PENDENTE" && demanda?.sou_o_solicitante === true && !!demanda?.solicitado_em;
+  const restanteMs = podeCancelarJanela
+    ? new Date(demanda!.solicitado_em as string).getTime() + 10 * 60 * 1000 - agora
+    : 0;
+  const dentroDaJanela = podeCancelarJanela && restanteMs > 0;
+
+  useEffect(() => {
+    if (!podeCancelarJanela) return;
+    const t = setInterval(() => setAgora(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [podeCancelarJanela]);
+
+  const contador = (() => {
+    const s = Math.max(0, Math.floor(restanteMs / 1000));
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  })();
+
+  const horasParaReenvio =
+    situacao === "RECUSADA" && demanda?.decidido_em
+      ? Math.ceil(
+          (new Date(demanda.decidido_em).getTime() + 24 * 60 * 60 * 1000 - agora) / (60 * 60 * 1000),
+        )
+      : 0;
+  const bloqueado24h = horasParaReenvio > 0;
+
+  async function cancelar() {
+    if (!demanda || cancelando) return;
+    setCancelando(true);
+    try {
+      const { data, error } = await supabase.rpc("rpc_canal_repasse_cancelar_nf" as never, {
+        p_demanda_id: demanda.demanda_id,
+      } as never);
+      if (error) throw error;
+      const r = (Array.isArray(data) ? data[0] : data) as { mensagem?: string } | null;
+      toast.success(r?.mensagem ?? "Envio cancelado.");
+      onCancelado();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setCancelando(false);
+    }
+  }
+
   return (
     <TableRow ref={ref} className={aceso ? "ring-2 ring-primary ring-offset-2" : undefined}>
       <TableCell className="font-medium">
         {canal}
+        {razaoSocial ? (
+          <p className="text-xs text-muted-foreground">{razaoSocial}</p>
+        ) : null}
         {situacao === "RECUSADA" && demanda?.observacao_financeiro ? (
           <p className="mt-1 text-xs text-destructive">{demanda.observacao_financeiro}</p>
         ) : null}
