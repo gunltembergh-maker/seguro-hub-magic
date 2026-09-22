@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Home,
+  Inbox,
   Megaphone,
   Landmark,
   Scale,
@@ -57,6 +58,9 @@ const primary = [
 ];
 
 const RESERVA_ITEM = { title: "Reserva de Posições", url: "/reserva-posicoes", icon: CalendarCheck };
+
+// Porta compartilhada de todos os ramos: fica no topo, fora de "Ramos".
+const ENTRADA_ITEM = { title: "Entrada de Demandas", url: "/entrada-demandas", icon: Inbox };
 
 const areasAll: AreaItem[] = [
   {
@@ -392,6 +396,20 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              {(isAdmin || hasPermission(meuPerfil, "menu_entrada_demandas")) && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(ENTRADA_ITEM.url)}
+                    tooltip={ENTRADA_ITEM.title}
+                  >
+                    <Link to={ENTRADA_ITEM.url}>
+                      <ENTRADA_ITEM.icon />
+                      <span>{ENTRADA_ITEM.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
               {(isAdmin || hasPermission(meuPerfil, "menu_reserva_posicoes")) && (
                 <SidebarMenuItem>
                   <SidebarMenuButton
