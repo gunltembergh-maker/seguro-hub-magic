@@ -1553,6 +1553,8 @@ export type Database = {
           assinado_em: string | null
           base_calculo: string
           canal_id: string | null
+          declarado_assinado: boolean | null
+          declarado_por: string | null
           enviado_em: string
           enviado_por: string | null
           extracao: Json | null
@@ -1560,6 +1562,7 @@ export type Database = {
           id: string
           minimo_repasse: number
           motivo_bloqueio: string | null
+          origem_leitura: string | null
           percentual_beneficios: number | null
           percentual_demais: number | null
           percentual_garantia: number | null
@@ -1577,6 +1580,8 @@ export type Database = {
           assinado_em?: string | null
           base_calculo?: string
           canal_id?: string | null
+          declarado_assinado?: boolean | null
+          declarado_por?: string | null
           enviado_em?: string
           enviado_por?: string | null
           extracao?: Json | null
@@ -1584,6 +1589,7 @@ export type Database = {
           id?: string
           minimo_repasse?: number
           motivo_bloqueio?: string | null
+          origem_leitura?: string | null
           percentual_beneficios?: number | null
           percentual_demais?: number | null
           percentual_garantia?: number | null
@@ -1601,6 +1607,8 @@ export type Database = {
           assinado_em?: string | null
           base_calculo?: string
           canal_id?: string | null
+          declarado_assinado?: boolean | null
+          declarado_por?: string | null
           enviado_em?: string
           enviado_por?: string | null
           extracao?: Json | null
@@ -1608,6 +1616,7 @@ export type Database = {
           id?: string
           minimo_repasse?: number
           motivo_bloqueio?: string | null
+          origem_leitura?: string | null
           percentual_beneficios?: number | null
           percentual_demais?: number | null
           percentual_garantia?: number | null
@@ -1695,6 +1704,51 @@ export type Database = {
             columns: ["canal_id"]
             isOneToOne: false
             referencedRelation: "canais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      canal_parceiro_eventos: {
+        Row: {
+          canal_id: string | null
+          contrato_id: string | null
+          criado_em: string
+          detalhe: Json | null
+          id: string
+          tipo: string
+          usuario_id: string | null
+        }
+        Insert: {
+          canal_id?: string | null
+          contrato_id?: string | null
+          criado_em?: string
+          detalhe?: Json | null
+          id?: string
+          tipo: string
+          usuario_id?: string | null
+        }
+        Update: {
+          canal_id?: string | null
+          contrato_id?: string | null
+          criado_em?: string
+          detalhe?: Json | null
+          id?: string
+          tipo?: string
+          usuario_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canal_parceiro_eventos_canal_id_fkey"
+            columns: ["canal_id"]
+            isOneToOne: false
+            referencedRelation: "canais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "canal_parceiro_eventos_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "canal_contratos"
             referencedColumns: ["id"]
           },
         ]
@@ -3674,6 +3728,16 @@ export type Database = {
           inicio: string
         }[]
       }
+      canal_parceiro_log: {
+        Args: {
+          p_canal_id: string
+          p_contrato_id: string
+          p_detalhe: Json
+          p_tipo: string
+          p_usuario: string
+        }
+        Returns: undefined
+      }
       canal_parceiro_marcar_aviso: {
         Args: {
           p_contrato_id: string
@@ -3698,11 +3762,13 @@ export type Database = {
           p_assinado?: boolean
           p_assinado_em?: string
           p_canal_id?: string
+          p_declarado_assinado?: boolean
           p_enviado_por?: string
           p_extracao?: Json
           p_hash_sha256?: string
           p_minimo?: number
           p_nomes_do_contrato: string[]
+          p_origem_leitura?: string
           p_pct_beneficios?: number
           p_pct_demais?: number
           p_pct_garantia?: number
@@ -4242,11 +4308,13 @@ export type Database = {
           canal_id: string
           canal_nome: string
           contrato_id: string
+          declarado_assinado: boolean
           dias_para_vencer: number
           enviado_em: string
           hash_sha256: string
           minimo_repasse: number
           motivo_bloqueio: string
+          origem_leitura: string
           pct_beneficios: number
           pct_demais_efetivo: number
           pct_garantia: number
@@ -4267,6 +4335,20 @@ export type Database = {
         Returns: {
           liberacao_id: string
           status: string
+        }[]
+      }
+      rpc_canal_parceiro_eventos: {
+        Args: { p_canal_id?: string; p_limite?: number }
+        Returns: {
+          canal_id: string
+          canal_nome: string
+          contrato_id: string
+          criado_em: string
+          detalhe: Json
+          evento_id: string
+          tipo: string
+          usuario: string
+          usuario_email: string
         }[]
       }
       rpc_canal_parceiro_liberacoes: {

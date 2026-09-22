@@ -109,7 +109,17 @@ interface Contrato {
   motivo_bloqueio?: string | null;
   vigente?: boolean | null;
   substituido_por?: string | null;
+  declarado_assinado?: boolean | null;
+  origem_leitura?: string | null;
   [k: string]: unknown;
+}
+
+interface Evento {
+  tipo: string | null;
+  detalhe: Record<string, unknown> | null;
+  usuario: string | null;
+  usuario_email: string | null;
+  criado_em: string | null;
 }
 
 interface Vigencia {
@@ -156,6 +166,50 @@ function BadgeContrato({ situacao }: { situacao?: string | null }) {
   }
   return <Badge variant="destructive">{texto}</Badge>;
 }
+
+const rotuloLeitura: Record<string, string> = {
+  TEXTO: "Texto",
+  OCR: "OCR",
+  MANUAL: "Manual",
+};
+
+/** Como o contrato foi lido. Âmbar quando a pessoa declarou assinatura e o
+ *  arquivo não trouxe o bloco de assinatura. */
+function BadgeLeitura({
+  origem,
+  declarado,
+  assinado,
+}: {
+  origem?: string | null;
+  declarado?: boolean | null;
+  assinado?: boolean | null;
+}) {
+  const texto = rotuloLeitura[origem ?? ""] ?? "Texto";
+  const divergente = declarado === true && assinado !== true;
+  return (
+    <Badge
+      variant="outline"
+      className={cn(
+        divergente &&
+          "border-amber-600/40 bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200",
+      )}
+    >
+      {texto}
+      {divergente ? " · assinatura não encontrada" : ""}
+    </Badge>
+  );
+}
+
+const rotuloEvento: Record<string, string> = {
+  CADASTRO_MANUAL: "Cadastro manual",
+  CONTRATO_ENVIADO: "Contrato enviado",
+  CONTRATO_SUBSTITUIDO: "Contrato substituído",
+  CONTRATO_VENCIDO: "Contrato vencido",
+  VINCULO_RESOLVIDO: "Vínculo confirmado",
+  LIBERACAO_SOLICITADA: "Liberação solicitada",
+  LIBERACAO_DECIDIDA: "Liberação decidida",
+  EXPORTACAO: "Relatório exportado",
+};
 
 /* ------------------------------------------------------------------ dados */
 
@@ -923,8 +977,16 @@ function DetalheParceiro({
                         {vigente ? " · vigente" : " · substituído"}
                       </p>
                     </div>
-                    <BadgeContrato situacao={c.situacao} />
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                      <BadgeContrato situacao={c.situacao} />
+                      <BadgeLeitura
+                        origem={c.origem_leitura}
+                        declarado={c.declarado_assinado}
+                        assinado={c.assinado}
+                      />
+                    </div>
                   </div>
+
 
                   <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
                     <Info rotulo="Assinatura" valor={c.assinado_em ? dataHora(c.assinado_em) : c.assinado ? "encontrada" : "não encontrada"} />
@@ -946,10 +1008,112 @@ function DetalheParceiro({
             })
           )}
         </div>
+
+        <Historico canalId={canalId} />
       </SheetContent>
     </Sheet>
   );
 }
+
+/* ------------------------------------------------------------- histórico */
+
+function textoDetalhe(ev: Evento): string | null {
+  const d = ev.detalhe ?? {};
+  const v = (k: string) => (d[k] == null ? null : String(d[k]));
+  if (ev.tipo === "CONTRATO_ENVIADO") return null; // tratado em destaque
+  const pedacos = [
+    v("parceiro"),
+    v("arquivo_nome"),
+    v("motivo"),
+    v("justificativa"),
+    v("observacao"),
+    v("situacao"),
+    v("status"),
+    v("ciclo"),
+  ].filter(Boolean) as string[];
+  return pedacos.length ? pedacos.join(" · ") : null;
+}
+
+function Historico({ canalId }: { canalId: string | null }) {
+  const eventos = useQuery({
+    queryKey: ["canal-parceiro-eventos", canalId],
+    queryFn: () =>
+      rpc<Evento>("rpc_canal_parceiro_eventos", { p_canal_id: canalId, p_limite: 50 }),
+    enabled: !!canalId,
+  });
+
+  const linhas = eventos.data ?? [];
+
+  return (
+    <div className="mt-6 space-y-2">
+      <h3 className="text-sm font-semibold">Histórico</h3>
+      {eventos.isLoading ? (
+        <p className="text-sm text-muted-foreground">
+          <Loader2 className="mr-2 inline h-4 w-4 animate-spin" />
+          Carregando
+        </p>
+      ) : eventos.error ? (
+        <Alert variant="destructive">
+          <AlertDescription>
+            {eventos.error instanceof Error ? eventos.error.message : String(eventos.error)}
+          </AlertDescription>
+        </Alert>
+      ) : linhas.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Nenhum registro ainda.</p>
+      ) : (
+        <ol className="space-y-2">
+          {linhas.map((ev, i) => {
+            const d = ev.detalhe ?? {};
+            const declarado = d["declarado_assinado"] === true;
+            const assinado = d["assinado"] === true;
+            const origem = d["origem_leitura"] == null ? null : String(d["origem_leitura"]);
+            const quem = ev.usuario || ev.usuario_email || "—";
+            return (
+              <li key={i} className="rounded-md border p-2 text-xs">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-medium text-foreground">
+                    {rotuloEvento[ev.tipo ?? ""] ?? ev.tipo ?? "Evento"}
+                  </span>
+                  <span className="text-muted-foreground">{dataHora(ev.criado_em)}</span>
+                  <span className="text-muted-foreground">· {quem}</span>
+                </div>
+
+                {ev.tipo === "CONTRATO_ENVIADO" ? (
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        declarado && !assinado &&
+                          "border-amber-600/40 bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200",
+                      )}
+                    >
+                      {declarado
+                        ? `${quem} declarou que estava assinado`
+                        : "declarado como não assinado"}
+                    </Badge>
+                    <Badge variant="outline">
+                      Assinatura no arquivo: {assinado ? "encontrada" : "não encontrada"}
+                    </Badge>
+                    <BadgeLeitura origem={origem} declarado={declarado} assinado={assinado} />
+                    {d["arquivo_nome"] ? (
+                      <span className="text-muted-foreground">{String(d["arquivo_nome"])}</span>
+                    ) : null}
+                  </div>
+                ) : (
+                  (() => {
+                    const t = textoDetalhe(ev);
+                    return t ? <p className="mt-1 text-muted-foreground">{t}</p> : null;
+                  })()
+                )}
+              </li>
+            );
+          })}
+        </ol>
+      )}
+    </div>
+  );
+}
+
 
 function Info({ rotulo, valor }: { rotulo: string; valor: string }) {
   return (
