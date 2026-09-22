@@ -6,12 +6,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
-import { AlertTriangle, Download, FileSearch, Loader2, Lock, Send } from "lucide-react";
+import { AlertTriangle, Download, FileSearch, FileText, Loader2, Lock, Send } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useCicloRepasse } from "@/hooks/use-ciclo-repasse";
 import { DetalheRepasseCiclo } from "@/components/repasse/DetalheRepasseCiclo";
+import { ContratoDoParceiro } from "@/components/repasse/ContratoDoParceiro";
+import { PedirLiberacaoSemContrato } from "@/components/repasse/PedirLiberacaoSemContrato";
 import { chaveCanal, exportarRepasse } from "@/lib/repasse/exportar-repasse";
 import { cicloPadrao } from "@/lib/repasse/ciclo-datas";
 import { Badge } from "@/components/ui/badge";
