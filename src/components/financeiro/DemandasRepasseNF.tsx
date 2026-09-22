@@ -3,6 +3,7 @@
 // O Comercial pede, o Financeiro autoriza informando a data prevista de
 // pagamento (contada a partir do recebimento da nota) e, depois da data,
 // confirma se o pagamento saiu.
+import { mensagemDeErro } from "@/lib/erro";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
@@ -366,7 +367,7 @@ function AutorizarDialog({
       toast.success(row?.mensagem ?? "Autorizado.");
       onSucesso();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
+      toast.error(mensagemDeErro(e));
     } finally {
       setSalvando(false);
     }
@@ -450,7 +451,7 @@ function RecusarDialog({
       toast.success(row?.mensagem ?? "Pedido recusado.");
       onSucesso();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
+      toast.error(mensagemDeErro(e));
     } finally {
       setSalvando(false);
     }
@@ -526,7 +527,7 @@ function ConfirmarBaixaDialog({
       toast.success(row?.mensagem ?? "Pagamento confirmado.");
       onSucesso();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
+      toast.error(mensagemDeErro(e));
     } finally {
       setSalvando(false);
     }
@@ -609,7 +610,7 @@ function NaoPagouDialog({
       toast.success(row?.mensagem ?? "Registrado.");
       onSucesso();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
+      toast.error(mensagemDeErro(e));
     } finally {
       setSalvando(false);
     }

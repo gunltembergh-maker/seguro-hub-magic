@@ -1,3 +1,4 @@
+import { mensagemDeErro } from "@/lib/erro";
 import { useEffect, useMemo, useState } from "react";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -1060,7 +1061,7 @@ function PainelLiberacoes({ pendentes }: { pendentes: LiberacaoPendente[] }) {
       if (error) throw new Error(error.message);
       window.open(data?.signedUrl, "_blank", "noopener");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
+      toast.error(mensagemDeErro(e));
     } finally {
       setAbrindoAnexo(null);
     }
@@ -1079,7 +1080,7 @@ function PainelLiberacoes({ pendentes }: { pendentes: LiberacaoPendente[] }) {
       queryClient.invalidateQueries({ queryKey: ["canal-parceiro-liberacoes"] });
       queryClient.invalidateQueries({ queryKey: ["canal-parceiro-situacao"] });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
+      toast.error(mensagemDeErro(e));
     } finally {
       setDecidindo(null);
     }

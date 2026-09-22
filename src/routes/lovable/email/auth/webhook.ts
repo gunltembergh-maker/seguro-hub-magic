@@ -1,3 +1,4 @@
+import { mensagemDeErro } from "@/lib/erro";
 import * as React from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { render } from '@react-email/render'
@@ -223,7 +224,7 @@ async function handle(request: Request): Promise<Response> {
     // Return 200 so Supabase does not retry indefinitely on a template bug;
     // errors are visible in Cloud → Emails logs and here in server logs.
     return Response.json(
-      { error: err instanceof Error ? err.message : String(err) },
+      { error: mensagemDeErro(err) },
       { status: 200 },
     )
   }

@@ -1,3 +1,4 @@
+import { mensagemDeErro } from "@/lib/erro";
 // Alerta de vencimento de contrato de parceria para o jurídico.
 // Server-only: usa service role e o envio gerenciado do Hub.
 //
@@ -85,7 +86,7 @@ export async function avisarVencimentosPendentes(): Promise<
       console.error(
         "[canal-parceiro-vencimentos] falha no envio",
         p.contrato_id,
-        e instanceof Error ? e.message : String(e),
+        mensagemDeErro(e),
       );
     }
   }

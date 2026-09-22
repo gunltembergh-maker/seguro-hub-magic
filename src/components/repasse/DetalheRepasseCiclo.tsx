@@ -2,6 +2,7 @@
 //
 // Usada pelo Comercial (antes de pedir) e pelo Financeiro (antes de decidir).
 // Nada aqui altera a exportação: prêmio e comissão aparecem só na tela.
+import { mensagemDeErro } from "@/lib/erro";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Loader2, Search } from "lucide-react";
@@ -160,7 +161,7 @@ export function DetalheRepasseCiclo({
         {error ? (
           <Alert variant="destructive">
             <AlertDescription>
-              {error instanceof Error ? error.message : String(error)}
+              {mensagemDeErro(error)}
             </AlertDescription>
           </Alert>
         ) : null}

@@ -2,6 +2,7 @@
 //
 // A tela só monta o pedido: quem valida justificativa, e-mail, anexo e quem
 // pode aprovar é o banco. Percentual é digitado em porcentagem e vai em fração.
+import { mensagemDeErro } from "@/lib/erro";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -169,7 +170,7 @@ export function SolicitarAlteracaoPercentual({
       onSucesso?.();
       onFechar();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
+      toast.error(mensagemDeErro(e));
     } finally {
       setEnviando(false);
     }

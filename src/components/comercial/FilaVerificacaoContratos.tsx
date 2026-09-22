@@ -4,6 +4,7 @@
 // abre o PDF por link temporário de 5 minutos e chama a RPC de correção.
 // Quem pode corrigir e quem pode atestar assinatura é decidido pelo banco:
 // aqui só escondemos o que a pessoa não pode usar e mostramos o erro do banco.
+import { mensagemDeErro } from "@/lib/erro";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -120,7 +121,7 @@ export function useAbrirContrato() {
         window.open(url, "_blank", "noopener,noreferrer");
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
+      toast.error(mensagemDeErro(e));
     } finally {
       setOcupado(false);
     }
@@ -381,7 +382,7 @@ function ConferirDialog({
       queryClient.invalidateQueries({ queryKey: ["canal-parceiro-lista"] });
       queryClient.invalidateQueries({ queryKey: ["canal-parceiro-vigencias"] });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
+      toast.error(mensagemDeErro(e));
     } finally {
       setSalvando(false);
     }

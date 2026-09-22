@@ -3,6 +3,7 @@
 // Só Garantia tem pipeline hoje. Demanda de outro ramo fica registrada e
 // retida — é melhor ter o registro do que perder a demanda por não ter tela.
 
+import { mensagemDeErro } from "@/lib/erro";
 import { useMemo, useState } from "react";
 import {
   AlertTriangle,
@@ -309,7 +310,7 @@ function CelulaPendencia({ entrada }: { entrada: EntradaLista }) {
       });
       toast.success(`Entrada ${entrada.protocolo} roteada para Garantia.`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : String(err));
+      toast.error(mensagemDeErro(err));
     }
   }
 
@@ -398,7 +399,7 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
       });
       toast.success(`Entrada ${r.entrada.protocolo} registrada.`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : String(err));
+      toast.error(mensagemDeErro(err));
     }
   }
 
@@ -411,7 +412,7 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
       setNovoCanal("");
       toast.success("Canal cadastrado.");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : String(err));
+      toast.error(mensagemDeErro(err));
     }
   }
 
@@ -822,7 +823,7 @@ function CadastroCliente({
       });
       onPronto(novo);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
+      const msg = mensagemDeErro(err);
       if (msg.includes("responsável")) {
         toast.error("Você não tem permissão para definir o responsável pelo cliente.");
       } else if (msg.includes("duplicate key") || msg.includes("cpf_cnpj")) {

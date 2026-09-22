@@ -2,6 +2,7 @@
 //
 // Quem define é o Financeiro, uma vez por ciclo. A janela válida vem do banco
 // (hoje, os dias 11 a 15) e o calendário bloqueia tudo fora dela.
+import { mensagemDeErro } from "@/lib/erro";
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
@@ -94,7 +95,7 @@ export function DataPrevistaPagamento({
       onDefinida?.(iso);
       fechar();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
+      toast.error(mensagemDeErro(e));
     } finally {
       setSalvando(false);
     }

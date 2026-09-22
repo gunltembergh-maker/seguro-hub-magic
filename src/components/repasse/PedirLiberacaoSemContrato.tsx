@@ -2,6 +2,7 @@
 //
 // O anexo com o De Acordo é obrigatório: o arquivo sobe primeiro e a RPC só é
 // chamada com o caminho gravado. Quem valida e aprova é o banco.
+import { mensagemDeErro } from "@/lib/erro";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
@@ -113,7 +114,7 @@ export function PedirLiberacaoSemContrato({
       onSucesso?.();
       onFechar();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
+      toast.error(mensagemDeErro(e));
     } finally {
       setEnviando(false);
     }

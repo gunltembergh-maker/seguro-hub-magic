@@ -1,5 +1,6 @@
 // Server-only. Dispatch de newsletters — usado pelo hook automático (cron) e
 // (opcionalmente) por qualquer chamada admin. NÃO importar de código cliente.
+import { mensagemDeErro } from "@/lib/erro";
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 export type Modulo = 'receita_lavoro' | 'executivo_lavoro' | 'fechamento_lavoro'
@@ -175,7 +176,7 @@ export async function dispatchNewsletterCore(opts: {
       }
     } catch (e) {
       falhas++
-      detalhes.push({ to, ok: false, error: e instanceof Error ? e.message : String(e) })
+      detalhes.push({ to, ok: false, error: mensagemDeErro(e) })
     }
   }
 

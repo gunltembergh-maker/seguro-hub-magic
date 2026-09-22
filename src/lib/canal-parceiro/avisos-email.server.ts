@@ -4,6 +4,7 @@
 // Server-only: usa service role e o envio gerenciado do Hub. O aviso só é
 // marcado depois que o envio dá certo — falhou, a rodada seguinte tenta de novo.
 // Nenhum link para arquivo: todos os botões levam para a tela do Hub.
+import { mensagemDeErro } from "@/lib/erro";
 import { SITE_URL } from "@/lib/email-templates/_shared";
 
 const dataBR = (iso: string | null | undefined) =>
@@ -175,7 +176,7 @@ export async function enviarAvisosCanalParceiro(): Promise<
           "[canal-parceiro-avisos] falha no envio",
           contexto,
           destino,
-          err instanceof Error ? err.message : String(err),
+          mensagemDeErro(err),
         );
       }
     }

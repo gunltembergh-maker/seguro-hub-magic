@@ -1,3 +1,4 @@
+import { mensagemDeErro } from "@/lib/erro";
 import React from "react";
 import { render } from "@react-email/render";
 import { sendLovableEmail } from "@lovable.dev/email-js";
@@ -111,7 +112,7 @@ export async function verifySuperAdminPassword(data: VerifyInput, context: AuthC
         template_name: "security:super-admin",
         recipient_email: ALERT_TO,
         status: "failed",
-        error_message: error instanceof Error ? error.message : String(error),
+        error_message: mensagemDeErro(error),
         metadata: { area },
       });
     }

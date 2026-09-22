@@ -3,6 +3,7 @@
 // Os números vêm das mesmas RPCs do Fluxo Diário e a planilha é gerada pelo
 // mesmo módulo (`@/lib/repasse/exportar-repasse`). O Comercial pede a
 // autorização ao Financeiro e só exporta ao parceiro depois de aprovado.
+import { mensagemDeErro } from "@/lib/erro";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
@@ -307,7 +308,7 @@ export function RepasseComercial({
       });
       toast.success(r.arquivo, { id: toastId });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e), { id: toastId });
+      toast.error(mensagemDeErro(e), { id: toastId });
     } finally {
       setExportando(null);
     }
@@ -344,7 +345,7 @@ export function RepasseComercial({
         {error ? (
           <Alert variant="destructive">
             <AlertDescription>
-              {error instanceof Error ? error.message : String(error)}
+              {mensagemDeErro(error)}
             </AlertDescription>
           </Alert>
         ) : null}
@@ -567,7 +568,7 @@ function LinhaRepasse({
       toast.success(r?.mensagem ?? "Envio cancelado.");
       onCancelado();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
+      toast.error(mensagemDeErro(e));
     } finally {
       setCancelando(false);
     }
@@ -785,7 +786,7 @@ function PedirNFDialog({
       toast.success(row?.mensagem ?? "Pedido enviado ao Financeiro.");
       onSucesso();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
+      toast.error(mensagemDeErro(e));
     } finally {
       setEnviando(false);
     }

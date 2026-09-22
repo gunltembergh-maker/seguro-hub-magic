@@ -3,6 +3,7 @@
 // Quem pode aprovar é o banco que decide (sou_o_aprovador). Aqui só escondemos
 // os botões de quem não é o aprovador e exigimos a senha de super administrador
 // antes de aprovar, do mesmo jeito que as liberações excepcionais.
+import { mensagemDeErro } from "@/lib/erro";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -136,7 +137,7 @@ export function FilaAlteracoesPercentual({ semCard = false }: { semCard?: boolea
       setRecusando(null);
       setObservacao("");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
+      toast.error(mensagemDeErro(e));
     } finally {
       setSalvando(false);
     }

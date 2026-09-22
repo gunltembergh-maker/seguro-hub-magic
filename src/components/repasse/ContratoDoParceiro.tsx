@@ -2,6 +2,7 @@
 //
 // O documento nunca é exposto por link fixo: a abertura gera uma URL assinada
 // de 5 minutos no bucket dos contratos.
+import { mensagemDeErro } from "@/lib/erro";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ExternalLink, Loader2 } from "lucide-react";
@@ -87,7 +88,7 @@ export function ContratoDoParceiro({
       if (error) throw new Error(error.message);
       window.open(url?.signedUrl, "_blank", "noopener");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
+      toast.error(mensagemDeErro(e));
     } finally {
       setAbrindo(false);
     }
@@ -104,7 +105,7 @@ export function ContratoDoParceiro({
         {error ? (
           <Alert variant="destructive">
             <AlertDescription>
-              {error instanceof Error ? error.message : String(error)}
+              {mensagemDeErro(error)}
             </AlertDescription>
           </Alert>
         ) : null}
