@@ -559,7 +559,7 @@ function BlocoCliente({
   const responsaveis = useResponsaveis();
 
   const nomeResponsavel = (id: string | null) =>
-    responsaveis.data?.find((r) => r.user_id === id)?.full_name ?? (id ? "—" : "não definido");
+    responsaveis.data?.find((r) => r.user_id === id)?.nome ?? (id ? "—" : "não definido");
 
   if (cliente) {
     return (
@@ -919,8 +919,8 @@ function CadastroCliente({
               <SelectTrigger><SelectValue placeholder="Sem responsável definido" /></SelectTrigger>
               <SelectContent>
                 {(responsaveis.data ?? []).map((r) => (
-                  <SelectItem key={r.user_id!} value={r.user_id!}>
-                    {r.full_name ?? r.email}
+                  <SelectItem key={r.user_id} value={r.user_id}>
+                    {r.nome}
                   </SelectItem>
                 ))}
               </SelectContent>
