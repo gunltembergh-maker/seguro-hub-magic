@@ -383,6 +383,9 @@ export default function CanalParceirosTela() {
         />
       ) : null}
 
+      {/* fila de conferência humana — só aparece quando há pendência */}
+      <FilaVerificacaoContratos />
+
       {/* tabela principal */}
       <Card>
         <CardHeader>
