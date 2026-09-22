@@ -22,6 +22,8 @@ import { useMeuPerfilEfetivo } from "@/contexts/view-as-context";
 import { hasRole } from "@/hooks/use-meu-perfil";
 import EnviarContratoParceiro from "@/components/comercial/EnviarContratoParceiro";
 import { FilaVerificacaoContratos } from "@/components/comercial/FilaVerificacaoContratos";
+import { RepasseComercial } from "@/components/comercial/RepasseComercial";
+
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -294,6 +296,16 @@ export default function CanalParceirosTela() {
     return m;
   }, [linhasSituacao]);
 
+  /** Trava da exportação: quem o banco libera, por chave normalizada do canal. */
+  const podeExportarPorChave = useMemo(() => {
+    const m = new Map<string, boolean>();
+    for (const s of linhasSituacao) {
+      if (s.chave_planilha) m.set(s.chave_planilha, s.pode_exportar === true);
+    }
+    return m;
+  }, [linhasSituacao]);
+
+
   /** Base da tabela: parceiros cadastrados + canais da planilha ainda sem parceiro. */
   const linhas = useMemo(() => {
     const parceiros = lista.data ?? [];
@@ -385,6 +397,10 @@ export default function CanalParceirosTela() {
 
       {/* fila de conferência humana — só aparece quando há pendência */}
       <FilaVerificacaoContratos />
+
+      {/* repasse do ciclo por parceiro */}
+      <RepasseComercial podeExportarPorChave={podeExportarPorChave} />
+
 
       {/* tabela principal */}
       <Card>
