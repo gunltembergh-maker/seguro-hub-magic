@@ -5248,6 +5248,10 @@ export type Database = {
         Args: { denominador: number; numerador: number }
         Returns: number
       }
+      garantia_ajustar_limite_utilizado: {
+        Args: { _chave_mercado: string; _cliente_id: string; _delta: number }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -5997,6 +6001,21 @@ export type Database = {
         Args: { p_ano: number; p_gran: string; p_periodo: number }
         Returns: Json
       }
+      rpc_garantia_dar_baixa_apolice: {
+        Args: {
+          _apolice_id: string
+          _data: string
+          _documento_id: string
+          _estorno_comissao: number
+          _observacao: string
+          _premio_devolver: number
+          _tipo: string
+        }
+        Returns: {
+          encerramento_id: string
+          limite_devolvido: boolean
+        }[]
+      }
       rpc_garantia_historico_demanda: {
         Args: { _demanda_id: string }
         Returns: {
@@ -6009,6 +6028,25 @@ export type Database = {
           relogio: string
           status_codigo: string
           status_nome: string
+        }[]
+      }
+      rpc_garantia_lancar_apolice: {
+        Args: {
+          _comissao_pct: number
+          _data_emissao: string
+          _demanda_id: string
+          _importancia_segurada: number
+          _numero_apolice: string
+          _numero_endosso: number
+          _objeto: string
+          _premio: number
+          _vencimento_boleto: string
+          _vigencia_fim: string
+          _vigencia_inicio: string
+        }
+        Returns: {
+          apolice_id: string
+          limite_atualizado: boolean
         }[]
       }
       rpc_garantia_registrar_aceite: {

@@ -47,9 +47,6 @@ import {
 
 const TODOS = "__todos__";
 
-/** Etapas cujas ações só chegam na próxima parte. */
-const SEM_ACOES = new Set(["8", "9"]);
-
 function Cartao({
   demanda,
   statusNome,
@@ -128,7 +125,15 @@ export default function Crm() {
 
   return (
     <GarantiaShell titulo="CRM" trilha={["CRM"]}>
-      <div className="space-y-6">
+      <Tabs defaultValue="quadro" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="quadro">Quadro</TabsTrigger>
+          <TabsTrigger value="carteira">Carteira</TabsTrigger>
+        </TabsList>
+        <TabsContent value="carteira">
+          <Carteira />
+        </TabsContent>
+        <TabsContent value="quadro" className="space-y-6">
         <div className="flex flex-wrap items-end gap-3">
           <div className="space-y-1">
             <Label>Produto</Label>
@@ -199,7 +204,6 @@ export default function Crm() {
           <div className="flex gap-4 overflow-x-auto pb-4">
             {colunas.map((coluna) => {
               const daColuna = demandas.filter((d) => d.etapa === coluna.etapa);
-              const semAcoes = SEM_ACOES.has(coluna.etapa);
               return (
                 <div
                   key={coluna.etapa}
@@ -211,9 +215,9 @@ export default function Crm() {
                     </h2>
                     <Badge variant="secondary">{daColuna.length}</Badge>
                   </div>
-                  {semAcoes && (
+                  {coluna.etapa === "9" && (
                     <p className="mb-2 text-[11px] text-muted-foreground">
-                      As ações desta coluna chegam na próxima etapa da construção.
+                      Esta etapa não conta tempo.
                     </p>
                   )}
                   <div className="space-y-2">
@@ -227,13 +231,7 @@ export default function Crm() {
                         seguradora={seguradoraPorDemanda[d.id] ?? null}
                         inicioStatus={inicios[d.id]}
                         podeVerTempo={podeVerTempo}
-                        onAbrir={() =>
-                          semAcoes
-                            ? toast.info(
-                                "Emissão e financeiro ainda não têm ações: a construção dessa parte vem na sequência.",
-                              )
-                            : setAberta(d.id)
-                        }
+                        onAbrir={() => setAberta(d.id)}
                       />
                     ))}
                     {!daColuna.length && (
