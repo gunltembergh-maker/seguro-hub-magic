@@ -360,6 +360,10 @@ function AutorizarDialog({
           <p className="text-sm text-muted-foreground">
             {demanda?.parceiro} · {BRL(demanda?.valor_total)}
           </p>
+          <p className="text-sm text-foreground">
+            A data é livre, quem define é o Financeiro. Conte a partir do recebimento da nota
+            fiscal.
+          </p>
           <Calendar
             mode="single"
             selected={data}
