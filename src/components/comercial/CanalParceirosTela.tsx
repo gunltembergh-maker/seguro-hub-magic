@@ -167,6 +167,50 @@ function BadgeContrato({ situacao }: { situacao?: string | null }) {
   return <Badge variant="destructive">{texto}</Badge>;
 }
 
+const rotuloLeitura: Record<string, string> = {
+  TEXTO: "Texto",
+  OCR: "OCR",
+  MANUAL: "Manual",
+};
+
+/** Como o contrato foi lido. Âmbar quando a pessoa declarou assinatura e o
+ *  arquivo não trouxe o bloco de assinatura. */
+function BadgeLeitura({
+  origem,
+  declarado,
+  assinado,
+}: {
+  origem?: string | null;
+  declarado?: boolean | null;
+  assinado?: boolean | null;
+}) {
+  const texto = rotuloLeitura[origem ?? ""] ?? "Texto";
+  const divergente = declarado === true && assinado !== true;
+  return (
+    <Badge
+      variant="outline"
+      className={cn(
+        divergente &&
+          "border-amber-600/40 bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200",
+      )}
+    >
+      {texto}
+      {divergente ? " · assinatura não encontrada" : ""}
+    </Badge>
+  );
+}
+
+const rotuloEvento: Record<string, string> = {
+  CADASTRO_MANUAL: "Cadastro manual",
+  CONTRATO_ENVIADO: "Contrato enviado",
+  CONTRATO_SUBSTITUIDO: "Contrato substituído",
+  CONTRATO_VENCIDO: "Contrato vencido",
+  VINCULO_RESOLVIDO: "Vínculo confirmado",
+  LIBERACAO_SOLICITADA: "Liberação solicitada",
+  LIBERACAO_DECIDIDA: "Liberação decidida",
+  EXPORTACAO: "Relatório exportado",
+};
+
 /* ------------------------------------------------------------------ dados */
 
 async function rpc<T>(nome: string, args?: Record<string, unknown>): Promise<T[]> {
