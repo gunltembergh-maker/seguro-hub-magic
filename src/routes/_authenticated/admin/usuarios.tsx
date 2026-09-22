@@ -353,7 +353,7 @@ function AdminUsuariosPage() {
                     </TableHeader>
                     <TableBody>
                       {filtered.map(u => (
-                        <TableRow key={u.user_id} className="cursor-pointer" onClick={() => setDetailUser(u)}>
+                        <TableRow key={u.user_id} className="cursor-pointer" onClick={() => { setDetailUser(u); setDetailAba("perfil"); }}>
                           <TableCell className="font-medium">{u.full_name ?? "—"}</TableCell>
                           <TableCell className="text-muted-foreground">{u.email}</TableCell>
                           <TableCell><TipoBadge u={u} /></TableCell>
