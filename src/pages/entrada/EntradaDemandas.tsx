@@ -4,7 +4,6 @@
 // retida — é melhor ter o registro do que perder a demanda por não ter tela.
 
 import { useMemo, useState } from "react";
-import { Link } from "@tanstack/react-router";
 import {
   AlertTriangle,
   ArrowRight,
@@ -944,5 +943,3 @@ function CadastroCliente({
     </div>
   );
 }
-
-export { Link };
