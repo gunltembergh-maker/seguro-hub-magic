@@ -243,14 +243,20 @@ export function DetalheRepasseCiclo({
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={15} className="text-sm text-muted-foreground">
+                  <TableCell
+                    colSpan={visaoParceiro ? 13 : 15}
+                    className="text-sm text-muted-foreground"
+                  >
                     <Loader2 className="mr-2 inline h-4 w-4 animate-spin" />
                     Carregando
                   </TableCell>
                 </TableRow>
               ) : linhas.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={15} className="text-sm text-muted-foreground">
+                  <TableCell
+                    colSpan={visaoParceiro ? 13 : 15}
+                    className="text-sm text-muted-foreground"
+                  >
                     Nenhuma parcela nesta relação.
                   </TableCell>
                 </TableRow>
@@ -303,7 +309,7 @@ export function DetalheRepasseCiclo({
             {linhas.length > 0 ? (
               <TableFooter>
                 <TableRow>
-                  <TableCell colSpan={9}>Total</TableCell>
+                  <TableCell colSpan={visaoParceiro ? 7 : 9}>Total</TableCell>
                   <TableCell className="text-right font-mono tabular-nums">
                     {BRL(totais.comissao)}
                   </TableCell>
