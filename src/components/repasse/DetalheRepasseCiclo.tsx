@@ -226,8 +226,12 @@ export function DetalheRepasseCiclo({
                 <TableHead>Nº Apólice</TableHead>
                 <TableHead>Parcela</TableHead>
                 <TableHead>Data de pagamento</TableHead>
-                <TableHead className="text-right">Prêmio total</TableHead>
-                <TableHead className="text-right">% Comissão</TableHead>
+                {!visaoParceiro ? (
+                  <TableHead className="text-right">Prêmio total</TableHead>
+                ) : null}
+                {!visaoParceiro ? (
+                  <TableHead className="text-right">% Comissão</TableHead>
+                ) : null}
                 <TableHead className="text-right">Comissão recebida</TableHead>
                 <TableHead className="text-right">% Imposto</TableHead>
                 <TableHead className="text-right">Base líquida</TableHead>
@@ -264,12 +268,16 @@ export function DetalheRepasseCiclo({
                       {l.numero_da_parcela ?? "—"} / {l.qtd_parcelas ?? "—"}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">{fmtBR(l.data_pagamento)}</TableCell>
-                    <TableCell className="whitespace-nowrap text-right font-mono tabular-nums">
-                      {BRL(l.premio_total)}
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap text-right tabular-nums">
-                      {PCT(l.percentual_comissao)}
-                    </TableCell>
+                    {!visaoParceiro ? (
+                      <TableCell className="whitespace-nowrap text-right font-mono tabular-nums">
+                        {BRL(l.premio_total)}
+                      </TableCell>
+                    ) : null}
+                    {!visaoParceiro ? (
+                      <TableCell className="whitespace-nowrap text-right tabular-nums">
+                        {PCT(l.percentual_comissao)}
+                      </TableCell>
+                    ) : null}
                     <TableCell className="whitespace-nowrap text-right font-mono tabular-nums">
                       {BRL(l.valor_recebido_a_receber)}
                     </TableCell>
