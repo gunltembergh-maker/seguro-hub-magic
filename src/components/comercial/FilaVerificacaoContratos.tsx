@@ -423,7 +423,9 @@ function ConferirDialog({
   onFechar: () => void;
 }) {
   const queryClient = useQueryClient();
-  const { abrir, ocupado } = useAbrirContrato();
+  const [vendo, setVendo] = useState(false);
+  const [baixando, setBaixando] = useState(false);
+
 
   const [inicio, setInicio] = useState("");
   const [fim, setFim] = useState("");
