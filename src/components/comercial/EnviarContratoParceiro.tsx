@@ -535,10 +535,10 @@ export default function EnviarContratoParceiro({
               </AlertDescription>
             </Alert>
 
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid min-w-0 gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="mn-ini">Início da vigência</Label>
-                <Input
+                <Input className="w-full min-w-0"
                   id="mn-ini"
                   type="date"
                   value={manual.vigencia_inicio}
@@ -547,7 +547,7 @@ export default function EnviarContratoParceiro({
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="mn-fim">Fim da vigência</Label>
-                <Input
+                <Input className="w-full min-w-0"
                   id="mn-fim"
                   type="date"
                   value={manual.vigencia_fim}
@@ -556,7 +556,7 @@ export default function EnviarContratoParceiro({
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="mn-ben">Benefícios (%)</Label>
-                <Input
+                <Input className="w-full min-w-0"
                   id="mn-ben"
                   inputMode="decimal"
                   placeholder="30"
@@ -566,7 +566,7 @@ export default function EnviarContratoParceiro({
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="mn-gar">Garantia (%)</Label>
-                <Input
+                <Input className="w-full min-w-0"
                   id="mn-gar"
                   inputMode="decimal"
                   placeholder="30"
@@ -576,7 +576,7 @@ export default function EnviarContratoParceiro({
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="mn-dem">Demais ramos (%)</Label>
-                <Input
+                <Input className="w-full min-w-0"
                   id="mn-dem"
                   inputMode="decimal"
                   placeholder="em branco segue Garantia"
@@ -586,7 +586,7 @@ export default function EnviarContratoParceiro({
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="mn-min">Mínimo por ciclo (R$)</Label>
-                <Input
+                <Input className="w-full min-w-0"
                   id="mn-min"
                   inputMode="decimal"
                   placeholder="100"
@@ -596,7 +596,7 @@ export default function EnviarContratoParceiro({
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="mn-cnpj">CNPJ</Label>
-                <Input
+                <Input className="w-full min-w-0"
                   id="mn-cnpj"
                   value={manual.cnpj}
                   onChange={(ev) => setManual((m) => ({ ...m, cnpj: ev.target.value }))}
@@ -604,7 +604,7 @@ export default function EnviarContratoParceiro({
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="mn-razao">Razão social</Label>
-                <Input
+                <Input className="w-full min-w-0"
                   id="mn-razao"
                   value={manual.razao_social}
                   onChange={(ev) => setManual((m) => ({ ...m, razao_social: ev.target.value }))}
