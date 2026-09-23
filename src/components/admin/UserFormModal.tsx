@@ -29,6 +29,21 @@ type TimeReceita = (typeof TIMES_RECEITA)[number]["value"];
 
 const LAVORO_DOMAIN = "lavoroseguros.com.br";
 
+const AREAS = [
+  "Operações",
+  "Garantia",
+  "Comercial - Garantia",
+  "Comercial - Beneficios",
+  "Juridico",
+  "Beneficios",
+  "Serviços Externos",
+  "RH",
+  "Direto Executivo",
+  "Financeiro",
+  "Dados & AI",
+];
+const OUTRA = "__outra__";
+
 function cpfMask(value: string): string {
   const digits = value.replace(/\D/g, "").slice(0, 11);
   if (digits.length <= 3) return digits;
@@ -83,6 +98,7 @@ export function UserFormModal({ open, onOpenChange, initial, onSaved }: Props) {
   const [cpf, setCpf] = useState("");
   const [perfilId, setPerfilId] = useState("");
   const [area, setArea] = useState("");
+  const [areaOpcao, setAreaOpcao] = useState("");
   const [gestor, setGestor] = useState("");
   const [empresa, setEmpresa] = useState("Lavoro Seguros");
   const [tipoUsuario, setTipoUsuario] = useState<"interno" | "externo">("interno");
@@ -108,7 +124,9 @@ export function UserFormModal({ open, onOpenChange, initial, onSaved }: Props) {
       setEmail(initial?.email || "");
       setCpf(initial?.cpf ? cpfMask(initial.cpf) : "");
       setPerfilId(initial?.perfil_id || "");
-      setArea(initial?.area || "");
+      const a = (initial?.area || "").trim();
+      setArea(a);
+      setAreaOpcao(a ? (AREAS.includes(a) ? a : OUTRA) : "");
       setGestor(initial?.gestor || "");
       setEmpresa(initial?.empresa || "Lavoro Seguros");
       setTipoUsuario((initial?.tipo_usuario as "interno" | "externo") || "interno");
@@ -117,10 +135,16 @@ export function UserFormModal({ open, onOpenChange, initial, onSaved }: Props) {
       ));
       setBlocked(!!initial?.blocked);
       setActive(initial?.active ?? true);
-      setCpfError(null);
-      setCpfValid(null);
+      const d = (initial?.cpf || "").replace(/\D/g, "");
+      setCpfError(d.length === 11 && !validarCPF(d) ? "CPF inválido" : null);
+      setCpfValid(d.length === 11 ? validarCPF(d) : null);
     }
   }, [open, initial]);
+
+  const cpfDigits = cpf.replace(/\D/g, "");
+  const cpfOk = cpfDigits.length === 11 && validarCPF(cpfDigits);
+  const areaFinal = area.trim();
+  const podeSalvar = cpfOk && areaFinal.length > 0;
 
   const handleCpfChange = (value: string) => {
     const masked = cpfMask(value);
@@ -137,10 +161,10 @@ export function UserFormModal({ open, onOpenChange, initial, onSaved }: Props) {
       if (!clean || !nome.trim()) throw new Error("Nome e e-mail são obrigatórios");
       if (!/^\S+@\S+\.\S+$/.test(clean)) throw new Error("E-mail inválido");
       if (!perfilId) throw new Error("Selecione um perfil de acesso");
-      const digits = cpf.replace(/\D/g, "");
-      if (digits.length > 0 && (digits.length !== 11 || !validarCPF(digits))) {
-        throw new Error("CPF inválido");
-      }
+      if (!cpfDigits) throw new Error("Informe o CPF");
+      if (!cpfOk) throw new Error("CPF inválido");
+      if (!areaFinal) throw new Error("Informe a Área");
+      const digits = cpfDigits;
 
       if (isEdit && initial?.user_id) {
         const { error } = await supabase.rpc("rpc_admin_update_user_full" as never, {
@@ -149,10 +173,11 @@ export function UserFormModal({ open, onOpenChange, initial, onSaved }: Props) {
           _perfil_id: perfilId,
           _blocked: blocked,
           _active: active,
-          _cpf: digits || null,
-          _area: area || null,
-          _gestor: gestor || null,
-          _empresa: empresa || null,
+          // Sempre os valores atuais do formulário: CPF e Área nunca vão vazios.
+          _cpf: digits,
+          _area: areaFinal,
+          _gestor: gestor.trim() || initial.gestor || null,
+          _empresa: empresa.trim() || initial.empresa || null,
           _times_receita: timesReceita,
         } as never);
         if (error) throw error;
@@ -162,8 +187,8 @@ export function UserFormModal({ open, onOpenChange, initial, onSaved }: Props) {
             email: clean,
             full_name: nome,
             perfil_id: perfilId,
-            cpf: digits || null,
-            area: area || null,
+            cpf: digits,
+            area: areaFinal,
             gestor: gestor || null,
             empresa: empresa || null,
             tipo_usuario: tipoUsuario,
@@ -212,7 +237,7 @@ export function UserFormModal({ open, onOpenChange, initial, onSaved }: Props) {
           </div>
 
           <div className="space-y-1">
-            <Label>CPF</Label>
+            <Label>CPF *</Label>
             <div className="relative">
               <Input
                 value={cpf}
@@ -224,13 +249,41 @@ export function UserFormModal({ open, onOpenChange, initial, onSaved }: Props) {
               {cpfValid === true && <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />}
               {cpfValid === false && <XCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-destructive" />}
             </div>
-            {cpfError && <p className="text-xs text-destructive mt-1">{cpfError}</p>}
+            {cpfError ? (
+              <p className="text-xs text-destructive mt-1">{cpfError}</p>
+            ) : !cpfDigits ? (
+              <p className="text-xs text-destructive mt-1">Informe o CPF</p>
+            ) : cpfDigits.length < 11 ? (
+              <p className="text-xs text-destructive mt-1">O CPF tem 11 dígitos</p>
+            ) : null}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label>Área</Label>
-              <Input value={area} onChange={(e) => setArea(e.target.value)} placeholder="Ex: Comercial - Garantia" />
+              <Label>Área *</Label>
+              <Select
+                value={areaOpcao}
+                onValueChange={(v) => {
+                  setAreaOpcao(v);
+                  setArea(v === OUTRA ? "" : v);
+                }}
+              >
+                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                <SelectContent>
+                  {AREAS.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                  <SelectItem value={OUTRA}>Outra</SelectItem>
+                </SelectContent>
+              </Select>
+              {areaOpcao === OUTRA ? (
+                <Input
+                  className="mt-2"
+                  value={area}
+                  onChange={(e) => setArea(e.target.value)}
+                  placeholder="Nome da área"
+                  maxLength={80}
+                />
+              ) : null}
+              {!areaFinal ? <p className="text-xs text-destructive mt-1">Informe a Área</p> : null}
             </div>
             <div className="space-y-1">
               <Label>Gestor Direto</Label>
@@ -321,7 +374,7 @@ export function UserFormModal({ open, onOpenChange, initial, onSaved }: Props) {
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={() => saveMut.mutate()} disabled={saveMut.isPending} className="gap-2">
+          <Button onClick={() => saveMut.mutate()} disabled={saveMut.isPending || !podeSalvar} className="gap-2">
             {saveMut.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
             {isEdit ? "Salvar alterações" : "Cadastrar"}
           </Button>

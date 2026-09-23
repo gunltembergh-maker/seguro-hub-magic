@@ -6,8 +6,8 @@ const Input = z.object({
   email: z.string().email(),
   full_name: z.string().min(1),
   perfil_id: z.string().uuid(),
-  cpf: z.string().nullable().optional(),
-  area: z.string().nullable().optional(),
+  cpf: z.string().trim().min(1, "Informe o CPF"),
+  area: z.string().trim().min(1, "Informe a Área").max(80),
   gestor: z.string().nullable().optional(),
   empresa: z.string().nullable().optional(),
   tipo_usuario: z.enum(["interno", "externo"]).default("interno"),
@@ -25,8 +25,8 @@ export const adminPrecadastrarUsuarioFull = createServerFn({ method: "POST" })
     if (roleErr) throw new Error(roleErr.message);
     if (!isAdmin) throw new Error("Apenas administradores podem executar esta ação.");
 
-    const cpfDigits = (data.cpf ?? "").replace(/\D/g, "") || null;
-    if (cpfDigits && cpfDigits.length !== 11) throw new Error("CPF inválido");
+    const cpfDigits = data.cpf.replace(/\D/g, "");
+    if (cpfDigits.length !== 11) throw new Error("CPF inválido");
 
     const email = data.email.trim().toLowerCase();
     const { lavoroAdmin } = await import("@/integrations/supabase/lavoro-admin.server");
@@ -53,7 +53,7 @@ export const adminPrecadastrarUsuarioFull = createServerFn({ method: "POST" })
           full_name: data.full_name,
           perfil_id: data.perfil_id,
           cpf: cpfDigits,
-          area: data.area ?? null,
+          area: data.area,
           gestor: data.gestor ?? null,
           empresa: data.empresa ?? null,
           tipo_usuario: data.tipo_usuario,
