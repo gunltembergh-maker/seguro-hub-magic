@@ -57,7 +57,9 @@ const iso = (a: number, m: number, d: number) =>
 
 /** Le uma data em qualquer das formas que aparecem nos contratos. */
 function acharData(txt: string): string | null {
-  let m = txt.match(/(\d{1,2})\s*(?:de\s+)?([a-zç]{3,9})\.?\s*(?:de\s+)?(\d{4})/i);
+  let m = txt.match(
+    /(\d{1,2})\s*(?:de\s+)?([a-zA-ZçÇáàâãéêíóôõúüÁ-Úà-ú]{3,9})\.?\s*(?:de\s+)?(\d{4})/i,
+  );
   if (m) {
     const mes = MESES[semAcento(m[2]).toLowerCase()];
     if (mes) return iso(+m[3], mes, +m[1]);
@@ -115,24 +117,56 @@ function extrair(texto: string) {
   const pctGarantia = percentualPerto(texto, ["garantia", "garantias"]);
   const pctDemais = percentualPerto(texto, ["demais ramos", "outros ramos"]);
 
-  // Vigencia: "prazo de 12 (doze) meses, com inicio em <data>"
+  // Vigencia: intervalo explicito, senao data de inicio + prazo em meses
   let vigIni: string | null = null;
   let vigFim: string | null = null;
+  let vigOrigem: "INTERVALO" | "TEXTO" | "ASSINATURA" | null = null;
   const mPrazo = plano.match(/prazo[^.]{0,160}?(\d{1,3})\s*\(?[a-z\s]*\)?\s*(mes|meses|ano|anos)/);
-  const mInicio = texto.match(/in[ií]cio\s+(?:em|no dia)?\s*([^,.;]{6,40})/i);
-  if (mInicio) vigIni = acharData(mInicio[1]);
-  if (!vigIni) {
-    const mVig = texto.match(/vig[eê]ncia[^.]{0,80}/i);
-    if (mVig) vigIni = acharData(mVig[0]);
+
+  const mIntervalo = texto.match(
+    /vig[eê]ncia[^.]{0,120}?(\d{1,2}[^\s]*\s*(?:de\s+)?[^\s,;]+\s*(?:de\s+)?\d{4}|\d{2}\/\d{2}\/\d{4})\s*(?:a|at[eé])\s*(\d{1,2}[^\s]*\s*(?:de\s+)?[^\s,;]+\s*(?:de\s+)?\d{4}|\d{2}\/\d{2}\/\d{4})/i,
+  );
+  if (mIntervalo) {
+    const ini = acharData(mIntervalo[1]);
+    const fim = acharData(mIntervalo[2]);
+    if (ini && fim) {
+      vigIni = ini;
+      vigFim = fim;
+      vigOrigem = "INTERVALO";
+    }
   }
-  if (vigIni && mPrazo) {
+
+  if (!vigIni) {
+    const padroes = [
+      /efeitos?\s+retroativos?\s+a\s+([^,.;]{6,60})/i,
+      /(?:com\s+)?in[ií]cio\s+(?:em|no\s+dia|a\s+partir\s+de)?\s*([^,.;]{6,60})/i,
+      /a\s+partir\s+de\s+([^,.;]{6,60})/i,
+      /viger[aá]\s+(?:de|a\s+partir\s+de)\s*([^,.;]{6,60})/i,
+      /vig[eê]ncia[^.]{0,80}/i,
+    ];
+    for (const re of padroes) {
+      const m = texto.match(re);
+      if (!m) continue;
+      const d = acharData(m[1] ?? m[0]);
+      if (d) {
+        vigIni = d;
+        vigOrigem = "TEXTO";
+        break;
+      }
+    }
+  }
+
+  const fecharPeloPrazo = (inicio: string) => {
+    if (!mPrazo) return null;
     const qtd = Number(mPrazo[1]);
     const meses = mPrazo[2].startsWith("ano") ? qtd * 12 : qtd;
-    const d = new Date(`${vigIni}T12:00:00Z`);
+    const d = new Date(`${inicio}T12:00:00Z`);
     d.setUTCMonth(d.getUTCMonth() + meses);
     d.setUTCDate(d.getUTCDate() - 1);
-    vigFim = d.toISOString().slice(0, 10);
-  }
+    return d.toISOString().slice(0, 10);
+  };
+
+  if (vigIni && !vigFim) vigFim = fecharPeloPrazo(vigIni);
 
   // Assinatura: bloco do Clicksign no fim do PDF
   const assinaturas = [
@@ -158,6 +192,13 @@ function extrair(texto: string) {
   const mMin = texto.match(/(?:import[aâ]ncia\s+m[ií]nima|valor\s+m[ií]nimo)[^\d]{0,40}R?\$?\s*([\d.]+,\d{2})/i);
   const minimo = mMin ? Number(mMin[1].replace(/\./g, "").replace(",", ".")) : 100;
 
+  // Sem data de inicio no texto, mas com prazo e assinatura: deduz pela assinatura
+  if (!vigIni && mPrazo && assinadoEm) {
+    vigIni = assinadoEm.slice(0, 10);
+    vigOrigem = "ASSINATURA";
+    vigFim = fecharPeloPrazo(vigIni);
+  }
+
   // Tipo de documento
   const tipo = /aditivo/.test(plano) ? "ADITIVO" : /renova[cç][aã]o/.test(plano) ? "RENOVACAO" : "CONTRATO";
 
@@ -168,6 +209,7 @@ function extrair(texto: string) {
     pct_demais: pctDemais,
     vigencia_inicio: vigIni,
     vigencia_fim: vigFim,
+    vigencia_origem: vigOrigem,
     assinado, assinado_em: assinadoEm, signatarios,
     minimo, tipo,
   };
@@ -253,32 +295,15 @@ async function handle(request: Request): Promise<Response> {
 
     let e = leituraServidor;
     let origem: "TEXTO" | "OCR" | "MANUAL" = "TEXTO";
+    const camposManuais: string[] = [];
 
-    if (!legivel) {
+    if (!legivel && !manuais) {
       if (textoOcr) {
         const o = extrair(textoOcr);
         origem = "OCR";
         e = {
           ...o,
           // assinatura sempre da leitura do servidor
-          assinado: leituraServidor.assinado,
-          assinado_em: leituraServidor.assinado_em,
-          signatarios: leituraServidor.signatarios,
-        };
-      } else if (manuais) {
-        origem = "MANUAL";
-        e = {
-          ...leituraServidor,
-          nomes: manuais.razao_social
-            ? [manuais.razao_social, ...leituraServidor.nomes]
-            : leituraServidor.nomes,
-          cnpj: manuais.cnpj ?? leituraServidor.cnpj,
-          vigencia_inicio: manuais.vigencia_inicio ?? leituraServidor.vigencia_inicio,
-          vigencia_fim: manuais.vigencia_fim ?? leituraServidor.vigencia_fim,
-          pct_beneficios: manuais.pct_beneficios ?? leituraServidor.pct_beneficios,
-          pct_garantia: manuais.pct_garantia ?? leituraServidor.pct_garantia,
-          pct_demais: manuais.pct_demais ?? leituraServidor.pct_demais,
-          minimo: manuais.minimo ?? leituraServidor.minimo,
           assinado: leituraServidor.assinado,
           assinado_em: leituraServidor.assinado_em,
           signatarios: leituraServidor.signatarios,
@@ -295,6 +320,35 @@ async function handle(request: Request): Promise<Response> {
         );
       }
     }
+
+    // O que o usuario informou a mao vence a leitura, campo a campo, legivel ou nao.
+    if (manuais) {
+      const base = e;
+      const pega = <T,>(valor: T | undefined | null | "", campo: string, lido: T): T => {
+        if (valor === undefined || valor === null || valor === "") return lido;
+        camposManuais.push(campo);
+        return valor;
+      };
+      origem = "MANUAL";
+      e = {
+        ...base,
+        nomes: manuais.razao_social
+          ? (camposManuais.push("razao_social"), [manuais.razao_social, ...base.nomes])
+          : base.nomes,
+        cnpj: pega(manuais.cnpj, "cnpj", base.cnpj),
+        vigencia_inicio: pega(manuais.vigencia_inicio, "vigencia_inicio", base.vigencia_inicio),
+        vigencia_fim: pega(manuais.vigencia_fim, "vigencia_fim", base.vigencia_fim),
+        pct_beneficios: pega(manuais.pct_beneficios, "pct_beneficios", base.pct_beneficios),
+        pct_garantia: pega(manuais.pct_garantia, "pct_garantia", base.pct_garantia),
+        pct_demais: pega(manuais.pct_demais, "pct_demais", base.pct_demais),
+        minimo: pega(manuais.minimo, "minimo", base.minimo),
+        // assinatura sempre da leitura do servidor
+        assinado: leituraServidor.assinado,
+        assinado_em: leituraServidor.assinado_em,
+        signatarios: leituraServidor.signatarios,
+      };
+    }
+
 
     const { data, error } = await admin.rpc("canal_parceiro_registrar_contrato", {
       p_nomes_do_contrato: e.nomes,
@@ -322,7 +376,16 @@ async function handle(request: Request): Promise<Response> {
 
     const r = Array.isArray(data) ? data[0] : data;
     return json(
-      { resultado: r, extracao: e, hash, paginas: pdf.numPages, origem_leitura: origem },
+      {
+        resultado: r,
+        extracao: e,
+        hash,
+        paginas: pdf.numPages,
+        origem_leitura: origem,
+        vigencia_origem: e.vigencia_origem,
+        manual_aplicado: camposManuais.length > 0,
+        campos_manuais: camposManuais,
+      },
       200,
     );
   } catch (err) {
