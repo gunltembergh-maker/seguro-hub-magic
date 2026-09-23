@@ -487,6 +487,7 @@ export function RepasseComercial({
                         pill={pill}
                         demanda={d}
                         liberado={liberado}
+                        parado={paradoPorChave.get(chave)}
                         destacar={!!d && d.demanda_id === demandaDestaque}
                         exportando={exportando}
                         onExportar={() => void exportar(l.canal)}
@@ -584,6 +585,7 @@ function LinhaRepasse({
   pill,
   demanda,
   liberado,
+  parado,
   destacar,
   exportando,
   onExportar,
