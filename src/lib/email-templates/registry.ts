@@ -16,6 +16,10 @@ import {
   templateLiberacaoPedido,
   templateLiberacaoDecisao,
   templateContratoDecisao,
+  templateDocNFEnviada,
+  templateDocNFDecidida,
+  templateDocPagamento,
+  templateDocPagamentoAnexos,
 } from './canal-parceiro-avisos'
 
 export interface TemplateEntry {
@@ -46,6 +50,11 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'canal-parceiro-liberacao-pedido': templateLiberacaoPedido,
   'canal-parceiro-liberacao-decisao': templateLiberacaoDecisao,
   'canal-parceiro-contrato-decisao': templateContratoDecisao,
+  'canal-repasse-nf-enviada': templateDocNFEnviada,
+  'canal-repasse-nf-decidida': templateDocNFDecidida,
+  'canal-repasse-pagamento': templateDocPagamento,
+  // Pré-visualização apenas: o envio com anexos sai pelo Graph.
+  'canal-repasse-pagamento-anexos': templateDocPagamentoAnexos,
   // Aliases legados (compat)
   'receita-diaria': receitaTemplate,
   'resumo-executivo-semanal': executivoTemplate,

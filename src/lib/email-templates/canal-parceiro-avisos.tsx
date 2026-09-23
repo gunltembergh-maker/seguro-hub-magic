@@ -15,6 +15,8 @@ export interface AvisoCanalParceiroProps {
   /** Parágrafos do corpo; `**texto**` vira negrito. */
   paragrafos: string[]
   destaque?: { titulo: string; subtitulo?: string } | null
+  /** Destaque em vermelho (ex.: valor divergente). */
+  alerta?: string | null
   itens?: { rotulo: string; valor: string }[]
   observacao?: { rotulo: string; texto: string } | null
   botao?: { rotulo: string; href: string } | null
@@ -72,6 +74,7 @@ export const AvisoCanalParceiroEmail = ({
   titulo = 'Aviso do Hub',
   paragrafos = [],
   destaque = null,
+  alerta = null,
   itens = [],
   observacao = null,
   botao = null,
@@ -116,6 +119,22 @@ export const AvisoCanalParceiroEmail = ({
                   {destaque.subtitulo}
                 </Text>
               ) : null}
+            </Section>
+          ) : null}
+
+          {alerta ? (
+            <Section
+              style={{
+                border: '1px solid #FCA5A5',
+                backgroundColor: '#FEF2F2',
+                borderRadius: '12px',
+                padding: '14px 18px',
+                margin: '18px 0 0',
+              }}
+            >
+              <Text style={{ fontSize: '14px', color: '#B91C1C', margin: 0, fontWeight: 700 }}>
+                {alerta}
+              </Text>
             </Section>
           ) : null}
 
@@ -213,15 +232,15 @@ export const templateResposta = entrada('Canal Parceiros · Repasse: resposta do
   botao: { rotulo: 'Ver solicitação', href: 'https://hub.lavoroseguros.com.br/comercial/canal-parceiros' },
 })
 
-export const templateCobranca = entrada('Canal Parceiros · Repasse: o pagamento saiu?', {
+export const templateCobranca = entrada('Canal Parceiros · Repasse: dia do pagamento', {
   ...basePreview,
-  assunto: 'O repasse de PARCEIRO EXEMPLO foi pago?',
-  titulo: 'O pagamento foi feito?',
+  assunto: 'Hoje é o dia do repasse de PARCEIRO EXEMPLO',
+  titulo: 'Pagamento previsto para hoje',
   paragrafos: [
-    'A data prevista de pagamento de **PARCEIRO EXEMPLO**, ciclo 09/2026, era 10/10/2026, e já se passaram 2 dia(s). O pagamento foi feito?',
+    'O pagamento do repasse de **PARCEIRO EXEMPLO**, ciclo 09/2026, está previsto para 10/10/2026. A nota fiscal já foi aprovada. Depois de pagar, registre o pagamento com o comprovante.',
   ],
-  botao: { rotulo: 'Responder no Hub', href: 'https://hub.lavoroseguros.com.br/financeiro/fluxo-diario' },
-  notaFinal: 'Confirmando a data, o Hub dá baixa no repasse deste ciclo.',
+  botao: { rotulo: 'Registrar pagamento', href: 'https://hub.lavoroseguros.com.br/financeiro/fluxo-diario' },
+  notaFinal: 'Com o comprovante anexado, o Hub dá baixa e envia o comprovante ao Comercial e ao middle office.',
 })
 
 export const templateConferencia = entrada('Canal Parceiros · Conferência de contrato', {
@@ -291,4 +310,50 @@ export const templateContratoDecisao = entrada('Canal Parceiros · Contrato: res
     { rotulo: 'Vigência', valor: '02/08/2026 a 01/08/2027' },
   ],
   botao: { rotulo: 'Ver solicitação', href: 'https://hub.lavoroseguros.com.br/comercial/canal-parceiros' },
+})
+
+export const templateDocNFEnviada = entrada('Canal Parceiros · Nota fiscal: conferir', {
+  ...basePreview,
+  assunto: 'Conferir nota fiscal de PARCEIRO EXEMPLO, ciclo 09/2026',
+  titulo: 'Nota fiscal para conferência',
+  paragrafos: ['Maria Silva enviou a nota fiscal de **PARCEIRO EXEMPLO** do ciclo 09/2026 para sua conferência.'],
+  alerta: 'O valor da nota é diferente do valor autorizado.',
+  itens: [
+    { rotulo: 'Número da nota', valor: '1234' },
+    { rotulo: 'Valor da nota', valor: 'R$ 18.500,00' },
+    { rotulo: 'Valor autorizado', valor: 'R$ 18.420,00' },
+    { rotulo: 'Emissão', valor: '05/10/2026' },
+  ],
+  botao: { rotulo: 'Conferir nota', href: 'https://hub.lavoroseguros.com.br/financeiro/fluxo-diario' },
+  notaFinal: 'Na tela você baixa a nota, aprova ou recusa com o motivo.',
+})
+
+export const templateDocNFDecidida = entrada('Canal Parceiros · Nota fiscal: decisão', {
+  ...basePreview,
+  assunto: 'Nota fiscal de PARCEIRO EXEMPLO aprovada',
+  titulo: 'Nota fiscal aprovada',
+  paragrafos: ['João Souza aprovou a nota fiscal 1234 de **PARCEIRO EXEMPLO**, ciclo 09/2026. O pagamento está previsto para 10/10/2026.'],
+  botao: { rotulo: 'Ver no Hub', href: 'https://hub.lavoroseguros.com.br/comercial/canal-parceiros' },
+})
+
+export const templateDocPagamento = entrada('Canal Parceiros · Repasse pago', {
+  ...basePreview,
+  assunto: 'Repasse de PARCEIRO EXEMPLO pago, ciclo 09/2026',
+  titulo: 'Repasse pago',
+  paragrafos: ['O Financeiro registrou o pagamento do repasse de **PARCEIRO EXEMPLO**, ciclo 09/2026, em 10/10/2026.'],
+  destaque: { titulo: 'R$ 18.420,00', subtitulo: 'valor autorizado' },
+  botao: { rotulo: 'Baixar comprovante no Hub', href: 'https://hub.lavoroseguros.com.br/comercial/canal-parceiros' },
+  notaFinal: 'O comprovante fica guardado em Documentos do parceiro.',
+})
+
+/** Pré-visualização apenas: o envio com anexos sai por avisos-email.server.ts. */
+export const templateDocPagamentoAnexos = entrada('Canal Parceiros · Comprovante e base (middle office)', {
+  ...basePreview,
+  assunto: 'Comprovante e base do repasse de PARCEIRO EXEMPLO, ciclo 09/2026',
+  titulo: 'Comprovante e base do repasse',
+  paragrafos: ['Segue o comprovante de pagamento do repasse de **PARCEIRO EXEMPLO**, ciclo 09/2026, pago em 10/10/2026, e a base do repasse.'],
+  itens: [
+    { rotulo: 'Valor pago', valor: 'R$ 18.420,00' },
+    { rotulo: 'Nota fiscal', valor: '1234' },
+  ],
 })
