@@ -443,6 +443,7 @@ export function RepasseComercial({
                         canal={l.canal}
                         razaoSocial={razaoPorChave.get(chave) ?? null}
                         percentuais={pctPorChave.get(chave)}
+                        divergencia={divergenciaPorChave.get(chave)}
                         primeiraLinha={index === 0}
                         onCancelado={() =>
                           void queryClient.invalidateQueries({
@@ -525,6 +526,7 @@ function LinhaRepasse({
   canal,
   razaoSocial,
   percentuais,
+  divergencia,
   primeiraLinha,
   cicloCorrente,
   acumulado,
