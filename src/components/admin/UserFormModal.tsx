@@ -109,6 +109,19 @@ export function UserFormModal({ open, onOpenChange, initial, onSaved }: Props) {
   const [cpfError, setCpfError] = useState<string | null>(null);
   const [cpfValid, setCpfValid] = useState<boolean | null>(null);
 
+  // Outras contas com o mesmo CPF em empresas diferentes (só leitura, só na edição).
+  const { data: contasMesmoCpf } = useQuery({
+    queryKey: ["admin-contas-mesmo-cpf", initial?.user_id],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_admin_contas_mesmo_cpf" as never, {
+        p_user_id: initial!.user_id,
+      } as never);
+      if (error) throw error;
+      return (data ?? []) as { user_id: string; email: string; empresa: string | null; area: string | null; ativo: boolean }[];
+    },
+    enabled: open && isEdit && !!initial?.user_id,
+  });
+
   const { data: perfis } = useQuery({
     queryKey: ["perfis-acesso-form"],
     queryFn: async () => {
@@ -267,6 +280,25 @@ export function UserFormModal({ open, onOpenChange, initial, onSaved }: Props) {
               <p className="text-xs text-destructive mt-1">Informe o CPF</p>
             ) : cpfDigits.length < 11 ? (
               <p className="text-xs text-destructive mt-1">O CPF tem 11 dígitos</p>
+            ) : null}
+            {isEdit && contasMesmoCpf && contasMesmoCpf.length > 0 ? (
+              <div className="mt-2 rounded-lg border bg-muted/40 p-3 space-y-1.5">
+                <p className="text-xs font-medium text-muted-foreground">Mesma pessoa em outras empresas</p>
+                {contasMesmoCpf.map((c) => (
+                  <div key={c.user_id} className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="truncate">
+                      {c.email}
+                      {c.empresa ? ` · ${c.empresa}` : ""}
+                      {c.area ? ` · ${c.area}` : ""}
+                    </span>
+                    {!c.ativo ? (
+                      <span className="shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] leading-none text-muted-foreground">
+                        inativo
+                      </span>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
             ) : null}
           </div>
 
