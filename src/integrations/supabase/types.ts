@@ -5787,6 +5787,10 @@ export type Database = {
         Returns: boolean
       }
       lavoro_receita_caixa_visivel: { Args: never; Returns: boolean }
+      lavoro_status_gera_receita: {
+        Args: { p_status: string }
+        Returns: boolean
+      }
       lavoro_times_usuario: { Args: { _user_id: string }; Returns: string[] }
       normalize_canal_repasse: { Args: { p_canal: string }; Returns: string }
       normalize_categoria_financeira: {
