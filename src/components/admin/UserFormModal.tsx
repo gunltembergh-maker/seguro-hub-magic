@@ -281,6 +281,25 @@ export function UserFormModal({ open, onOpenChange, initial, onSaved }: Props) {
             ) : cpfDigits.length < 11 ? (
               <p className="text-xs text-destructive mt-1">O CPF tem 11 dígitos</p>
             ) : null}
+            {isEdit && contasMesmoCpf && contasMesmoCpf.length > 0 ? (
+              <div className="mt-2 rounded-lg border bg-muted/40 p-3 space-y-1.5">
+                <p className="text-xs font-medium text-muted-foreground">Mesma pessoa em outras empresas</p>
+                {contasMesmoCpf.map((c) => (
+                  <div key={c.user_id} className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="truncate">
+                      {c.email}
+                      {c.empresa ? ` · ${c.empresa}` : ""}
+                      {c.area ? ` · ${c.area}` : ""}
+                    </span>
+                    {!c.ativo ? (
+                      <span className="shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] leading-none text-muted-foreground">
+                        inativo
+                      </span>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            ) : null}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
