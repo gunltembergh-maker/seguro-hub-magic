@@ -6532,6 +6532,22 @@ export type Database = {
           vigencia_inicio: string
         }[]
       }
+      rpc_canal_parceiro_percentuais: {
+        Args: { p_canal_planilha?: string }
+        Returns: {
+          autorizado_em: string
+          canal_id: string
+          chave_planilha: string
+          minimo_repasse: number
+          origem_beneficios: string
+          origem_demais: string
+          origem_garantia: string
+          parceiro: string
+          pct_beneficios: number
+          pct_demais: number
+          pct_garantia: number
+        }[]
+      }
       rpc_canal_parceiro_resolver_vinculo: {
         Args: { p_canal_id: string; p_contrato_id: string }
         Returns: {
@@ -6669,6 +6685,27 @@ export type Database = {
           situacao: string
         }[]
       }
+      rpc_canal_repasse_contrato_do_parceiro: {
+        Args: { p_canal_planilha: string }
+        Returns: {
+          arquivo_nome: string
+          arquivo_path: string
+          assinado: boolean
+          assinado_em: string
+          assinatura_atestada_por: string
+          contrato_id: string
+          minimo_repasse: number
+          origem_leitura: string
+          parceiro: string
+          pct_beneficios: number
+          pct_demais_efetivo: number
+          pct_garantia: number
+          situacao: string
+          tipo: string
+          vigencia_fim: string
+          vigencia_inicio: string
+        }[]
+      }
       rpc_canal_repasse_decidir_nf: {
         Args: {
           p_aprovar: boolean
@@ -6707,6 +6744,19 @@ export type Database = {
           sou_o_aprovador: boolean
           sou_o_solicitante: boolean
           valor_total: number
+        }[]
+      }
+      rpc_canal_repasse_divergencia_pct: {
+        Args: { p_ano?: number; p_canal_repasse?: string; p_mes?: number }
+        Returns: {
+          chave_planilha: string
+          linhas: number
+          linhas_com_regra: number
+          linhas_divergentes: number
+          pct_hub: number[]
+          pct_planilha: number[]
+          resumo: string
+          valor_divergente: number
         }[]
       }
       rpc_canal_repasse_situacao_ciclo: {
