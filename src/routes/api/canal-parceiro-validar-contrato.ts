@@ -233,6 +233,7 @@ function extrair(texto: string) {
     vigencia_fim: vigFim,
     vigencia_origem: vigOrigem,
     assinado, assinado_em: assinadoEm, signatarios,
+    assinatura_plataforma: assinaturaPlataforma,
     minimo, tipo,
   };
 }
