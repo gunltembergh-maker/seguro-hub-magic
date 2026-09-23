@@ -216,48 +216,90 @@ export function DemandasRepasseNF() {
 
           {aConfirmar.length > 0 ? (
             <section className="space-y-3" data-tour="fin-pagamentos">
-              <h3 className="text-sm font-semibold text-foreground">Pagamentos a confirmar</h3>
+              <h3 className="text-sm font-semibold text-foreground">Repasses aprovados</h3>
               {aConfirmar.map((d) => {
-                const atraso = Math.abs(Number(d.dias_para_a_data ?? 0));
+                const dias = Number(d.dias_para_a_data ?? 0);
+                const pago = !!d.baixa_data_pagamento;
+                const selo = pago
+                  ? { r: `Pago em ${fmtBR(d.baixa_data_pagamento)}`, c: "bg-blue-100 text-blue-800" }
+                  : d.nf_status === "EM_CONFERENCIA"
+                    ? { r: "Nota em conferência", c: "bg-amber-200 text-amber-950 font-semibold" }
+                    : d.nf_status === "APROVADA"
+                      ? { r: "Nota aprovada", c: "bg-emerald-100 text-emerald-800" }
+                      : d.nf_status === "RECUSADA"
+                        ? { r: "Nota recusada", c: "bg-red-100 text-red-800" }
+                        : { r: "Aguardando nota fiscal", c: "bg-muted text-muted-foreground" };
                 return (
                   <BlocoDemanda key={d.demanda_id} destacar={d.demanda_id === destaque}>
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="space-y-1">
-                        <p className="font-medium text-foreground">{d.parceiro}</p>
+                        <p className="font-medium text-foreground">
+                          {d.parceiro}{" "}
+                          <Badge variant="outline" className={cn("ml-1 border-transparent", selo.c)}>
+                            {selo.r}
+                          </Badge>
+                        </p>
                         <p className="text-xs text-muted-foreground">
                           Ciclo de {MESES[(d.ciclo_mes ?? 1) - 1]}/{d.ciclo_ano}
+                          {d.nf_numero ? ` · nota nº ${d.nf_numero}` : ""}
                         </p>
                         <p className="font-mono text-lg font-semibold tabular-nums text-foreground">
                           {BRL(d.valor_total)}
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                          Previsto para {fmtBR(d.data_prevista_pagamento)} ·{" "}
-                          <span className="text-amber-700">
-                            {atraso === 0 ? "vence hoje" : `${atraso} dia(s) de atraso`}
-                          </span>
-                        </p>
+                        {!pago && d.data_prevista_pagamento ? (
+                          <p className="text-xs text-muted-foreground">
+                            Previsto para {fmtBR(d.data_prevista_pagamento)}
+                            {dias <= 0 ? (
+                              <span className="text-amber-700">
+                                {" · "}
+                                {dias === 0 ? "vence hoje" : `${Math.abs(dias)} dia(s) de atraso`}
+                              </span>
+                            ) : null}
+                          </p>
+                        ) : null}
+                        {!pago && d.nf_status !== "APROVADA" ? (
+                          <p className="text-xs text-muted-foreground">
+                            O pagamento só pode ser registrado depois da nota fiscal aprovada.
+                          </p>
+                        ) : null}
                       </div>
                       <div className="flex flex-wrap gap-2">
                         <Button size="sm" variant="outline" onClick={() => setRelacao(d)}>
                           <FileSearch className="mr-2 h-4 w-4" />
                           Abrir a relação
                         </Button>
-                        {d.sou_o_aprovador ? (
+                        {d.canal_id ? (
+                          <Button size="sm" variant="ghost" onClick={() => setDocumentos(d)}>
+                            <FolderOpen className="mr-2 h-4 w-4" />
+                            Documentos
+                          </Button>
+                        ) : null}
+                        {pago ? (
                           <>
-                            <Button size="sm" onClick={() => setConfirmar(d)}>
+                            <BotaoBaixarDocumento id={d.comprovante_documento_id} rotulo="Baixar comprovante" />
+                            <BotaoBaixarDocumento id={d.nf_documento_id} rotulo="Baixar nota" />
+                          </>
+                        ) : !d.sou_o_aprovador ? (
+                          <Badge variant="outline" className="text-muted-foreground">
+                            Aguardando o gestor do Financeiro.
+                          </Badge>
+                        ) : d.nf_status === "EM_CONFERENCIA" ? (
+                          <Button size="sm" onClick={() => setConferir(d)}>
+                            <Check className="mr-2 h-4 w-4" />
+                            Conferir nota
+                          </Button>
+                        ) : d.nf_status === "APROVADA" ? (
+                          <>
+                            <Button size="sm" onClick={() => setRegistrar(d)}>
                               <Check className="mr-2 h-4 w-4" />
-                              Confirmar pagamento
+                              Registrar pagamento
                             </Button>
                             <Button size="sm" variant="outline" onClick={() => setNaoPagou(d)}>
                               <AlertTriangle className="mr-2 h-4 w-4" />
-                              Ainda não pagou
+                              Ainda não foi pago
                             </Button>
                           </>
-                        ) : (
-                          <Badge variant="outline" className="text-muted-foreground">
-                            Aguardando autorização do gestor do Financeiro.
-                          </Badge>
-                        )}
+                        ) : null}
                       </div>
                     </div>
                   </BlocoDemanda>
@@ -284,13 +326,12 @@ export function DemandasRepasseNF() {
           setRecusar(null);
         }}
       />
-      <ConfirmarBaixaDialog
-        demanda={confirmar}
-        onFechar={() => setConfirmar(null)}
-        onSucesso={() => {
-          apósDecidir();
-          setConfirmar(null);
-        }}
+      <ConferirNFDialog demanda={conferir} onFechar={() => setConferir(null)} />
+      <RegistrarPagamentoDialog demanda={registrar} onFechar={() => setRegistrar(null)} />
+      <DocumentosParceiroDialog
+        canalId={documentos?.canal_id ?? null}
+        parceiro={documentos?.parceiro ?? ""}
+        onFechar={() => setDocumentos(null)}
       />
       <NaoPagouDialog
         demanda={naoPagou}
