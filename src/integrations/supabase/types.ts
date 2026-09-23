@@ -6777,6 +6777,11 @@ export type Database = {
           contrato_id: string
           dias_para_vencer: number
           parceiro: string
+          pct_beneficios: number
+          pct_demais: number
+          pct_garantia: number
+          razao_social: string
+          renovacao_automatica: boolean
           repasse_acumulado: number
           tipo_aviso: string
           vigencia_fim: string

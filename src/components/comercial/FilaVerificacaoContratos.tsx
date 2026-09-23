@@ -90,15 +90,27 @@ const simNao = (v?: boolean | null) => (v === true ? "Sim" : "Não");
 
 /* ----------------------------------------------------------- abrir o PDF */
 
-/** Link temporário de 5 minutos. Nunca guardado, nunca enviado por e-mail. */
-async function linkTemporario(path: string, baixarComo?: string | null) {
-  const { data, error } = await supabase.storage
-    .from(BUCKET)
-    .createSignedUrl(path, 300, baixarComo ? { download: baixarComo } : undefined);
-  if (error || !data?.signedUrl) {
-    throw new Error(error?.message || "Não foi possível gerar o link do contrato.");
+/** Baixa o PDF pela rota do próprio Hub (nenhum bloqueador derruba o domínio do Hub). */
+async function baixarContrato(path: string): Promise<Blob> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error("Sessão expirada. Entre novamente no Hub.");
+  const resp = await fetch("/api/canal-parceiro-contrato", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ path }),
+  });
+  if (!resp.ok) {
+    let msg = "Não foi possível abrir o contrato.";
+    try {
+      const j = (await resp.json()) as { error?: string };
+      if (j?.error) msg = j.error;
+    } catch {
+      /* resposta sem corpo */
+    }
+    throw new Error(msg);
   }
-  return data.signedUrl;
+  return resp.blob();
 }
 
 export function useAbrirContrato() {
@@ -110,8 +122,11 @@ export function useAbrirContrato() {
       return;
     }
     setOcupado(true);
+    // Abre a aba já no clique para não cair no bloqueio de pop-up.
+    const aba = baixarComo ? null : window.open("", "_blank");
     try {
-      const url = await linkTemporario(path, baixarComo);
+      const blob = await baixarContrato(path);
+      const url = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
       if (baixarComo) {
         const a = document.createElement("a");
         a.href = url;
@@ -120,10 +135,14 @@ export function useAbrirContrato() {
         document.body.appendChild(a);
         a.click();
         a.remove();
+      } else if (aba) {
+        aba.location.href = url;
       } else {
-        window.open(url, "_blank", "noopener,noreferrer");
+        window.open(url, "_blank");
       }
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch (e) {
+      aba?.close();
       toast.error(mensagemDeErro(e));
     } finally {
       setOcupado(false);
