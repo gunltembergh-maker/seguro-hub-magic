@@ -16,6 +16,8 @@ import {
   Lock,
   MoreHorizontal,
   Send,
+  Upload,
+  FolderOpen,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -24,6 +26,11 @@ import { useCicloRepasse } from "@/hooks/use-ciclo-repasse";
 import { DetalheRepasseCiclo } from "@/components/repasse/DetalheRepasseCiclo";
 import { ContratoDoParceiro } from "@/components/repasse/ContratoDoParceiro";
 import { PedirLiberacaoSemContrato } from "@/components/repasse/PedirLiberacaoSemContrato";
+import {
+  BotaoBaixarDocumento,
+  DocumentosParceiroDialog,
+  EnviarNFDialog,
+} from "@/components/repasse/DocumentosRepasse";
 import { chaveCanal, exportarRepasse } from "@/lib/repasse/exportar-repasse";
 import { cicloPadrao } from "@/lib/repasse/ciclo-datas";
 import { Badge } from "@/components/ui/badge";
@@ -130,6 +137,15 @@ export type DemandaNF = {
   sou_o_solicitante: boolean | null;
   prazo_resposta_em: string | null;
   horas_para_expirar: number | null;
+  nf_documento_id?: string | null;
+  nf_status?: string | null;
+  nf_numero?: string | null;
+  nf_valor?: number | null;
+  nf_valor_diverge?: boolean | null;
+  nf_enviada_em?: string | null;
+  nf_enviada_por_nome?: string | null;
+  nf_motivo_recusa?: string | null;
+  comprovante_documento_id?: string | null;
 };
 
 const PILL: Record<string, { bg: string; color: string; label: string }> = {
@@ -220,10 +236,18 @@ function BadgeFinanceiro({ d }: { d: DemandaNF | undefined }) {
     );
   }
   if (d.situacao === "APROVADA") {
+    const nf =
+      d.nf_status === "EM_CONFERENCIA"
+        ? { rotulo: `Nota fiscal em conferência${d.nf_numero ? ` (nº ${d.nf_numero})` : ""}`, cls: "bg-amber-100 text-amber-900" }
+        : d.nf_status === "APROVADA"
+          ? { rotulo: "Nota fiscal aprovada, aguardando pagamento", cls: "bg-emerald-100 text-emerald-800" }
+          : d.nf_status === "RECUSADA"
+            ? { rotulo: "Nota fiscal recusada, envie outra", cls: "bg-red-100 text-red-800" }
+            : { rotulo: "Aprovado pelo financeiro, aguardando nota fiscal", cls: "bg-emerald-100 text-emerald-800" };
     return (
       <div className="space-y-0.5">
-        <Badge variant="outline" className="border-transparent bg-emerald-100 text-emerald-800">
-          Aprovado pelo financeiro
+        <Badge variant="outline" className={`border-transparent ${nf.cls}`}>
+          {nf.rotulo}
         </Badge>
         {d.data_prevista_pagamento ? (
           <p className="text-xs text-muted-foreground">
@@ -295,6 +319,8 @@ export function RepasseComercial({
   const ciclo = useMemo(() => cicloPadrao(new Set<string>()), []);
   const { data: estadoCiclo } = useCicloRepasse(ciclo.ano, ciclo.mes);
   const [exportando, setExportando] = useState<string | null>(null);
+  const [enviarNF, setEnviarNF] = useState<DemandaNF | null>(null);
+  const [documentos, setDocumentos] = useState<{ canalId: string; parceiro: string } | null>(null);
   const [relacao, setRelacao] = useState<string | null>(null);
   const [contrato, setContrato] = useState<string | null>(null);
   const [liberacao, setLiberacao] = useState<{ canal: string; valor: number } | null>(null);
@@ -564,6 +590,12 @@ export function RepasseComercial({
                         onPedirLiberacao={() =>
                           setLiberacao({ canal: l.canal, valor: l.cicloCorrente })
                         }
+                        onEnviarNF={() => (d ? setEnviarNF(d) : undefined)}
+                        onDocumentos={() =>
+                          d?.canal_id
+                            ? setDocumentos({ canalId: d.canal_id, parceiro: l.canal })
+                            : undefined
+                        }
                       />
                     );
                   })
@@ -634,6 +666,13 @@ export function RepasseComercial({
         mes={ciclo.mes}
         valor={liberacao?.valor}
       />
+
+      <EnviarNFDialog demanda={enviarNF} onFechar={() => setEnviarNF(null)} />
+      <DocumentosParceiroDialog
+        canalId={documentos?.canalId ?? null}
+        parceiro={documentos?.parceiro ?? ""}
+        onFechar={() => setDocumentos(null)}
+      />
     </Card>
   );
 }
@@ -659,6 +698,8 @@ function LinhaRepasse({
   onVerContrato,
   onPedirLiberacao,
   onCancelado,
+  onEnviarNF,
+  onDocumentos,
 }: {
   canal: string;
   razaoSocial: string | null;
@@ -689,6 +730,8 @@ function LinhaRepasse({
   onVerContrato: () => void;
   onPedirLiberacao: () => void;
   onCancelado: () => void;
+  onEnviarNF: () => void;
+  onDocumentos: () => void;
 }) {
   const ref = useRef<HTMLTableRowElement | null>(null);
   const [aceso, setAceso] = useState(false);
@@ -706,6 +749,10 @@ function LinhaRepasse({
 
   const situacao = demanda?.situacao ?? null;
   const pago = !!demanda?.baixa_data_pagamento;
+  const podeEnviarNF =
+    situacao === "APROVADA" &&
+    !pago &&
+    (!demanda?.nf_status || demanda.nf_status === "RECUSADA");
 
   const podeCancelarJanela =
     situacao === "PENDENTE" && demanda?.sou_o_solicitante === true && !!demanda?.solicitado_em;
@@ -763,6 +810,11 @@ function LinhaRepasse({
         {situacao === "RECUSADA" && demanda?.observacao_financeiro ? (
           <p className="mt-1 text-xs text-destructive">{demanda.observacao_financeiro}</p>
         ) : null}
+        {situacao === "APROVADA" && !pago && demanda?.nf_status === "RECUSADA" ? (
+          <p className="mt-1 text-xs text-destructive">
+            Nota fiscal recusada pelo Financeiro: {demanda.nf_motivo_recusa ?? "sem motivo informado"}
+          </p>
+        ) : null}
       </TableCell>
       <TableCell className="text-right tabular-nums">
         <PercentualRepasse percentuais={percentuais} divergencia={divergencia} />
@@ -813,21 +865,40 @@ function LinhaRepasse({
               <Send className="mr-2 h-4 w-4" />
               Enviar ao financeiro
             </Button>
+          ) : pago ? (
+            <BotaoBaixarDocumento
+              id={demanda.comprovante_documento_id}
+              rotulo="Baixar comprovante"
+            />
           ) : (
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={exportando !== null || pago}
-              onClick={onExportar}
-            >
-              {exportando === canal ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Download className="mr-2 h-4 w-4" />
-              )}
-              Exportar ao parceiro
-            </Button>
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={exportando !== null}
+                onClick={onExportar}
+              >
+                {exportando === canal ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="mr-2 h-4 w-4" />
+                )}
+                Exportar ao parceiro
+              </Button>
+              {podeEnviarNF ? (
+                <Button size="sm" onClick={onEnviarNF}>
+                  <Upload className="mr-2 h-4 w-4" />
+                  {demanda.nf_status === "RECUSADA" ? "Enviar nota fiscal de novo" : "Enviar nota fiscal"}
+                </Button>
+              ) : null}
+            </>
           )}
+          {demanda?.canal_id ? (
+            <Button size="sm" variant="ghost" onClick={onDocumentos}>
+              <FolderOpen className="mr-2 h-4 w-4" />
+              Documentos
+            </Button>
+          ) : null}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

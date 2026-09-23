@@ -2210,6 +2210,105 @@ export type Database = {
           },
         ]
       }
+      canal_repasse_documentos: {
+        Row: {
+          arquivo_nome: string
+          arquivo_path: string
+          canal_id: string
+          ciclo_ano: number
+          ciclo_mes: number
+          conferido_em: string | null
+          conferido_por: string | null
+          data_emissao: string | null
+          data_pagamento: string | null
+          demanda_id: string
+          email_decisao_em: string | null
+          email_decisao_id: string | null
+          email_envio_em: string | null
+          email_envio_id: string | null
+          enviado_em: string
+          enviado_por: string
+          id: string
+          motivo_recusa: string | null
+          numero_nf: string | null
+          observacao: string | null
+          status: string
+          tipo: string
+          valor_autorizado: number | null
+          valor_diverge: boolean
+          valor_nf: number | null
+        }
+        Insert: {
+          arquivo_nome: string
+          arquivo_path: string
+          canal_id: string
+          ciclo_ano: number
+          ciclo_mes: number
+          conferido_em?: string | null
+          conferido_por?: string | null
+          data_emissao?: string | null
+          data_pagamento?: string | null
+          demanda_id: string
+          email_decisao_em?: string | null
+          email_decisao_id?: string | null
+          email_envio_em?: string | null
+          email_envio_id?: string | null
+          enviado_em?: string
+          enviado_por: string
+          id?: string
+          motivo_recusa?: string | null
+          numero_nf?: string | null
+          observacao?: string | null
+          status: string
+          tipo: string
+          valor_autorizado?: number | null
+          valor_diverge?: boolean
+          valor_nf?: number | null
+        }
+        Update: {
+          arquivo_nome?: string
+          arquivo_path?: string
+          canal_id?: string
+          ciclo_ano?: number
+          ciclo_mes?: number
+          conferido_em?: string | null
+          conferido_por?: string | null
+          data_emissao?: string | null
+          data_pagamento?: string | null
+          demanda_id?: string
+          email_decisao_em?: string | null
+          email_decisao_id?: string | null
+          email_envio_em?: string | null
+          email_envio_id?: string | null
+          enviado_em?: string
+          enviado_por?: string
+          id?: string
+          motivo_recusa?: string | null
+          numero_nf?: string | null
+          observacao?: string | null
+          status?: string
+          tipo?: string
+          valor_autorizado?: number | null
+          valor_diverge?: boolean
+          valor_nf?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canal_repasse_documentos_canal_id_fkey"
+            columns: ["canal_id"]
+            isOneToOne: false
+            referencedRelation: "canais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "canal_repasse_documentos_demanda_id_fkey"
+            columns: ["demanda_id"]
+            isOneToOne: false
+            referencedRelation: "canal_repasse_demandas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       canal_repasse_exportacoes: {
         Row: {
           base: string
@@ -5916,6 +6015,41 @@ export type Database = {
           situacao: string
         }[]
       }
+      canal_repasse_docs_emails_pendentes: {
+        Args: never
+        Returns: {
+          arquivo_nome: string
+          arquivo_path: string
+          assinatura_area: string
+          assinatura_nome: string
+          canal_id: string
+          chave_planilha: string
+          ciclo: string
+          ciclo_ano: number
+          ciclo_mes: number
+          conferido_por_nome: string
+          data_emissao: string
+          data_pagamento: string
+          data_prevista: string
+          demanda_id: string
+          destinatarios: string[]
+          destinatarios_anexos: string[]
+          documento_id: string
+          enviado_por_nome: string
+          motivo: string
+          numero_nf: string
+          parceiro: string
+          situacao: string
+          tipo: string
+          valor_autorizado: number
+          valor_diverge: boolean
+          valor_nf: number
+        }[]
+      }
+      canal_repasse_docs_marcar_email: {
+        Args: { p_documento_id: string; p_message_id: string; p_tipo: string }
+        Returns: undefined
+      }
       canal_repasse_emails_pendentes: {
         Args: never
         Returns: {
@@ -6658,6 +6792,33 @@ export type Database = {
           data_prevista: string
         }[]
       }
+      rpc_canal_parceiro_documentos: {
+        Args: { p_canal_id?: string; p_demanda_id?: string }
+        Returns: {
+          arquivo_nome: string
+          arquivo_path: string
+          canal_id: string
+          ciclo_ano: number
+          ciclo_mes: number
+          conferido_em: string
+          conferido_por_nome: string
+          data_emissao: string
+          data_pagamento: string
+          demanda_id: string
+          documento_id: string
+          enviado_em: string
+          enviado_por_nome: string
+          motivo_recusa: string
+          numero_nf: string
+          observacao: string
+          parceiro: string
+          status: string
+          tipo: string
+          valor_autorizado: number
+          valor_diverge: boolean
+          valor_nf: number
+        }[]
+      }
       rpc_canal_parceiro_eventos: {
         Args: { p_canal_id?: string; p_limite?: number }
         Returns: {
@@ -6892,6 +7053,14 @@ export type Database = {
           situacao: string
         }[]
       }
+      rpc_canal_repasse_conferir_nf: {
+        Args: { p_aprovar: boolean; p_documento_id: string; p_motivo?: string }
+        Returns: {
+          documento_id: string
+          mensagem: string
+          status: string
+        }[]
+      }
       rpc_canal_repasse_confirmar_baixa: {
         Args: {
           p_data_pagamento?: string
@@ -6950,6 +7119,7 @@ export type Database = {
           chave_planilha: string
           ciclo_ano: number
           ciclo_mes: number
+          comprovante_documento_id: string
           data_prevista_pagamento: string
           decidido_em: string
           decidido_por_nome: string
@@ -6957,6 +7127,13 @@ export type Database = {
           dias_para_a_data: number
           horas_para_expirar: number
           linhas: number
+          nf_documento_id: string
+          nf_enviada_em: string
+          nf_enviada_por_nome: string
+          nf_numero: string
+          nf_status: string
+          nf_valor: number
+          nf_valor_diverge: boolean
           observacao_financeiro: string
           observacao_solicitante: string
           parceiro: string
@@ -6982,16 +7159,52 @@ export type Database = {
           valor_divergente: number
         }[]
       }
+      rpc_canal_repasse_enviar_nf: {
+        Args: {
+          p_arquivo_nome: string
+          p_arquivo_path: string
+          p_data_emissao?: string
+          p_demanda_id: string
+          p_numero_nf: string
+          p_valor_nf: number
+        }
+        Returns: {
+          documento_id: string
+          mensagem: string
+          valor_diverge: boolean
+        }[]
+      }
+      rpc_canal_repasse_registrar_pagamento: {
+        Args: {
+          p_arquivo_nome: string
+          p_arquivo_path: string
+          p_data_pagamento: string
+          p_demanda_id: string
+          p_observacao?: string
+        }
+        Returns: {
+          baixa_id: string
+          documento_id: string
+          mensagem: string
+        }[]
+      }
       rpc_canal_repasse_situacao_ciclo: {
         Args: { p_ano: number; p_canal_planilha: string; p_mes: number }
         Returns: {
           aprovado_em: string
           aprovado_por_nome: string
+          comprovante_documento_id: string
           data_pagamento: string
           data_prevista: string
           demanda_id: string
+          nf_documento_id: string
+          nf_motivo_recusa: string
+          nf_numero: string
+          nf_status: string
+          nf_valor: number
           observacao_financeiro: string
           pago: boolean
+          pode_enviar_nf: boolean
           rotulo: string
           situacao: string
           solicitado_em: string
