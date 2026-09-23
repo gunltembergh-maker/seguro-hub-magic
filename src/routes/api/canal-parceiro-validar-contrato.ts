@@ -295,32 +295,15 @@ async function handle(request: Request): Promise<Response> {
 
     let e = leituraServidor;
     let origem: "TEXTO" | "OCR" | "MANUAL" = "TEXTO";
+    const camposManuais: string[] = [];
 
-    if (!legivel) {
+    if (!legivel && !manuais) {
       if (textoOcr) {
         const o = extrair(textoOcr);
         origem = "OCR";
         e = {
           ...o,
           // assinatura sempre da leitura do servidor
-          assinado: leituraServidor.assinado,
-          assinado_em: leituraServidor.assinado_em,
-          signatarios: leituraServidor.signatarios,
-        };
-      } else if (manuais) {
-        origem = "MANUAL";
-        e = {
-          ...leituraServidor,
-          nomes: manuais.razao_social
-            ? [manuais.razao_social, ...leituraServidor.nomes]
-            : leituraServidor.nomes,
-          cnpj: manuais.cnpj ?? leituraServidor.cnpj,
-          vigencia_inicio: manuais.vigencia_inicio ?? leituraServidor.vigencia_inicio,
-          vigencia_fim: manuais.vigencia_fim ?? leituraServidor.vigencia_fim,
-          pct_beneficios: manuais.pct_beneficios ?? leituraServidor.pct_beneficios,
-          pct_garantia: manuais.pct_garantia ?? leituraServidor.pct_garantia,
-          pct_demais: manuais.pct_demais ?? leituraServidor.pct_demais,
-          minimo: manuais.minimo ?? leituraServidor.minimo,
           assinado: leituraServidor.assinado,
           assinado_em: leituraServidor.assinado_em,
           signatarios: leituraServidor.signatarios,
@@ -337,6 +320,35 @@ async function handle(request: Request): Promise<Response> {
         );
       }
     }
+
+    // O que o usuario informou a mao vence a leitura, campo a campo, legivel ou nao.
+    if (manuais) {
+      const base = e;
+      const pega = <T,>(valor: T | undefined | null | "", campo: string, lido: T): T => {
+        if (valor === undefined || valor === null || valor === "") return lido;
+        camposManuais.push(campo);
+        return valor;
+      };
+      origem = "MANUAL";
+      e = {
+        ...base,
+        nomes: manuais.razao_social
+          ? (camposManuais.push("razao_social"), [manuais.razao_social, ...base.nomes])
+          : base.nomes,
+        cnpj: pega(manuais.cnpj, "cnpj", base.cnpj),
+        vigencia_inicio: pega(manuais.vigencia_inicio, "vigencia_inicio", base.vigencia_inicio),
+        vigencia_fim: pega(manuais.vigencia_fim, "vigencia_fim", base.vigencia_fim),
+        pct_beneficios: pega(manuais.pct_beneficios, "pct_beneficios", base.pct_beneficios),
+        pct_garantia: pega(manuais.pct_garantia, "pct_garantia", base.pct_garantia),
+        pct_demais: pega(manuais.pct_demais, "pct_demais", base.pct_demais),
+        minimo: pega(manuais.minimo, "minimo", base.minimo),
+        // assinatura sempre da leitura do servidor
+        assinado: leituraServidor.assinado,
+        assinado_em: leituraServidor.assinado_em,
+        signatarios: leituraServidor.signatarios,
+      };
+    }
+
 
     const { data, error } = await admin.rpc("canal_parceiro_registrar_contrato", {
       p_nomes_do_contrato: e.nomes,
