@@ -90,6 +90,9 @@ interface Situacao {
   pct_demais: number | null;
   pct_demais_efetivo: number | null;
   minimo_repasse: number | null;
+  motivo_parado: string | null;
+  bloqueado: boolean | null;
+  bloqueio_motivo: string | null;
 }
 
 interface Parceiro {
@@ -380,6 +383,30 @@ export default function CanalParceirosTela() {
     return m;
   }, [linhasSituacao]);
 
+  /** Por que o parceiro está parado, por chave normalizada do canal. */
+  const paradoPorChave = useMemo(() => {
+    const m = new Map<
+      string,
+      {
+        situacao: string | null;
+        motivo_parado: string | null;
+        bloqueado: boolean;
+        bloqueio_motivo: string | null;
+      }
+    >();
+    for (const s of linhasSituacao) {
+      if (s.chave_planilha) {
+        m.set(s.chave_planilha, {
+          situacao: s.situacao,
+          motivo_parado: s.motivo_parado,
+          bloqueado: s.bloqueado === true,
+          bloqueio_motivo: s.bloqueio_motivo,
+        });
+      }
+    }
+    return m;
+  }, [linhasSituacao]);
+
   /** Percentuais resolvidos no banco (contrato ou diretoria), por canal_id. */
   const pctPorCanalId = useMemo(() => {
     const m = new Map<string, PercentualCanal>();
@@ -570,6 +597,7 @@ export default function CanalParceirosTela() {
           <RepasseComercial
             podeExportarPorChave={podeExportarPorChave}
             pctPorChave={pctPorChave}
+            paradoPorChave={paradoPorChave}
           />
         </TabsContent>
 

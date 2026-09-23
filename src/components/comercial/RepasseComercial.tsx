@@ -139,6 +139,71 @@ const PILL: Record<string, { bg: string; color: string; label: string }> = {
   SEM_VALOR: { bg: "#F3F4F6", color: "#6B7280", label: "Sem valor" },
 };
 
+/** Badge que diz por que o parceiro está parado, conforme a situação do banco. */
+function BadgeParado({ parado }: { parado: ParadoInfo | undefined }) {
+  const bloqueado = parado?.bloqueado === true;
+  const sit = parado?.situacao ?? "SEM_CONTRATO";
+
+  if (bloqueado) {
+    const badge = (
+      <Badge variant="outline" className="gap-1 border-red-600/40 bg-red-50 text-red-700 hover:bg-red-50">
+        <Lock className="h-3 w-3" />
+        Repasse bloqueado
+      </Badge>
+    );
+    return parado?.bloqueio_motivo ? (
+      <Tooltip>
+        <TooltipTrigger asChild>{badge}</TooltipTrigger>
+        <TooltipContent>{parado.bloqueio_motivo}</TooltipContent>
+      </Tooltip>
+    ) : (
+      badge
+    );
+  }
+
+  if (sit === "AGUARDANDO_JURIDICO") {
+    const badge = (
+      <Badge variant="outline" className="gap-1 border-amber-600/40 bg-amber-50 text-amber-800 hover:bg-amber-50">
+        <Lock className="h-3 w-3" />
+        Aguardando o Jurídico
+      </Badge>
+    );
+    return parado?.motivo_parado ? (
+      <Tooltip>
+        <TooltipTrigger asChild>{badge}</TooltipTrigger>
+        <TooltipContent>{parado.motivo_parado}</TooltipContent>
+      </Tooltip>
+    ) : (
+      badge
+    );
+  }
+
+  if (sit === "SUSPENSO") {
+    return (
+      <Badge variant="outline" className="gap-1 text-muted-foreground">
+        <Lock className="h-3 w-3" />
+        Contrato suspenso
+      </Badge>
+    );
+  }
+
+  if (sit === "VENCIDO") {
+    return (
+      <Badge variant="outline" className="gap-1 border-red-600/40 bg-red-50 text-red-700 hover:bg-red-50">
+        <Lock className="h-3 w-3" />
+        Contrato vencido
+      </Badge>
+    );
+  }
+
+  return (
+    <Badge variant="outline" className="gap-1 text-muted-foreground">
+      <Lock className="h-3 w-3" />
+      Sem contrato válido
+    </Badge>
+  );
+}
+
 function BadgeFinanceiro({ d }: { d: DemandaNF | undefined }) {
   if (!d) {
     return (
@@ -199,9 +264,18 @@ function BadgeFinanceiro({ d }: { d: DemandaNF | undefined }) {
   );
 }
 
+/** Por que o parceiro está parado, vindo do banco por chave normalizada do canal. */
+export type ParadoInfo = {
+  situacao: string | null;
+  motivo_parado: string | null;
+  bloqueado: boolean;
+  bloqueio_motivo: string | null;
+};
+
 export function RepasseComercial({
   podeExportarPorChave,
   pctPorChave,
+  paradoPorChave,
 }: {
   /** Chave normalizada do canal → pode exportar (trava do contrato, vinda do banco). */
   podeExportarPorChave: Map<string, boolean>;
@@ -216,6 +290,7 @@ export function RepasseComercial({
       origemDemais: string | null;
     }
   >;
+  paradoPorChave: Map<string, ParadoInfo>;
 }) {
   const ciclo = useMemo(() => cicloPadrao(new Set<string>()), []);
   const { data: estadoCiclo } = useCicloRepasse(ciclo.ano, ciclo.mes);
@@ -477,6 +552,7 @@ export function RepasseComercial({
                         pill={pill}
                         demanda={d}
                         liberado={liberado}
+                        parado={paradoPorChave.get(chave)}
                         destacar={!!d && d.demanda_id === demandaDestaque}
                         exportando={exportando}
                         onExportar={() => void exportar(l.canal)}
@@ -574,6 +650,7 @@ function LinhaRepasse({
   pill,
   demanda,
   liberado,
+  parado,
   destacar,
   exportando,
   onExportar,
@@ -603,6 +680,7 @@ function LinhaRepasse({
   pill: { bg: string; color: string; label: string };
   demanda: DemandaNF | undefined;
   liberado: boolean;
+  parado: ParadoInfo | undefined;
   destacar: boolean;
   exportando: string | null;
   onExportar: () => void;
@@ -705,10 +783,7 @@ function LinhaRepasse({
       <TableCell className="text-right" data-tour={primeiraLinha ? "cp-repasse-acoes" : undefined}>
         <div className="flex flex-wrap items-center justify-end gap-1">
           {!liberado ? (
-            <Badge variant="outline" className="gap-1 text-muted-foreground">
-              <Lock className="h-3 w-3" />
-              Sem contrato válido
-            </Badge>
+            <BadgeParado parado={parado} />
           ) : !demanda ? (
             <Button size="sm" variant="default" onClick={onPedir} disabled={cicloCorrente <= 0}>
               <Send className="mr-2 h-4 w-4" />

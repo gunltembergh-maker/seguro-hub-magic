@@ -69,7 +69,14 @@ type SituacaoContrato = {
   chave_planilha: string;
   canal_id: string | null;
   nome: string | null;
-  situacao: "ATIVO" | "SEM_CONTRATO" | "VENCIDO" | "VINCULO_A_CONFIRMAR";
+  situacao:
+    | "ATIVO"
+    | "SEM_CONTRATO"
+    | "VENCIDO"
+    | "VINCULO_A_CONFIRMAR"
+    | "AGUARDANDO_JURIDICO"
+    | "SUSPENSO"
+    | "LIBERADO_SEM_CONTRATO";
   pode_exportar: boolean;
   vigencia_fim: string | null;
   dias_para_vencer: number | null;
@@ -77,6 +84,9 @@ type SituacaoContrato = {
   pct_garantia: number | null;
   pct_demais_efetivo: number | null;
   minimo_repasse: number | null;
+  motivo_parado?: string | null;
+  bloqueado?: boolean | null;
+  bloqueio_motivo?: string | null;
 };
 
 const fmtBR = (iso: string | null | undefined) =>
@@ -88,6 +98,28 @@ function motivoBloqueio(s?: SituacaoContrato | null) {
   if (s.situacao === "VINCULO_A_CONFIRMAR")
     return "Contrato recebido, aguardando um administrador confirmar o vínculo";
   return "Parceiro sem contrato assinado no Hub";
+}
+
+/** Texto do botão quando o parceiro está parado, conforme a situação do banco. */
+function rotuloParado(s?: SituacaoContrato | null) {
+  if (s?.bloqueado === true) return "Repasse bloqueado";
+  switch (s?.situacao) {
+    case "AGUARDANDO_JURIDICO":
+      return "Aguardando o Jurídico";
+    case "SUSPENSO":
+      return "Contrato suspenso";
+    case "VENCIDO":
+      return "Contrato vencido";
+    default:
+      return "Sem contrato";
+  }
+}
+
+/** Tooltip do botão: motivo pronto do banco quando existe, senão o texto local. */
+function tooltipParado(s?: SituacaoContrato | null) {
+  if (s?.bloqueado === true && s.bloqueio_motivo?.trim()) return s.bloqueio_motivo;
+  if (s?.motivo_parado?.trim()) return s.motivo_parado;
+  return motivoBloqueio(s);
 }
 
 function BadgeContrato({ s }: { s?: SituacaoContrato | null }) {
@@ -1237,10 +1269,10 @@ function ExportBtn({
                 className="h-6 gap-1 border-amber-500/60 px-2 text-[11px] font-semibold text-amber-700 hover:bg-amber-50 hover:text-amber-800"
               >
                 <Lock className="h-3 w-3" />
-                Sem contrato
+                {rotuloParado(situacao)}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>{motivoBloqueio(situacao)}</TooltipContent>
+            <TooltipContent>{tooltipParado(situacao)}</TooltipContent>
           </Tooltip>
         </TooltipProvider>
       ) : null}
