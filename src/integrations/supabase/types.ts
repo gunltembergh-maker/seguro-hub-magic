@@ -5013,6 +5013,63 @@ export type Database = {
         }
         Relationships: []
       }
+      senha_aprovacao: {
+        Row: {
+          atualizada_em: string
+          bloqueada_ate: string | null
+          criada_em: string
+          falhas: number
+          senha_hash: string
+          user_id: string
+        }
+        Insert: {
+          atualizada_em?: string
+          bloqueada_ate?: string | null
+          criada_em?: string
+          falhas?: number
+          senha_hash: string
+          user_id: string
+        }
+        Update: {
+          atualizada_em?: string
+          bloqueada_ate?: string | null
+          criada_em?: string
+          falhas?: number
+          senha_hash?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      senha_aprovacao_codigos: {
+        Row: {
+          codigo_hash: string
+          criado_em: string
+          expira_em: string
+          id: string
+          tentativas: number
+          usado_em: string | null
+          user_id: string
+        }
+        Insert: {
+          codigo_hash: string
+          criado_em?: string
+          expira_em: string
+          id?: string
+          tentativas?: number
+          usado_em?: string | null
+          user_id: string
+        }
+        Update: {
+          codigo_hash?: string
+          criado_em?: string
+          expira_em?: string
+          id?: string
+          tentativas?: number
+          usado_em?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       sso_handoff: {
         Row: {
           code: string
@@ -8108,6 +8165,37 @@ export type Database = {
       rpc_rp_grade_dia: { Args: { p_data: string }; Returns: Json }
       rpc_rp_minhas_reservas: { Args: never; Returns: Json }
       rpc_rp_parametros: { Args: never; Returns: Json }
+      rpc_senha_aprovacao_confirmar: {
+        Args: { p_alvo?: string; p_area: string; p_senha: string }
+        Returns: {
+          bloqueada_ate: string
+          motivo: string
+          ok: boolean
+        }[]
+      }
+      rpc_senha_aprovacao_criar: {
+        Args: { p_alvo?: string; p_area?: string; p_senha: string }
+        Returns: boolean
+      }
+      rpc_senha_aprovacao_redefinir: {
+        Args: {
+          p_alvo?: string
+          p_area?: string
+          p_codigo: string
+          p_nova_senha: string
+        }
+        Returns: {
+          motivo: string
+          ok: boolean
+        }[]
+      }
+      rpc_senha_aprovacao_status: {
+        Args: never
+        Returns: {
+          bloqueada_ate: string
+          definida: boolean
+        }[]
+      }
       rpc_set_meta_anual: {
         Args: { _ano: number; _valor: number }
         Returns: undefined
@@ -8115,6 +8203,10 @@ export type Database = {
       rpc_toggle_schedule: {
         Args: { p_modulo: string; p_motivo?: string }
         Returns: boolean
+      }
+      senha_aprovacao_gerar_codigo: {
+        Args: { p_user_id: string }
+        Returns: string
       }
       senha_confirmada: {
         Args: { p_area: string; p_minutos?: number }
