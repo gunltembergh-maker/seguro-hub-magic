@@ -18,7 +18,8 @@ import {
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
-import { hasRole, useMeuPerfilEfetivo } from "@/hooks/use-meu-perfil";
+import { hasRole } from "@/hooks/use-meu-perfil";
+import { useMeuPerfilEfetivo } from "@/contexts/view-as-context";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
