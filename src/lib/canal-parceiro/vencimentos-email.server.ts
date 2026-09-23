@@ -13,6 +13,7 @@ type Pendente = {
   contrato_id: string;
   canal_id: string | null;
   parceiro: string | null;
+  razao_social: string | null;
   cnpj: string | null;
   arquivo_nome: string | null;
   vigencia_inicio: string | null;
@@ -20,6 +21,10 @@ type Pendente = {
   dias_para_vencer: number | null;
   tipo_aviso: string | null;
   repasse_acumulado: number | null;
+  renovacao_automatica: boolean | null;
+  pct_beneficios: number | null;
+  pct_garantia: number | null;
+  pct_demais: number | null;
 };
 
 const dataBR = (iso: string | null) =>
