@@ -379,6 +379,13 @@ export function FilaVerificacaoContratos({ semCard = false }: { semCard?: boolea
         souAprovador={aprovador.data === true}
         onFechar={() => setConferindo(null)}
       />
+
+      <VisualizadorContrato
+        path={vendo?.path}
+        nome={vendo?.nome}
+        aberto={!!vendo}
+        onFechar={() => setVendo(null)}
+      />
     </>
   );
 }
