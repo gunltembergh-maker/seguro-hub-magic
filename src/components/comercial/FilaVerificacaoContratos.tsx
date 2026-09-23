@@ -113,43 +113,125 @@ async function baixarContrato(path: string): Promise<Blob> {
   return resp.blob();
 }
 
-export function useAbrirContrato() {
-  const [ocupado, setOcupado] = useState(false);
+/**
+ * Carrega o contrato como blob sem abrir aba: bloqueador de anúncios derruba
+ * window.open, até com blob:, então o PDF é exibido dentro do próprio Hub.
+ */
+export function useContratoBlob() {
+  const [url, setUrl] = useState<string | null>(null);
+  const [carregando, setCarregando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const [pathAtual, setPathAtual] = useState<string | null>(null);
 
-  async function abrir(path?: string | null, baixarComo?: string | null) {
+  async function carregar(path?: string | null) {
     if (!path) {
       toast.error("Este contrato não tem arquivo guardado.");
       return;
     }
-    setOcupado(true);
-    // Abre a aba já no clique para não cair no bloqueio de pop-up.
-    const aba = baixarComo ? null : window.open("", "_blank");
+    setPathAtual(path);
+    setCarregando(true);
+    setErro(null);
     try {
       const blob = await baixarContrato(path);
-      const url = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
-      if (baixarComo) {
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = baixarComo;
-        a.rel = "noopener";
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-      } else if (aba) {
-        aba.location.href = url;
-      } else {
-        window.open(url, "_blank");
-      }
-      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      const u = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
+      setUrl((antiga) => {
+        if (antiga) URL.revokeObjectURL(antiga);
+        return u;
+      });
     } catch (e) {
-      aba?.close();
-      toast.error(mensagemDeErro(e));
+      setErro(mensagemDeErro(e));
     } finally {
-      setOcupado(false);
+      setCarregando(false);
     }
   }
 
-  return { abrir, ocupado };
+  function limpar() {
+    setUrl((antiga) => {
+      if (antiga) URL.revokeObjectURL(antiga);
+      return null;
+    });
+    setErro(null);
+    setCarregando(false);
+    setPathAtual(null);
+  }
+
+  return { url, carregando, erro, pathAtual, carregar, limpar };
+}
+
+/** Diálogo com o PDF embutido. Nenhuma aba nova, nenhum domínio externo. */
+export function VisualizadorContrato({
+  path,
+  nome,
+  aberto,
+  onFechar,
+}: {
+  path: string | null | undefined;
+  nome: string | null | undefined;
+  aberto: boolean;
+  onFechar: () => void;
+}) {
+  const blob = useContratoBlob();
+
+  useEffect(() => {
+    if (aberto && path) blob.carregar(path);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aberto, path]);
+
+  function fechar() {
+    blob.limpar();
+    onFechar();
+  }
+
+  function baixar() {
+    if (!blob.url) return;
+    const a = document.createElement("a");
+    a.href = blob.url;
+    a.download = nome ?? "contrato.pdf";
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  return (
+    <Dialog open={aberto} onOpenChange={(o) => !o && fechar()}>
+      <DialogContent className="max-w-5xl w-[calc(100vw-2rem)]">
+        <DialogHeader>
+          <DialogTitle className="truncate">{nome ?? "Contrato"}</DialogTitle>
+        </DialogHeader>
+
+        {blob.carregando ? (
+          <div className="flex h-[75vh] items-center justify-center gap-2 text-muted-foreground">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            Abrindo o contrato...
+          </div>
+        ) : blob.erro ? (
+          <div className="flex h-[75vh] flex-col items-center justify-center gap-3">
+            <p className="text-sm text-destructive">{blob.erro}</p>
+            <Button variant="outline" onClick={() => blob.carregar(blob.pathAtual)}>
+              Tentar de novo
+            </Button>
+          </div>
+        ) : blob.url ? (
+          <iframe src={blob.url} className="h-[75vh] w-full rounded border" title="Contrato" />
+        ) : (
+          <div className="flex h-[75vh] items-center justify-center text-muted-foreground">
+            Nada para mostrar.
+          </div>
+        )}
+
+        <DialogFooter className="flex-wrap gap-2">
+          <Button variant="outline" onClick={baixar} disabled={!blob.url}>
+            <Download className="mr-2 h-4 w-4" />
+            Baixar
+          </Button>
+          <Button variant="secondary" onClick={fechar}>
+            Fechar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 /* ------------------------------------------------------------------ dados */
@@ -192,7 +274,7 @@ function useSouAprovador() {
 export function FilaVerificacaoContratos({ semCard = false }: { semCard?: boolean } = {}) {
   const pendencias = usePendenciasVerificacao();
   const aprovador = useSouAprovador();
-  const { abrir, ocupado } = useAbrirContrato();
+  const [vendo, setVendo] = useState<{ path: string; nome: string | null } | null>(null);
   const [conferindo, setConferindo] = useState<Pendencia | null>(null);
   const meuPerfil = useMeuPerfilEfetivo();
   const isAdmin = hasRole(meuPerfil, "ADMIN");
@@ -216,10 +298,12 @@ export function FilaVerificacaoContratos({ semCard = false }: { semCard?: boolea
               <Button
                 variant="outline"
                 size="sm"
-                disabled={ocupado}
-                onClick={() => abrir(p.arquivo_path)}
+                disabled={!p.arquivo_path}
+                onClick={() =>
+                  setVendo({ path: p.arquivo_path!, nome: p.arquivo_nome ?? "Contrato" })
+                }
               >
-                <ExternalLink className="mr-2 h-4 w-4" />
+                <FileText className="mr-2 h-4 w-4" />
                 Abrir contrato
               </Button>
               <Button size="sm" onClick={() => setConferindo(p)}>
@@ -295,6 +379,13 @@ export function FilaVerificacaoContratos({ semCard = false }: { semCard?: boolea
         souAprovador={aprovador.data === true}
         onFechar={() => setConferindo(null)}
       />
+
+      <VisualizadorContrato
+        path={vendo?.path}
+        nome={vendo?.nome}
+        aberto={!!vendo}
+        onFechar={() => setVendo(null)}
+      />
     </>
   );
 }
@@ -332,7 +423,9 @@ function ConferirDialog({
   onFechar: () => void;
 }) {
   const queryClient = useQueryClient();
-  const { abrir, ocupado } = useAbrirContrato();
+  const [vendo, setVendo] = useState(false);
+  const [baixando, setBaixando] = useState(false);
+
 
   const [inicio, setInicio] = useState("");
   const [fim, setFim] = useState("");
@@ -437,14 +530,10 @@ function ConferirDialog({
           <Button
             className="w-full"
             size="lg"
-            disabled={ocupado}
-            onClick={() => abrir(pendencia.arquivo_path)}
+            disabled={!pendencia.arquivo_path}
+            onClick={() => setVendo(true)}
           >
-            {ocupado ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <ExternalLink className="mr-2 h-4 w-4" />
-            )}
+            <FileText className="mr-2 h-4 w-4" />
             Abrir o contrato
           </Button>
           <div className="mt-2 flex items-center justify-between gap-2">
@@ -452,16 +541,43 @@ function ConferirDialog({
             <Button
               variant="ghost"
               size="sm"
-              disabled={ocupado}
-              onClick={() =>
-                abrir(pendencia.arquivo_path, pendencia.arquivo_nome ?? "contrato.pdf")
-              }
+              disabled={baixando || !pendencia.arquivo_path}
+              onClick={async () => {
+                setBaixando(true);
+                try {
+                  const blob = await baixarContrato(pendencia.arquivo_path!);
+                  const url = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = pendencia.arquivo_nome ?? "contrato.pdf";
+                  a.rel = "noopener";
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+                } catch (e) {
+                  toast.error(mensagemDeErro(e));
+                } finally {
+                  setBaixando(false);
+                }
+              }}
             >
-              <Download className="mr-2 h-4 w-4" />
+              {baixando ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="mr-2 h-4 w-4" />
+              )}
               Baixar
             </Button>
           </div>
         </div>
+
+        <VisualizadorContrato
+          path={pendencia.arquivo_path}
+          nome={pendencia.arquivo_nome}
+          aberto={vendo}
+          onFechar={() => setVendo(false)}
+        />
 
         <Separator />
 

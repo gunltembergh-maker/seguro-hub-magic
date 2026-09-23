@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import EnviarContratoParceiro from "@/components/comercial/EnviarContratoParceiro";
-import { useAbrirContrato } from "@/components/comercial/FilaVerificacaoContratos";
+import { VisualizadorContrato } from "@/components/comercial/FilaVerificacaoContratos";
 
 type Linha = {
   canal_id: string;
@@ -139,7 +139,7 @@ export default function ContratoParceriaTela() {
   const podeBloquear = hasPermission(perfil, "juridico_bloquear_repasse");
 
   const qc = useQueryClient();
-  const { abrir, ocupado } = useAbrirContrato();
+  const [vendo, setVendo] = useState<{ path: string; nome: string | null } | null>(null);
   const [filtro, setFiltro] = useState<Filtro>(null);
   const [acao, setAcao] = useState<{ tipo: TipoAcao; linha: Linha } | null>(null);
   const [justificativa, setJustificativa] = useState("");
@@ -383,7 +383,7 @@ export default function ContratoParceriaTela() {
                           <TableCell className="align-top">
                             <div className="flex flex-wrap justify-end gap-1" data-tour="jur-acoes">
                               {l.arquivo_path && (
-                                <Button size="sm" variant="ghost" disabled={ocupado} onClick={() => abrir(l.arquivo_path)}>
+                                <Button size="sm" variant="ghost" onClick={() => setVendo({ path: l.arquivo_path!, nome: l.arquivo_nome ?? "Contrato" })}>
                                   <FileText className="mr-1 h-4 w-4" /> Abrir contrato
                                 </Button>
                               )}
@@ -484,6 +484,13 @@ export default function ContratoParceriaTela() {
           aberto={!!envio}
           onFechar={() => setEnvio(null)}
           onSucesso={invalidar}
+        />
+
+        <VisualizadorContrato
+          path={vendo?.path}
+          nome={vendo?.nome}
+          aberto={!!vendo}
+          onFechar={() => setVendo(null)}
         />
       </div>
     </TooltipProvider>

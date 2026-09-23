@@ -8116,6 +8116,10 @@ export type Database = {
         Args: { p_modulo: string; p_motivo?: string }
         Returns: boolean
       }
+      senha_confirmada: {
+        Args: { p_area: string; p_minutos?: number }
+        Returns: boolean
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       super_admin_liberado: {
