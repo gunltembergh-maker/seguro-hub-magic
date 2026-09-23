@@ -139,6 +139,71 @@ const PILL: Record<string, { bg: string; color: string; label: string }> = {
   SEM_VALOR: { bg: "#F3F4F6", color: "#6B7280", label: "Sem valor" },
 };
 
+/** Badge que diz por que o parceiro está parado, conforme a situação do banco. */
+function BadgeParado({ parado }: { parado: ParadoInfo | undefined }) {
+  const bloqueado = parado?.bloqueado === true;
+  const sit = parado?.situacao ?? "SEM_CONTRATO";
+
+  if (bloqueado) {
+    const badge = (
+      <Badge variant="outline" className="gap-1 border-red-600/40 bg-red-50 text-red-700 hover:bg-red-50">
+        <Lock className="h-3 w-3" />
+        Repasse bloqueado
+      </Badge>
+    );
+    return parado?.bloqueio_motivo ? (
+      <Tooltip>
+        <TooltipTrigger asChild>{badge}</TooltipTrigger>
+        <TooltipContent>{parado.bloqueio_motivo}</TooltipContent>
+      </Tooltip>
+    ) : (
+      badge
+    );
+  }
+
+  if (sit === "AGUARDANDO_JURIDICO") {
+    const badge = (
+      <Badge variant="outline" className="gap-1 border-amber-600/40 bg-amber-50 text-amber-800 hover:bg-amber-50">
+        <Lock className="h-3 w-3" />
+        Aguardando o Jurídico
+      </Badge>
+    );
+    return parado?.motivo_parado ? (
+      <Tooltip>
+        <TooltipTrigger asChild>{badge}</TooltipTrigger>
+        <TooltipContent>{parado.motivo_parado}</TooltipContent>
+      </Tooltip>
+    ) : (
+      badge
+    );
+  }
+
+  if (sit === "SUSPENSO") {
+    return (
+      <Badge variant="outline" className="gap-1 text-muted-foreground">
+        <Lock className="h-3 w-3" />
+        Contrato suspenso
+      </Badge>
+    );
+  }
+
+  if (sit === "VENCIDO") {
+    return (
+      <Badge variant="outline" className="gap-1 border-red-600/40 bg-red-50 text-red-700 hover:bg-red-50">
+        <Lock className="h-3 w-3" />
+        Contrato vencido
+      </Badge>
+    );
+  }
+
+  return (
+    <Badge variant="outline" className="gap-1 text-muted-foreground">
+      <Lock className="h-3 w-3" />
+      Sem contrato válido
+    </Badge>
+  );
+}
+
 function BadgeFinanceiro({ d }: { d: DemandaNF | undefined }) {
   if (!d) {
     return (
