@@ -647,7 +647,7 @@ function LinhaRepasse({
         ) : null}
       </TableCell>
       <TableCell className="text-right tabular-nums">
-        <PercentualRepasse percentuais={percentuais} />
+        <PercentualRepasse percentuais={percentuais} divergencia={divergencia} />
       </TableCell>
       <TableCell className="text-right font-mono tabular-nums">{BRL(cicloCorrente)}</TableCell>
       <TableCell className="text-right font-mono tabular-nums">{BRL(acumulado)}</TableCell>
@@ -773,8 +773,23 @@ function LinhaRepasse({
   );
 }
 
+function SeloDivergencia({ divergencia }: { divergencia: DivergenciaPct | undefined }) {
+  if (!divergencia) return null;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="cursor-help">
+          <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{divergencia.resumo}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 function PercentualRepasse({
   percentuais,
+  divergencia,
 }: {
   percentuais:
     | {
@@ -786,8 +801,15 @@ function PercentualRepasse({
         origemDemais: string | null;
       }
     | undefined;
+  divergencia: DivergenciaPct | undefined;
 }) {
-  if (!percentuais) return <span className="text-muted-foreground">—</span>;
+  const seloDivergencia = <SeloDivergencia divergencia={divergencia} />;
+  if (!percentuais)
+    return (
+      <span className="inline-flex items-center justify-end gap-1.5 text-muted-foreground">
+        —{seloDivergencia}
+      </span>
+    );
   const formatar = (valor: number | null) =>
     valor == null
       ? "—"
