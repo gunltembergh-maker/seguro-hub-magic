@@ -70,12 +70,15 @@ export async function avisarVencimentosPendentes(): Promise<
         idempotencyKey: messageId,
         templateData: {
           parceiro: p.parceiro ?? "—",
+          razaoSocial: p.razao_social ?? "—",
           cnpj: p.cnpj && p.cnpj.trim() ? p.cnpj : "CNPJ não cadastrado",
           vigenciaInicio: dataBR(p.vigencia_inicio),
           vigenciaFim: dataBR(p.vigencia_fim),
           diasParaVencer: Number(p.dias_para_vencer ?? 0),
           arquivoNome: p.arquivo_nome ?? "—",
           repasseAcumulado: moedaBR(p.repasse_acumulado),
+          percentuais: percentuaisRepasse(p),
+          renovacaoAutomatica: p.renovacao_automatica,
         },
       });
 
