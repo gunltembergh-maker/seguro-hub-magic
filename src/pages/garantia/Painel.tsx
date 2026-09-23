@@ -191,8 +191,8 @@ export default function Painel() {
   return (
     <GarantiaShell titulo="Painel da Gerência" trilha={["Painel"]}>
       {/* Filtros — valem para todos os blocos. */}
-      <div className="mb-6 rounded-xl border border-border bg-card p-4 shadow-sm">
-        <div className="flex flex-wrap items-end gap-3">
+      <div className="mb-6 min-w-0 rounded-xl border border-border bg-card p-4 shadow-sm">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <div>
             <label className="text-xs text-muted-foreground" htmlFor="painel-de">De</label>
             <Input
@@ -271,7 +271,7 @@ export default function Painel() {
           </div>
 
           {/* ---------------- Em jogo ---------------- */}
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <Bloco
               titulo="Quanto está parado em cada etapa"
               descricao="Prêmio estimado das demandas ainda em aberto."
@@ -313,7 +313,7 @@ export default function Painel() {
           </div>
 
           {/* ---------------- Deixado na mesa ---------------- */}
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <Bloco
               titulo="Por que perdemos"
               descricao="Prêmio das demandas perdidas, por motivo."
@@ -390,7 +390,7 @@ export default function Painel() {
           </div>
 
           {/* ---------------- Virou resultado ---------------- */}
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <Bloco
               titulo="O que virou apólice"
               descricao="Prêmio emitido por mês."
@@ -448,7 +448,7 @@ export default function Painel() {
             />
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {[
               { titulo: "Quanto tempo cada etapa consome", dados: velEtapa, coluna: "Etapa" },
               { titulo: "Quanto tempo cada status consome", dados: velStatus, coluna: "Status" },
@@ -486,7 +486,7 @@ export default function Painel() {
           </div>
 
           {/* ---------------- Conversão ---------------- */}
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {[
               { titulo: "Quanto convertemos por modalidade", dados: convModalidade, coluna: "Modalidade" },
               { titulo: "Quanto convertemos por canal", dados: convCanal, coluna: "Canal" },
@@ -517,7 +517,7 @@ export default function Painel() {
           </div>
 
           {/* ---------------- Carteira ---------------- */}
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <Bloco
               titulo="Limite usado por cliente"
               descricao="Soma do limite ocupado nas consultas de mercado ainda válidas."
@@ -607,10 +607,10 @@ function Seletor({
   onChange: (v: string | null) => void;
 }) {
   return (
-    <div>
+    <div className="min-w-0">
       <p className="text-xs text-muted-foreground">{rotulo}</p>
       <Select value={valor ?? TODOS} onValueChange={(v) => onChange(v === TODOS ? null : v)}>
-        <SelectTrigger className="h-9 w-[180px]">
+        <SelectTrigger className="h-9 w-full">
           <SelectValue placeholder="Todos" />
         </SelectTrigger>
         <SelectContent>
