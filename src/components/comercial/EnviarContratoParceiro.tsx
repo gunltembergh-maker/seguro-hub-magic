@@ -73,7 +73,22 @@ interface Resposta {
   origem_leitura?: string | null;
   precisa_ocr?: boolean;
   motivo?: string | null;
+  manual_aplicado?: boolean;
+  campos_manuais?: string[] | null;
+  vigencia_origem?: string | null;
 }
+
+/** Rótulo curto dos campos gravados à mão, para o aviso de conferência. */
+const ROTULO_CAMPO: Record<string, string> = {
+  razao_social: "razão social",
+  cnpj: "CNPJ",
+  vigencia_inicio: "vigência",
+  vigencia_fim: "vigência",
+  pct_beneficios: "benefícios",
+  pct_garantia: "garantia",
+  pct_demais: "demais ramos",
+  minimo: "mínimo",
+};
 
 export interface EnviarContratoParceiroProps {
   canalId?: string | null;
@@ -341,7 +356,7 @@ export default function EnviarContratoParceiro({
 
   return (
     <Dialog open={aberto} onOpenChange={(v) => { if (!v) fechar(); }}>
-      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
+      <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] min-w-0 overflow-y-auto overflow-x-hidden sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Enviar contrato de parceria</DialogTitle>
           <DialogDescription>
