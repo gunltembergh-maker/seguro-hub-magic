@@ -555,6 +555,7 @@ function LinhaRepasse({
         origemDemais: string | null;
       }
     | undefined;
+  divergencia: DivergenciaPct | undefined;
   primeiraLinha: boolean;
   cicloCorrente: number;
   acumulado: number;
