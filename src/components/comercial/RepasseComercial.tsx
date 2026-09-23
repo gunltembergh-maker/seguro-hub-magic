@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
 import {
+  AlertTriangle,
   Download,
   FileSearch,
   FileText,
@@ -91,6 +92,17 @@ type CanalRow = {
   valor: number;
   total_canal_no_ciclo: number;
   situacao: "A_PAGAR" | "RETIDO_MINIMO" | "PAGO";
+};
+
+type DivergenciaPct = {
+  chave_planilha: string;
+  linhas: number | null;
+  linhas_com_regra: number | null;
+  linhas_divergentes: number | null;
+  valor_divergente: number | null;
+  pct_planilha: number[] | null;
+  pct_hub: number[] | null;
+  resumo: string | null;
 };
 
 export type DemandaNF = {
