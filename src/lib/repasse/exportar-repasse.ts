@@ -211,6 +211,7 @@ export async function exportarRepasse(opts: {
     { rotulo: "Ciclo", valor: `${MESES_LONGOS[mes - 1]} / ${ano}` },
     { rotulo: "Total a repassar", valor: BRL(totalRepasse) },
     { rotulo: "Parcelas", valor: String(todas.length) },
+    ...(avisoDivergencia ? [{ rotulo: "Atenção", valor: avisoDivergencia }] : []),
     ...(dataPrevista
       ? [{ rotulo: "Data prevista de pagamento", valor: fmtBR(dataPrevista) }]
       : []),
