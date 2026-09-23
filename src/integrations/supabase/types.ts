@@ -6163,6 +6163,7 @@ export type Database = {
         Returns: boolean
       }
       lavoro_times_usuario: { Args: { _user_id: string }; Returns: string[] }
+      lavoro_uid_efetivo: { Args: never; Returns: string }
       normalize_canal_repasse: { Args: { p_canal: string }; Returns: string }
       normalize_categoria_financeira: {
         Args: { categoria: string }
