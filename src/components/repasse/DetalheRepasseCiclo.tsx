@@ -18,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Table,
   TableBody,
@@ -90,6 +91,8 @@ export function DetalheRepasseCiclo({
   valorDoPedido?: number;
 }) {
   const [busca, setBusca] = useState("");
+  const [visao, setVisao] = useState<"INTERNA" | "PARCEIRO">("INTERNA");
+  const visaoParceiro = visao === "PARCEIRO";
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["repasse-detalhe-ciclo", canal, ano, mes, modoDados, situacaoRepasse],
@@ -184,6 +187,18 @@ export function DetalheRepasseCiclo({
           </Alert>
         ) : null}
 
+        <ToggleGroup
+          type="single"
+          size="sm"
+          value={visao}
+          onValueChange={(v) => {
+            if (v === "INTERNA" || v === "PARCEIRO") setVisao(v);
+          }}
+        >
+          <ToggleGroupItem value="INTERNA">Visão interna</ToggleGroupItem>
+          <ToggleGroupItem value="PARCEIRO">Visão do parceiro</ToggleGroupItem>
+        </ToggleGroup>
+
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -195,7 +210,9 @@ export function DetalheRepasseCiclo({
         </div>
 
         <p className="text-xs text-muted-foreground">
-          Visão interna do Hub. O arquivo enviado ao parceiro não traz prêmio nem comissão.
+          {visaoParceiro
+            ? "Estas são as mesmas informações do arquivo enviado ao parceiro. Prêmio e percentual de comissão não saem para ele."
+            : "Visão interna do Hub. O arquivo enviado ao parceiro não traz prêmio nem comissão."}
         </p>
 
         <div className="overflow-x-auto rounded-md border">
@@ -209,8 +226,12 @@ export function DetalheRepasseCiclo({
                 <TableHead>Nº Apólice</TableHead>
                 <TableHead>Parcela</TableHead>
                 <TableHead>Data de pagamento</TableHead>
-                <TableHead className="text-right">Prêmio total</TableHead>
-                <TableHead className="text-right">% Comissão</TableHead>
+                {!visaoParceiro ? (
+                  <TableHead className="text-right">Prêmio total</TableHead>
+                ) : null}
+                {!visaoParceiro ? (
+                  <TableHead className="text-right">% Comissão</TableHead>
+                ) : null}
                 <TableHead className="text-right">Comissão recebida</TableHead>
                 <TableHead className="text-right">% Imposto</TableHead>
                 <TableHead className="text-right">Base líquida</TableHead>
@@ -222,14 +243,20 @@ export function DetalheRepasseCiclo({
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={15} className="text-sm text-muted-foreground">
+                  <TableCell
+                    colSpan={visaoParceiro ? 13 : 15}
+                    className="text-sm text-muted-foreground"
+                  >
                     <Loader2 className="mr-2 inline h-4 w-4 animate-spin" />
                     Carregando
                   </TableCell>
                 </TableRow>
               ) : linhas.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={15} className="text-sm text-muted-foreground">
+                  <TableCell
+                    colSpan={visaoParceiro ? 13 : 15}
+                    className="text-sm text-muted-foreground"
+                  >
                     Nenhuma parcela nesta relação.
                   </TableCell>
                 </TableRow>
@@ -247,12 +274,16 @@ export function DetalheRepasseCiclo({
                       {l.numero_da_parcela ?? "—"} / {l.qtd_parcelas ?? "—"}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">{fmtBR(l.data_pagamento)}</TableCell>
-                    <TableCell className="whitespace-nowrap text-right font-mono tabular-nums">
-                      {BRL(l.premio_total)}
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap text-right tabular-nums">
-                      {PCT(l.percentual_comissao)}
-                    </TableCell>
+                    {!visaoParceiro ? (
+                      <TableCell className="whitespace-nowrap text-right font-mono tabular-nums">
+                        {BRL(l.premio_total)}
+                      </TableCell>
+                    ) : null}
+                    {!visaoParceiro ? (
+                      <TableCell className="whitespace-nowrap text-right tabular-nums">
+                        {PCT(l.percentual_comissao)}
+                      </TableCell>
+                    ) : null}
                     <TableCell className="whitespace-nowrap text-right font-mono tabular-nums">
                       {BRL(l.valor_recebido_a_receber)}
                     </TableCell>
@@ -278,7 +309,7 @@ export function DetalheRepasseCiclo({
             {linhas.length > 0 ? (
               <TableFooter>
                 <TableRow>
-                  <TableCell colSpan={9}>Total</TableCell>
+                  <TableCell colSpan={visaoParceiro ? 7 : 9}>Total</TableCell>
                   <TableCell className="text-right font-mono tabular-nums">
                     {BRL(totais.comissao)}
                   </TableCell>
