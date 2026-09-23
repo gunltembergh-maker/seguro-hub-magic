@@ -210,7 +210,7 @@ function Quadro({
   };
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4">
+    <div className="flex min-w-0 gap-4 overflow-x-auto pb-4">
       {colunas.map((coluna) => {
         const daColuna = demandas.filter((d) => d.etapa === coluna.etapa);
         return (
@@ -218,7 +218,7 @@ function Quadro({
             key={coluna.etapa}
             onDragOver={(e) => e.preventDefault()}
             onDrop={() => soltarEm(coluna)}
-            className="flex w-72 shrink-0 flex-col rounded-lg bg-muted/40 p-3"
+            className="flex w-[280px] shrink-0 flex-col rounded-lg bg-muted/40 p-3 sm:w-[320px]"
           >
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-sm font-semibold text-foreground">{rotuloEtapa(coluna.etapa)}</h2>
@@ -280,14 +280,14 @@ function Perdidos({ podeVerValor, ativo }: { podeVerValor: boolean; ativo: boole
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="space-y-1">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="min-w-0 space-y-1">
           <Label>Motivo</Label>
           <Select
             value={filtros.motivo ?? TODOS}
             onValueChange={(v) => setFiltros({ ...filtros, motivo: v === TODOS ? undefined : v })}
           >
-            <SelectTrigger className="w-64"><SelectValue placeholder="Todos" /></SelectTrigger>
+            <SelectTrigger className="w-full"><SelectValue placeholder="Todos" /></SelectTrigger>
             <SelectContent>
               <SelectItem value={TODOS}>Todos</SelectItem>
               {MOTIVOS_PERDA.map((m) => (
@@ -296,7 +296,7 @@ function Perdidos({ podeVerValor, ativo }: { podeVerValor: boolean; ativo: boole
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-1">
+          <div className="min-w-0 space-y-1">
           <Label>De</Label>
           <Input
             type="date"
@@ -306,7 +306,7 @@ function Perdidos({ podeVerValor, ativo }: { podeVerValor: boolean; ativo: boole
             }
           />
         </div>
-        <div className="space-y-1">
+          <div className="min-w-0 space-y-1">
           <Label>Até</Label>
           <Input
             type="date"
@@ -318,7 +318,7 @@ function Perdidos({ podeVerValor, ativo }: { podeVerValor: boolean; ativo: boole
         </div>
         {/* Valor deixado na mesa: só para quem tem o Painel da Gerência. */}
         {podeVerValor && (
-          <div className="ml-auto rounded-md border border-border bg-card px-4 py-2 text-sm">
+            <div className="rounded-md border border-border bg-card px-4 py-2 text-sm xl:ml-auto">
             <span className="text-muted-foreground">Deixado na mesa: </span>
             <span className="font-semibold">{moeda(total)}</span>
           </div>
@@ -332,8 +332,8 @@ function Perdidos({ podeVerValor, ativo }: { podeVerValor: boolean; ativo: boole
           Nenhum negócio perdido registrado no período.
         </p>
       ) : (
-        <div className="rounded-lg border border-border">
-          <Table>
+        <div className="min-w-0 overflow-x-auto rounded-lg border border-border">
+          <Table className="min-w-[720px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Cliente</TableHead>
@@ -420,14 +420,14 @@ export default function Negociacao() {
         </TabsList>
 
         <TabsContent value="quadro" className="space-y-6">
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="space-y-1">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="min-w-0 space-y-1">
               <Label>Produto</Label>
               <Select
                 value={filtros.produto ?? TODOS}
                 onValueChange={(v) => setFiltros({ ...filtros, produto: v === TODOS ? undefined : v })}
               >
-                <SelectTrigger className="w-52"><SelectValue placeholder="Todos" /></SelectTrigger>
+                <SelectTrigger className="w-full"><SelectValue placeholder="Todos" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value={TODOS}>Todos</SelectItem>
                   <SelectItem value="seguro_garantia">Seguro Garantia</SelectItem>
@@ -435,13 +435,13 @@ export default function Negociacao() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1">
+            <div className="min-w-0 space-y-1">
               <Label>Modalidade</Label>
               <Select
                 value={filtros.modalidade ?? TODOS}
                 onValueChange={(v) => setFiltros({ ...filtros, modalidade: v === TODOS ? undefined : v })}
               >
-                <SelectTrigger className="w-48"><SelectValue placeholder="Todas" /></SelectTrigger>
+                <SelectTrigger className="w-full"><SelectValue placeholder="Todas" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value={TODOS}>Todas</SelectItem>
                   {MODALIDADES.map((m) => (
@@ -451,7 +451,7 @@ export default function Negociacao() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1">
+            <div className="min-w-0 space-y-1">
               <Label>Responsável técnico</Label>
               <Select
                 value={filtros.responsavel_tecnico_id ?? TODOS}
@@ -459,7 +459,7 @@ export default function Negociacao() {
                   setFiltros({ ...filtros, responsavel_tecnico_id: v === TODOS ? undefined : v })
                 }
               >
-                <SelectTrigger className="w-52"><SelectValue placeholder="Todos" /></SelectTrigger>
+                <SelectTrigger className="w-full"><SelectValue placeholder="Todos" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value={TODOS}>Todos</SelectItem>
                   {pessoas.map((p) => (
@@ -468,13 +468,13 @@ export default function Negociacao() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1">
+            <div className="min-w-0 space-y-1">
               <Label>Canal</Label>
               <Select
                 value={filtros.canal_id ?? TODOS}
                 onValueChange={(v) => setFiltros({ ...filtros, canal_id: v === TODOS ? undefined : v })}
               >
-                <SelectTrigger className="w-52"><SelectValue placeholder="Todos" /></SelectTrigger>
+                <SelectTrigger className="w-full"><SelectValue placeholder="Todos" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value={TODOS}>Todos</SelectItem>
                   {canais.map((c) => (
@@ -483,12 +483,12 @@ export default function Negociacao() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1">
+            <div className="min-w-0 space-y-1 sm:col-span-2 xl:col-span-4">
               <Label>Cliente</Label>
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  className="w-64 pl-8"
+                  className="w-full pl-8"
                   placeholder="Buscar por nome ou CNPJ"
                   value={busca}
                   onChange={(e) => setBusca(e.target.value)}
