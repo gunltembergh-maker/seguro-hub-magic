@@ -5,6 +5,7 @@ import { template as executivoTemplate } from './resumo-executivo-semanal'
 import { template as fechamentoTemplate } from './fechamento'
 import { template as garantiaNovaDemandaTemplate } from './garantia-judicial-nova-demanda'
 import { template as canalParceiroVencimentoTemplate } from './canal-parceiro-vencimento'
+import { template as senhaAprovacaoCodigoTemplate } from './senha-aprovacao-codigo'
 import {
   templateSolicitacao,
   templateResposta,
@@ -35,6 +36,7 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   // src/lib/garantia/garantia-judicial-email.server.ts (precisa de anexos).
   'garantia-judicial-nova-demanda': garantiaNovaDemandaTemplate,
   'canal-parceiro-vencimento': canalParceiroVencimentoTemplate,
+  'senha-aprovacao-codigo': senhaAprovacaoCodigoTemplate,
   'canal-repasse-solicitacao': templateSolicitacao,
   'canal-repasse-resposta': templateResposta,
   'canal-repasse-cobranca': templateCobranca,

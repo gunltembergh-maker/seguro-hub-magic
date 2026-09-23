@@ -1,46 +1,33 @@
-import { createClient } from "@supabase/supabase-js";
 import { lavoroAdmin } from "@/integrations/supabase/lavoro-admin.server";
-
-interface Entrada {
-  area: string;
-  senha: string;
-  alvo?: string | null;
-}
+import { sendTemplateEmail } from "@/lib/email-templates/send-email";
 
 interface Contexto {
   userId: string;
   claims?: { email?: string } | Record<string, unknown>;
 }
 
-/** Valida a senha do próprio usuário com um client descartável e registra em auditoria. */
-export async function confirmarSenhaDoUsuario(data: Entrada, context: Contexto) {
+function mascarar(email: string) {
+  const [local, dominio] = email.split("@");
+  return `${local.slice(0, 2)}***@${dominio ?? ""}`;
+}
+
+/** Gera o código de redefinição da senha de aprovação e envia por e-mail. Nunca devolve o código. */
+export async function enviarCodigoRedefinicao(context: Contexto) {
   let email = (context.claims as { email?: string } | undefined)?.email ?? null;
   if (!email) {
     const { data: u } = await lavoroAdmin.auth.admin.getUserById(context.userId);
     email = u?.user?.email ?? null;
   }
+  if (!email) throw new Error("Não encontramos o seu e-mail para enviar o código.");
 
-  let ok = false;
-  if (email) {
-    const url = process.env["VITE_SUPABASE_URL"] ?? process.env["SUPABASE_URL"] ?? "https://primmycdkkiziyhqkkkv.supabase.co";
-    const anon =
-      process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ??
-      process.env["SUPABASE_PUBLISHABLE_KEY"] ??
-      process.env["VITE_SUPABASE_ANON_KEY"];
-    if (!anon) throw new Error("Configuração de autenticação ausente no servidor.");
-    const descartavel = createClient(url, anon, {
-      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storage: undefined },
-    });
-    const { data: s, error } = await descartavel.auth.signInWithPassword({ email, password: data.senha });
-    ok = !error && s?.user?.id === context.userId;
-    if (s?.session) await descartavel.auth.signOut({ scope: "local" }).catch(() => {});
-  }
-
-  await lavoroAdmin.from("user_activity_log").insert({
-    user_id: context.userId,
-    acao: ok ? "senha_confirmada" : "senha_confirmada_falha",
-    detalhes: ok ? { area: data.area, alvo: data.alvo ?? null } : { area: data.area },
+  const { data: codigo, error } = await lavoroAdmin.rpc("senha_aprovacao_gerar_codigo" as never, {
+    p_user_id: context.userId,
   } as never);
+  if (error) throw new Error((error as { message?: string }).message || "Não foi possível gerar o código.");
 
-  return { ok };
+  await sendTemplateEmail("senha-aprovacao-codigo", email, {
+    templateData: { codigo: String(codigo) },
+  });
+
+  return { ok: true as const, email_mascarado: mascarar(email) };
 }
