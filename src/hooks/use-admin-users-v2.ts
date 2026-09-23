@@ -48,33 +48,6 @@ export function usePreCadastrarUsuario() {
   });
 }
 
-export function useUpdateUserV2() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (vars: {
-      user_id: string;
-      full_name: string;
-      perfil_id: string | null;
-      blocked: boolean;
-      active: boolean;
-    }) => {
-      const { error } = await supabase.rpc("rpc_admin_update_user_v2" as never, {
-        _user_id: vars.user_id,
-        _full_name: vars.full_name,
-        _perfil_id: vars.perfil_id,
-        _blocked: vars.blocked,
-        _active: vars.active,
-      } as never);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Usuário atualizado");
-      qc.invalidateQueries({ queryKey: ["admin-users-v2"] });
-    },
-    onError: (e: Error) => toast.error("Falha ao atualizar", { description: e.message }),
-  });
-}
-
 export interface AdminUserV2 {
   user_id: string;
   full_name: string | null;

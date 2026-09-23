@@ -162,6 +162,8 @@ type DocPendente = {
   destinatarios_anexos: Destinatarios;
   base_path: string | null;
   base_nome: string | null;
+  comercial_ja_enviado?: boolean | null;
+  anexos_ja_enviados?: boolean | null;
 };
 
 type Envio = {
@@ -247,7 +249,12 @@ export async function enviarAvisosCanalParceiro(): Promise<
   let falhas = 0;
 
   /** Envia para todos os destinatários; só devolve true se todos saíram. */
-  async function despachar(e: Envio, contexto: string): Promise<string | null> {
+  async function despachar(
+    e: Envio,
+    contexto: string,
+    /** Prefixo estável da idempotência (fila de documentos): `${documento_id}-${tipo}`. */
+    chaveEstavel?: string,
+  ): Promise<string | null> {
     const destinos = (e.destinatarios ?? []).filter((d) => typeof d === "string" && d.includes("@"));
     if (destinos.length === 0) {
       console.error(`[canal-parceiro-avisos] sem destinatários`, contexto);
@@ -258,7 +265,7 @@ export async function enviarAvisosCanalParceiro(): Promise<
     for (const destino of destinos) {
       try {
         const r = await sendTemplateEmail(e.template, destino, {
-          idempotencyKey: `${messageId}-${destino}`,
+          idempotencyKey: chaveEstavel ? `${chaveEstavel}-${destino}` : `${messageId}-${destino}`,
           templateData: {
             assunto: e.assunto,
             eyebrowTexto: "Canal Parceiros",
@@ -641,6 +648,7 @@ export async function enviarAvisosCanalParceiro(): Promise<
           },
         },
         `docs NF_ENVIADA ${d.documento_id}`,
+        `${d.documento_id}-${d.tipo}`,
       );
     } else if (d.tipo === "NF_DECIDIDA") {
       const aprovada = (d.situacao ?? "").toUpperCase() === "APROVADA";
@@ -665,28 +673,58 @@ export async function enviarAvisosCanalParceiro(): Promise<
           },
         },
         `docs NF_DECIDIDA ${d.documento_id}`,
+        `${d.documento_id}-${d.tipo}`,
       );
     } else if (d.tipo === "PAGAMENTO") {
-      const idComercial = await despachar(
-        {
-          template: "canal-repasse-pagamento",
-          assunto: `Repasse de ${parceiro} pago, ciclo ${ciclo}`,
-          destinatarios: d.destinatarios ?? [],
-          dados: {
-            ...comum,
-            titulo: "Repasse pago",
-            paragrafos: [
-              `O Financeiro registrou o pagamento do repasse de **${parceiro}**, ciclo ${ciclo}, em ${dataBR(d.data_pagamento)}.`,
-            ],
-            destaque: { titulo: moedaBR(d.valor_autorizado), subtitulo: "valor autorizado" },
-            botao: { rotulo: "Baixar comprovante no Hub", href: telaComercial(d.demanda_id) },
-            notaFinal: "O comprovante fica guardado em Documentos do parceiro.",
+      // Dois envios independentes, cada um marcado com o próprio tipo.
+      const marcar = async (tipo: string, id: string) => {
+        const { error } = await lavoroAdmin.rpc("canal_repasse_docs_marcar_email" as never, {
+          p_documento_id: d.documento_id,
+          p_tipo: tipo,
+          p_message_id: id,
+        } as never);
+        if (error) console.error("[canal-parceiro-avisos] falha ao marcar documento", tipo, error.message);
+      };
+      let algum = false;
+      let falhou = false;
+
+      if (!d.comercial_ja_enviado) {
+        const id = await despachar(
+          {
+            template: "canal-repasse-pagamento",
+            assunto: `Repasse de ${parceiro} pago, ciclo ${ciclo}`,
+            destinatarios: d.destinatarios ?? [],
+            dados: {
+              ...comum,
+              titulo: "Repasse pago",
+              paragrafos: [
+                `O Financeiro registrou o pagamento do repasse de **${parceiro}**, ciclo ${ciclo}, em ${dataBR(d.data_pagamento)}.`,
+              ],
+              destaque: { titulo: moedaBR(d.valor_autorizado), subtitulo: "valor autorizado" },
+              botao: { rotulo: "Baixar comprovante no Hub", href: telaComercial(d.demanda_id) },
+              notaFinal: "O comprovante fica guardado em Documentos do parceiro.",
+            },
           },
-        },
-        `docs PAGAMENTO comercial ${d.documento_id}`,
-      );
-      const anexosOk = idComercial ? await enviarPagamentoComAnexos(d, lavoroAdmin) : false;
-      messageId = idComercial && anexosOk ? idComercial : null;
+          `docs PAGAMENTO comercial ${d.documento_id}`,
+          `${d.documento_id}-PAGAMENTO`,
+        );
+        if (id) {
+          await marcar("PAGAMENTO", id);
+          algum = true;
+        } else falhou = true;
+      }
+
+      if (!d.anexos_ja_enviados) {
+        const ok = await enviarPagamentoComAnexos(d, lavoroAdmin);
+        if (ok) {
+          await marcar("PAGAMENTO_ANEXOS", `${d.documento_id}-PAGAMENTO_ANEXOS`);
+          algum = true;
+        } else falhou = true;
+      }
+
+      if (algum) enviados += 1;
+      if (falhou) falhas += 1;
+      continue;
     } else {
       console.error("[canal-parceiro-avisos] tipo de documento desconhecido", d.tipo);
       continue;
@@ -754,24 +792,32 @@ async function enviarPagamentoComAnexos(
     return false;
   }
   try {
-    const anexos: { name: string; contentType: string; contentBytes: string }[] = [];
-    const baixar = async (path: string, nome: string) => {
+    type Anexo = { name: string; contentType: string; contentBytes: string };
+    const baixar = async (path: string, nome: string): Promise<Anexo> => {
       const { data, error } = await admin.storage.from(BUCKET_DOCS).download(path);
       if (error || !data) throw new Error(`arquivo ausente: ${path}`);
       const ext = (path.split(".").pop() || "").toLowerCase();
-      anexos.push({
+      return {
         name: nome,
         contentType: MIME_POR_EXT[ext] ?? "application/octet-stream",
         contentBytes: paraBase64(await data.arrayBuffer()),
-      });
+      };
     };
-    await baixar(d.arquivo_path, d.arquivo_nome || "comprovante");
-    if (d.base_path) await baixar(d.base_path, d.base_nome || "base-do-repasse.xlsx");
-    const total = anexos.reduce((a, x) => a + x.contentBytes.length, 0);
-    if (total > LIMITE_ANEXOS_BASE64) {
-      console.error("[canal-parceiro-avisos] anexos acima do limite", d.documento_id, total);
-      return false;
+    const comprovante = await baixar(d.arquivo_path, d.arquivo_nome || "comprovante");
+    const base = d.base_path ? await baixar(d.base_path, d.base_nome || "base-do-repasse.xlsx") : null;
+
+    // Limite: comprovante + base; se passar, só o comprovante; se nem ele cabe, sem anexos.
+    let anexos: Anexo[] = [];
+    let avisoLimite: string | null = null;
+    if (comprovante.contentBytes.length > LIMITE_ANEXOS_BASE64) {
+      avisoLimite = "Os arquivos ficaram acima do limite de anexo e estão disponíveis com o Financeiro no Hub.";
+    } else if (base && comprovante.contentBytes.length + base.contentBytes.length > LIMITE_ANEXOS_BASE64) {
+      anexos = [comprovante];
+      avisoLimite = "A base ficou acima do limite de anexo e está disponível com o Financeiro no Hub.";
+    } else {
+      anexos = base ? [comprovante, base] : [comprovante];
     }
+    const baseAnexada = anexos.length === 2;
 
     const parceiro = d.parceiro ?? "parceiro";
     const ciclo = d.ciclo ?? "atual";
@@ -795,9 +841,9 @@ async function enviarPagamentoComAnexos(
           { rotulo: "Valor pago", valor: moedaBR(d.valor_autorizado) },
           { rotulo: "Nota fiscal", valor: d.numero_nf ?? "não informado" },
         ],
-        notaFinal: d.base_path
-          ? null
-          : "A base não foi anexada; ela está disponível no Hub com o Financeiro.",
+        notaFinal:
+          avisoLimite ??
+          (baseAnexada ? null : "A base não foi anexada; ela está disponível no Hub com o Financeiro."),
         assinaturaNome: d.assinatura_nome,
         assinaturaArea: d.assinatura_area,
       }),

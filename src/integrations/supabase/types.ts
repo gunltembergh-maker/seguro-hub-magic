@@ -2224,6 +2224,8 @@ export type Database = {
           data_emissao: string | null
           data_pagamento: string | null
           demanda_id: string
+          email_anexos_em: string | null
+          email_anexos_id: string | null
           email_decisao_em: string | null
           email_decisao_id: string | null
           email_envio_em: string | null
@@ -2253,6 +2255,8 @@ export type Database = {
           data_emissao?: string | null
           data_pagamento?: string | null
           demanda_id: string
+          email_anexos_em?: string | null
+          email_anexos_id?: string | null
           email_decisao_em?: string | null
           email_decisao_id?: string | null
           email_envio_em?: string | null
@@ -2282,6 +2286,8 @@ export type Database = {
           data_emissao?: string | null
           data_pagamento?: string | null
           demanda_id?: string
+          email_anexos_em?: string | null
+          email_anexos_id?: string | null
           email_decisao_em?: string | null
           email_decisao_id?: string | null
           email_envio_em?: string | null
@@ -4499,6 +4505,24 @@ export type Database = {
         }
         Relationships: []
       }
+      notificacao_vistas: {
+        Row: {
+          chave: string
+          user_id: string
+          vista_em: string
+        }
+        Insert: {
+          chave: string
+          user_id: string
+          vista_em?: string
+        }
+        Update: {
+          chave?: string
+          user_id?: string
+          vista_em?: string
+        }
+        Relationships: []
+      }
       notificacoes_admin: {
         Row: {
           created_at: string
@@ -6024,6 +6048,7 @@ export type Database = {
       canal_repasse_docs_emails_pendentes: {
         Args: never
         Returns: {
+          anexos_ja_enviados: boolean
           arquivo_nome: string
           arquivo_path: string
           assinatura_area: string
@@ -6035,6 +6060,7 @@ export type Database = {
           ciclo: string
           ciclo_ano: number
           ciclo_mes: number
+          comercial_ja_enviado: boolean
           conferido_por_nome: string
           data_emissao: string
           data_pagamento: string
@@ -8204,6 +8230,23 @@ export type Database = {
           times_receita: string[]
           user_id: string
         }[]
+      }
+      rpc_minhas_notificacoes: {
+        Args: never
+        Returns: {
+          categoria: string
+          chave: string
+          descricao: string
+          desde: string
+          link: string
+          titulo: string
+          urgencia: string
+          vista: boolean
+        }[]
+      }
+      rpc_notificacoes_marcar_vistas: {
+        Args: { p_chaves: string[] }
+        Returns: number
       }
       rpc_pageview_ping: { Args: { _id: string }; Returns: undefined }
       rpc_permitir_login_senha: { Args: never; Returns: boolean }
