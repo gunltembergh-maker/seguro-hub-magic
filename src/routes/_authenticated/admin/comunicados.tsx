@@ -102,8 +102,6 @@ interface UsuarioOption {
 
 type DestMode = "todos" | "perfil" | "especifico";
 
-const PERFIS = ["ADMIN", "COLABORADOR"];
-
 const defaultForm = {
   tipo: "COMUNICADO" as "COMUNICADO" | "TOUR",
   titulo: "",
@@ -169,6 +167,26 @@ function AdminComunicadosPage() {
       ) as UsuarioOption[];
     },
   });
+
+  const { data: perfisAcesso } = useQuery({
+    enabled: isAdmin,
+    queryKey: ["admin-perfis-acesso"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("perfis_acesso")
+        .select("id, nome")
+        .order("nome");
+      if (error) throw error;
+      return (data || []) as { id: string; nome: string }[];
+    },
+  });
+
+  // Valores salvos que não correspondem a nenhum perfil de acesso (papéis de
+  // sistema antigos, como ADMIN/COLABORADOR): nunca descartados ao salvar.
+  const perfisLegados = useMemo(() => {
+    const nomes = new Set((perfisAcesso || []).map((p) => p.nome));
+    return form.perfis.filter((v) => !nomes.has(v));
+  }, [form.perfis, perfisAcesso]);
 
   const filteredUsers = useMemo(() => {
     if (!usuarios) return [];
@@ -623,29 +641,39 @@ function AdminComunicadosPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="todos">Todos os usuários</SelectItem>
-                    <SelectItem value="perfil">Por role</SelectItem>
+                    <SelectItem value="perfil">Por perfil de acesso</SelectItem>
                     <SelectItem value="especifico">Usuários específicos</SelectItem>
                   </SelectContent>
                 </Select>
 
                 {form.destinatario_mode === "perfil" && (
-                  <div className="flex flex-wrap gap-3">
-                    {PERFIS.map((p) => (
-                      <label key={p} className="flex items-center gap-1.5 text-sm cursor-pointer">
-                        <Checkbox
-                          checked={form.perfis.includes(p)}
-                          onCheckedChange={(c) =>
-                            setForm({
-                              ...form,
-                              perfis: c
-                                ? [...form.perfis, p]
-                                : form.perfis.filter((x) => x !== p),
-                            })
-                          }
-                        />
-                        {p}
-                      </label>
-                    ))}
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap gap-3">
+                      {(perfisAcesso || []).map((p) => (
+                        <label
+                          key={p.id}
+                          className="flex items-center gap-1.5 text-sm cursor-pointer"
+                        >
+                          <Checkbox
+                            checked={form.perfis.includes(p.nome)}
+                            onCheckedChange={(c) =>
+                              setForm({
+                                ...form,
+                                perfis: c
+                                  ? [...form.perfis, p.nome]
+                                  : form.perfis.filter((x) => x !== p.nome),
+                              })
+                            }
+                          />
+                          {p.nome}
+                        </label>
+                      ))}
+                    </div>
+                    {perfisLegados.length > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        Também alcança os papéis: {perfisLegados.join(", ")}
+                      </p>
+                    )}
                   </div>
                 )}
 
