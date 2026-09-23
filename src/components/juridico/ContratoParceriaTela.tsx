@@ -51,14 +51,16 @@ type Linha = {
   renovado_por: string | null;
 };
 
-type Filtro = "AGUARDANDO_JURIDICO" | "VENCIDO" | "SUSPENSO" | "BLOQUEADO" | null;
+type Filtro = "AGUARDANDO_JURIDICO" | "VENCIDO" | "SUSPENSO" | "BLOQUEADO" | "VENCENDO_60" | null;
 type TipoAcao = "RENOVAR" | "SUSPENDER" | "BLOQUEAR" | "LIBERAR";
 
 const dia = (v?: string | null) =>
   v ? new Date(`${v.slice(0, 10)}T12:00:00`).toLocaleDateString("pt-BR") : "—";
 const dataHora = (v?: string | null) => (v ? new Date(v).toLocaleString("pt-BR") : "—");
-const brl = (v?: number | null) =>
-  (v ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const pct = (v?: number | null) =>
+  v == null ? "—" : `${(v * 100).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`;
+const vence60 = (l: { situacao: string; dias_para_vencer: number | null }) =>
+  l.situacao === "ATIVO" && l.dias_para_vencer != null && l.dias_para_vencer >= 0 && l.dias_para_vencer <= 60;
 
 function Dica({ texto, children }: { texto?: React.ReactNode; children: React.ReactNode }) {
   if (!texto) return <>{children}</>;
@@ -126,7 +128,8 @@ function SituacaoBadges({ l }: { l: Linha }) {
   );
 }
 
-const PODE_RENOVAR = new Set(["VENCIDO", "AGUARDANDO_JURIDICO", "ATIVO"]);
+const podeRenovarSituacao = (l: Linha) =>
+  l.situacao === "VENCIDO" || l.situacao === "AGUARDANDO_JURIDICO" || vence60(l);
 
 export default function ContratoParceriaTela() {
   const perfil = useMeuPerfilEfetivo();
@@ -158,6 +161,7 @@ export default function ContratoParceriaTela() {
       VENCIDO: linhas.filter((l) => l.situacao === "VENCIDO").length,
       SUSPENSO: linhas.filter((l) => l.situacao === "SUSPENSO").length,
       BLOQUEADO: linhas.filter((l) => l.bloqueado).length,
+      VENCENDO_60: linhas.filter(vence60).length,
     }),
     [linhas],
   );
@@ -165,8 +169,14 @@ export default function ContratoParceriaTela() {
   const visiveis = useMemo(() => {
     if (!filtro) return linhas;
     if (filtro === "BLOQUEADO") return linhas.filter((l) => l.bloqueado);
+    if (filtro === "VENCENDO_60") return linhas.filter(vence60);
     return linhas.filter((l) => l.situacao === filtro);
   }, [linhas, filtro]);
+
+  const semClausulaVencendo = useMemo(
+    () => linhas.filter((l) => vence60(l) && l.renovacao_automatica === false),
+    [linhas],
+  );
 
   function invalidar() {
     qc.invalidateQueries({ queryKey: ["juridico-contratos"] });
@@ -228,6 +238,7 @@ export default function ContratoParceriaTela() {
     { chave: "VENCIDO", rotulo: "Vencidos", cor: "text-red-700" },
     { chave: "SUSPENSO", rotulo: "Suspensos", cor: "text-muted-foreground" },
     { chave: "BLOQUEADO", rotulo: "Repasse bloqueado", cor: "text-red-700" },
+    { chave: "VENCENDO_60", rotulo: "Vencendo em 60 dias", cor: "text-amber-700" },
   ];
 
   const textoValido = justificativa.trim().length >= 10;
@@ -266,7 +277,22 @@ export default function ContratoParceriaTela() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4" data-tour="jur-resumo">
+        {semClausulaVencendo.length > 0 && (
+          <Alert className="border-amber-400 bg-amber-50 text-amber-900">
+            <AlertDescription>
+              <div className="font-semibold">Contratos vencendo sem renovação automática</div>
+              <ul className="mt-1 list-disc space-y-0.5 pl-5">
+                {semClausulaVencendo.map((l) => (
+                  <li key={l.canal_id}>
+                    {l.parceiro} vence em {dia(l.vigencia_fim)}, sem renovação automática
+                  </li>
+                ))}
+              </ul>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-5" data-tour="jur-resumo">
           {contadores.map((c) => (
             <button
               key={c.chave}
@@ -304,7 +330,7 @@ export default function ContratoParceriaTela() {
                     <TableHead>Vigência</TableHead>
                     <TableHead>Situação</TableHead>
                     <TableHead>Renovação automática</TableHead>
-                    <TableHead className="text-right">Repasse acumulado</TableHead>
+                    <TableHead>% Repasse</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -315,7 +341,7 @@ export default function ContratoParceriaTela() {
                     <TableRow><TableCell colSpan={6} className="py-8 text-center text-muted-foreground">Nenhum parceiro nesta situação.</TableCell></TableRow>
                   ) : (
                     visiveis.map((l) => {
-                      const renovavel = l.renovacao_automatica === true && PODE_RENOVAR.has(l.situacao) && !!l.contrato_id;
+                      const renovavel = l.renovacao_automatica === true && podeRenovarSituacao(l) && !!l.contrato_id;
                       return (
                         <TableRow key={l.canal_id}>
                           <TableCell className="align-top">
@@ -328,12 +354,32 @@ export default function ContratoParceriaTela() {
                             {l.vigencia_inicio || l.vigencia_fim
                               ? `${dia(l.vigencia_inicio)} a ${dia(l.vigencia_fim)}`
                               : "—"}
+                            {vence60(l) && (
+                              l.renovacao_automatica === true ? (
+                                <div className="mt-1 whitespace-normal text-xs text-amber-700">
+                                  renova por igual período, confirme até {dia(l.vigencia_fim)}
+                                </div>
+                              ) : l.renovacao_automatica === false ? (
+                                <div className="mt-1 whitespace-normal rounded border border-amber-400 bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-900">
+                                  não tem renovação automática, precisa de novo contrato até {dia(l.vigencia_fim)}
+                                </div>
+                              ) : (
+                                <div className="mt-1 whitespace-normal text-xs text-amber-700">
+                                  cláusula não identificada no documento, confira o contrato
+                                </div>
+                              )
+                            )}
                           </TableCell>
                           <TableCell className="align-top"><SituacaoBadges l={l} /></TableCell>
                           <TableCell className="align-top text-sm">
                             {l.renovacao_automatica === true ? "Sim" : l.renovacao_automatica === false ? "Não" : "Não identificada"}
                           </TableCell>
-                          <TableCell className="align-top text-right tabular-nums">{brl(l.repasse_acumulado)}</TableCell>
+                          <TableCell className="align-top text-sm tabular-nums">
+                            Benefícios {pct(l.pct_beneficios)} · Garantia {pct(l.pct_garantia)} · Demais{" "}
+                            {l.pct_demais != null ? pct(l.pct_demais) : (
+                              <>{pct(l.pct_garantia)} <span className="text-xs text-muted-foreground">(herdado)</span></>
+                            )}
+                          </TableCell>
                           <TableCell className="align-top">
                             <div className="flex flex-wrap justify-end gap-1" data-tour="jur-acoes">
                               {l.arquivo_path && (
