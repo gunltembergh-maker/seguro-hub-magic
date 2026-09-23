@@ -383,6 +383,26 @@ export function RepasseComercial({
           </Alert>
         ) : null}
 
+        {divergenciaPorChave.size > 0 ? (
+          <Alert className="border-amber-600/40 bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              <p className="font-medium">
+                O percentual da base gerencial está diferente da regra do Hub
+              </p>
+              {Array.from(divergenciaPorChave.values()).map((d) => (
+                <p key={d.chave_planilha}>
+                  {d.chave_planilha}: {d.resumo}
+                </p>
+              ))}
+              <p>
+                A exportação continua liberada. Corrija na base gerencial ou ajuste a regra no Hub
+                para os dois voltarem a bater.
+              </p>
+            </AlertDescription>
+          </Alert>
+        ) : null}
+
         <div className="overflow-x-auto">
           <TooltipProvider>
             <Table data-tour="cp-repasse-tabela">
