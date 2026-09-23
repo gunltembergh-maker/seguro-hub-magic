@@ -383,6 +383,13 @@ function ConferirDialog({
         pode_exportar?: boolean | null;
       } | null;
       setResultado(r ?? {});
+      toast.success(
+        r?.motivo ??
+          (r?.situacao === "ATIVO"
+            ? "Contrato ativo. O repasse deste parceiro foi liberado."
+            : `Situação: ${r?.situacao ?? "—"}.`),
+      );
+      onFechar();
       queryClient.invalidateQueries({ queryKey: ["canal-parceiro-situacao"] });
       queryClient.invalidateQueries({ queryKey: ["canal-parceiro-pendencias-verificacao"] });
       queryClient.invalidateQueries({ queryKey: ["canal-parceiro-contratos"] });
@@ -442,6 +449,9 @@ function ConferirDialog({
         {/* 2. correções */}
         <div className="space-y-3">
           <p className="text-sm font-medium">O que precisa ser corrigido</p>
+          <p className="text-xs text-muted-foreground">
+            Confira o que foi lido e corrija só o que estiver diferente do documento.
+          </p>
           <p className="text-xs text-muted-foreground">
             Só o que você alterar é gravado. Campo intocado continua como está.
           </p>
