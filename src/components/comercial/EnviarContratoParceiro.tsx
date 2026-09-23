@@ -653,16 +653,39 @@ export default function EnviarContratoParceiro({
               </Alert>
             )}
 
-            {(situacao === "RECUSADO" || situacao === "VENCIDO" || situacao === "EM_VALIDACAO") && (
+            {emConferencia && (
+              <Alert className="border-amber-600/40 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Enviado para conferência</AlertTitle>
+                <AlertDescription className="space-y-1">
+                  <p>
+                    Os dados foram gravados e um administrador vai conferir. A análise acontece em
+                    até 24 horas e você recebe o retorno por e-mail.
+                  </p>
+                  {manualAplicado && camposManuais.length > 0 ? (
+                    <p>Gravado à mão: {camposManuais.join(", ")}.</p>
+                  ) : null}
+                  {vigenciaDeduzida ? (
+                    <p className="text-xs">
+                      A data de início foi deduzida da data de assinatura. Confira antes de liberar.
+                    </p>
+                  ) : null}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {situacao === "VENCIDO" && !emConferencia && (
               <Alert variant="destructive">
                 <XCircle className="h-4 w-4" />
-                <AlertTitle>
-                  {situacao === "VENCIDO"
-                    ? "Contrato vencido"
-                    : situacao === "EM_VALIDACAO"
-                      ? "Contrato em validação"
-                      : "Contrato recusado"}
-                </AlertTitle>
+                <AlertTitle>Contrato vencido</AlertTitle>
+                <AlertDescription>{motivo ?? "Sem detalhe informado."}</AlertDescription>
+              </Alert>
+            )}
+
+            {situacao === "RECUSADO" && !emConferencia && (
+              <Alert variant="destructive">
+                <XCircle className="h-4 w-4" />
+                <AlertTitle>Contrato recusado</AlertTitle>
                 <AlertDescription>{motivo ?? "Sem detalhe informado."}</AlertDescription>
               </Alert>
             )}
@@ -716,7 +739,7 @@ export default function EnviarContratoParceiro({
           </div>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="flex-wrap">
           {passo === "pergunta" && (
             <Button variant="outline" onClick={fechar}>
               Cancelar
