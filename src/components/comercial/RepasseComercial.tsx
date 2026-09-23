@@ -199,9 +199,18 @@ function BadgeFinanceiro({ d }: { d: DemandaNF | undefined }) {
   );
 }
 
+/** Por que o parceiro está parado, vindo do banco por chave normalizada do canal. */
+export type ParadoInfo = {
+  situacao: string | null;
+  motivo_parado: string | null;
+  bloqueado: boolean;
+  bloqueio_motivo: string | null;
+};
+
 export function RepasseComercial({
   podeExportarPorChave,
   pctPorChave,
+  paradoPorChave,
 }: {
   /** Chave normalizada do canal → pode exportar (trava do contrato, vinda do banco). */
   podeExportarPorChave: Map<string, boolean>;
@@ -216,6 +225,7 @@ export function RepasseComercial({
       origemDemais: string | null;
     }
   >;
+  paradoPorChave: Map<string, ParadoInfo>;
 }) {
   const ciclo = useMemo(() => cicloPadrao(new Set<string>()), []);
   const { data: estadoCiclo } = useCicloRepasse(ciclo.ano, ciclo.mes);

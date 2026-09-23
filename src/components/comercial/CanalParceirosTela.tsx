@@ -597,6 +597,7 @@ export default function CanalParceirosTela() {
           <RepasseComercial
             podeExportarPorChave={podeExportarPorChave}
             pctPorChave={pctPorChave}
+            paradoPorChave={paradoPorChave}
           />
         </TabsContent>
 
