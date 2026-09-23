@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
 import {
+  AlertTriangle,
   Download,
   FileSearch,
   FileText,
@@ -91,6 +92,17 @@ type CanalRow = {
   valor: number;
   total_canal_no_ciclo: number;
   situacao: "A_PAGAR" | "RETIDO_MINIMO" | "PAGO";
+};
+
+type DivergenciaPct = {
+  chave_planilha: string;
+  linhas: number | null;
+  linhas_com_regra: number | null;
+  linhas_divergentes: number | null;
+  valor_divergente: number | null;
+  pct_planilha: number[] | null;
+  pct_hub: number[] | null;
+  resumo: string | null;
 };
 
 export type DemandaNF = {
@@ -242,6 +254,26 @@ export function RepasseComercial({
     return m;
   }, [demandas.data]);
 
+  // Aviso (não trava): percentual calculado na base gerencial diferente da regra do Hub.
+  const divergencias = useQuery({
+    queryKey: ["canal-repasse-divergencia-pct", ciclo.ano, ciclo.mes],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc(
+        "rpc_canal_repasse_divergencia_pct" as never,
+        { p_ano: ciclo.ano, p_mes: ciclo.mes, p_canal_repasse: null } as never,
+      );
+      if (error) throw error;
+      return (data || []) as DivergenciaPct[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const divergenciaPorChave = useMemo(() => {
+    const m = new Map<string, DivergenciaPct>();
+    for (const d of divergencias.data ?? []) m.set(chaveCanal(d.chave_planilha), d);
+    return m;
+  }, [divergencias.data]);
+
   const parceiros = useQuery({
     queryKey: ["canal-parceiro-lista"],
     queryFn: async () => {
@@ -351,6 +383,26 @@ export function RepasseComercial({
           </Alert>
         ) : null}
 
+        {divergenciaPorChave.size > 0 ? (
+          <Alert className="border-amber-600/40 bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              <p className="font-medium">
+                O percentual da base gerencial está diferente da regra do Hub
+              </p>
+              {Array.from(divergenciaPorChave.values()).map((d) => (
+                <p key={d.chave_planilha}>
+                  {d.chave_planilha}: {d.resumo}
+                </p>
+              ))}
+              <p>
+                A exportação continua liberada. Corrija na base gerencial ou ajuste a regra no Hub
+                para os dois voltarem a bater.
+              </p>
+            </AlertDescription>
+          </Alert>
+        ) : null}
+
         <div className="overflow-x-auto">
           <TooltipProvider>
             <Table data-tour="cp-repasse-tabela">
@@ -391,6 +443,7 @@ export function RepasseComercial({
                         canal={l.canal}
                         razaoSocial={razaoPorChave.get(chave) ?? null}
                         percentuais={pctPorChave.get(chave)}
+                        divergencia={divergenciaPorChave.get(chave)}
                         primeiraLinha={index === 0}
                         onCancelado={() =>
                           void queryClient.invalidateQueries({
@@ -473,6 +526,7 @@ function LinhaRepasse({
   canal,
   razaoSocial,
   percentuais,
+  divergencia,
   primeiraLinha,
   cicloCorrente,
   acumulado,
@@ -501,6 +555,7 @@ function LinhaRepasse({
         origemDemais: string | null;
       }
     | undefined;
+  divergencia: DivergenciaPct | undefined;
   primeiraLinha: boolean;
   cicloCorrente: number;
   acumulado: number;
@@ -592,7 +647,7 @@ function LinhaRepasse({
         ) : null}
       </TableCell>
       <TableCell className="text-right tabular-nums">
-        <PercentualRepasse percentuais={percentuais} />
+        <PercentualRepasse percentuais={percentuais} divergencia={divergencia} />
       </TableCell>
       <TableCell className="text-right font-mono tabular-nums">{BRL(cicloCorrente)}</TableCell>
       <TableCell className="text-right font-mono tabular-nums">{BRL(acumulado)}</TableCell>
@@ -718,8 +773,23 @@ function LinhaRepasse({
   );
 }
 
+function SeloDivergencia({ divergencia }: { divergencia: DivergenciaPct | undefined }) {
+  if (!divergencia) return null;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="cursor-help">
+          <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{divergencia.resumo}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 function PercentualRepasse({
   percentuais,
+  divergencia,
 }: {
   percentuais:
     | {
@@ -731,8 +801,15 @@ function PercentualRepasse({
         origemDemais: string | null;
       }
     | undefined;
+  divergencia: DivergenciaPct | undefined;
 }) {
-  if (!percentuais) return <span className="text-muted-foreground">—</span>;
+  const seloDivergencia = <SeloDivergencia divergencia={divergencia} />;
+  if (!percentuais)
+    return (
+      <span className="inline-flex items-center justify-end gap-1.5 text-muted-foreground">
+        —{seloDivergencia}
+      </span>
+    );
   const formatar = (valor: number | null) =>
     valor == null
       ? "—"
@@ -741,7 +818,12 @@ function PercentualRepasse({
     origem === "DIRETORIA" ? " (diretoria)" : origem === "CONTRATO" ? " (contrato)" : "";
   const valores = [percentuais.beneficios, percentuais.garantia, percentuais.demais];
   const disponiveis = valores.filter((v): v is number => v != null);
-  if (disponiveis.length === 0) return <span className="text-muted-foreground">—</span>;
+  if (disponiveis.length === 0)
+    return (
+      <span className="inline-flex items-center justify-end gap-1.5 text-muted-foreground">
+        —{seloDivergencia}
+      </span>
+    );
   const unicos = Array.from(new Set(disponiveis));
   const resumo = unicos.map(formatar).join(" / ");
   const temDiretoria =
@@ -762,6 +844,7 @@ function PercentualRepasse({
       <span className="inline-flex items-center justify-end gap-1.5">
         {resumo}
         {seloDiretoria}
+        {seloDivergencia}
       </span>
     );
   }
@@ -781,6 +864,7 @@ function PercentualRepasse({
         </TooltipContent>
       </Tooltip>
       {seloDiretoria}
+      {seloDivergencia}
     </span>
   );
 }
