@@ -199,7 +199,7 @@ export const templateSolicitacao = entrada('Canal Parceiros · Repasse: pedido d
     'Maria Silva conferiu a relação de repasse de **PARCEIRO EXEMPLO** do ciclo 09/2026 e pede sua autorização para o envio ao parceiro, para emissão da nota fiscal.',
   ],
   destaque: { titulo: 'R$ 18.420,00', subtitulo: '37 parcelas' },
-  botao: { rotulo: 'Abrir no Hub', href: 'https://hub.lavoroseguros.com.br/financeiro/fluxo-diario' },
+  botao: { rotulo: 'Ver solicitação', href: 'https://hub.lavoroseguros.com.br/financeiro/fluxo-diario' },
   notaFinal: 'Na tela você confere o valor, autoriza e informa a data prevista do pagamento.',
 })
 
@@ -210,7 +210,7 @@ export const templateResposta = entrada('Canal Parceiros · Repasse: resposta do
   paragrafos: [
     'João Souza autorizou o envio da relação de **PARCEIRO EXEMPLO**, ciclo 09/2026. Pagamento previsto para 10/10/2026, após o recebimento da nota fiscal.',
   ],
-  botao: { rotulo: 'Abrir no Hub', href: 'https://hub.lavoroseguros.com.br/comercial/canal-parceiros' },
+  botao: { rotulo: 'Ver solicitação', href: 'https://hub.lavoroseguros.com.br/comercial/canal-parceiros' },
 })
 
 export const templateCobranca = entrada('Canal Parceiros · Repasse: o pagamento saiu?', {
@@ -235,7 +235,7 @@ export const templateConferencia = entrada('Canal Parceiros · Conferência de c
     { rotulo: 'Situação', valor: 'AGUARDANDO_VERIFICACAO' },
     { rotulo: 'Motivo', valor: 'Assinatura não localizada no arquivo' },
   ],
-  botao: { rotulo: 'Abrir no Hub', href: 'https://hub.lavoroseguros.com.br/comercial/canal-parceiros' },
+  botao: { rotulo: 'Ver solicitação', href: 'https://hub.lavoroseguros.com.br/comercial/canal-parceiros' },
   notaFinal: 'Na tela você abre o documento por um link temporário e decide.',
 })
 
@@ -247,7 +247,7 @@ export const templateAlteracaoPedido = entrada('Canal Parceiros · Alteração d
     'Maria Silva pediu alteração de percentual de **PARCEIRO EXEMPLO**, com De Acordo de diretoria@lavoroseguros.com.br.',
   ],
   itens: [{ rotulo: 'Garantia', valor: '30% para 25%' }],
-  botao: { rotulo: 'Abrir no Hub', href: 'https://hub.lavoroseguros.com.br/comercial/canal-parceiros' },
+  botao: { rotulo: 'Ver solicitação', href: 'https://hub.lavoroseguros.com.br/comercial/canal-parceiros' },
 })
 
 export const templateAlteracaoDecisao = entrada('Canal Parceiros · Alteração de percentual: decisão', {
@@ -256,5 +256,39 @@ export const templateAlteracaoDecisao = entrada('Canal Parceiros · Alteração 
   titulo: 'Alteração de percentual decidida',
   paragrafos: ['Alessandro Oliveira aprovou a alteração de percentual de **PARCEIRO EXEMPLO**.'],
   itens: [{ rotulo: 'Garantia', valor: '30% para 25%' }],
-  botao: { rotulo: 'Abrir no Hub', href: 'https://hub.lavoroseguros.com.br/comercial/canal-parceiros' },
+  botao: { rotulo: 'Ver solicitação', href: 'https://hub.lavoroseguros.com.br/comercial/canal-parceiros' },
+})
+
+export const templateLiberacaoPedido = entrada('Canal Parceiros · Liberação sem contrato: pedido', {
+  ...basePreview,
+  assunto: 'Liberar repasse sem contrato de PARCEIRO EXEMPLO, ciclo 09/2026',
+  titulo: 'Liberação sem contrato',
+  paragrafos: [
+    'Maria Silva pediu liberação de repasse de **PARCEIRO EXEMPLO** no ciclo 09/2026, sem contrato assinado, com De Acordo de Diretor Exemplo (diretoria@lavoroseguros.com.br).',
+  ],
+  itens: [{ rotulo: 'Anexo com o De Acordo', valor: 'de-acordo.pdf' }],
+  botao: { rotulo: 'Ver solicitação', href: 'https://hub.lavoroseguros.com.br/comercial/canal-parceiros' },
+  notaFinal: 'O Financeiro tem até 24 horas para responder. Sem resposta, o pedido cai e o Comercial precisa pedir de novo.',
+})
+
+export const templateLiberacaoDecisao = entrada('Canal Parceiros · Liberação sem contrato: resposta', {
+  ...basePreview,
+  assunto: 'Liberação sem contrato de PARCEIRO EXEMPLO: APROVADA',
+  titulo: 'Resposta da liberação sem contrato',
+  paragrafos: [
+    'João Souza aprovou a liberação de **PARCEIRO EXEMPLO**, ciclo 09/2026. O parceiro está destravado e você já pode enviar o pedido de repasse ao Financeiro.',
+  ],
+  botao: { rotulo: 'Ver solicitação', href: 'https://hub.lavoroseguros.com.br/comercial/canal-parceiros' },
+})
+
+export const templateContratoDecisao = entrada('Canal Parceiros · Contrato: resposta', {
+  ...basePreview,
+  assunto: 'Contrato de PARCEIRO EXEMPLO: ATIVO',
+  titulo: 'Resposta do contrato enviado',
+  paragrafos: ['João Souza conferiu e liberou o contrato de **PARCEIRO EXEMPLO**. O repasse deste parceiro está liberado.'],
+  itens: [
+    { rotulo: 'Arquivo', valor: 'Contrato_Exemplo.pdf' },
+    { rotulo: 'Vigência', valor: '02/08/2026 a 01/08/2027' },
+  ],
+  botao: { rotulo: 'Ver solicitação', href: 'https://hub.lavoroseguros.com.br/comercial/canal-parceiros' },
 })
