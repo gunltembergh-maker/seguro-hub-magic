@@ -348,9 +348,16 @@ export default function EnviarContratoParceiro({
   const origem = resposta?.origem_leitura ?? null;
   const faltaDado =
     !e?.vigencia_fim || (e.pct_beneficios == null && e.pct_garantia == null && e.pct_demais == null);
+  const manualAplicado = resposta?.manual_aplicado === true;
+  const camposManuais = Array.from(
+    new Set((resposta?.campos_manuais ?? []).map((c) => ROTULO_CAMPO[c] ?? c)),
+  );
+  const vigenciaDeduzida = resposta?.vigencia_origem === "ASSINATURA";
+  const emConferencia = situacao === "EM_VALIDACAO" || manualAplicado;
   const podeTentarManual =
     passo === "resultado" &&
-    (situacao === "RECUSADO" || situacao === "EM_VALIDACAO") &&
+    situacao === "RECUSADO" &&
+    !emConferencia &&
     faltaDado &&
     !!caminhoArquivo;
 
