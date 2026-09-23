@@ -235,7 +235,7 @@ function NovoSeguradoDialog({
 
   return (
     <Dialog open={aberto} onOpenChange={(o) => !o && onFechar()}>
-      <DialogContent>
+      <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Cadastrar {rotulo.toLowerCase()}</DialogTitle>
           <DialogDescription>
@@ -243,7 +243,7 @@ function NovoSeguradoDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1">
               <Label>Tipo</Label>
               <Select value={tipo} onValueChange={setTipo}>
@@ -368,7 +368,7 @@ function TriagemDialog({
 
   return (
     <Dialog open={aberto} onOpenChange={(o) => !o && onFechar()}>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+      <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Completar triagem</DialogTitle>
           <DialogDescription>
@@ -396,7 +396,7 @@ function TriagemDialog({
             }}
           />
 
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1">
               <Label>Segurado público ou privado</Label>
               <Select value={pubPriv} onValueChange={setPubPriv}>
@@ -554,7 +554,7 @@ function PerdaDialog({
 
   return (
     <Dialog open={aberto} onOpenChange={(o) => !o && onFechar()}>
-      <DialogContent className="max-h-[90vh] max-w-xl overflow-y-auto">
+      <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Registrar perda</DialogTitle>
           <DialogDescription>
@@ -577,7 +577,7 @@ function PerdaDialog({
               </SelectContent>
             </Select>
           </div>
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1">
               <Label>Prêmio estimado</Label>
               <Input value={premio} onChange={(e) => setPremio(e.target.value)} inputMode="decimal" />
@@ -698,7 +698,7 @@ function AbaDados({ demanda }: { demanda: DemandaLista }) {
         <Linha rotulo="Etapa" valor={rotuloEtapa(demanda.etapa)} />
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1">
           <Label>Modalidade</Label>
           {locaticia ? (
@@ -980,7 +980,7 @@ export function DemandaSheet({
 
   return (
     <Sheet open={!!demanda} onOpenChange={(o) => !o && onFechar()}>
-      <SheetContent className="flex w-full flex-col gap-0 overflow-y-auto sm:max-w-xl">
+      <SheetContent className="flex w-full min-w-0 flex-col gap-0 overflow-y-auto sm:max-w-xl lg:max-w-2xl">
         <SheetHeader>
           <SheetTitle className="text-left">
             {demanda.cliente?.nome ?? "Demanda"}

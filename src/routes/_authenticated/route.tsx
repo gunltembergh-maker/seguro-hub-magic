@@ -100,7 +100,7 @@ function AuthenticatedShell() {
     <SidebarProvider defaultOpen={false}>
       <div className="hub-theme flex min-h-screen w-full bg-sidebar">
         <AppSidebar />
-        <SidebarInset className="flex flex-1 flex-col">
+        <SidebarInset className="flex w-full min-w-0 flex-1 flex-col">
           {isImpersonating && viewAsProfile && (
             <div className="flex items-center justify-center gap-2 border-b border-amber-500/50 bg-amber-400/95 px-4 py-1.5 text-xs font-medium text-amber-950">
               👁 Você está visualizando como{" "}
@@ -108,15 +108,15 @@ function AuthenticatedShell() {
               usam suas credenciais reais — apenas a UI é filtrada.
             </div>
           )}
-          <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-white/10 bg-sidebar px-4 text-sidebar-foreground">
+          <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-white/10 bg-sidebar px-4 text-sidebar-foreground sm:px-6">
             <SidebarTrigger className="text-sidebar-foreground/80 hover:text-sidebar-foreground" />
-            <HubHeader />
-            <div className="ml-auto">
+            <div className="min-w-0 flex-1"><HubHeader /></div>
+            <div className="ml-auto shrink-0">
               <ViewAsSelector />
             </div>
           </header>
-          <main className="relative flex-1 bg-background">
-            <div className="relative">
+          <main className="relative min-w-0 flex-1 bg-background">
+            <div className="relative min-w-0">
               <Outlet />
             </div>
           </main>
