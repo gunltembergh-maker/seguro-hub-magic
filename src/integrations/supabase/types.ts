@@ -7828,6 +7828,7 @@ export type Database = {
               dias_atraso: number
               documento: string
               faixa_aging: string
+              id: number
               numero_apolice: string
               numero_da_parcela: number
               observacao: string
@@ -7856,6 +7857,7 @@ export type Database = {
               dias_atraso: number
               documento: string
               faixa_aging: string
+              id: number
               numero_apolice: string
               numero_da_parcela: number
               observacao: string
