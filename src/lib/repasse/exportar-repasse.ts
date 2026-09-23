@@ -4,7 +4,7 @@
 // A lista de colunas proibidas protege a margem da Lavoro: prêmio, comissão
 // bruta e percentual de comissão NUNCA saem no arquivo do parceiro.
 import { supabase } from "@/integrations/supabase/client";
-import { exportarXlsx, type ColunaExport } from "@/lib/export-xlsx";
+import { exportarXlsx, montarXlsxBuffer, type ColunaExport } from "@/lib/export-xlsx";
 
 export type ModoExport = "INTERNO" | "PARCEIRO";
 export type ModoDados = "PROVISIONADO" | "HISTORICO";
@@ -115,7 +115,13 @@ const BRL = (v: number | null | undefined) =>
 const fmtBR = (iso: string | null | undefined) =>
   iso ? new Date(`${String(iso).slice(0, 10)}T12:00:00`).toLocaleDateString("pt-BR") : "";
 
-export type ResultadoExportacao = { arquivo: string; truncado: boolean; dataPrevista: string | null };
+export type ResultadoExportacao = {
+  arquivo: string;
+  truncado: boolean;
+  dataPrevista: string | null;
+  /** Preenchido só quando `apenasGerar`: o arquivo não é baixado, volta em memória. */
+  buffer?: ArrayBuffer;
+};
 
 export class NadaAExportar extends Error {
   constructor() {
@@ -135,8 +141,11 @@ export async function exportarRepasse(opts: {
   modo: ModoExport;
   modoDados: ModoDados;
   situacaoRepasse: string | null;
+  /** Gera o mesmo arquivo sem baixar no navegador (ex.: base anexada ao pagamento). */
+  apenasGerar?: boolean;
 }): Promise<ResultadoExportacao> {
-  const { canal, ano, mes, modo, modoDados, situacaoRepasse } = opts;
+  const { canal, ano, mes, modo, modoDados, situacaoRepasse, apenasGerar } = opts;
+  let buffer: ArrayBuffer | undefined;
 
   // O banco autoriza (ou recusa) a exportação ANTES de montar o arquivo.
   // No modo PARCEIRO a autorização depende da demanda aprovada pelo Financeiro.
@@ -229,11 +238,10 @@ export async function exportarRepasse(opts: {
   let arquivo: string;
   if (modo === "INTERNO") {
     arquivo = `Repasse_${slugCanal(canal)}_${anoMes}.xlsx`;
-    await exportarXlsx({
-      arquivo,
-      cabecalho: { titulo: "Repasse de Parceiro · conferência interna", subtitulo: `${canal} · ${anoMes}`, info },
-      abas: [{ nome: "Detalhe", colunas: COLS_INTERNO, linhas: todas, totalizar: ["valor_repasse_total"], semLinhasDeGrade: true }],
-    });
+    const cabecalho = { titulo: "Repasse de Parceiro · conferência interna", subtitulo: `${canal} · ${anoMes}`, info };
+    const abas = [{ nome: "Detalhe", colunas: COLS_INTERNO, linhas: todas, totalizar: ["valor_repasse_total"], semLinhasDeGrade: true }];
+    if (apenasGerar) buffer = await montarXlsxBuffer({ cabecalho, abas });
+    else await exportarXlsx({ arquivo, cabecalho, abas });
   } else {
     // Garantia: nenhuma coluna proibida sai no arquivo do parceiro.
     const abasCols = [COLS_PARCEIRO_RESUMO, COLS_PARCEIRO_DETALHE];
@@ -268,5 +276,5 @@ export async function exportarRepasse(opts: {
     });
   }
 
-  return { arquivo, truncado, dataPrevista };
+  return { arquivo, truncado, dataPrevista, buffer };
 }

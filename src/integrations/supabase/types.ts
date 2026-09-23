@@ -2214,6 +2214,8 @@ export type Database = {
         Row: {
           arquivo_nome: string
           arquivo_path: string
+          base_nome: string | null
+          base_path: string | null
           canal_id: string
           ciclo_ano: number
           ciclo_mes: number
@@ -2241,6 +2243,8 @@ export type Database = {
         Insert: {
           arquivo_nome: string
           arquivo_path: string
+          base_nome?: string | null
+          base_path?: string | null
           canal_id: string
           ciclo_ano: number
           ciclo_mes: number
@@ -2268,6 +2272,8 @@ export type Database = {
         Update: {
           arquivo_nome?: string
           arquivo_path?: string
+          base_nome?: string | null
+          base_path?: string | null
           canal_id?: string
           ciclo_ano?: number
           ciclo_mes?: number
@@ -6022,6 +6028,8 @@ export type Database = {
           arquivo_path: string
           assinatura_area: string
           assinatura_nome: string
+          base_nome: string
+          base_path: string
           canal_id: string
           chave_planilha: string
           ciclo: string
@@ -7178,6 +7186,8 @@ export type Database = {
         Args: {
           p_arquivo_nome: string
           p_arquivo_path: string
+          p_base_nome?: string
+          p_base_path?: string
           p_data_pagamento: string
           p_demanda_id: string
           p_observacao?: string

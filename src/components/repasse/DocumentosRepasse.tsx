@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { exportarRepasse } from "@/lib/repasse/exportar-repasse";
 
 const BUCKET = "canal-parceiros-documentos";
 const MAX_BYTES = 20 * 1024 * 1024;
@@ -180,6 +181,7 @@ export function invalidarRepasse(qc: ReturnType<typeof useQueryClient>) {
 export type DemandaDoc = {
   demanda_id: string;
   canal_id: string | null;
+  chave_planilha?: string | null;
   parceiro: string;
   ciclo_ano: number;
   ciclo_mes: number;
@@ -486,21 +488,58 @@ export function RegistrarPagamentoDialog({
     }
     setSalvando(true);
     let path: string | null = null;
+    let basePath: string | null = null;
+    let baseNome: string | null = null;
     try {
       path = await subir(arquivo, demanda.canal_id, demanda.ciclo_ano, demanda.ciclo_mes, "comprovante");
+
+      // Base do repasse: mesmo arquivo da Relação interna do Fluxo Diário.
+      try {
+        const parceiro = demanda.chave_planilha || demanda.parceiro;
+        const mm = String(demanda.ciclo_mes).padStart(2, "0");
+        const r = await exportarRepasse({
+          canal: parceiro,
+          ano: demanda.ciclo_ano,
+          mes: demanda.ciclo_mes,
+          modo: "INTERNO",
+          modoDados: "PROVISIONADO",
+          situacaoRepasse: null,
+          apenasGerar: true,
+        });
+        if (!r.buffer) throw new Error("Base não gerada.");
+        baseNome = `relacao-interna-${sanitizar(parceiro).toLowerCase()}-${mm}-${demanda.ciclo_ano}.xlsx`;
+        const caminho = `${demanda.canal_id}/${demanda.ciclo_ano}-${mm}/base/${Date.now()}-${baseNome}`;
+        const { error: erroBase } = await supabase.storage.from(BUCKET).upload(
+          caminho,
+          new Blob([r.buffer], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          }),
+          { upsert: false },
+        );
+        if (erroBase) throw erroBase;
+        basePath = caminho;
+      } catch {
+        basePath = null;
+        baseNome = null;
+      }
+
       const { data: r, error } = await supabase.rpc("rpc_canal_repasse_registrar_pagamento" as never, {
         p_demanda_id: demanda.demanda_id,
         p_data_pagamento: data,
         p_arquivo_path: path,
         p_arquivo_nome: arquivo.name,
         p_observacao: observacao.trim() || null,
+        p_base_path: basePath,
+        p_base_nome: baseNome,
       } as never);
       if (error) throw error;
       toast.success(primeira<{ mensagem?: string }>(r)?.mensagem ?? "Pagamento registrado.");
+      if (!basePath) toast.warning("Pagamento registrado sem a base anexada");
       invalidarRepasse(qc);
       onFechar();
     } catch (e) {
       if (path) await remover(path);
+      if (basePath) await remover(basePath);
       toast.error(mensagemDeErro(e));
     } finally {
       setSalvando(false);
