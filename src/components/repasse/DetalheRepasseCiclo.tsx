@@ -187,6 +187,18 @@ export function DetalheRepasseCiclo({
           </Alert>
         ) : null}
 
+        <ToggleGroup
+          type="single"
+          size="sm"
+          value={visao}
+          onValueChange={(v) => {
+            if (v === "INTERNA" || v === "PARCEIRO") setVisao(v);
+          }}
+        >
+          <ToggleGroupItem value="INTERNA">Visão interna</ToggleGroupItem>
+          <ToggleGroupItem value="PARCEIRO">Visão do parceiro</ToggleGroupItem>
+        </ToggleGroup>
+
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -198,7 +210,9 @@ export function DetalheRepasseCiclo({
         </div>
 
         <p className="text-xs text-muted-foreground">
-          Visão interna do Hub. O arquivo enviado ao parceiro não traz prêmio nem comissão.
+          {visaoParceiro
+            ? "Estas são as mesmas informações do arquivo enviado ao parceiro. Prêmio e percentual de comissão não saem para ele."
+            : "Visão interna do Hub. O arquivo enviado ao parceiro não traz prêmio nem comissão."}
         </p>
 
         <div className="overflow-x-auto rounded-md border">
