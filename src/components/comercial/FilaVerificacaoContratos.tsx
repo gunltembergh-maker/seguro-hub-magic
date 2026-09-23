@@ -20,6 +20,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { hasRole } from "@/hooks/use-meu-perfil";
 import { useMeuPerfilEfetivo } from "@/contexts/view-as-context";
+import { VisualizadorPdf } from "@/components/pdf/VisualizadorPdf";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -177,6 +178,7 @@ export function BotaoBaixarContrato({
  */
 export function useContratoBlob() {
   const [url, setUrl] = useState<string | null>(null);
+  const [dado, setDado] = useState<Blob | null>(null);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [pathAtual, setPathAtual] = useState<string | null>(null);
@@ -191,7 +193,9 @@ export function useContratoBlob() {
     setErro(null);
     try {
       const blob = await baixarContrato(path);
-      const u = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
+      const b = new Blob([blob], { type: "application/pdf" });
+      const u = URL.createObjectURL(b);
+      setDado(b);
       setUrl((antiga) => {
         if (antiga) URL.revokeObjectURL(antiga);
         return u;
@@ -208,12 +212,13 @@ export function useContratoBlob() {
       if (antiga) URL.revokeObjectURL(antiga);
       return null;
     });
+    setDado(null);
     setErro(null);
     setCarregando(false);
     setPathAtual(null);
   }
 
-  return { url, carregando, erro, pathAtual, carregar, limpar };
+  return { url, dado, carregando, erro, pathAtual, carregar, limpar };
 }
 
 /** Diálogo com o PDF embutido. Nenhuma aba nova, nenhum domínio externo. */
@@ -270,13 +275,8 @@ export function VisualizadorContrato({
               Tentar de novo
             </Button>
           </div>
-        ) : blob.url ? (
-          <>
-            <iframe src={blob.url} className="h-[75vh] w-full rounded border" title="Contrato" />
-            <p className="text-xs text-muted-foreground">
-              Não está aparecendo? Use o botão Baixar.
-            </p>
-          </>
+        ) : blob.url && blob.dado ? (
+          <VisualizadorPdf blob={blob.dado} />
         ) : (
           <div className="flex h-[75vh] items-center justify-center text-muted-foreground">
             Nada para mostrar.
