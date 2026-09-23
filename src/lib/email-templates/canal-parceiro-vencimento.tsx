@@ -4,7 +4,7 @@ import {
 } from '@react-email/components'
 import {
   main, container, header, logoImg, accentBar, card, eyebrow, h1, text, button, buttonWrap,
-  divider, footer, footerStrong, LOGO_URL, NAVY, NAVY_DEEP, MUTED, BORDER, LIGHT_BG,
+  divider, footer, footerStrong, LOGO_URL, NAVY_DEEP, MUTED, BORDER, LIGHT_BG,
 } from './_lavoro-shared'
 
 export interface CanalParceiroVencimentoProps {
@@ -18,6 +18,8 @@ export interface CanalParceiroVencimentoProps {
   repasseAcumulado: string
   percentuais: string
   renovacaoAutomatica: boolean | null
+  tipoAviso: string
+  vencido: boolean
 }
 
 const label: React.CSSProperties = {
@@ -90,6 +92,31 @@ function textoRenovacao(renovacao: boolean | null, parceiro: string, vigenciaFim
   }
 }
 
+function textoDiario(vencido: boolean, parceiro: string, vigenciaFim: string) {
+  if (vencido) {
+    return {
+      paragrafo: (
+        <>
+          A vigência do contrato de <strong>{parceiro}</strong> terminou em{' '}
+          <strong>{vigenciaFim}</strong> e o repasse deste parceiro está travado desde então. Este
+          aviso se repete todo dia até entrar um contrato novo para o parceiro.
+        </>
+      ),
+      nota: 'Envie o contrato novo em Jurídico > Contrato de Parceria. Se a parceria foi encerrada, suspenda o contrato por lá.',
+    }
+  }
+  return {
+    paragrafo: (
+      <>
+        O contrato de <strong>{parceiro}</strong> vence em <strong>{vigenciaFim}</strong>. Passando
+        a data, o repasse trava automaticamente. A partir de agora este lembrete é diário até o
+        contrato novo entrar no Hub.
+      </>
+    ),
+    nota: 'Resolva em Jurídico > Contrato de Parceria antes do vencimento.',
+  }
+}
+
 export const CanalParceiroVencimentoEmail = ({
   parceiro = '—',
   razaoSocial = '—',
@@ -101,12 +128,22 @@ export const CanalParceiroVencimentoEmail = ({
   repasseAcumulado = 'R$ 0,00',
   percentuais = '—',
   renovacaoAutomatica = null,
+  tipoAviso = 'VENCE_60',
+  vencido = false,
 }: Partial<CanalParceiroVencimentoProps>) => {
-  const caso = textoRenovacao(renovacaoAutomatica ?? null, parceiro, vigenciaFim)
+  const caso =
+    tipoAviso === 'VENCE_DIARIO'
+      ? textoDiario(vencido, parceiro, vigenciaFim)
+      : textoRenovacao(renovacaoAutomatica ?? null, parceiro, vigenciaFim)
+  const n = Math.abs(diasParaVencer)
+  const titulo = vencido ? 'Contrato de parceria vencido' : 'Contrato de parceria a vencer'
+  const linhaVigencia = vencido
+    ? `${vigenciaInicio} a ${vigenciaFim} · venceu há ${n} dias`
+    : `${vigenciaInicio} a ${vigenciaFim} · vence em ${n} dias`
   return (
     <Html lang="pt-BR" dir="ltr">
       <Head />
-      <Preview>{`Contrato de parceria com ${parceiro} vence em ${diasParaVencer} dias`}</Preview>
+      <Preview>{`Contrato de parceria com ${parceiro} vence em ${n} dias`}</Preview>
       <Body style={main}>
         <Container style={container}>
           <Section style={header}>
@@ -116,7 +153,7 @@ export const CanalParceiroVencimentoEmail = ({
           <Section style={card}>
             <Text style={eyebrow}>Canal Parceiros</Text>
             <Heading as="h1" style={{ ...h1, margin: '0 0 12px' }}>
-              Contrato de parceria a vencer
+              {titulo}
             </Heading>
 
             <Text style={{ fontSize: '13px', color: MUTED, margin: '0 0 16px', lineHeight: '20px' }}>
@@ -131,7 +168,7 @@ export const CanalParceiroVencimentoEmail = ({
               <Text style={label}>Razão social</Text>
               <Text style={valor}>{razaoSocial}</Text>
               <Text style={label}>Vigência atual</Text>
-              <Text style={valor}>{vigenciaInicio} a {vigenciaFim} · vence em {diasParaVencer} dias</Text>
+              <Text style={valor}>{linhaVigencia}</Text>
               <Text style={label}>Percentuais de repasse</Text>
               <Text style={valor}>{percentuais}</Text>
               <Text style={label}>Documento no Hub</Text>
@@ -151,12 +188,6 @@ export const CanalParceiroVencimentoEmail = ({
                 {caso.nota}
               </Text>
             </Section>
-
-            <Section style={divider}>&nbsp;</Section>
-
-            <Text style={{ fontSize: '14px', color: NAVY, margin: 0, lineHeight: '21px' }}>
-              Alessandro Oliveira, Equipe de Dados &amp; AI
-            </Text>
           </Section>
           <Section style={{ ...divider, margin: 0, borderTop: `1px solid ${BORDER}` }}>&nbsp;</Section>
           <Section style={footer}>
@@ -174,14 +205,20 @@ export const template = {
   component: CanalParceiroVencimentoEmail,
   subject: (d: Record<string, any>) => {
     const parceiro = d?.parceiro ?? '—'
-    const dias = d?.diasParaVencer ?? 0
+    const n = Math.abs(Number(d?.diasParaVencer ?? 0))
+    if (d?.tipoAviso === 'VENCE_DIARIO') {
+      if (d?.vencido === true) {
+        return `Contrato de ${parceiro} venceu há ${n} dias e o repasse está travado`
+      }
+      return `Faltam ${n} dias para o contrato de ${parceiro} vencer`
+    }
     if (d?.renovacaoAutomatica === false) {
-      return `Contrato de ${parceiro} vence em ${dias} dias e não tem renovação automática`
+      return `Contrato de ${parceiro} vence em ${n} dias e não tem renovação automática`
     }
     if (d?.renovacaoAutomatica === true) {
-      return `Contrato de ${parceiro} vence em ${dias} dias, com renovação automática`
+      return `Contrato de ${parceiro} vence em ${n} dias, com renovação automática`
     }
-    return `Contrato de ${parceiro} vence em ${dias} dias`
+    return `Contrato de ${parceiro} vence em ${n} dias`
   },
   displayName: 'Canal Parceiros · Vencimento de contrato',
   previewData: {
@@ -195,5 +232,7 @@ export const template = {
     repasseAcumulado: 'R$ 184.320,55',
     percentuais: 'Benefícios 30% · Garantia 30% · Demais 30%',
     renovacaoAutomatica: false,
+    tipoAviso: 'VENCE_60',
+    vencido: false,
   },
 }
