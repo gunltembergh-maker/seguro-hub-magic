@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { SinoNotificacoes } from "@/components/sino-notificacoes";
 
 function initials(name?: string | null, email?: string | null) {
   const source = (name || email || "?").trim();
@@ -52,6 +53,8 @@ export function HubHeader() {
         <Input placeholder="Buscar áreas, comunicados, documentos..." className="pl-9 bg-white border-transparent text-foreground placeholder:text-muted-foreground focus-visible:bg-white" />
       </div>
 
+      <div className="flex items-center gap-1">
+      <SinoNotificacoes />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className="flex items-center gap-2 rounded-full pl-1 pr-3 py-1 hover:bg-white/10 transition-colors">
@@ -77,6 +80,7 @@ export function HubHeader() {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      </div>
 
       <Button variant="ghost" size="sm" onClick={handleSignOut} className="md:hidden">
         <LogOut className="h-4 w-4" />
