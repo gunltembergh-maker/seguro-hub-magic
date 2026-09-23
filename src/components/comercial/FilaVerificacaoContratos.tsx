@@ -530,14 +530,10 @@ function ConferirDialog({
           <Button
             className="w-full"
             size="lg"
-            disabled={ocupado}
-            onClick={() => abrir(pendencia.arquivo_path)}
+            disabled={!pendencia.arquivo_path}
+            onClick={() => setVendo(true)}
           >
-            {ocupado ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <ExternalLink className="mr-2 h-4 w-4" />
-            )}
+            <FileText className="mr-2 h-4 w-4" />
             Abrir o contrato
           </Button>
           <div className="mt-2 flex items-center justify-between gap-2">
@@ -545,11 +541,43 @@ function ConferirDialog({
             <Button
               variant="ghost"
               size="sm"
-              disabled={ocupado}
-              onClick={() =>
-                abrir(pendencia.arquivo_path, pendencia.arquivo_nome ?? "contrato.pdf")
-              }
+              disabled={baixando || !pendencia.arquivo_path}
+              onClick={async () => {
+                setBaixando(true);
+                try {
+                  const blob = await baixarContrato(pendencia.arquivo_path!);
+                  const url = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = pendencia.arquivo_nome ?? "contrato.pdf";
+                  a.rel = "noopener";
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+                } catch (e) {
+                  toast.error(mensagemDeErro(e));
+                } finally {
+                  setBaixando(false);
+                }
+              }}
             >
+              {baixando ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="mr-2 h-4 w-4" />
+              )}
+              Baixar
+            </Button>
+          </div>
+        </div>
+
+        <VisualizadorContrato
+          path={pendencia.arquivo_path}
+          nome={pendencia.arquivo_nome}
+          aberto={vendo}
+          onFechar={() => setVendo(false)}
+        />
               <Download className="mr-2 h-4 w-4" />
               Baixar
             </Button>
