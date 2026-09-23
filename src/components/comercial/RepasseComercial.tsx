@@ -254,6 +254,26 @@ export function RepasseComercial({
     return m;
   }, [demandas.data]);
 
+  // Aviso (não trava): percentual calculado na base gerencial diferente da regra do Hub.
+  const divergencias = useQuery({
+    queryKey: ["canal-repasse-divergencia-pct", ciclo.ano, ciclo.mes],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc(
+        "rpc_canal_repasse_divergencia_pct" as never,
+        { p_ano: ciclo.ano, p_mes: ciclo.mes, p_canal_repasse: null } as never,
+      );
+      if (error) throw error;
+      return (data || []) as DivergenciaPct[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const divergenciaPorChave = useMemo(() => {
+    const m = new Map<string, DivergenciaPct>();
+    for (const d of divergencias.data ?? []) m.set(chaveCanal(d.chave_planilha), d);
+    return m;
+  }, [divergencias.data]);
+
   const parceiros = useQuery({
     queryKey: ["canal-parceiro-lista"],
     queryFn: async () => {
