@@ -274,7 +274,7 @@ function useSouAprovador() {
 export function FilaVerificacaoContratos({ semCard = false }: { semCard?: boolean } = {}) {
   const pendencias = usePendenciasVerificacao();
   const aprovador = useSouAprovador();
-  const { abrir, ocupado } = useAbrirContrato();
+  const [vendo, setVendo] = useState<{ path: string; nome: string | null } | null>(null);
   const [conferindo, setConferindo] = useState<Pendencia | null>(null);
   const meuPerfil = useMeuPerfilEfetivo();
   const isAdmin = hasRole(meuPerfil, "ADMIN");
