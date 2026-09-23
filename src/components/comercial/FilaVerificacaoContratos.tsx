@@ -578,11 +578,6 @@ function ConferirDialog({
           aberto={vendo}
           onFechar={() => setVendo(false)}
         />
-              <Download className="mr-2 h-4 w-4" />
-              Baixar
-            </Button>
-          </div>
-        </div>
 
         <Separator />
 
