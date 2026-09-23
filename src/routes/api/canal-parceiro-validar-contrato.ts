@@ -376,7 +376,16 @@ async function handle(request: Request): Promise<Response> {
 
     const r = Array.isArray(data) ? data[0] : data;
     return json(
-      { resultado: r, extracao: e, hash, paginas: pdf.numPages, origem_leitura: origem },
+      {
+        resultado: r,
+        extracao: e,
+        hash,
+        paginas: pdf.numPages,
+        origem_leitura: origem,
+        vigencia_origem: e.vigencia_origem,
+        manual_aplicado: camposManuais.length > 0,
+        campos_manuais: camposManuais,
+      },
       200,
     );
   } catch (err) {
