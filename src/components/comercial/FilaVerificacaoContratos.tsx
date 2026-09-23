@@ -298,10 +298,12 @@ export function FilaVerificacaoContratos({ semCard = false }: { semCard?: boolea
               <Button
                 variant="outline"
                 size="sm"
-                disabled={ocupado}
-                onClick={() => abrir(p.arquivo_path)}
+                disabled={!p.arquivo_path}
+                onClick={() =>
+                  setVendo({ path: p.arquivo_path!, nome: p.arquivo_nome ?? "Contrato" })
+                }
               >
-                <ExternalLink className="mr-2 h-4 w-4" />
+                <FileText className="mr-2 h-4 w-4" />
                 Abrir contrato
               </Button>
               <Button size="sm" onClick={() => setConferindo(p)}>
