@@ -6292,6 +6292,16 @@ export type Database = {
         Returns: number
       }
       rpc_admin_caixa_reset: { Args: never; Returns: string }
+      rpc_admin_contas_mesmo_cpf: {
+        Args: { p_user_id: string }
+        Returns: {
+          area: string
+          ativo: boolean
+          email: string
+          empresa: string
+          user_id: string
+        }[]
+      }
       rpc_admin_convidar_externo: {
         Args: { _email: string; _perfil_id: string }
         Returns: string
@@ -7164,6 +7174,7 @@ export type Database = {
           nf_documento_id: string
           nf_enviada_em: string
           nf_enviada_por_nome: string
+          nf_motivo_recusa: string
           nf_numero: string
           nf_status: string
           nf_valor: number
