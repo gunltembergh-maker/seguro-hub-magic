@@ -142,7 +142,16 @@ export function SinoNotificacoes() {
                     className="flex w-full items-start gap-2 px-4 py-2 text-left hover:bg-muted/60"
                     onClick={() => {
                       setAberto(false);
-                      if (i.link) void navigate({ to: i.link as never });
+                      if (!i.link) return;
+                      const url = new URL(i.link, window.location.origin);
+                      try {
+                        void navigate({
+                          to: url.pathname as never,
+                          search: Object.fromEntries(url.searchParams) as never,
+                        });
+                      } catch {
+                        window.location.assign(i.link);
+                      }
                     }}
                   >
                     <span
