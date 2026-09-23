@@ -1216,7 +1216,7 @@ function PainelLiberacoes({ pendentes }: { pendentes: LiberacaoPendente[] }) {
         area="liberacao_repasse"
         alvo={confirmandoId}
         titulo="Confirmar aprovação"
-        descricao="Para aprovar a liberação do repasse sem contrato, confirme a sua senha do Hub."
+        descricao="Para aprovar a liberação do repasse sem contrato, confirme a sua senha de aprovação."
         onFechar={() => setConfirmandoId(null)}
         onConfirmado={() => {
           const id = confirmandoId;
