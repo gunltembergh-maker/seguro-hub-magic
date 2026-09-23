@@ -187,6 +187,23 @@ export async function exportarRepasse(opts: {
 
   if (todas.length === 0) throw new NadaAExportar();
 
+  // Aviso (não trava): divergência entre o percentual da base gerencial e a regra do Hub.
+  // Só no arquivo interno — o do parceiro não leva esse assunto. Erro aqui nunca impede a exportação.
+  let avisoDivergencia: string | null = null;
+  if (modo === "INTERNO") {
+    try {
+      const { data: div } = await supabase.rpc("rpc_canal_repasse_divergencia_pct" as never, {
+        p_ano: ano,
+        p_mes: mes,
+        p_canal_repasse: canal,
+      } as never);
+      const primeira = (Array.isArray(div) ? div[0] : div) as { resumo?: string } | null;
+      avisoDivergencia = primeira?.resumo ?? null;
+    } catch {
+      // ignorado: o aviso nunca pode impedir o arquivo de sair
+    }
+  }
+
   const totalRepasse = todas.reduce((acc, r) => acc + (Number(r.valor_repasse_total) || 0), 0);
   const anoMes = `${ano}-${String(mes).padStart(2, "0")}`;
   const info = [
