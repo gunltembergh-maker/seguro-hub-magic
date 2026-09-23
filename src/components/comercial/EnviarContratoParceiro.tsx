@@ -310,6 +310,7 @@ export default function EnviarContratoParceiro({
       });
       setResposta(corpo);
       setPasso("resultado");
+      onSucesso?.();
     } catch (e) {
       setErro(mensagemDeErro(e));
     } finally {
