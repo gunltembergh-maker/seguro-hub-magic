@@ -12,6 +12,9 @@ import {
   templateConferencia,
   templateAlteracaoPedido,
   templateAlteracaoDecisao,
+  templateLiberacaoPedido,
+  templateLiberacaoDecisao,
+  templateContratoDecisao,
 } from './canal-parceiro-avisos'
 
 export interface TemplateEntry {
@@ -38,6 +41,9 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'canal-parceiro-conferencia': templateConferencia,
   'canal-parceiro-alteracao-pedido': templateAlteracaoPedido,
   'canal-parceiro-alteracao-decisao': templateAlteracaoDecisao,
+  'canal-parceiro-liberacao-pedido': templateLiberacaoPedido,
+  'canal-parceiro-liberacao-decisao': templateLiberacaoDecisao,
+  'canal-parceiro-contrato-decisao': templateContratoDecisao,
   // Aliases legados (compat)
   'receita-diaria': receitaTemplate,
   'resumo-executivo-semanal': executivoTemplate,

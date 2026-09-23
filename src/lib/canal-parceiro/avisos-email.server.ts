@@ -87,6 +87,46 @@ type AlteracaoPendente = {
   assinatura_area: string | null;
 };
 
+type LiberacaoPendente = {
+  tipo: string;
+  liberacao_id: string;
+  parceiro: string | null;
+  ciclo: string | null;
+  justificativa: string | null;
+  nome_de_acordo: string | null;
+  email_de_acordo: string | null;
+  anexo_nome: string | null;
+  solicitante_nome: string | null;
+  solicitante_email: string | null;
+  solicitado_em: string | null;
+  situacao: string | null;
+  aprovador_nome: string | null;
+  observacao: string | null;
+  prazo_em: string | null;
+  destinatarios: Destinatarios;
+  assinatura_nome: string | null;
+  assinatura_area: string | null;
+};
+
+type ContratoDecisaoPendente = {
+  contrato_id: string;
+  parceiro: string | null;
+  arquivo_nome: string | null;
+  situacao: string | null;
+  motivo: string | null;
+  vigencia_inicio: string | null;
+  vigencia_fim: string | null;
+  pct_beneficios: number | null;
+  pct_garantia: number | null;
+  pct_demais: number | null;
+  enviado_por_nome: string | null;
+  corrigido_por_nome: string | null;
+  corrigido_em: string | null;
+  destinatarios: Destinatarios;
+  assinatura_nome: string | null;
+  assinatura_area: string | null;
+};
+
 type Envio = {
   template: string;
   assunto: string;
@@ -127,20 +167,32 @@ export async function enviarAvisosCanalParceiro(): Promise<
 > {
   const { lavoroAdmin } = await import("@/integrations/supabase/lavoro-admin.server");
 
-  const [repasse, verificacoes, alteracoes] = await Promise.all([
+  const [repasse, verificacoes, alteracoes, liberacoes, decisoesContrato] = await Promise.all([
     lavoroAdmin.rpc("canal_repasse_emails_pendentes" as never, {} as never),
     lavoroAdmin.rpc("canal_parceiro_verificacoes_para_email" as never, {} as never),
     lavoroAdmin.rpc("canal_parceiro_alteracoes_para_email" as never, {} as never),
+    lavoroAdmin.rpc("canal_liberacao_emails_pendentes" as never, {} as never),
+    lavoroAdmin.rpc("canal_parceiro_contrato_decisoes_para_email" as never, {} as never),
   ]);
 
-  const erro = repasse.error ?? verificacoes.error ?? alteracoes.error;
+  const erro =
+    repasse.error ?? verificacoes.error ?? alteracoes.error ?? liberacoes.error ?? decisoesContrato.error;
   if (erro) return { ok: false, erro: erro.message };
 
   const filaRepasse = (repasse.data ?? []) as RepassePendente[];
   const filaVerificacao = (verificacoes.data ?? []) as VerificacaoPendente[];
   const filaAlteracao = (alteracoes.data ?? []) as AlteracaoPendente[];
 
-  if (filaRepasse.length === 0 && filaVerificacao.length === 0 && filaAlteracao.length === 0) {
+  const filaLiberacao = (liberacoes.data ?? []) as LiberacaoPendente[];
+  const filaContratoDecisao = (decisoesContrato.data ?? []) as ContratoDecisaoPendente[];
+
+  if (
+    filaRepasse.length === 0 &&
+    filaVerificacao.length === 0 &&
+    filaAlteracao.length === 0 &&
+    filaLiberacao.length === 0 &&
+    filaContratoDecisao.length === 0
+  ) {
     return { ok: true, enviados: 0 };
   }
 
@@ -206,11 +258,11 @@ export async function enviarAvisosCanalParceiro(): Promise<
             subtitulo: `${Number(r.linhas ?? 0)} parcelas`,
           },
           observacao: r.observacao
-            ? { rotulo: "Observação de quem pediu", texto: r.observacao }
+            ? { rotulo: `Observação de ${r.solicitante_nome ?? "quem pediu"}`, texto: r.observacao }
             : null,
-          botao: { rotulo: "Abrir no Hub", href: telaFinanceiro(r.demanda_id) },
+          botao: { rotulo: "Ver solicitação", href: telaFinanceiro(r.demanda_id) },
           notaFinal:
-            "Na tela você confere o valor, autoriza e informa a data prevista do pagamento.",
+            "Na tela você confere o valor, autoriza e informa a data prevista do pagamento. O prazo de resposta é de 24 horas; sem resposta o pedido cai e o Comercial precisa enviar de novo.",
         },
       };
     } else if (r.tipo === "RESPOSTA") {
@@ -229,11 +281,19 @@ export async function enviarAvisosCanalParceiro(): Promise<
               : `${r.financeiro_nome ?? "O Financeiro"} não aprovou o envio da relação de **${parceiro}**, ciclo ${ciclo}.`,
           ],
           destaque: { titulo: moedaBR(r.valor_total), subtitulo: `${Number(r.linhas ?? 0)} parcelas` },
+          itens: aprovada
+            ? [
+                { rotulo: "1", valor: "Abra Comercial > Canal Parceiros e localize o parceiro" },
+                { rotulo: "2", valor: "Clique em Exportar ao parceiro: o arquivo sai sem prêmio e sem comissão da Lavoro" },
+                { rotulo: "3", valor: "Envie o arquivo ao parceiro e peça a nota fiscal" },
+                { rotulo: "4", valor: "O pagamento acontece após o recebimento da nota fiscal" },
+              ]
+            : undefined,
           observacao:
             !aprovada && r.observacao
               ? { rotulo: "Observação do Financeiro", texto: r.observacao }
               : null,
-          botao: { rotulo: "Abrir no Hub", href: telaComercial(r.demanda_id) },
+          botao: { rotulo: "Ver solicitação", href: telaComercial(r.demanda_id) },
         },
       };
     } else {
@@ -293,7 +353,7 @@ export async function enviarAvisosCanalParceiro(): Promise<
           },
           { rotulo: "Repasse acumulado travado", valor: moedaBR(v.repasse_acumulado) },
         ],
-        botao: { rotulo: "Abrir no Hub", href: telaComercial() },
+        botao: { rotulo: "Ver solicitação", href: telaComercial() },
         notaFinal: "Na tela você abre o documento por um link temporário e decide.",
       },
     };
@@ -339,7 +399,7 @@ export async function enviarAvisosCanalParceiro(): Promise<
           observacao: a.justificativa
             ? { rotulo: "Justificativa", texto: a.justificativa }
             : null,
-          botao: { rotulo: "Abrir no Hub", href: telaComercial() },
+          botao: { rotulo: "Ver solicitação", href: telaComercial() },
         },
       };
     } else {
@@ -357,7 +417,7 @@ export async function enviarAvisosCanalParceiro(): Promise<
           ],
           itens,
           observacao: a.observacao ? { rotulo: "Observação", texto: a.observacao } : null,
-          botao: { rotulo: "Abrir no Hub", href: telaComercial() },
+          botao: { rotulo: "Ver solicitação", href: telaComercial() },
         },
       };
     }
@@ -377,6 +437,124 @@ export async function enviarAvisosCanalParceiro(): Promise<
     );
     if (erroMarca)
       console.error("[canal-parceiro-avisos] falha ao marcar alteração", erroMarca.message);
+    enviados += 1;
+  }
+
+  // ---------- Fila 4: liberação sem contrato ----------
+  for (const l of filaLiberacao) {
+    const parceiro = l.parceiro ?? "—";
+    const ciclo = l.ciclo ?? "—";
+    let envio: Envio;
+
+    if (l.tipo === "PEDIDO") {
+      const solicitante = l.solicitante_nome ?? "O Comercial";
+      envio = {
+        template: "canal-parceiro-liberacao-pedido",
+        assunto: `Liberar repasse sem contrato de ${parceiro}, ciclo ${ciclo}`,
+        destinatarios: l.destinatarios ?? [],
+        dados: {
+          assinaturaNome: l.assinatura_nome,
+          assinaturaArea: l.assinatura_area,
+          titulo: "Liberação sem contrato",
+          paragrafos: [
+            `${solicitante} pediu liberação de repasse de **${parceiro}** no ciclo ${ciclo}, sem contrato assinado, com De Acordo de ${l.nome_de_acordo ?? "—"} (${l.email_de_acordo ?? "—"}).`,
+          ],
+          itens: [{ rotulo: "Anexo com o De Acordo", valor: l.anexo_nome ?? "—" }],
+          observacao: l.justificativa
+            ? { rotulo: `Justificativa de ${l.solicitante_nome ?? "quem pediu"}`, texto: l.justificativa }
+            : null,
+          botao: { rotulo: "Ver solicitação", href: telaComercial() },
+          notaFinal:
+            "O Financeiro tem até 24 horas para responder. Sem resposta, o pedido cai e o Comercial precisa pedir de novo.",
+        },
+      };
+    } else {
+      const situacao = (l.situacao ?? "").toUpperCase();
+      const aprovador = l.aprovador_nome ?? "O Financeiro";
+      const paragrafo =
+        situacao === "APROVADA"
+          ? `${aprovador} aprovou a liberação de **${parceiro}**, ciclo ${ciclo}. O parceiro está destravado e você já pode enviar o pedido de repasse ao Financeiro.`
+          : situacao === "EXPIRADA"
+            ? `O pedido de liberação de **${parceiro}**, ciclo ${ciclo}, caiu por falta de resposta em 24 horas. Se ainda for necessário, peça de novo.`
+            : `${aprovador} não aprovou a liberação de **${parceiro}**, ciclo ${ciclo}.`;
+      envio = {
+        template: "canal-parceiro-liberacao-decisao",
+        assunto: `Liberação sem contrato de ${parceiro}: ${l.situacao ?? "decidida"}`,
+        destinatarios: l.destinatarios ?? [],
+        dados: {
+          assinaturaNome: l.assinatura_nome,
+          assinaturaArea: l.assinatura_area,
+          titulo: "Resposta da liberação sem contrato",
+          paragrafos: [paragrafo],
+          observacao: l.observacao
+            ? { rotulo: "Observação de quem decidiu", texto: l.observacao }
+            : null,
+          botao: { rotulo: "Ver solicitação", href: telaComercial() },
+        },
+      };
+    }
+
+    const messageId = await despachar(envio, `liberacao ${l.tipo} ${l.liberacao_id}`);
+    if (!messageId) {
+      falhas += 1;
+      continue;
+    }
+    const { error: erroMarca } = await lavoroAdmin.rpc("canal_liberacao_marcar_email" as never, {
+      p_liberacao_id: l.liberacao_id,
+      p_tipo: l.tipo,
+      p_message_id: messageId,
+    } as never);
+    if (erroMarca)
+      console.error("[canal-parceiro-avisos] falha ao marcar liberação", erroMarca.message);
+    enviados += 1;
+  }
+
+  // ---------- Fila 5: decisão do contrato ----------
+  for (const c of filaContratoDecisao) {
+    const parceiro = c.parceiro ?? "—";
+    const ativo = (c.situacao ?? "").toUpperCase() === "ATIVO";
+    const quem = c.corrigido_por_nome ?? "O administrador";
+    const envio: Envio = {
+      template: "canal-parceiro-contrato-decisao",
+      assunto: `Contrato de ${parceiro}: ${c.situacao ?? "decidido"}`,
+      destinatarios: c.destinatarios ?? [],
+      dados: {
+        assinaturaNome: c.assinatura_nome,
+        assinaturaArea: c.assinatura_area,
+        titulo: "Resposta do contrato enviado",
+        paragrafos: [
+          ativo
+            ? `${quem} conferiu e liberou o contrato de **${parceiro}**. O repasse deste parceiro está liberado.`
+            : `${quem} não liberou o contrato de **${parceiro}**.`,
+        ],
+        itens: [
+          { rotulo: "Arquivo", valor: c.arquivo_nome ?? "—" },
+          { rotulo: "Vigência", valor: `${dataBR(c.vigencia_inicio)} a ${dataBR(c.vigencia_fim)}` },
+          { rotulo: "Benefícios", valor: pctBR(c.pct_beneficios) },
+          { rotulo: "Garantia", valor: pctBR(c.pct_garantia) },
+          { rotulo: "Demais ramos", valor: pctBR(c.pct_demais) },
+        ],
+        observacao: c.motivo ? { rotulo: "Motivo", texto: c.motivo } : null,
+        botao: { rotulo: "Ver solicitação", href: telaComercial() },
+      },
+    };
+
+    const destinos = (c.destinatarios ?? []).filter((d) => typeof d === "string" && d.includes("@"));
+    const messageId = await despachar(envio, `contrato decisao ${c.contrato_id}`);
+    if (!messageId) {
+      falhas += 1;
+      continue;
+    }
+    for (const destino of destinos) {
+      const { error: erroMarca } = await lavoroAdmin.rpc("canal_parceiro_marcar_aviso" as never, {
+        p_contrato_id: c.contrato_id,
+        p_tipo: "DECISAO",
+        p_destinatario: destino,
+        p_message_id: messageId,
+      } as never);
+      if (erroMarca)
+        console.error("[canal-parceiro-avisos] falha ao marcar decisão de contrato", erroMarca.message);
+    }
     enviados += 1;
   }
 
