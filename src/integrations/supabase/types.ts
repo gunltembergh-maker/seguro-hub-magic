@@ -7312,6 +7312,7 @@ export type Database = {
         Returns: {
           contrato_id: string
           mensagem: string
+          periodos: number
           vigencia_fim: string
           vigencia_inicio: string
         }[]
