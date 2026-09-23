@@ -7,7 +7,16 @@ import { mensagemDeErro } from "@/lib/erro";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
-import { AlertTriangle, CalendarClock, Check, FileSearch, FileText, Loader2, X } from "lucide-react";
+import {
+  AlertTriangle,
+  CalendarClock,
+  Check,
+  FileSearch,
+  FileText,
+  FolderOpen,
+  Loader2,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +27,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Textarea } from "@/components/ui/textarea";
 import { DetalheRepasseCiclo } from "@/components/repasse/DetalheRepasseCiclo";
 import { ContratoDoParceiro } from "@/components/repasse/ContratoDoParceiro";
+import {
+  BotaoBaixarDocumento,
+  ConferirNFDialog,
+  DocumentosParceiroDialog,
+  RegistrarPagamentoDialog,
+} from "@/components/repasse/DocumentosRepasse";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -67,6 +82,14 @@ export type DemandaNF = {
   sou_o_solicitante: boolean | null;
   prazo_resposta_em: string | null;
   horas_para_expirar: number | null;
+  nf_documento_id?: string | null;
+  nf_status?: string | null;
+  nf_numero?: string | null;
+  nf_valor?: number | null;
+  nf_valor_diverge?: boolean | null;
+  nf_enviada_em?: string | null;
+  nf_enviada_por_nome?: string | null;
+  comprovante_documento_id?: string | null;
 };
 
 function useDemandas(situacao: string) {
@@ -100,17 +123,21 @@ export function DemandasRepasseNF() {
   const [naoPagou, setNaoPagou] = useState<DemandaNF | null>(null);
   const [relacao, setRelacao] = useState<DemandaNF | null>(null);
   const [contrato, setContrato] = useState<DemandaNF | null>(null);
+  const [conferir, setConferir] = useState<DemandaNF | null>(null);
+  const [registrar, setRegistrar] = useState<DemandaNF | null>(null);
+  const [documentos, setDocumentos] = useState<DemandaNF | null>(null);
+  void setConfirmar;
+  void confirmar;
 
-  const aConfirmar = useMemo(
-    () =>
-      (aprovadas.data ?? []).filter(
-        (d) =>
-          !d.baixa_data_pagamento &&
-          d.data_prevista_pagamento != null &&
-          (d.dias_para_a_data ?? 0) <= 0,
-      ),
-    [aprovadas.data],
-  );
+  // Repasses aprovados: todos sem baixa e os pagos nos últimos 30 dias.
+  const aConfirmar = useMemo(() => {
+    const limite = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    return (aprovadas.data ?? []).filter(
+      (d) =>
+        !d.baixa_data_pagamento ||
+        new Date(`${d.baixa_data_pagamento.slice(0, 10)}T12:00:00`).getTime() >= limite,
+    );
+  }, [aprovadas.data]);
 
   const listaPendentes = pendentes.data ?? [];
 
