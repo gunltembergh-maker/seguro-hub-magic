@@ -5764,6 +5764,8 @@ export type Database = {
         Returns: string
       }
       canal_parceiro_de: { Args: { p_canal_planilha: string }; Returns: string }
+      canal_parceiro_emails_comercial: { Args: never; Returns: string[] }
+      canal_parceiro_emails_juridico: { Args: never; Returns: string[] }
       canal_parceiro_expirar_contratos: { Args: never; Returns: number }
       canal_parceiro_janela_pagamento: {
         Args: { p_ref?: string }
@@ -6775,6 +6777,7 @@ export type Database = {
           canal_id: string
           cnpj: string
           contrato_id: string
+          destinatarios: string[]
           dias_para_vencer: number
           parceiro: string
           pct_beneficios: number
@@ -6784,6 +6787,7 @@ export type Database = {
           renovacao_automatica: boolean
           repasse_acumulado: number
           tipo_aviso: string
+          vencido: boolean
           vigencia_fim: string
           vigencia_inicio: string
         }[]
