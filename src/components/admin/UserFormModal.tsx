@@ -109,6 +109,19 @@ export function UserFormModal({ open, onOpenChange, initial, onSaved }: Props) {
   const [cpfError, setCpfError] = useState<string | null>(null);
   const [cpfValid, setCpfValid] = useState<boolean | null>(null);
 
+  // Outras contas com o mesmo CPF em empresas diferentes (só leitura, só na edição).
+  const { data: contasMesmoCpf } = useQuery({
+    queryKey: ["admin-contas-mesmo-cpf", initial?.user_id],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_admin_contas_mesmo_cpf" as never, {
+        p_user_id: initial!.user_id,
+      } as never);
+      if (error) throw error;
+      return (data ?? []) as { user_id: string; email: string; empresa: string | null; area: string | null; ativo: boolean }[];
+    },
+    enabled: open && isEdit && !!initial?.user_id,
+  });
+
   const { data: perfis } = useQuery({
     queryKey: ["perfis-acesso-form"],
     queryFn: async () => {
