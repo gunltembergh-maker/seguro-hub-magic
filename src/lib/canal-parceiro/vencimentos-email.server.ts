@@ -13,6 +13,7 @@ type Pendente = {
   contrato_id: string;
   canal_id: string | null;
   parceiro: string | null;
+  razao_social: string | null;
   cnpj: string | null;
   arquivo_nome: string | null;
   vigencia_inicio: string | null;
@@ -20,6 +21,10 @@ type Pendente = {
   dias_para_vencer: number | null;
   tipo_aviso: string | null;
   repasse_acumulado: number | null;
+  renovacao_automatica: boolean | null;
+  pct_beneficios: number | null;
+  pct_garantia: number | null;
+  pct_demais: number | null;
 };
 
 const dataBR = (iso: string | null) =>
@@ -27,6 +32,17 @@ const dataBR = (iso: string | null) =>
 
 const moedaBR = (v: number | null) =>
   Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+const pct = (v: number | null) =>
+  v == null ? "—" : `${Math.round(Number(v) * 100)}%`;
+
+const percentuaisRepasse = (p: Pendente) => {
+  const demais = p.pct_demais == null;
+  return (
+    `Benefícios ${pct(p.pct_beneficios)} · Garantia ${pct(p.pct_garantia)} · ` +
+    `Demais ${pct(demais ? p.pct_garantia : p.pct_demais)}${demais ? " (herdado)" : ""}`
+  );
+};
 
 export async function avisarVencimentosPendentes(): Promise<
   { ok: true; enviados: number; falhas?: number } | { ok: false; erro: string }
@@ -54,12 +70,15 @@ export async function avisarVencimentosPendentes(): Promise<
         idempotencyKey: messageId,
         templateData: {
           parceiro: p.parceiro ?? "—",
+          razaoSocial: p.razao_social ?? "—",
           cnpj: p.cnpj && p.cnpj.trim() ? p.cnpj : "CNPJ não cadastrado",
           vigenciaInicio: dataBR(p.vigencia_inicio),
           vigenciaFim: dataBR(p.vigencia_fim),
           diasParaVencer: Number(p.dias_para_vencer ?? 0),
           arquivoNome: p.arquivo_nome ?? "—",
           repasseAcumulado: moedaBR(p.repasse_acumulado),
+          percentuais: percentuaisRepasse(p),
+          renovacaoAutomatica: p.renovacao_automatica,
         },
       });
 
