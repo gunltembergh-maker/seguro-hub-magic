@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { hasRole, useMeuPerfilEfetivo } from "@/hooks/use-meu-perfil";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -56,6 +57,7 @@ export interface Pendencia {
   pct_garantia: number | null;
   pct_demais: number | null;
   minimo_repasse?: number | null;
+  tentativas?: number | null;
   enviado_por_nome: string | null;
   enviado_em: string | null;
   repasse_acumulado: number | null;
@@ -154,7 +156,7 @@ function useSouAprovador() {
       const { data, error } = await supabase.rpc(
         "rpc_canal_parceiro_liberacoes" as never,
         {
-          p_canal_id: null,
+          p_status: null,
         } as never,
       );
       if (error) throw error;
