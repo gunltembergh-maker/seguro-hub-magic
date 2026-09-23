@@ -99,6 +99,8 @@ const areasAll: AreaItem[] = [
     children: [
       { title: "Background Check", url: "/juridico/analise-background", icon: SearchCheck,
         perms: ["ab_juridico", "ab_compliance", "ab_rh"] },
+      { title: "Contrato de Parceria", url: "/juridico/contrato-parceria", icon: FileSignature,
+        perms: ["menu_juridico_contratos"] },
     ],
   },
   { title: "Operacional", url: "/operacional", icon: Cog, perm: "menu_area_operacional" },
