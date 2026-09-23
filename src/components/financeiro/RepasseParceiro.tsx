@@ -24,7 +24,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { SuperAdminGate } from "@/components/admin/SuperAdminGate";
+import { ConfirmarSenhaDialog } from "@/components/admin/ConfirmarSenhaDialog";
 import ExportacaoBloqueada from "@/components/financeiro/ExportacaoBloqueada";
 import DataPrevistaPagamento from "@/components/financeiro/DataPrevistaPagamento";
 import {
@@ -1081,6 +1081,7 @@ function PainelLiberacoes({ pendentes }: { pendentes: LiberacaoPendente[] }) {
   const queryClient = useQueryClient();
   const [aberto, setAberto] = useState(false);
   const [decidindo, setDecidindo] = useState<string | null>(null);
+  const [confirmandoId, setConfirmandoId] = useState<string | null>(null);
   const [abrindoAnexo, setAbrindoAnexo] = useState<string | null>(null);
 
   const verDeAcordo = async (p: LiberacaoPendente) => {
@@ -1112,7 +1113,12 @@ function PainelLiberacoes({ pendentes }: { pendentes: LiberacaoPendente[] }) {
       queryClient.invalidateQueries({ queryKey: ["canal-parceiro-liberacoes"] });
       queryClient.invalidateQueries({ queryKey: ["canal-parceiro-situacao"] });
     } catch (e) {
-      toast.error(mensagemDeErro(e));
+      const msg = mensagemDeErro(e);
+      if (/senha/i.test(msg)) {
+        toast.error("A confirmação de senha vale por 10 minutos. Clique em Aprovar e confirme a senha de novo.");
+      } else {
+        toast.error(msg);
+      }
     } finally {
       setDecidindo(null);
     }
@@ -1143,7 +1149,7 @@ function PainelLiberacoes({ pendentes }: { pendentes: LiberacaoPendente[] }) {
             </DialogDescription>
           </DialogHeader>
 
-          <SuperAdminGate area="canal-parceiro-liberacoes" titulo="Aprovar liberações de repasse">
+          <>
             <div className="max-h-[60vh] space-y-3 overflow-y-auto">
               {pendentes.map((p) => (
                 <div key={p.liberacao_id} className="rounded-lg border p-3" style={{ borderColor: BORDER }}>
@@ -1183,7 +1189,7 @@ function PainelLiberacoes({ pendentes }: { pendentes: LiberacaoPendente[] }) {
                     ) : null}
                     <Button
                       size="sm"
-                      onClick={() => decidir(p.liberacao_id, true)}
+                      onClick={() => setConfirmandoId(p.liberacao_id)}
                       disabled={decidindo !== null}
                     >
                       {decidindo === p.liberacao_id && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
@@ -1201,9 +1207,23 @@ function PainelLiberacoes({ pendentes }: { pendentes: LiberacaoPendente[] }) {
                 </div>
               ))}
             </div>
-          </SuperAdminGate>
+          </>
         </DialogContent>
       </Dialog>
+
+      <ConfirmarSenhaDialog
+        aberto={!!confirmandoId}
+        area="liberacao_repasse"
+        alvo={confirmandoId}
+        titulo="Confirmar aprovação"
+        descricao="Para aprovar a liberação do repasse sem contrato, confirme a sua senha do Hub."
+        onFechar={() => setConfirmandoId(null)}
+        onConfirmado={() => {
+          const id = confirmandoId;
+          setConfirmandoId(null);
+          if (id) decidir(id, true);
+        }}
+      />
     </>
   );
 }
