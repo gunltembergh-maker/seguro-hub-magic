@@ -844,6 +844,7 @@ function PercentualRepasse({
       <span className="inline-flex items-center justify-end gap-1.5">
         {resumo}
         {seloDiretoria}
+        {seloDivergencia}
       </span>
     );
   }
@@ -863,6 +864,7 @@ function PercentualRepasse({
         </TooltipContent>
       </Tooltip>
       {seloDiretoria}
+      {seloDivergencia}
     </span>
   );
 }
