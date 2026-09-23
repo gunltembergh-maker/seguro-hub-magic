@@ -139,7 +139,6 @@ export default function ContratoParceriaTela() {
   const podeBloquear = hasPermission(perfil, "juridico_bloquear_repasse");
 
   const qc = useQueryClient();
-  const { abrir, ocupado } = { abrir: (_p?: string | null) => {}, ocupado: false };
   const [vendo, setVendo] = useState<{ path: string; nome: string | null } | null>(null);
   const [filtro, setFiltro] = useState<Filtro>(null);
   const [acao, setAcao] = useState<{ tipo: TipoAcao; linha: Linha } | null>(null);
@@ -384,7 +383,7 @@ export default function ContratoParceriaTela() {
                           <TableCell className="align-top">
                             <div className="flex flex-wrap justify-end gap-1" data-tour="jur-acoes">
                               {l.arquivo_path && (
-                                <Button size="sm" variant="ghost" disabled={ocupado} onClick={() => abrir(l.arquivo_path)}>
+                                <Button size="sm" variant="ghost" onClick={() => setVendo({ path: l.arquivo_path!, nome: l.arquivo_nome ?? "Contrato" })}>
                                   <FileText className="mr-1 h-4 w-4" /> Abrir contrato
                                 </Button>
                               )}
