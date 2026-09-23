@@ -615,6 +615,7 @@ function LinhaRepasse({
   pill: { bg: string; color: string; label: string };
   demanda: DemandaNF | undefined;
   liberado: boolean;
+  parado: ParadoInfo | undefined;
   destacar: boolean;
   exportando: string | null;
   onExportar: () => void;
