@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import EnviarContratoParceiro from "@/components/comercial/EnviarContratoParceiro";
-import { useAbrirContrato } from "@/components/comercial/FilaVerificacaoContratos";
+import { VisualizadorContrato } from "@/components/comercial/FilaVerificacaoContratos";
 
 type Linha = {
   canal_id: string;
@@ -139,7 +139,8 @@ export default function ContratoParceriaTela() {
   const podeBloquear = hasPermission(perfil, "juridico_bloquear_repasse");
 
   const qc = useQueryClient();
-  const { abrir, ocupado } = useAbrirContrato();
+  const { abrir, ocupado } = { abrir: (_p?: string | null) => {}, ocupado: false };
+  const [vendo, setVendo] = useState<{ path: string; nome: string | null } | null>(null);
   const [filtro, setFiltro] = useState<Filtro>(null);
   const [acao, setAcao] = useState<{ tipo: TipoAcao; linha: Linha } | null>(null);
   const [justificativa, setJustificativa] = useState("");
