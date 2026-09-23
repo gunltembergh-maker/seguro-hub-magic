@@ -1683,6 +1683,11 @@ export type Database = {
           ciclo_ano: number
           ciclo_mes: number
           email_de_acordo: string | null
+          email_decisao_em: string | null
+          email_decisao_id: string | null
+          email_expiracao_em: string | null
+          email_pedido_em: string | null
+          email_pedido_id: string | null
           id: string
           justificativa: string
           nome_de_acordo: string | null
@@ -1701,6 +1706,11 @@ export type Database = {
           ciclo_ano: number
           ciclo_mes: number
           email_de_acordo?: string | null
+          email_decisao_em?: string | null
+          email_decisao_id?: string | null
+          email_expiracao_em?: string | null
+          email_pedido_em?: string | null
+          email_pedido_id?: string | null
           id?: string
           justificativa: string
           nome_de_acordo?: string | null
@@ -1719,6 +1729,11 @@ export type Database = {
           ciclo_ano?: number
           ciclo_mes?: number
           email_de_acordo?: string | null
+          email_decisao_em?: string | null
+          email_decisao_id?: string | null
+          email_expiracao_em?: string | null
+          email_pedido_em?: string | null
+          email_pedido_id?: string | null
           id?: string
           justificativa?: string
           nome_de_acordo?: string | null
@@ -5583,6 +5598,33 @@ export type Database = {
       ab_pode: { Args: { p_chave: string }; Returns: boolean }
       ab_seed_demo: { Args: never; Returns: string }
       assinatura_area_do_usuario: { Args: { p_user: string }; Returns: string }
+      canal_liberacao_emails_pendentes: {
+        Args: never
+        Returns: {
+          anexo_nome: string
+          aprovador_nome: string
+          assinatura_area: string
+          assinatura_nome: string
+          ciclo: string
+          destinatarios: string[]
+          email_de_acordo: string
+          justificativa: string
+          liberacao_id: string
+          nome_de_acordo: string
+          observacao: string
+          parceiro: string
+          prazo_em: string
+          situacao: string
+          solicitado_em: string
+          solicitante_email: string
+          solicitante_nome: string
+          tipo: string
+        }[]
+      }
+      canal_liberacao_marcar_email: {
+        Args: { p_liberacao_id: string; p_message_id: string; p_tipo: string }
+        Returns: undefined
+      }
       canal_parceiro_alteracoes_para_email: {
         Args: never
         Returns: {
@@ -5617,6 +5659,27 @@ export type Database = {
           canal_id: string
           chave_planilha: string
           nome: string
+        }[]
+      }
+      canal_parceiro_contrato_decisoes_para_email: {
+        Args: never
+        Returns: {
+          arquivo_nome: string
+          assinatura_area: string
+          assinatura_nome: string
+          contrato_id: string
+          corrigido_em: string
+          corrigido_por_nome: string
+          destinatarios: string[]
+          enviado_por_nome: string
+          motivo: string
+          parceiro: string
+          pct_beneficios: number
+          pct_demais: number
+          pct_garantia: number
+          situacao: string
+          vigencia_fim: string
+          vigencia_inicio: string
         }[]
       }
       canal_parceiro_data_do_ciclo: {
@@ -5741,6 +5804,13 @@ export type Database = {
           solicitante_nome: string
           tipo: string
           valor_total: number
+        }[]
+      }
+      canal_repasse_expirar_pendentes: {
+        Args: never
+        Returns: {
+          demandas_expiradas: number
+          liberacoes_expiradas: number
         }[]
       }
       canal_repasse_financeiro_emails: { Args: never; Returns: string[] }
@@ -6741,10 +6811,12 @@ export type Database = {
           decidido_por_nome: string
           demanda_id: string
           dias_para_a_data: number
+          horas_para_expirar: number
           linhas: number
           observacao_financeiro: string
           observacao_solicitante: string
           parceiro: string
+          prazo_resposta_em: string
           situacao: string
           solicitado_em: string
           solicitado_por_nome: string
