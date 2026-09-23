@@ -175,9 +175,11 @@ export function FilaVerificacaoContratos({ semCard = false }: { semCard?: boolea
   const aprovador = useSouAprovador();
   const { abrir, ocupado } = useAbrirContrato();
   const [conferindo, setConferindo] = useState<Pendencia | null>(null);
+  const meuPerfil = useMeuPerfilEfetivo();
+  const isAdmin = hasRole(meuPerfil, "ADMIN");
 
   const linhas = pendencias.data ?? [];
-  if (pendencias.isLoading || linhas.length === 0) return null;
+  if (!isAdmin || pendencias.isLoading || linhas.length === 0) return null;
 
   const conteudo = (
     <div className="space-y-3">
@@ -240,6 +242,9 @@ export function FilaVerificacaoContratos({ semCard = false }: { semCard?: boolea
             </span>
             <Badge variant="outline">Repasse acumulado travado: {reais(p.repasse_acumulado)}</Badge>
             {p.ja_avisado_em ? <span>Avisado em {dataHora(p.ja_avisado_em)}</span> : null}
+            {(p.tentativas ?? 0) > 1 ? (
+              <span>{p.tentativas} envios deste parceiro. Vale o mais recente.</span>
+            ) : null}
           </div>
         </div>
       ))}
