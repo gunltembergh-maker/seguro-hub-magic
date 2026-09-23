@@ -168,25 +168,47 @@ function extrair(texto: string) {
 
   if (vigIni && !vigFim) vigFim = fecharPeloPrazo(vigIni);
 
-  // Assinatura: bloco do Clicksign no fim do PDF
+  // Assinatura: os padrões rodam sobre o texto com espaços normalizados, porque
+  // plataformas como ZapSign quebram "Assinado ... por Nome" e a data em linhas
+  // separadas, e [^\n] não atravessa. Mantém o formato Clicksign (mês por
+  // extenso) e acrescenta o numérico; fica a data/hora mais recente.
+  const linear = texto.replace(/\s+/g, " ");
   const assinaturas = [
-    ...texto.matchAll(
+    ...linear.matchAll(
       /assin(?:ou|ado|atura)[^\n]{0,120}?(\d{1,2}\s+[a-zç]{3,9}\.?\s+\d{4}[^\n]{0,20}\d{2}:\d{2}(?::\d{2})?)/gi,
+    ),
+    ...linear.matchAll(
+      /assin(?:ou|ado|atura)[\s\S]{0,160}?(\d{2}\/\d{2}\/\d{4})[\s,]*(\d{2}:\d{2}(?::\d{2})?)/gi,
     ),
   ];
   let assinadoEm: string | null = null;
   for (const a of assinaturas) {
-    const dia = acharData(a[1]);
-    const hora = a[1].match(/(\d{2}):(\d{2})(?::(\d{2}))?/);
+    const trecho = `${a[1]} ${a[2] ?? ""}`;
+    const dia = acharData(trecho);
+    const hora = trecho.match(/(\d{2}):(\d{2})(?::(\d{2}))?/);
     if (dia) {
       const t = `${dia}T${hora ? `${hora[1]}:${hora[2]}:${hora[3] ?? "00"}` : "12:00:00"}-03:00`;
       if (!assinadoEm || t > assinadoEm) assinadoEm = t;
     }
   }
   const mSign = plano.match(/(\d{1,2})\s*(?:signat[aá]rios?|assinantes?)/);
-  const signatarios = mSign ? Number(mSign[1]) : (assinaturas.length || null);
+  const nDeclarado = mSign ? Number(mSign[1]) : null;
+  const nOcorrencias = linear.match(
+    /assinado\s+(?:digitalmente|eletronicamente)\s+(?:na|no|por)/gi,
+  )?.length ?? 0;
+  const signatarios =
+    Math.max(nDeclarado ?? 0, nOcorrencias, assinaturas.length) || null;
+  const plataformaRe = /(zapsign|clicksign|docusign)/i.exec(linear);
+  const plataformaMapa: Record<string, string> = {
+    zapsign: "ZapSign",
+    clicksign: "Clicksign",
+    docusign: "DocuSign",
+  };
+  const assinaturaPlataforma = plataformaRe
+    ? plataformaMapa[plataformaRe[1].toLowerCase()]
+    : null;
   const assinado = Boolean(assinadoEm) &&
-    /clicksign|docusign|assinatura eletronica|assinado digitalmente|lista de assinaturas/.test(plano);
+    /zapsign|clicksign|docusign|assinatura eletronica|assinado digitalmente|assinado eletronicamente|lista de assinaturas|mp 2\.200-2/.test(plano);
 
   // Importancia minima
   const mMin = texto.match(/(?:import[aâ]ncia\s+m[ií]nima|valor\s+m[ií]nimo)[^\d]{0,40}R?\$?\s*([\d.]+,\d{2})/i);
