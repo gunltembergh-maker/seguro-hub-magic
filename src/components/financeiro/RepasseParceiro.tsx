@@ -1269,10 +1269,10 @@ function ExportBtn({
                 className="h-6 gap-1 border-amber-500/60 px-2 text-[11px] font-semibold text-amber-700 hover:bg-amber-50 hover:text-amber-800"
               >
                 <Lock className="h-3 w-3" />
-                Sem contrato
+                {rotuloParado(situacao)}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>{motivoBloqueio(situacao)}</TooltipContent>
+            <TooltipContent>{tooltipParado(situacao)}</TooltipContent>
           </Tooltip>
         </TooltipProvider>
       ) : null}
