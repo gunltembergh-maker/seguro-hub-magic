@@ -46,6 +46,8 @@ interface Extracao {
   signatarios?: number | null;
   minimo?: number | null;
   tipo?: string | null;
+  renovacao_automatica?: boolean | null;
+  renovacao_trecho?: string | null;
 }
 
 interface Resultado {
@@ -76,6 +78,8 @@ interface Resposta {
   manual_aplicado?: boolean;
   campos_manuais?: string[] | null;
   vigencia_origem?: string | null;
+  renovacao_automatica?: boolean | null;
+  renovacao_trecho?: string | null;
 }
 
 /** Rótulo curto dos campos gravados à mão, para o aviso de conferência. */
@@ -729,6 +733,14 @@ export default function EnviarContratoParceiro({
                 {e?.assinado_em ? ` em ${new Date(e.assinado_em).toLocaleString("pt-BR")}` : ""}
               </p>
               <p>Signatários: {e?.signatarios ?? "—"}</p>
+              <p>
+                Renovação automática:{" "}
+                {(resposta.renovacao_automatica ?? e?.renovacao_automatica) === true
+                  ? "sim"
+                  : (resposta.renovacao_automatica ?? e?.renovacao_automatica) === false
+                    ? "não"
+                    : "não identificada"}
+              </p>
               {resposta.paginas != null && <p>Páginas: {resposta.paginas}</p>}
             </div>
 

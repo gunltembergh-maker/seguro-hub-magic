@@ -1576,8 +1576,15 @@ export type Database = {
           percentual_beneficios: number | null
           percentual_demais: number | null
           percentual_garantia: number | null
+          renovacao_automatica: boolean | null
+          renovado_de: string | null
+          renovado_em: string | null
+          renovado_por: string | null
           signatarios: number | null
           situacao: string
+          suspenso_em: string | null
+          suspenso_motivo: string | null
+          suspenso_por: string | null
           tipo: string
           validado_em: string | null
           vigencia_fim: string | null
@@ -1607,8 +1614,15 @@ export type Database = {
           percentual_beneficios?: number | null
           percentual_demais?: number | null
           percentual_garantia?: number | null
+          renovacao_automatica?: boolean | null
+          renovado_de?: string | null
+          renovado_em?: string | null
+          renovado_por?: string | null
           signatarios?: number | null
           situacao?: string
+          suspenso_em?: string | null
+          suspenso_motivo?: string | null
+          suspenso_por?: string | null
           tipo?: string
           validado_em?: string | null
           vigencia_fim?: string | null
@@ -1638,8 +1652,15 @@ export type Database = {
           percentual_beneficios?: number | null
           percentual_demais?: number | null
           percentual_garantia?: number | null
+          renovacao_automatica?: boolean | null
+          renovado_de?: string | null
+          renovado_em?: string | null
+          renovado_por?: string | null
           signatarios?: number | null
           situacao?: string
+          suspenso_em?: string | null
+          suspenso_motivo?: string | null
+          suspenso_por?: string | null
           tipo?: string
           validado_em?: string | null
           vigencia_fim?: string | null
@@ -1651,6 +1672,13 @@ export type Database = {
             columns: ["canal_id"]
             isOneToOne: false
             referencedRelation: "canais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "canal_contratos_renovado_de_fkey"
+            columns: ["renovado_de"]
+            isOneToOne: false
+            referencedRelation: "canal_contratos"
             referencedColumns: ["id"]
           },
         ]
@@ -1852,6 +1880,47 @@ export type Database = {
             columns: ["superada_por_contrato_id"]
             isOneToOne: false
             referencedRelation: "canal_contratos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      canal_parceiro_bloqueios: {
+        Row: {
+          bloqueado_em: string
+          bloqueado_por: string
+          canal_id: string
+          id: string
+          liberado_em: string | null
+          liberado_por: string | null
+          motivo: string
+          motivo_liberacao: string | null
+        }
+        Insert: {
+          bloqueado_em?: string
+          bloqueado_por: string
+          canal_id: string
+          id?: string
+          liberado_em?: string | null
+          liberado_por?: string | null
+          motivo: string
+          motivo_liberacao?: string | null
+        }
+        Update: {
+          bloqueado_em?: string
+          bloqueado_por?: string
+          canal_id?: string
+          id?: string
+          liberado_em?: string | null
+          liberado_por?: string | null
+          motivo?: string
+          motivo_liberacao?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canal_parceiro_bloqueios_canal_id_fkey"
+            columns: ["canal_id"]
+            isOneToOne: false
+            referencedRelation: "canais"
             referencedColumns: ["id"]
           },
         ]
@@ -5653,6 +5722,10 @@ export type Database = {
         }[]
       }
       canal_parceiro_aprovadores_emails: { Args: never; Returns: string[] }
+      canal_parceiro_bloqueado: {
+        Args: { p_canal_id: string }
+        Returns: boolean
+      }
       canal_parceiro_casar: {
         Args: { p_nomes: string[] }
         Returns: {
@@ -5747,6 +5820,7 @@ export type Database = {
           p_pct_beneficios?: number
           p_pct_demais?: number
           p_pct_garantia?: number
+          p_renovacao_automatica?: boolean
           p_signatarios?: number
           p_tipo?: string
           p_vigencia_fim?: string
@@ -5890,6 +5964,7 @@ export type Database = {
       }
       pode_ver_canal_parceiro: { Args: never; Returns: boolean }
       pode_ver_garantia_formulario: { Args: never; Returns: boolean }
+      pode_ver_juridico_contratos: { Args: never; Returns: boolean }
       pode_ver_repasse_demanda: { Args: never; Returns: boolean }
       retry_lavoro_sync_if_needed: { Args: never; Returns: undefined }
       rp_expirar_reservas: { Args: never; Returns: number }
@@ -7185,6 +7260,66 @@ export type Database = {
           fonte: string
           total_linhas: number
           ultima_atualizacao: string
+        }[]
+      }
+      rpc_juridico_bloquear_repasse: {
+        Args: { p_canal_id: string; p_motivo: string }
+        Returns: {
+          bloqueio_id: string
+          demandas_derrubadas: number
+          mensagem: string
+        }[]
+      }
+      rpc_juridico_contratos: {
+        Args: { p_situacao?: string }
+        Returns: {
+          arquivo_nome: string
+          arquivo_path: string
+          bloqueado: boolean
+          bloqueio_em: string
+          bloqueio_motivo: string
+          bloqueio_por: string
+          canal_id: string
+          cnpj: string
+          contrato_id: string
+          dias_para_vencer: number
+          minimo_repasse: number
+          motivo_bloqueio: string
+          parceiro: string
+          pct_beneficios: number
+          pct_demais: number
+          pct_garantia: number
+          razao_social: string
+          renovacao_automatica: boolean
+          renovado_em: string
+          renovado_por: string
+          repasse_acumulado: number
+          situacao: string
+          suspenso_motivo: string
+          tipo: string
+          vigencia_fim: string
+          vigencia_inicio: string
+        }[]
+      }
+      rpc_juridico_liberar_repasse: {
+        Args: { p_canal_id: string; p_motivo: string }
+        Returns: {
+          mensagem: string
+        }[]
+      }
+      rpc_juridico_renovar_contrato: {
+        Args: { p_contrato_id: string; p_justificativa: string }
+        Returns: {
+          contrato_id: string
+          mensagem: string
+          vigencia_fim: string
+          vigencia_inicio: string
+        }[]
+      }
+      rpc_juridico_suspender_contrato: {
+        Args: { p_contrato_id: string; p_justificativa: string }
+        Returns: {
+          mensagem: string
         }[]
       }
       rpc_lavoro_apolices_filtros:
