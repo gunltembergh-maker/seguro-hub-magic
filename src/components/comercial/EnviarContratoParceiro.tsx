@@ -73,7 +73,22 @@ interface Resposta {
   origem_leitura?: string | null;
   precisa_ocr?: boolean;
   motivo?: string | null;
+  manual_aplicado?: boolean;
+  campos_manuais?: string[] | null;
+  vigencia_origem?: string | null;
 }
+
+/** Rótulo curto dos campos gravados à mão, para o aviso de conferência. */
+const ROTULO_CAMPO: Record<string, string> = {
+  razao_social: "razão social",
+  cnpj: "CNPJ",
+  vigencia_inicio: "vigência",
+  vigencia_fim: "vigência",
+  pct_beneficios: "benefícios",
+  pct_garantia: "garantia",
+  pct_demais: "demais ramos",
+  minimo: "mínimo",
+};
 
 export interface EnviarContratoParceiroProps {
   canalId?: string | null;
@@ -295,6 +310,7 @@ export default function EnviarContratoParceiro({
       });
       setResposta(corpo);
       setPasso("resultado");
+      onSucesso?.();
     } catch (e) {
       setErro(mensagemDeErro(e));
     } finally {
@@ -333,15 +349,22 @@ export default function EnviarContratoParceiro({
   const origem = resposta?.origem_leitura ?? null;
   const faltaDado =
     !e?.vigencia_fim || (e.pct_beneficios == null && e.pct_garantia == null && e.pct_demais == null);
+  const manualAplicado = resposta?.manual_aplicado === true;
+  const camposManuais = Array.from(
+    new Set((resposta?.campos_manuais ?? []).map((c) => ROTULO_CAMPO[c] ?? c)),
+  );
+  const vigenciaDeduzida = resposta?.vigencia_origem === "ASSINATURA";
+  const emConferencia = situacao === "EM_VALIDACAO" || manualAplicado;
   const podeTentarManual =
     passo === "resultado" &&
-    (situacao === "RECUSADO" || situacao === "EM_VALIDACAO") &&
+    situacao === "RECUSADO" &&
+    !emConferencia &&
     faltaDado &&
     !!caminhoArquivo;
 
   return (
     <Dialog open={aberto} onOpenChange={(v) => { if (!v) fechar(); }}>
-      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
+      <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] min-w-0 overflow-y-auto overflow-x-hidden sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Enviar contrato de parceria</DialogTitle>
           <DialogDescription>
@@ -513,10 +536,10 @@ export default function EnviarContratoParceiro({
               </AlertDescription>
             </Alert>
 
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid min-w-0 gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="mn-ini">Início da vigência</Label>
-                <Input
+                <Input className="w-full min-w-0"
                   id="mn-ini"
                   type="date"
                   value={manual.vigencia_inicio}
@@ -525,7 +548,7 @@ export default function EnviarContratoParceiro({
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="mn-fim">Fim da vigência</Label>
-                <Input
+                <Input className="w-full min-w-0"
                   id="mn-fim"
                   type="date"
                   value={manual.vigencia_fim}
@@ -534,7 +557,7 @@ export default function EnviarContratoParceiro({
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="mn-ben">Benefícios (%)</Label>
-                <Input
+                <Input className="w-full min-w-0"
                   id="mn-ben"
                   inputMode="decimal"
                   placeholder="30"
@@ -544,7 +567,7 @@ export default function EnviarContratoParceiro({
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="mn-gar">Garantia (%)</Label>
-                <Input
+                <Input className="w-full min-w-0"
                   id="mn-gar"
                   inputMode="decimal"
                   placeholder="30"
@@ -554,7 +577,7 @@ export default function EnviarContratoParceiro({
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="mn-dem">Demais ramos (%)</Label>
-                <Input
+                <Input className="w-full min-w-0"
                   id="mn-dem"
                   inputMode="decimal"
                   placeholder="em branco segue Garantia"
@@ -564,7 +587,7 @@ export default function EnviarContratoParceiro({
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="mn-min">Mínimo por ciclo (R$)</Label>
-                <Input
+                <Input className="w-full min-w-0"
                   id="mn-min"
                   inputMode="decimal"
                   placeholder="100"
@@ -574,7 +597,7 @@ export default function EnviarContratoParceiro({
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="mn-cnpj">CNPJ</Label>
-                <Input
+                <Input className="w-full min-w-0"
                   id="mn-cnpj"
                   value={manual.cnpj}
                   onChange={(ev) => setManual((m) => ({ ...m, cnpj: ev.target.value }))}
@@ -582,7 +605,7 @@ export default function EnviarContratoParceiro({
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="mn-razao">Razão social</Label>
-                <Input
+                <Input className="w-full min-w-0"
                   id="mn-razao"
                   value={manual.razao_social}
                   onChange={(ev) => setManual((m) => ({ ...m, razao_social: ev.target.value }))}
@@ -631,16 +654,39 @@ export default function EnviarContratoParceiro({
               </Alert>
             )}
 
-            {(situacao === "RECUSADO" || situacao === "VENCIDO" || situacao === "EM_VALIDACAO") && (
+            {emConferencia && (
+              <Alert className="border-amber-600/40 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Enviado para conferência</AlertTitle>
+                <AlertDescription className="space-y-1">
+                  <p>
+                    Os dados foram gravados e um administrador vai conferir. A análise acontece em
+                    até 24 horas e você recebe o retorno por e-mail.
+                  </p>
+                  {manualAplicado && camposManuais.length > 0 ? (
+                    <p>Gravado à mão: {camposManuais.join(", ")}.</p>
+                  ) : null}
+                  {vigenciaDeduzida ? (
+                    <p className="text-xs">
+                      A data de início foi deduzida da data de assinatura. Confira antes de liberar.
+                    </p>
+                  ) : null}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {situacao === "VENCIDO" && !emConferencia && (
               <Alert variant="destructive">
                 <XCircle className="h-4 w-4" />
-                <AlertTitle>
-                  {situacao === "VENCIDO"
-                    ? "Contrato vencido"
-                    : situacao === "EM_VALIDACAO"
-                      ? "Contrato em validação"
-                      : "Contrato recusado"}
-                </AlertTitle>
+                <AlertTitle>Contrato vencido</AlertTitle>
+                <AlertDescription>{motivo ?? "Sem detalhe informado."}</AlertDescription>
+              </Alert>
+            )}
+
+            {situacao === "RECUSADO" && !emConferencia && (
+              <Alert variant="destructive">
+                <XCircle className="h-4 w-4" />
+                <AlertTitle>Contrato recusado</AlertTitle>
                 <AlertDescription>{motivo ?? "Sem detalhe informado."}</AlertDescription>
               </Alert>
             )}
@@ -694,7 +740,7 @@ export default function EnviarContratoParceiro({
           </div>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="flex-wrap">
           {passo === "pergunta" && (
             <Button variant="outline" onClick={fechar}>
               Cancelar

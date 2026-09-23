@@ -449,7 +449,7 @@ export default function CanalParceirosTela() {
   const pendVerificacao = usePendenciasVerificacao();
   const altPendentes = useAlteracoesPercentual("PENDENTE");
   const nVinculos = isAdmin ? vinculosPendentes.length : 0;
-  const nVerificacao = (pendVerificacao.data ?? []).length;
+  const nVerificacao = isAdmin ? (pendVerificacao.data ?? []).length : 0;
   const nAlteracoes = (altPendentes.data ?? []).length;
   const filasAtivas = [nVinculos, nVerificacao, nAlteracoes].filter((n) => n > 0).length;
   const umaFilaSo = filasAtivas === 1;

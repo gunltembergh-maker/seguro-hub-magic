@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { hasRole } from "@/hooks/use-meu-perfil";
+import { useMeuPerfilEfetivo } from "@/contexts/view-as-context";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -56,6 +58,7 @@ export interface Pendencia {
   pct_garantia: number | null;
   pct_demais: number | null;
   minimo_repasse?: number | null;
+  tentativas?: number | null;
   enviado_por_nome: string | null;
   enviado_em: string | null;
   repasse_acumulado: number | null;
@@ -154,7 +157,7 @@ function useSouAprovador() {
       const { data, error } = await supabase.rpc(
         "rpc_canal_parceiro_liberacoes" as never,
         {
-          p_canal_id: null,
+          p_status: null,
         } as never,
       );
       if (error) throw error;
@@ -172,9 +175,11 @@ export function FilaVerificacaoContratos({ semCard = false }: { semCard?: boolea
   const aprovador = useSouAprovador();
   const { abrir, ocupado } = useAbrirContrato();
   const [conferindo, setConferindo] = useState<Pendencia | null>(null);
+  const meuPerfil = useMeuPerfilEfetivo();
+  const isAdmin = hasRole(meuPerfil, "ADMIN");
 
   const linhas = pendencias.data ?? [];
-  if (pendencias.isLoading || linhas.length === 0) return null;
+  if (!isAdmin || pendencias.isLoading || linhas.length === 0) return null;
 
   const conteudo = (
     <div className="space-y-3">
@@ -237,6 +242,9 @@ export function FilaVerificacaoContratos({ semCard = false }: { semCard?: boolea
             </span>
             <Badge variant="outline">Repasse acumulado travado: {reais(p.repasse_acumulado)}</Badge>
             {p.ja_avisado_em ? <span>Avisado em {dataHora(p.ja_avisado_em)}</span> : null}
+            {(p.tentativas ?? 0) > 1 ? (
+              <span>{p.tentativas} envios deste parceiro. Vale o mais recente.</span>
+            ) : null}
           </div>
         </div>
       ))}
@@ -375,6 +383,13 @@ function ConferirDialog({
         pode_exportar?: boolean | null;
       } | null;
       setResultado(r ?? {});
+      toast.success(
+        r?.motivo ??
+          (r?.situacao === "ATIVO"
+            ? "Contrato ativo. O repasse deste parceiro foi liberado."
+            : `Situação: ${r?.situacao ?? "—"}.`),
+      );
+      onFechar();
       queryClient.invalidateQueries({ queryKey: ["canal-parceiro-situacao"] });
       queryClient.invalidateQueries({ queryKey: ["canal-parceiro-pendencias-verificacao"] });
       queryClient.invalidateQueries({ queryKey: ["canal-parceiro-contratos"] });
@@ -434,6 +449,9 @@ function ConferirDialog({
         {/* 2. correções */}
         <div className="space-y-3">
           <p className="text-sm font-medium">O que precisa ser corrigido</p>
+          <p className="text-xs text-muted-foreground">
+            Confira o que foi lido e corrija só o que estiver diferente do documento.
+          </p>
           <p className="text-xs text-muted-foreground">
             Só o que você alterar é gravado. Campo intocado continua como está.
           </p>
