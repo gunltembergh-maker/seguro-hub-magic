@@ -485,6 +485,13 @@ export default function ContratoParceriaTela() {
           onFechar={() => setEnvio(null)}
           onSucesso={invalidar}
         />
+
+        <VisualizadorContrato
+          path={vendo?.path}
+          nome={vendo?.nome}
+          aberto={!!vendo}
+          onFechar={() => setVendo(null)}
+        />
       </div>
     </TooltipProvider>
   );
