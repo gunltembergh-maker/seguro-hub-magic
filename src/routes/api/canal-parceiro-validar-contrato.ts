@@ -257,6 +257,8 @@ function extrair(texto: string) {
     vigencia_origem: vigOrigem,
     assinado, assinado_em: assinadoEm, signatarios,
     assinatura_plataforma: assinaturaPlataforma,
+    renovacao_automatica: renovacaoAutomatica,
+    renovacao_trecho: renovacaoTrecho,
     minimo, tipo,
   };
 }
@@ -389,6 +391,9 @@ async function handle(request: Request): Promise<Response> {
         pct_garantia: pega(manuais.pct_garantia, "pct_garantia", base.pct_garantia),
         pct_demais: pega(manuais.pct_demais, "pct_demais", base.pct_demais),
         minimo: pega(manuais.minimo, "minimo", base.minimo),
+        renovacao_automatica: pega(
+          manuais.renovacao_automatica, "renovacao_automatica", base.renovacao_automatica,
+        ),
         // assinatura sempre da leitura do servidor
         assinado: leituraServidor.assinado,
         assinado_em: leituraServidor.assinado_em,
@@ -418,6 +423,7 @@ async function handle(request: Request): Promise<Response> {
       p_canal_id: canalId,
       p_declarado_assinado: declaradoAssinado,
       p_origem_leitura: origem,
+      p_renovacao_automatica: e.renovacao_automatica ?? null,
     } as never);
     if (error) return json({ erro: error.message }, 400);
 
@@ -430,6 +436,8 @@ async function handle(request: Request): Promise<Response> {
         paginas: pdf.numPages,
         origem_leitura: origem,
         vigencia_origem: e.vigencia_origem,
+        renovacao_automatica: e.renovacao_automatica,
+        renovacao_trecho: e.renovacao_trecho,
         manual_aplicado: camposManuais.length > 0,
         campos_manuais: camposManuais,
       },
