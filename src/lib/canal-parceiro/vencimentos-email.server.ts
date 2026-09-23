@@ -33,6 +33,17 @@ const dataBR = (iso: string | null) =>
 const moedaBR = (v: number | null) =>
   Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+const pct = (v: number | null) =>
+  v == null ? "—" : `${Math.round(Number(v) * 100)}%`;
+
+const percentuaisRepasse = (p: Pendente) => {
+  const demais = p.pct_demais == null;
+  return (
+    `Benefícios ${pct(p.pct_beneficios)} · Garantia ${pct(p.pct_garantia)} · ` +
+    `Demais ${pct(demais ? p.pct_garantia : p.pct_demais)}${demais ? " (herdado)" : ""}`
+  );
+};
+
 export async function avisarVencimentosPendentes(): Promise<
   { ok: true; enviados: number; falhas?: number } | { ok: false; erro: string }
 > {
