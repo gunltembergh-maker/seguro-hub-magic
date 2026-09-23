@@ -818,7 +818,12 @@ function PercentualRepasse({
     origem === "DIRETORIA" ? " (diretoria)" : origem === "CONTRATO" ? " (contrato)" : "";
   const valores = [percentuais.beneficios, percentuais.garantia, percentuais.demais];
   const disponiveis = valores.filter((v): v is number => v != null);
-  if (disponiveis.length === 0) return <span className="text-muted-foreground">—</span>;
+  if (disponiveis.length === 0)
+    return (
+      <span className="inline-flex items-center justify-end gap-1.5 text-muted-foreground">
+        —{seloDivergencia}
+      </span>
+    );
   const unicos = Array.from(new Set(disponiveis));
   const resumo = unicos.map(formatar).join(" / ");
   const temDiretoria =
