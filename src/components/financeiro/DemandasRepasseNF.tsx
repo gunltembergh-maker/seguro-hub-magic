@@ -49,10 +49,10 @@ const BRL = (v: number | null | undefined) =>
   Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 const fmtBR = (iso: string | null | undefined) =>
-  iso ? new Date(`${String(iso).slice(0, 10)}T12:00:00`).toLocaleDateString("pt-BR") : "—";
+  iso ? new Date(`${String(iso).slice(0, 10)}T12:00:00`).toLocaleDateString("pt-BR") : "";
 
 const fmtDataHora = (iso: string | null | undefined) =>
-  iso ? new Date(iso).toLocaleString("pt-BR") : "—";
+  iso ? new Date(iso).toLocaleString("pt-BR") : "";
 
 const iso = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -175,7 +175,7 @@ export function DemandasRepasseNF() {
                         {BRL(d.valor_total)}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Pedido por {d.solicitado_por_nome ?? "—"} em {fmtDataHora(d.solicitado_em)}
+                        Pedido por {d.solicitado_por_nome ?? "não informado"} em {fmtDataHora(d.solicitado_em)}
                       </p>
                       <p
                         className={cn(
