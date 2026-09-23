@@ -1223,46 +1223,45 @@ function ExportBtn({
 }) {
   const travado = situacao?.pode_exportar !== true;
 
-  if (travado) {
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => onBloqueado(canal)}
-              className="h-6 gap-1 border-amber-500/60 px-2 text-[11px] font-semibold text-amber-700 hover:bg-amber-50 hover:text-amber-800"
-            >
-              <Lock className="h-3 w-3" />
-              Sem contrato
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>{motivoBloqueio(situacao)}</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-  }
-
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          disabled={bloqueado}
-          aria-label={`Exportar repasse de ${canal}`}
-          title="Exportar planilha"
-          className="inline-flex h-6 w-6 items-center justify-center rounded text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {exportando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        <DropdownMenuItem onClick={() => onExport(canal, "INTERNO")}>Exportar completo (interno)</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onExport(canal, "PARCEIRO")}>Exportar para o parceiro</DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className="flex items-center gap-1">
+      {travado ? (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => onBloqueado(canal)}
+                className="h-6 gap-1 border-amber-500/60 px-2 text-[11px] font-semibold text-amber-700 hover:bg-amber-50 hover:text-amber-800"
+              >
+                <Lock className="h-3 w-3" />
+                Sem contrato
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{motivoBloqueio(situacao)}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : null}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            disabled={bloqueado}
+            aria-label={`Exportar repasse de ${canal}`}
+            title="Exportar planilha"
+            className="inline-flex h-6 w-6 items-center justify-center rounded text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {exportando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          <DropdownMenuItem onClick={() => onExport(canal, "INTERNO")}>Exportar completo (interno)</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onExport(canal, "PARCEIRO")}>Exportar para o parceiro</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }
 
