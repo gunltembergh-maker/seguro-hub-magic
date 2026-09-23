@@ -6717,6 +6717,8 @@ export type Database = {
         Returns: {
           assinado: boolean
           assinado_em: string
+          bloqueado: boolean
+          bloqueio_motivo: string
           cadastro_origem: string
           canal_id: string
           chave_planilha: string
@@ -6724,6 +6726,7 @@ export type Database = {
           dias_para_vencer: number
           eh_parceiro: boolean
           minimo_repasse: number
+          motivo_parado: string
           nome: string
           pct_beneficios: number
           pct_demais_efetivo: number
