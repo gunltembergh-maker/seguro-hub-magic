@@ -28,7 +28,11 @@ type Pendente = {
 };
 
 const dataBR = (iso: string | null) =>
-  iso ? new Date(`${String(iso).slice(0, 10)}T12:00:00`).toLocaleDateString("pt-BR") : "—";
+  iso
+    ? new Date(`${String(iso).slice(0, 10)}T12:00:00Z`).toLocaleDateString("pt-BR", {
+        timeZone: "America/Sao_Paulo",
+      })
+    : "—";
 
 const moedaBR = (v: number | null) =>
   Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });

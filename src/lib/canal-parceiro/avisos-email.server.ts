@@ -7,11 +7,17 @@
 import { mensagemDeErro } from "@/lib/erro";
 import { SITE_URL } from "@/lib/email-templates/_shared";
 
+// O servidor roda em UTC: tudo formatado no horário de Brasília.
+// Data pura (YYYY-MM-DD) ancorada ao meio-dia para nunca trocar de dia.
 const dataBR = (iso: string | null | undefined) =>
-  iso ? new Date(`${String(iso).slice(0, 10)}T12:00:00`).toLocaleDateString("pt-BR") : "—";
+  iso
+    ? new Date(`${String(iso).slice(0, 10)}T12:00:00Z`).toLocaleDateString("pt-BR", {
+        timeZone: "America/Sao_Paulo",
+      })
+    : "—";
 
 const dataHoraBR = (iso: string | null | undefined) =>
-  iso ? new Date(iso).toLocaleDateString("pt-BR") : "—";
+  iso ? new Date(iso).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "—";
 
 const moedaBR = (v: number | null | undefined) =>
   Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -127,6 +133,37 @@ type ContratoDecisaoPendente = {
   assinatura_area: string | null;
 };
 
+type DocPendente = {
+  tipo: "NF_ENVIADA" | "NF_DECIDIDA" | "PAGAMENTO" | string;
+  documento_id: string;
+  demanda_id: string;
+  canal_id: string | null;
+  parceiro: string | null;
+  chave_planilha: string | null;
+  ciclo: string | null;
+  ciclo_ano: number | null;
+  ciclo_mes: number | null;
+  situacao: string | null;
+  numero_nf: string | null;
+  valor_nf: number | null;
+  valor_autorizado: number | null;
+  valor_diverge: boolean | null;
+  data_emissao: string | null;
+  data_prevista: string | null;
+  data_pagamento: string | null;
+  arquivo_path: string | null;
+  arquivo_nome: string | null;
+  motivo: string | null;
+  enviado_por_nome: string | null;
+  conferido_por_nome: string | null;
+  assinatura_nome: string | null;
+  assinatura_area: string | null;
+  destinatarios: Destinatarios;
+  destinatarios_anexos: Destinatarios;
+  base_path: string | null;
+  base_nome: string | null;
+};
+
 type Envio = {
   template: string;
   assunto: string;
@@ -167,16 +204,22 @@ export async function enviarAvisosCanalParceiro(): Promise<
 > {
   const { lavoroAdmin } = await import("@/integrations/supabase/lavoro-admin.server");
 
-  const [repasse, verificacoes, alteracoes, liberacoes, decisoesContrato] = await Promise.all([
+  const [repasse, verificacoes, alteracoes, liberacoes, decisoesContrato, docs] = await Promise.all([
     lavoroAdmin.rpc("canal_repasse_emails_pendentes" as never, {} as never),
     lavoroAdmin.rpc("canal_parceiro_verificacoes_para_email" as never, {} as never),
     lavoroAdmin.rpc("canal_parceiro_alteracoes_para_email" as never, {} as never),
     lavoroAdmin.rpc("canal_liberacao_emails_pendentes" as never, {} as never),
     lavoroAdmin.rpc("canal_parceiro_contrato_decisoes_para_email" as never, {} as never),
+    lavoroAdmin.rpc("canal_repasse_docs_emails_pendentes" as never, {} as never),
   ]);
 
   const erro =
-    repasse.error ?? verificacoes.error ?? alteracoes.error ?? liberacoes.error ?? decisoesContrato.error;
+    repasse.error ??
+    verificacoes.error ??
+    alteracoes.error ??
+    liberacoes.error ??
+    decisoesContrato.error ??
+    docs.error;
   if (erro) return { ok: false, erro: erro.message };
 
   const filaRepasse = (repasse.data ?? []) as RepassePendente[];
@@ -185,13 +228,15 @@ export async function enviarAvisosCanalParceiro(): Promise<
 
   const filaLiberacao = (liberacoes.data ?? []) as LiberacaoPendente[];
   const filaContratoDecisao = (decisoesContrato.data ?? []) as ContratoDecisaoPendente[];
+  const filaDocs = (docs.data ?? []) as DocPendente[];
 
   if (
     filaRepasse.length === 0 &&
     filaVerificacao.length === 0 &&
     filaAlteracao.length === 0 &&
     filaLiberacao.length === 0 &&
-    filaContratoDecisao.length === 0
+    filaContratoDecisao.length === 0 &&
+    filaDocs.length === 0
   ) {
     return { ok: true, enviados: 0 };
   }
@@ -286,7 +331,8 @@ export async function enviarAvisosCanalParceiro(): Promise<
                 { rotulo: "1", valor: "Abra Comercial > Canal Parceiros e localize o parceiro" },
                 { rotulo: "2", valor: "Clique em Exportar ao parceiro: o arquivo sai sem prêmio e sem comissão da Lavoro" },
                 { rotulo: "3", valor: "Envie o arquivo ao parceiro e peça a nota fiscal" },
-                { rotulo: "4", valor: "O pagamento acontece após o recebimento da nota fiscal" },
+                { rotulo: "4", valor: "Quando a nota chegar, clique em Enviar nota fiscal na linha do parceiro" },
+                { rotulo: "5", valor: "O Financeiro confere a nota e paga até a data prevista" },
               ]
             : undefined,
           observacao:
@@ -297,20 +343,26 @@ export async function enviarAvisosCanalParceiro(): Promise<
         },
       };
     } else {
+      const atraso = Number(r.dias_de_atraso ?? 0);
       envio = {
         template: "canal-repasse-cobranca",
-        assunto: `O repasse de ${parceiro} foi pago?`,
+        assunto: `Hoje é o dia do repasse de ${parceiro}`,
         destinatarios: r.destinatarios ?? [],
         dados: {
           assinaturaNome: r.assinatura_nome,
           assinaturaArea: r.assinatura_area,
-          titulo: "O pagamento foi feito?",
+          titulo: "Pagamento previsto para hoje",
           paragrafos: [
-            `A data prevista de pagamento de **${parceiro}**, ciclo ${ciclo}, era ${dataBR(r.data_prevista)}, e já se passaram ${Number(r.dias_de_atraso ?? 0)} dia(s). O pagamento foi feito?`,
+            `O pagamento do repasse de **${parceiro}**, ciclo ${ciclo}, ${
+              atraso > 0
+                ? `estava previsto para ${dataBR(r.data_prevista)} (há ${atraso} dia(s))`
+                : `está previsto para ${dataBR(r.data_prevista)}`
+            }. A nota fiscal já foi aprovada. Depois de pagar, registre o pagamento com o comprovante.`,
           ],
           destaque: { titulo: moedaBR(r.valor_total), subtitulo: `${Number(r.linhas ?? 0)} parcelas` },
-          botao: { rotulo: "Responder no Hub", href: telaFinanceiro(r.demanda_id) },
-          notaFinal: "Confirmando a data, o Hub dá baixa no repasse deste ciclo.",
+          botao: { rotulo: "Registrar pagamento", href: telaFinanceiro(r.demanda_id) },
+          notaFinal:
+            "Com o comprovante anexado, o Hub dá baixa e envia o comprovante ao Comercial e ao middle office.",
         },
       };
     }
@@ -558,5 +610,231 @@ export async function enviarAvisosCanalParceiro(): Promise<
     enviados += 1;
   }
 
+  // ---------- Fila 6: documentos do repasse (nota fiscal e pagamento) ----------
+  for (const d of filaDocs) {
+    const parceiro = d.parceiro ?? "—";
+    const ciclo = d.ciclo ?? "—";
+    const comum = { assinaturaNome: d.assinatura_nome, assinaturaArea: d.assinatura_area };
+    let messageId: string | null = null;
+
+    if (d.tipo === "NF_ENVIADA") {
+      messageId = await despachar(
+        {
+          template: "canal-repasse-nf-enviada",
+          assunto: `Conferir nota fiscal de ${parceiro}, ciclo ${ciclo}`,
+          destinatarios: d.destinatarios ?? [],
+          dados: {
+            ...comum,
+            titulo: "Nota fiscal para conferência",
+            paragrafos: [
+              `${d.enviado_por_nome ?? "O Comercial"} enviou a nota fiscal de **${parceiro}** do ciclo ${ciclo} para sua conferência.`,
+            ],
+            alerta: d.valor_diverge ? "O valor da nota é diferente do valor autorizado." : null,
+            itens: [
+              { rotulo: "Número da nota", valor: d.numero_nf ?? "—" },
+              { rotulo: "Valor da nota", valor: moedaBR(d.valor_nf) },
+              { rotulo: "Valor autorizado", valor: moedaBR(d.valor_autorizado) },
+              { rotulo: "Emissão", valor: d.data_emissao ? dataBR(d.data_emissao) : "não informada" },
+            ],
+            botao: { rotulo: "Conferir nota", href: telaFinanceiro(d.demanda_id) },
+            notaFinal: "Na tela você baixa a nota, aprova ou recusa com o motivo.",
+          },
+        },
+        `docs NF_ENVIADA ${d.documento_id}`,
+      );
+    } else if (d.tipo === "NF_DECIDIDA") {
+      const aprovada = (d.situacao ?? "").toUpperCase() === "APROVADA";
+      const quem = d.conferido_por_nome ?? "O Financeiro";
+      messageId = await despachar(
+        {
+          template: "canal-repasse-nf-decidida",
+          assunto: aprovada
+            ? `Nota fiscal de ${parceiro} aprovada`
+            : `Nota fiscal de ${parceiro} recusada`,
+          destinatarios: d.destinatarios ?? [],
+          dados: {
+            ...comum,
+            titulo: aprovada ? "Nota fiscal aprovada" : "Nota fiscal recusada",
+            paragrafos: [
+              aprovada
+                ? `${quem} aprovou a nota fiscal ${d.numero_nf ?? ""} de **${parceiro}**, ciclo ${ciclo}. O pagamento está previsto para ${dataBR(d.data_prevista)}.`
+                : `${quem} recusou a nota fiscal ${d.numero_nf ?? ""} de **${parceiro}**, ciclo ${ciclo}. Peça ao parceiro uma nota corrigida e envie de novo pelo Hub.`,
+            ],
+            observacao: !aprovada && d.motivo ? { rotulo: "Motivo", texto: d.motivo } : null,
+            botao: { rotulo: "Ver no Hub", href: telaComercial(d.demanda_id) },
+          },
+        },
+        `docs NF_DECIDIDA ${d.documento_id}`,
+      );
+    } else if (d.tipo === "PAGAMENTO") {
+      const idComercial = await despachar(
+        {
+          template: "canal-repasse-pagamento",
+          assunto: `Repasse de ${parceiro} pago, ciclo ${ciclo}`,
+          destinatarios: d.destinatarios ?? [],
+          dados: {
+            ...comum,
+            titulo: "Repasse pago",
+            paragrafos: [
+              `O Financeiro registrou o pagamento do repasse de **${parceiro}**, ciclo ${ciclo}, em ${dataBR(d.data_pagamento)}.`,
+            ],
+            destaque: { titulo: moedaBR(d.valor_autorizado), subtitulo: "valor autorizado" },
+            botao: { rotulo: "Baixar comprovante no Hub", href: telaComercial(d.demanda_id) },
+            notaFinal: "O comprovante fica guardado em Documentos do parceiro.",
+          },
+        },
+        `docs PAGAMENTO comercial ${d.documento_id}`,
+      );
+      const anexosOk = idComercial ? await enviarPagamentoComAnexos(d, lavoroAdmin) : false;
+      messageId = idComercial && anexosOk ? idComercial : null;
+    } else {
+      console.error("[canal-parceiro-avisos] tipo de documento desconhecido", d.tipo);
+      continue;
+    }
+
+    if (!messageId) {
+      falhas += 1;
+      continue;
+    }
+    const { error: erroMarca } = await lavoroAdmin.rpc("canal_repasse_docs_marcar_email" as never, {
+      p_documento_id: d.documento_id,
+      p_tipo: d.tipo,
+      p_message_id: messageId,
+    } as never);
+    if (erroMarca)
+      console.error("[canal-parceiro-avisos] falha ao marcar documento", erroMarca.message);
+    enviados += 1;
+  }
+
   return { ok: true, enviados, falhas };
+}
+
+
+/* ------------------------------------------------------------------ anexos */
+
+const BUCKET_DOCS = "canal-parceiros-documentos";
+const REMETENTE_ANEXOS = "naoresponda@lavoroseguros.com.br";
+// Mesmo limite do envio com anexos da Garantia Judicial (sendMail do Graph ~4 MB).
+const LIMITE_ANEXOS_BASE64 = 3 * 1024 * 1024;
+
+const MIME_POR_EXT: Record<string, string> = {
+  pdf: "application/pdf",
+  png: "image/png",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  xml: "application/xml",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+};
+
+function paraBase64(bytes: ArrayBuffer): string {
+  const u8 = new Uint8Array(bytes);
+  let bin = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < u8.length; i += chunk) bin += String.fromCharCode(...u8.subarray(i, i + chunk));
+  return btoa(bin);
+}
+
+/**
+ * E-mail ao middle office com comprovante e base anexados.
+ * Mesmo transporte da Garantia Judicial (Microsoft Graph sendMail com fileAttachment).
+ * Só devolve true se saiu para todos os destinatários.
+ */
+async function enviarPagamentoComAnexos(
+  d: DocPendente,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  admin: any,
+): Promise<boolean> {
+  const destinos = (d.destinatarios_anexos ?? []).filter((x) => typeof x === "string" && x.includes("@"));
+  if (destinos.length === 0) {
+    console.error("[canal-parceiro-avisos] pagamento sem destinatários de anexos", d.documento_id);
+    return false;
+  }
+  if (!d.arquivo_path) {
+    console.error("[canal-parceiro-avisos] pagamento sem comprovante", d.documento_id);
+    return false;
+  }
+  try {
+    const anexos: { name: string; contentType: string; contentBytes: string }[] = [];
+    const baixar = async (path: string, nome: string) => {
+      const { data, error } = await admin.storage.from(BUCKET_DOCS).download(path);
+      if (error || !data) throw new Error(`arquivo ausente: ${path}`);
+      const ext = (path.split(".").pop() || "").toLowerCase();
+      anexos.push({
+        name: nome,
+        contentType: MIME_POR_EXT[ext] ?? "application/octet-stream",
+        contentBytes: paraBase64(await data.arrayBuffer()),
+      });
+    };
+    await baixar(d.arquivo_path, d.arquivo_nome || "comprovante");
+    if (d.base_path) await baixar(d.base_path, d.base_nome || "base-do-repasse.xlsx");
+    const total = anexos.reduce((a, x) => a + x.contentBytes.length, 0);
+    if (total > LIMITE_ANEXOS_BASE64) {
+      console.error("[canal-parceiro-avisos] anexos acima do limite", d.documento_id, total);
+      return false;
+    }
+
+    const parceiro = d.parceiro ?? "—";
+    const ciclo = d.ciclo ?? "—";
+    const assunto = `Comprovante e base do repasse de ${parceiro}, ciclo ${ciclo}`;
+    const [{ render }, React, { AvisoCanalParceiroEmail }, { obterTokenGraph }] = await Promise.all([
+      import("@react-email/render"),
+      import("react"),
+      import("@/lib/email-templates/canal-parceiro-avisos"),
+      import("@/lib/graph/graph-token.server"),
+    ]);
+    const html = await render(
+      React.createElement(AvisoCanalParceiroEmail, {
+        eyebrowTexto: "Canal Parceiros",
+        titulo: "Comprovante e base do repasse",
+        preview: assunto,
+        rodape: RODAPE,
+        paragrafos: [
+          `Segue o comprovante de pagamento do repasse de **${parceiro}**, ciclo ${ciclo}, pago em ${dataBR(d.data_pagamento)}, e a base do repasse.`,
+        ],
+        itens: [
+          { rotulo: "Valor pago", valor: moedaBR(d.valor_autorizado) },
+          { rotulo: "Nota fiscal", valor: d.numero_nf ?? "—" },
+        ],
+        notaFinal: d.base_path
+          ? null
+          : "A base não foi anexada; ela está disponível no Hub com o Financeiro.",
+        assinaturaNome: d.assinatura_nome,
+        assinaturaArea: d.assinatura_area,
+      }),
+    );
+
+    const token = await obterTokenGraph();
+    const resp = await fetch(
+      `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(REMETENTE_ANEXOS)}/sendMail`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: {
+            subject: assunto,
+            body: { contentType: "HTML", content: html },
+            from: { emailAddress: { address: REMETENTE_ANEXOS } },
+            toRecipients: destinos.map((address) => ({ emailAddress: { address } })),
+            attachments: anexos.map((a) => ({ "@odata.type": "#microsoft.graph.fileAttachment", ...a })),
+          },
+          saveToSentItems: true,
+        }),
+      },
+    );
+    if (!resp.ok) {
+      let codigo = "erro_desconhecido";
+      try {
+        const corpo = (await resp.json()) as { error?: { code?: string; message?: string } };
+        codigo = String(corpo?.error?.code || corpo?.error?.message || codigo).slice(0, 120);
+      } catch {
+        /* sem JSON */
+      }
+      console.error("[canal-parceiro-avisos] Graph sendMail falhou", resp.status, codigo);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error("[canal-parceiro-avisos] falha no envio com anexos", d.documento_id, mensagemDeErro(err));
+    return false;
+  }
 }
