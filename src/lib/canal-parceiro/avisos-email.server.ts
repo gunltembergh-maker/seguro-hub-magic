@@ -612,8 +612,8 @@ export async function enviarAvisosCanalParceiro(): Promise<
 
   // ---------- Fila 6: documentos do repasse (nota fiscal e pagamento) ----------
   for (const d of filaDocs) {
-    const parceiro = d.parceiro ?? "—";
-    const ciclo = d.ciclo ?? "—";
+    const parceiro = d.parceiro ?? "parceiro";
+    const ciclo = d.ciclo ?? "atual";
     const comum = { assinaturaNome: d.assinatura_nome, assinaturaArea: d.assinatura_area };
     let messageId: string | null = null;
 
@@ -631,7 +631,7 @@ export async function enviarAvisosCanalParceiro(): Promise<
             ],
             alerta: d.valor_diverge ? "O valor da nota é diferente do valor autorizado." : null,
             itens: [
-              { rotulo: "Número da nota", valor: d.numero_nf ?? "—" },
+              { rotulo: "Número da nota", valor: d.numero_nf ?? "não informado" },
               { rotulo: "Valor da nota", valor: moedaBR(d.valor_nf) },
               { rotulo: "Valor autorizado", valor: moedaBR(d.valor_autorizado) },
               { rotulo: "Emissão", valor: d.data_emissao ? dataBR(d.data_emissao) : "não informada" },
@@ -773,8 +773,8 @@ async function enviarPagamentoComAnexos(
       return false;
     }
 
-    const parceiro = d.parceiro ?? "—";
-    const ciclo = d.ciclo ?? "—";
+    const parceiro = d.parceiro ?? "parceiro";
+    const ciclo = d.ciclo ?? "atual";
     const assunto = `Comprovante e base do repasse de ${parceiro}, ciclo ${ciclo}`;
     const [{ render }, React, { AvisoCanalParceiroEmail }, { obterTokenGraph }] = await Promise.all([
       import("@react-email/render"),
@@ -793,7 +793,7 @@ async function enviarPagamentoComAnexos(
         ],
         itens: [
           { rotulo: "Valor pago", valor: moedaBR(d.valor_autorizado) },
-          { rotulo: "Nota fiscal", valor: d.numero_nf ?? "—" },
+          { rotulo: "Nota fiscal", valor: d.numero_nf ?? "não informado" },
         ],
         notaFinal: d.base_path
           ? null
