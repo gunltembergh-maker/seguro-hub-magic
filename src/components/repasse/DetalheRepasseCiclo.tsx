@@ -18,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Table,
   TableBody,
@@ -90,6 +91,8 @@ export function DetalheRepasseCiclo({
   valorDoPedido?: number;
 }) {
   const [busca, setBusca] = useState("");
+  const [visao, setVisao] = useState<"INTERNA" | "PARCEIRO">("INTERNA");
+  const visaoParceiro = visao === "PARCEIRO";
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["repasse-detalhe-ciclo", canal, ano, mes, modoDados, situacaoRepasse],
