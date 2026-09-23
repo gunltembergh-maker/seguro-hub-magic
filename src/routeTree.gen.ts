@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthSenhaRouteImport } from './routes/auth.senha'
 import { Route as ApiCanalParceiroValidarContratoRouteImport } from './routes/api/canal-parceiro-validar-contrato'
+import { Route as ApiCanalParceiroDocumentoRouteImport } from './routes/api/canal-parceiro-documento'
 import { Route as ApiCanalParceiroContratoRouteImport } from './routes/api/canal-parceiro-contrato'
 import { Route as AuthenticatedReservaPosicoesRouteImport } from './routes/_authenticated/reserva-posicoes'
 import { Route as AuthenticatedOperacionalRouteImport } from './routes/_authenticated/operacional'
@@ -113,6 +114,12 @@ const ApiCanalParceiroValidarContratoRoute =
   ApiCanalParceiroValidarContratoRouteImport.update({
     id: '/api/canal-parceiro-validar-contrato',
     path: '/api/canal-parceiro-validar-contrato',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiCanalParceiroDocumentoRoute =
+  ApiCanalParceiroDocumentoRouteImport.update({
+    id: '/api/canal-parceiro-documento',
+    path: '/api/canal-parceiro-documento',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiCanalParceiroContratoRoute =
@@ -528,6 +535,7 @@ export interface FileRoutesByFullPath {
   '/operacional': typeof AuthenticatedOperacionalRoute
   '/reserva-posicoes': typeof AuthenticatedReservaPosicoesRoute
   '/api/canal-parceiro-contrato': typeof ApiCanalParceiroContratoRoute
+  '/api/canal-parceiro-documento': typeof ApiCanalParceiroDocumentoRoute
   '/api/canal-parceiro-validar-contrato': typeof ApiCanalParceiroValidarContratoRoute
   '/auth/senha': typeof AuthSenhaRoute
   '/admin/comunicados': typeof AuthenticatedAdminComunicadosRoute
@@ -603,6 +611,7 @@ export interface FileRoutesByTo {
   '/operacional': typeof AuthenticatedOperacionalRoute
   '/reserva-posicoes': typeof AuthenticatedReservaPosicoesRoute
   '/api/canal-parceiro-contrato': typeof ApiCanalParceiroContratoRoute
+  '/api/canal-parceiro-documento': typeof ApiCanalParceiroDocumentoRoute
   '/api/canal-parceiro-validar-contrato': typeof ApiCanalParceiroValidarContratoRoute
   '/auth/senha': typeof AuthSenhaRoute
   '/admin/comunicados': typeof AuthenticatedAdminComunicadosRoute
@@ -681,6 +690,7 @@ export interface FileRoutesById {
   '/_authenticated/operacional': typeof AuthenticatedOperacionalRoute
   '/_authenticated/reserva-posicoes': typeof AuthenticatedReservaPosicoesRoute
   '/api/canal-parceiro-contrato': typeof ApiCanalParceiroContratoRoute
+  '/api/canal-parceiro-documento': typeof ApiCanalParceiroDocumentoRoute
   '/api/canal-parceiro-validar-contrato': typeof ApiCanalParceiroValidarContratoRoute
   '/auth/senha': typeof AuthSenhaRoute
   '/_authenticated/admin/comunicados': typeof AuthenticatedAdminComunicadosRoute
@@ -759,6 +769,7 @@ export interface FileRouteTypes {
     | '/operacional'
     | '/reserva-posicoes'
     | '/api/canal-parceiro-contrato'
+    | '/api/canal-parceiro-documento'
     | '/api/canal-parceiro-validar-contrato'
     | '/auth/senha'
     | '/admin/comunicados'
@@ -834,6 +845,7 @@ export interface FileRouteTypes {
     | '/operacional'
     | '/reserva-posicoes'
     | '/api/canal-parceiro-contrato'
+    | '/api/canal-parceiro-documento'
     | '/api/canal-parceiro-validar-contrato'
     | '/auth/senha'
     | '/admin/comunicados'
@@ -911,6 +923,7 @@ export interface FileRouteTypes {
     | '/_authenticated/operacional'
     | '/_authenticated/reserva-posicoes'
     | '/api/canal-parceiro-contrato'
+    | '/api/canal-parceiro-documento'
     | '/api/canal-parceiro-validar-contrato'
     | '/auth/senha'
     | '/_authenticated/admin/comunicados'
@@ -976,6 +989,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
   ApiCanalParceiroContratoRoute: typeof ApiCanalParceiroContratoRoute
+  ApiCanalParceiroDocumentoRoute: typeof ApiCanalParceiroDocumentoRoute
   ApiCanalParceiroValidarContratoRoute: typeof ApiCanalParceiroValidarContratoRoute
   ApiAbBgcheckRoute: typeof ApiAbBgcheckRoute
   ApiAbCotaRoute: typeof ApiAbCotaRoute
@@ -1044,6 +1058,13 @@ declare module '@tanstack/react-router' {
       path: '/api/canal-parceiro-validar-contrato'
       fullPath: '/api/canal-parceiro-validar-contrato'
       preLoaderRoute: typeof ApiCanalParceiroValidarContratoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/canal-parceiro-documento': {
+      id: '/api/canal-parceiro-documento'
+      path: '/api/canal-parceiro-documento'
+      fullPath: '/api/canal-parceiro-documento'
+      preLoaderRoute: typeof ApiCanalParceiroDocumentoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/canal-parceiro-contrato': {
@@ -1720,6 +1741,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
   ApiCanalParceiroContratoRoute: ApiCanalParceiroContratoRoute,
+  ApiCanalParceiroDocumentoRoute: ApiCanalParceiroDocumentoRoute,
   ApiCanalParceiroValidarContratoRoute: ApiCanalParceiroValidarContratoRoute,
   ApiAbBgcheckRoute: ApiAbBgcheckRoute,
   ApiAbCotaRoute: ApiAbCotaRoute,
