@@ -43,7 +43,7 @@ export const VAZIO = "Ainda não há demanda suficiente para este indicador.";
 
 export function Cartao({ rotulo, valor, nota }: { rotulo: string; valor: string; nota?: string }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+    <div className="min-w-0 rounded-xl border border-border bg-card p-4 shadow-sm">
       <p className="text-xs uppercase tracking-wide text-muted-foreground">{rotulo}</p>
       <p className="mt-1 font-display text-2xl font-bold text-foreground">{valor}</p>
       {nota && <p className="mt-1 text-xs text-muted-foreground">{nota}</p>}
@@ -83,7 +83,7 @@ export function Bloco<T>({
   const vazio = dados.length === 0;
 
   return (
-    <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+    <section className="min-w-0 rounded-xl border border-border bg-card p-4 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="font-display text-sm font-semibold text-foreground">{titulo}</h3>
@@ -117,12 +117,14 @@ export function Bloco<T>({
       {vazio ? (
         <p className="mt-6 text-sm text-muted-foreground">{VAZIO}</p>
       ) : modo === "grafico" ? (
-        <div className="mt-3" style={{ height: altura }}>
-          <ResponsiveContainer>{grafico as React.ReactElement}</ResponsiveContainer>
+        <div className="mt-3 min-w-0 overflow-x-auto">
+          <div className="min-w-[560px]" style={{ height: altura }}>
+            <ResponsiveContainer>{grafico as React.ReactElement}</ResponsiveContainer>
+          </div>
         </div>
       ) : (
         <div className="mt-3 overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[640px] text-sm">
             <thead>
               <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
                 {colunas.map((c) => (

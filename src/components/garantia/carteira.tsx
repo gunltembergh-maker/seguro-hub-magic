@@ -174,11 +174,11 @@ export function Carteira() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="space-y-1">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="min-w-0 space-y-1">
           <Label>Seguradora</Label>
           <Select value={chave} onValueChange={setChave}>
-            <SelectTrigger className="w-56">
+            <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -191,10 +191,10 @@ export function Carteira() {
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-1">
+        <div className="min-w-0 space-y-1">
           <Label>Produto</Label>
           <Select value={produto} onValueChange={setProduto}>
-            <SelectTrigger className="w-52">
+            <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -204,10 +204,10 @@ export function Carteira() {
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-1">
+        <div className="min-w-0 space-y-1">
           <Label>Vence em até</Label>
           <Select value={janela} onValueChange={setJanela}>
-            <SelectTrigger className="w-44">
+            <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

@@ -49,6 +49,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { PaginaHub } from "@/components/hub/pagina-hub";
 
 import { useMeuPerfilEfetivo } from "@/contexts/view-as-context";
 import { hasPermission, hasRole } from "@/hooks/use-meu-perfil";
@@ -133,32 +134,30 @@ export default function EntradaDemandas() {
   const entradas = useEntradas(filtros);
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl font-semibold text-[#14405C]">Entrada de Demandas</h1>
-          <p className="text-sm text-muted-foreground">
-            Porta única de registro: toda demanda do Hub entra por aqui, de qualquer ramo.
-          </p>
-        </div>
-        <Button onClick={() => setAberto(true)} className="bg-[#14405C] hover:bg-[#14405C]/90">
+    <PaginaHub
+      trilha={["Hub Lavoro"]}
+      titulo="Entrada de Demandas"
+      subtitulo="Porta única de registro: toda demanda do Hub entra por aqui, de qualquer ramo."
+      acoes={
+        <Button onClick={() => setAberto(true)} className="w-full bg-[#14405C] hover:bg-[#14405C]/90 sm:w-auto">
           <Plus className="mr-1 h-4 w-4" />
           Registrar entrada
         </Button>
-      </div>
-
+      }
+    >
+      <div className="flex min-w-0 flex-col gap-4">
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Filtros</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="space-y-1">
+        <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="min-w-0 space-y-1">
             <Label>Ramo</Label>
             <Select
               value={filtros.ramo ?? "todos"}
               onValueChange={(v) => setFiltros((f) => ({ ...f, ramo: v === "todos" ? undefined : v }))}
             >
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos</SelectItem>
                 {RAMOS.map((r) => (
@@ -167,13 +166,13 @@ export default function EntradaDemandas() {
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-1">
+          <div className="min-w-0 space-y-1">
             <Label>Destino</Label>
             <Select
               value={filtros.destino ?? "todos"}
               onValueChange={(v) => setFiltros((f) => ({ ...f, destino: v === "todos" ? undefined : v }))}
             >
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos</SelectItem>
                 <SelectItem value="roteada">Roteada</SelectItem>
@@ -182,7 +181,7 @@ export default function EntradaDemandas() {
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-1">
+          <div className="min-w-0 space-y-1">
             <Label>De</Label>
             <Input
               type="date"
@@ -192,7 +191,7 @@ export default function EntradaDemandas() {
               }
             />
           </div>
-          <div className="space-y-1">
+          <div className="min-w-0 space-y-1">
             <Label>Até</Label>
             <Input
               type="date"
@@ -205,7 +204,7 @@ export default function EntradaDemandas() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="min-w-0 overflow-hidden">
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Entradas registradas</CardTitle>
         </CardHeader>
@@ -227,16 +226,16 @@ export default function EntradaDemandas() {
               </Button>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
+            <div className="w-full overflow-x-auto">
+              <Table className="min-w-[640px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Protocolo</TableHead>
-                    <TableHead>Chegada</TableHead>
+                    <TableHead className="hidden lg:table-cell">Chegada</TableHead>
                     <TableHead>Cliente</TableHead>
                     <TableHead>Ramo</TableHead>
-                    <TableHead>Canal</TableHead>
-                    <TableHead>Assunto</TableHead>
+                    <TableHead className="hidden lg:table-cell">Canal</TableHead>
+                    <TableHead className="hidden lg:table-cell">Assunto</TableHead>
                     <TableHead>Destino</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -244,11 +243,14 @@ export default function EntradaDemandas() {
                   {entradas.data!.map((e) => (
                     <TableRow key={e.id}>
                       <TableCell className="font-mono text-xs">{e.protocolo}</TableCell>
-                      <TableCell className="whitespace-nowrap text-xs">{fmtDataHora(e.chegada_em)}</TableCell>
+                      <TableCell className="hidden whitespace-nowrap text-xs lg:table-cell">{fmtDataHora(e.chegada_em)}</TableCell>
                       <TableCell>
                         <div className="text-sm">{e.cliente?.nome ?? "—"}</div>
                         <div className="text-xs text-muted-foreground">
                           {e.cliente ? mascaraDoc(e.cliente.cpf_cnpj) : ""}
+                        </div>
+                        <div className="max-w-[220px] truncate text-xs text-muted-foreground lg:hidden">
+                          {e.assunto ?? "—"}
                         </div>
                       </TableCell>
                       <TableCell className="text-sm">
@@ -257,8 +259,8 @@ export default function EntradaDemandas() {
                           <div className="text-xs text-muted-foreground">{rotuloProduto(e.produto)}</div>
                         )}
                       </TableCell>
-                      <TableCell className="text-sm">{e.canal?.nome ?? "—"}</TableCell>
-                      <TableCell className="max-w-[240px] truncate text-sm">{e.assunto ?? "—"}</TableCell>
+                      <TableCell className="hidden text-sm lg:table-cell">{e.canal?.nome ?? "—"}</TableCell>
+                      <TableCell className="hidden max-w-[240px] truncate text-sm lg:table-cell">{e.assunto ?? "—"}</TableCell>
                       <TableCell>
                         {e.destino === "roteada" ? (
                           <Badge className="bg-[#338B85] hover:bg-[#338B85]">Roteada</Badge>
@@ -282,7 +284,8 @@ export default function EntradaDemandas() {
       </Card>
 
       <DialogRegistro aberto={aberto} onFechar={() => setAberto(false)} />
-    </div>
+      </div>
+    </PaginaHub>
   );
 }
 
@@ -423,7 +426,7 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
         if (!o) { limpar(); onFechar(); }
       }}
     >
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+      <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Registrar entrada</DialogTitle>
           <DialogDescription>
