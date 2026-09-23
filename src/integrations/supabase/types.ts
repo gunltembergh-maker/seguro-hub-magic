@@ -6525,13 +6525,16 @@ export type Database = {
           enviado_em: string
           enviado_por_nome: string
           ja_avisado_em: string
+          minimo_repasse: number
           motivo_bloqueio: string
           origem_leitura: string
           parceiro: string
           pct_beneficios: number
+          pct_demais: number
           pct_garantia: number
           repasse_acumulado: number
           situacao: string
+          tentativas: number
           vigencia_fim: string
           vigencia_inicio: string
         }[]
