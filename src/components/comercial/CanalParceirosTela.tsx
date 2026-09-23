@@ -90,6 +90,9 @@ interface Situacao {
   pct_demais: number | null;
   pct_demais_efetivo: number | null;
   minimo_repasse: number | null;
+  motivo_parado: string | null;
+  bloqueado: boolean | null;
+  bloqueio_motivo: string | null;
 }
 
 interface Parceiro {

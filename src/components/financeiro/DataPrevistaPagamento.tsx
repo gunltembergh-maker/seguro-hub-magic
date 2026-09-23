@@ -108,8 +108,8 @@ export function DataPrevistaPagamento({
           <DialogTitle>Data do ciclo de pagamento</DialogTitle>
           <DialogDescription>
             {limites
-              ? `O pagamento acontece entre os dias 11 e 15. A janela disponível é de ${fmtBR(ciclo!.janela_inicio!)} a ${fmtBR(ciclo!.janela_fim!)}.`
-              : "O pagamento acontece entre os dias 11 e 15."}
+              ? `Escolha qualquer dia útil. A janela disponível vai de ${fmtBR(ciclo!.janela_inicio!)} a ${fmtBR(ciclo!.janela_fim!)}.`
+              : "Escolha qualquer dia útil."}
           </DialogDescription>
         </DialogHeader>
 
@@ -132,12 +132,16 @@ export function DataPrevistaPagamento({
               defaultMonth={limites.inicio}
               disabled={(d) => {
                 const x = soData(d);
-                return x < limites.inicio || x > limites.fim;
+                return x < limites.inicio || x > limites.fim || d.getDay() === 0 || d.getDay() === 6;
               }}
               className={cn("p-3 pointer-events-auto")}
             />
           </div>
         )}
+
+        <p className="text-xs text-muted-foreground">
+          O Hub não verifica feriados: confira o calendário antes de definir a data.
+        </p>
 
         <div className="space-y-2">
           <Label htmlFor="observacao-ciclo">Observação (opcional)</Label>
