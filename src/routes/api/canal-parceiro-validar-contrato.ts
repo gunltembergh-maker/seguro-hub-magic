@@ -57,7 +57,9 @@ const iso = (a: number, m: number, d: number) =>
 
 /** Le uma data em qualquer das formas que aparecem nos contratos. */
 function acharData(txt: string): string | null {
-  let m = txt.match(/(\d{1,2})\s*(?:de\s+)?([a-zç]{3,9})\.?\s*(?:de\s+)?(\d{4})/i);
+  let m = txt.match(
+    /(\d{1,2})\s*(?:de\s+)?([a-zA-ZçÇáàâãéêíóôõúüÁ-Úà-ú]{3,9})\.?\s*(?:de\s+)?(\d{4})/i,
+  );
   if (m) {
     const mes = MESES[semAcento(m[2]).toLowerCase()];
     if (mes) return iso(+m[3], mes, +m[1]);
@@ -115,24 +117,56 @@ function extrair(texto: string) {
   const pctGarantia = percentualPerto(texto, ["garantia", "garantias"]);
   const pctDemais = percentualPerto(texto, ["demais ramos", "outros ramos"]);
 
-  // Vigencia: "prazo de 12 (doze) meses, com inicio em <data>"
+  // Vigencia: intervalo explicito, senao data de inicio + prazo em meses
   let vigIni: string | null = null;
   let vigFim: string | null = null;
+  let vigOrigem: "INTERVALO" | "TEXTO" | "ASSINATURA" | null = null;
   const mPrazo = plano.match(/prazo[^.]{0,160}?(\d{1,3})\s*\(?[a-z\s]*\)?\s*(mes|meses|ano|anos)/);
-  const mInicio = texto.match(/in[ií]cio\s+(?:em|no dia)?\s*([^,.;]{6,40})/i);
-  if (mInicio) vigIni = acharData(mInicio[1]);
-  if (!vigIni) {
-    const mVig = texto.match(/vig[eê]ncia[^.]{0,80}/i);
-    if (mVig) vigIni = acharData(mVig[0]);
+
+  const mIntervalo = texto.match(
+    /vig[eê]ncia[^.]{0,120}?(\d{1,2}[^\s]*\s*(?:de\s+)?[^\s,;]+\s*(?:de\s+)?\d{4}|\d{2}\/\d{2}\/\d{4})\s*(?:a|at[eé])\s*(\d{1,2}[^\s]*\s*(?:de\s+)?[^\s,;]+\s*(?:de\s+)?\d{4}|\d{2}\/\d{2}\/\d{4})/i,
+  );
+  if (mIntervalo) {
+    const ini = acharData(mIntervalo[1]);
+    const fim = acharData(mIntervalo[2]);
+    if (ini && fim) {
+      vigIni = ini;
+      vigFim = fim;
+      vigOrigem = "INTERVALO";
+    }
   }
-  if (vigIni && mPrazo) {
+
+  if (!vigIni) {
+    const padroes = [
+      /efeitos?\s+retroativos?\s+a\s+([^,.;]{6,60})/i,
+      /(?:com\s+)?in[ií]cio\s+(?:em|no\s+dia|a\s+partir\s+de)?\s*([^,.;]{6,60})/i,
+      /a\s+partir\s+de\s+([^,.;]{6,60})/i,
+      /viger[aá]\s+(?:de|a\s+partir\s+de)\s*([^,.;]{6,60})/i,
+      /vig[eê]ncia[^.]{0,80}/i,
+    ];
+    for (const re of padroes) {
+      const m = texto.match(re);
+      if (!m) continue;
+      const d = acharData(m[1] ?? m[0]);
+      if (d) {
+        vigIni = d;
+        vigOrigem = "TEXTO";
+        break;
+      }
+    }
+  }
+
+  const fecharPeloPrazo = (inicio: string) => {
+    if (!mPrazo) return null;
     const qtd = Number(mPrazo[1]);
     const meses = mPrazo[2].startsWith("ano") ? qtd * 12 : qtd;
-    const d = new Date(`${vigIni}T12:00:00Z`);
+    const d = new Date(`${inicio}T12:00:00Z`);
     d.setUTCMonth(d.getUTCMonth() + meses);
     d.setUTCDate(d.getUTCDate() - 1);
-    vigFim = d.toISOString().slice(0, 10);
-  }
+    return d.toISOString().slice(0, 10);
+  };
+
+  if (vigIni && !vigFim) vigFim = fecharPeloPrazo(vigIni);
 
   // Assinatura: bloco do Clicksign no fim do PDF
   const assinaturas = [
