@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import EnviarContratoParceiro from "@/components/comercial/EnviarContratoParceiro";
-import { VisualizadorContrato } from "@/components/comercial/FilaVerificacaoContratos";
+import { BotaoBaixarContrato, VisualizadorContrato } from "@/components/comercial/FilaVerificacaoContratos";
 
 type Linha = {
   canal_id: string;
@@ -383,9 +383,12 @@ export default function ContratoParceriaTela() {
                           <TableCell className="align-top">
                             <div className="flex flex-wrap justify-end gap-1" data-tour="jur-acoes">
                               {l.arquivo_path && (
-                                <Button size="sm" variant="ghost" onClick={() => setVendo({ path: l.arquivo_path!, nome: l.arquivo_nome ?? "Contrato" })}>
-                                  <FileText className="mr-1 h-4 w-4" /> Abrir contrato
-                                </Button>
+                                <>
+                                  <BotaoBaixarContrato path={l.arquivo_path} nome={l.arquivo_nome} variant="outline" size="sm" />
+                                  <Button size="sm" variant="ghost" onClick={() => setVendo({ path: l.arquivo_path!, nome: l.arquivo_nome ?? "Contrato" })}>
+                                    <FileText className="mr-1 h-4 w-4" /> Ver aqui
+                                  </Button>
+                                </>
                               )}
                               {podeRenovar && l.contrato_id && (
                                 renovavel ? (

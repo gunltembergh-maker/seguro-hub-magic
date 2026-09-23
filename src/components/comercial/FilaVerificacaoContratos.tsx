@@ -113,6 +113,64 @@ async function baixarContrato(path: string): Promise<Blob> {
   return resp.blob();
 }
 
+/** Baixa o contrato como arquivo (<a download>): não é navegação, nenhum bloqueador derruba. */
+export async function baixarContratoArquivo(path: string, nome?: string | null): Promise<void> {
+  const blob = await baixarContrato(path);
+  const url = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = nome || "contrato.pdf";
+  a.rel = "noopener";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
+/** Botão principal "Baixar contrato", com spinner e toast de erro. */
+export function BotaoBaixarContrato({
+  path,
+  nome,
+  className,
+  variant = "default",
+  size = "sm",
+}: {
+  path?: string | null;
+  nome?: string | null;
+  className?: string;
+  variant?: "default" | "outline" | "ghost" | "secondary";
+  size?: "default" | "sm" | "lg";
+}) {
+  const [baixando, setBaixando] = useState(false);
+  return (
+    <Button
+      className={className}
+      variant={variant}
+      size={size}
+      disabled={baixando || !path}
+      onClick={async () => {
+        if (!path) return;
+        setBaixando(true);
+        try {
+          await baixarContratoArquivo(path, nome);
+        } catch (e) {
+          toast.error(mensagemDeErro(e));
+        } finally {
+          setBaixando(false);
+        }
+      }}
+    >
+      {baixando ? (
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+      ) : (
+        <Download className="mr-2 h-4 w-4" />
+      )}
+      Baixar contrato
+    </Button>
+  );
+}
+
+
 /**
  * Carrega o contrato como blob sem abrir aba: bloqueador de anúncios derruba
  * window.open, até com blob:, então o PDF é exibido dentro do próprio Hub.
@@ -213,7 +271,12 @@ export function VisualizadorContrato({
             </Button>
           </div>
         ) : blob.url ? (
-          <iframe src={blob.url} className="h-[75vh] w-full rounded border" title="Contrato" />
+          <>
+            <iframe src={blob.url} className="h-[75vh] w-full rounded border" title="Contrato" />
+            <p className="text-xs text-muted-foreground">
+              Não está aparecendo? Use o botão Baixar.
+            </p>
+          </>
         ) : (
           <div className="flex h-[75vh] items-center justify-center text-muted-foreground">
             Nada para mostrar.
@@ -295,8 +358,9 @@ export function FilaVerificacaoContratos({ semCard = false }: { semCard?: boolea
               </p>
             </div>
             <div className="flex shrink-0 flex-wrap gap-2">
+              <BotaoBaixarContrato path={p.arquivo_path} nome={p.arquivo_nome} variant="outline" size="sm" />
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 disabled={!p.arquivo_path}
                 onClick={() =>
@@ -304,7 +368,7 @@ export function FilaVerificacaoContratos({ semCard = false }: { semCard?: boolea
                 }
               >
                 <FileText className="mr-2 h-4 w-4" />
-                Abrir contrato
+                Ver aqui
               </Button>
               <Button size="sm" onClick={() => setConferindo(p)}>
                 Conferir e liberar
@@ -424,7 +488,6 @@ function ConferirDialog({
 }) {
   const queryClient = useQueryClient();
   const [vendo, setVendo] = useState(false);
-  const [baixando, setBaixando] = useState(false);
 
 
   const [inicio, setInicio] = useState("");
@@ -527,47 +590,22 @@ function ConferirDialog({
 
         {/* 1. o documento */}
         <div className="rounded-lg border bg-muted/30 p-3">
-          <Button
+          <BotaoBaixarContrato
+            path={pendencia.arquivo_path}
+            nome={pendencia.arquivo_nome}
             className="w-full"
             size="lg"
-            disabled={!pendencia.arquivo_path}
-            onClick={() => setVendo(true)}
-          >
-            <FileText className="mr-2 h-4 w-4" />
-            Abrir o contrato
-          </Button>
+          />
           <div className="mt-2 flex items-center justify-between gap-2">
             <p className="text-xs text-muted-foreground">Confira o documento antes de liberar.</p>
             <Button
               variant="ghost"
               size="sm"
-              disabled={baixando || !pendencia.arquivo_path}
-              onClick={async () => {
-                setBaixando(true);
-                try {
-                  const blob = await baixarContrato(pendencia.arquivo_path!);
-                  const url = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
-                  const a = document.createElement("a");
-                  a.href = url;
-                  a.download = pendencia.arquivo_nome ?? "contrato.pdf";
-                  a.rel = "noopener";
-                  document.body.appendChild(a);
-                  a.click();
-                  a.remove();
-                  setTimeout(() => URL.revokeObjectURL(url), 60_000);
-                } catch (e) {
-                  toast.error(mensagemDeErro(e));
-                } finally {
-                  setBaixando(false);
-                }
-              }}
+              disabled={!pendencia.arquivo_path}
+              onClick={() => setVendo(true)}
             >
-              {baixando ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Download className="mr-2 h-4 w-4" />
-              )}
-              Baixar
+              <FileText className="mr-2 h-4 w-4" />
+              Ver aqui
             </Button>
           </div>
         </div>
