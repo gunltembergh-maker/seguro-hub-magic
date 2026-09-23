@@ -783,10 +783,7 @@ function LinhaRepasse({
       <TableCell className="text-right" data-tour={primeiraLinha ? "cp-repasse-acoes" : undefined}>
         <div className="flex flex-wrap items-center justify-end gap-1">
           {!liberado ? (
-            <Badge variant="outline" className="gap-1 text-muted-foreground">
-              <Lock className="h-3 w-3" />
-              Sem contrato válido
-            </Badge>
+            <BadgeParado parado={parado} />
           ) : !demanda ? (
             <Button size="sm" variant="default" onClick={onPedir} disabled={cicloCorrente <= 0}>
               <Send className="mr-2 h-4 w-4" />
