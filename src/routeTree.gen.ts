@@ -39,6 +39,7 @@ import { Route as ApiAbExecutarRouteImport } from './routes/api/ab/executar'
 import { Route as ApiAbCotaRouteImport } from './routes/api/ab/cota'
 import { Route as ApiAbBgcheckRouteImport } from './routes/api/ab/bgcheck'
 import { Route as AuthenticatedRhControlePosicoesRouteImport } from './routes/_authenticated/rh.controle-posicoes'
+import { Route as AuthenticatedJuridicoContratoParceriaRouteImport } from './routes/_authenticated/juridico_.contrato-parceria'
 import { Route as AuthenticatedJuridicoAnaliseBackgroundRouteImport } from './routes/_authenticated/juridico_.analise-background'
 import { Route as AuthenticatedGarantiaPainelRouteImport } from './routes/_authenticated/garantia_.painel'
 import { Route as AuthenticatedGarantiaNegociacaoRouteImport } from './routes/_authenticated/garantia_.negociacao'
@@ -239,6 +240,12 @@ const AuthenticatedRhControlePosicoesRoute =
   AuthenticatedRhControlePosicoesRouteImport.update({
     id: '/rh/controle-posicoes',
     path: '/rh/controle-posicoes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedJuridicoContratoParceriaRoute =
+  AuthenticatedJuridicoContratoParceriaRouteImport.update({
+    id: '/juridico_/contrato-parceria',
+    path: '/juridico/contrato-parceria',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedJuridicoAnaliseBackgroundRoute =
@@ -538,6 +545,7 @@ export interface FileRoutesByFullPath {
   '/garantia/negociacao': typeof AuthenticatedGarantiaNegociacaoRoute
   '/garantia/painel': typeof AuthenticatedGarantiaPainelRoute
   '/juridico/analise-background': typeof AuthenticatedJuridicoAnaliseBackgroundRoute
+  '/juridico/contrato-parceria': typeof AuthenticatedJuridicoContratoParceriaRoute
   '/rh/controle-posicoes': typeof AuthenticatedRhControlePosicoesRoute
   '/api/ab/bgcheck': typeof ApiAbBgcheckRoute
   '/api/ab/cota': typeof ApiAbCotaRoute
@@ -611,6 +619,7 @@ export interface FileRoutesByTo {
   '/garantia/negociacao': typeof AuthenticatedGarantiaNegociacaoRoute
   '/garantia/painel': typeof AuthenticatedGarantiaPainelRoute
   '/juridico/analise-background': typeof AuthenticatedJuridicoAnaliseBackgroundRoute
+  '/juridico/contrato-parceria': typeof AuthenticatedJuridicoContratoParceriaRoute
   '/rh/controle-posicoes': typeof AuthenticatedRhControlePosicoesRoute
   '/api/ab/bgcheck': typeof ApiAbBgcheckRoute
   '/api/ab/cota': typeof ApiAbCotaRoute
@@ -687,6 +696,7 @@ export interface FileRoutesById {
   '/_authenticated/garantia_/negociacao': typeof AuthenticatedGarantiaNegociacaoRoute
   '/_authenticated/garantia_/painel': typeof AuthenticatedGarantiaPainelRoute
   '/_authenticated/juridico_/analise-background': typeof AuthenticatedJuridicoAnaliseBackgroundRoute
+  '/_authenticated/juridico_/contrato-parceria': typeof AuthenticatedJuridicoContratoParceriaRoute
   '/_authenticated/rh/controle-posicoes': typeof AuthenticatedRhControlePosicoesRoute
   '/api/ab/bgcheck': typeof ApiAbBgcheckRoute
   '/api/ab/cota': typeof ApiAbCotaRoute
@@ -763,6 +773,7 @@ export interface FileRouteTypes {
     | '/garantia/negociacao'
     | '/garantia/painel'
     | '/juridico/analise-background'
+    | '/juridico/contrato-parceria'
     | '/rh/controle-posicoes'
     | '/api/ab/bgcheck'
     | '/api/ab/cota'
@@ -836,6 +847,7 @@ export interface FileRouteTypes {
     | '/garantia/negociacao'
     | '/garantia/painel'
     | '/juridico/analise-background'
+    | '/juridico/contrato-parceria'
     | '/rh/controle-posicoes'
     | '/api/ab/bgcheck'
     | '/api/ab/cota'
@@ -911,6 +923,7 @@ export interface FileRouteTypes {
     | '/_authenticated/garantia_/negociacao'
     | '/_authenticated/garantia_/painel'
     | '/_authenticated/juridico_/analise-background'
+    | '/_authenticated/juridico_/contrato-parceria'
     | '/_authenticated/rh/controle-posicoes'
     | '/api/ab/bgcheck'
     | '/api/ab/cota'
@@ -1185,6 +1198,13 @@ declare module '@tanstack/react-router' {
       path: '/rh/controle-posicoes'
       fullPath: '/rh/controle-posicoes'
       preLoaderRoute: typeof AuthenticatedRhControlePosicoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/juridico_/contrato-parceria': {
+      id: '/_authenticated/juridico_/contrato-parceria'
+      path: '/juridico/contrato-parceria'
+      fullPath: '/juridico/contrato-parceria'
+      preLoaderRoute: typeof AuthenticatedJuridicoContratoParceriaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/juridico_/analise-background': {
@@ -1573,6 +1593,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedGarantiaNegociacaoRoute: typeof AuthenticatedGarantiaNegociacaoRoute
   AuthenticatedGarantiaPainelRoute: typeof AuthenticatedGarantiaPainelRoute
   AuthenticatedJuridicoAnaliseBackgroundRoute: typeof AuthenticatedJuridicoAnaliseBackgroundRoute
+  AuthenticatedJuridicoContratoParceriaRoute: typeof AuthenticatedJuridicoContratoParceriaRoute
   AuthenticatedRhControlePosicoesRoute: typeof AuthenticatedRhControlePosicoesRoute
 }
 
@@ -1612,6 +1633,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedGarantiaPainelRoute: AuthenticatedGarantiaPainelRoute,
   AuthenticatedJuridicoAnaliseBackgroundRoute:
     AuthenticatedJuridicoAnaliseBackgroundRoute,
+  AuthenticatedJuridicoContratoParceriaRoute:
+    AuthenticatedJuridicoContratoParceriaRoute,
   AuthenticatedRhControlePosicoesRoute: AuthenticatedRhControlePosicoesRoute,
 }
 
