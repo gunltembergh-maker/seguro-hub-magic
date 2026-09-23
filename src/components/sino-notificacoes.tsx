@@ -29,7 +29,8 @@ const CHAVES_QUE_RESOLVEM = new Set([
   "canal-parceiro-documentos",
   "canal-parceiro-liberacoes",
   "canal-parceiro-contratos",
-  "canal-parceiro-verificacao",
+  "canal-parceiro-pendencias-verificacao",
+  "canal-parceiro-eventos",
   "canal-parceiro-alteracoes",
   "juridico-contratos",
 ]);
