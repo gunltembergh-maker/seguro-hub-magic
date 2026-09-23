@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { mensagemDeErro } from "@/lib/erro";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -118,8 +119,18 @@ export function UserFormModal({ open, onOpenChange, initial, onSaved }: Props) {
     enabled: open,
   });
 
+  // Preenche só na abertura (ou troca de usuário). Recarregar a lista cria um
+  // `initial` novo e, antes, isso zerava o que o administrador estava digitando.
+  const preenchidoPara = useRef<string | null>(null);
   useEffect(() => {
-    if (open) {
+    if (!open) {
+      preenchidoPara.current = null;
+      return;
+    }
+    const chave = `${initial?.isEdit ? "edit" : "novo"}:${initial?.user_id ?? ""}`;
+    if (preenchidoPara.current === chave) return;
+    preenchidoPara.current = chave;
+    {
       setNome(initial?.full_name || "");
       setEmail(initial?.email || "");
       setCpf(initial?.cpf ? cpfMask(initial.cpf) : "");
@@ -139,7 +150,8 @@ export function UserFormModal({ open, onOpenChange, initial, onSaved }: Props) {
       setCpfError(d.length === 11 && !validarCPF(d) ? "CPF inválido" : null);
       setCpfValid(d.length === 11 ? validarCPF(d) : null);
     }
-  }, [open, initial]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initial?.user_id, initial?.isEdit]);
 
   const cpfDigits = cpf.replace(/\D/g, "");
   const cpfOk = cpfDigits.length === 11 && validarCPF(cpfDigits);
@@ -204,7 +216,7 @@ export function UserFormModal({ open, onOpenChange, initial, onSaved }: Props) {
       onOpenChange(false);
       onSaved();
     },
-    onError: (e: Error) => toast.error("Falha ao salvar", { description: e.message }),
+    onError: (e: unknown) => toast.error("Falha ao salvar", { description: mensagemDeErro(e) }),
   });
 
   return (

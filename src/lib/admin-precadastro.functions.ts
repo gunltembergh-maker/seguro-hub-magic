@@ -67,6 +67,9 @@ export const adminPrecadastrarUsuarioFull = createServerFn({ method: "POST" })
     if (upErr) {
       // rollback auth user to avoid orphans
       await lavoroAdmin.auth.admin.deleteUser(authUserId).catch(() => {});
+      if (upErr.code === "23505" && `${upErr.message} ${upErr.details ?? ""}`.includes("profiles_cpf_unique")) {
+        throw new Error("Este CPF já está cadastrado para outro usuário");
+      }
       throw new Error(upErr.message);
     }
 
