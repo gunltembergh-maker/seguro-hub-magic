@@ -2134,7 +2134,7 @@ export type Database = {
           ciclo_ano: number
           ciclo_mes: number
           contrato_id: string | null
-          data_prevista_pagamento: string
+          data_prevista_pagamento: string | null
           demanda_id: string | null
           exportado_em: string
           exportado_por: string | null
@@ -2150,7 +2150,7 @@ export type Database = {
           ciclo_ano: number
           ciclo_mes: number
           contrato_id?: string | null
-          data_prevista_pagamento: string
+          data_prevista_pagamento?: string | null
           demanda_id?: string | null
           exportado_em?: string
           exportado_por?: string | null
@@ -2166,7 +2166,7 @@ export type Database = {
           ciclo_ano?: number
           ciclo_mes?: number
           contrato_id?: string | null
-          data_prevista_pagamento?: string
+          data_prevista_pagamento?: string | null
           demanda_id?: string | null
           exportado_em?: string
           exportado_por?: string | null
