@@ -192,6 +192,13 @@ function extrair(texto: string) {
   const mMin = texto.match(/(?:import[aâ]ncia\s+m[ií]nima|valor\s+m[ií]nimo)[^\d]{0,40}R?\$?\s*([\d.]+,\d{2})/i);
   const minimo = mMin ? Number(mMin[1].replace(/\./g, "").replace(",", ".")) : 100;
 
+  // Sem data de inicio no texto, mas com prazo e assinatura: deduz pela assinatura
+  if (!vigIni && mPrazo && assinadoEm) {
+    vigIni = assinadoEm.slice(0, 10);
+    vigOrigem = "ASSINATURA";
+    vigFim = fecharPeloPrazo(vigIni);
+  }
+
   // Tipo de documento
   const tipo = /aditivo/.test(plano) ? "ADITIVO" : /renova[cç][aã]o/.test(plano) ? "RENOVACAO" : "CONTRATO";
 
@@ -202,6 +209,7 @@ function extrair(texto: string) {
     pct_demais: pctDemais,
     vigencia_inicio: vigIni,
     vigencia_fim: vigFim,
+    vigencia_origem: vigOrigem,
     assinado, assinado_em: assinadoEm, signatarios,
     minimo, tipo,
   };
