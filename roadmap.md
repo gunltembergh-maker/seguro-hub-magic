@@ -5,3 +5,6 @@
 - [x] Exibir percentual de repasse na tabela Comercial.
 - [x] Trocar a assinatura fixa dos e-mails pela pessoa e área devolvidas pelas filas.
 - [x] Validar tipos, comportamento visual e interações do tour.
+
+- [ ] Planilha Comissão Vencida: coluna ID (aguarda aprovação da alteração no banco)
+- [ ] Visualizador de contrato com pdf.js (sem iframe)
