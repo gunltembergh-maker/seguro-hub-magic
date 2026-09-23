@@ -91,6 +91,7 @@ const COLS_VENCIDA_DETALHE: ColunaExport[] = [
   { header: "Nº Parcela", key: "numero_da_parcela", formato: "inteiro" },
   { header: "Comissão Bruta", key: "comissao_bruta", formato: "moeda", width: 18 },
   { header: "Responsável", key: "responsavel", formato: "texto", width: 24 },
+  { header: "ID", key: "id", formato: "inteiro", width: 12 },
   { header: "Observação", key: "observacao", formato: "texto", width: 40 },
 ];
 
