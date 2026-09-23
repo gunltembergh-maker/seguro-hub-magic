@@ -65,6 +65,8 @@ export type DemandaNF = {
   observacao_financeiro: string | null;
   sou_o_aprovador: boolean | null;
   sou_o_solicitante: boolean | null;
+  prazo_resposta_em: string | null;
+  horas_para_expirar: number | null;
 };
 
 function useDemandas(situacao: string) {
@@ -79,7 +81,8 @@ function useDemandas(situacao: string) {
       if (error) throw error;
       return (data || []) as DemandaNF[];
     },
-    staleTime: 60_000,
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -146,6 +149,20 @@ export function DemandasRepasseNF() {
                       </p>
                       <p className="text-xs text-muted-foreground">
                         Pedido por {d.solicitado_por_nome ?? "—"} em {fmtDataHora(d.solicitado_em)}
+                      </p>
+                      <p
+                        className={cn(
+                          "text-xs",
+                          (d.horas_para_expirar ?? 0) === 0
+                            ? "text-destructive"
+                            : (d.horas_para_expirar ?? 0) <= 6
+                              ? "text-amber-700"
+                              : "text-muted-foreground",
+                        )}
+                      >
+                        {(d.horas_para_expirar ?? 0) === 0
+                          ? "Prazo vencido, o pedido vai cair"
+                          : `Vence em ${d.horas_para_expirar}h`}
                       </p>
                       {d.observacao_solicitante ? (
                         <p className="text-sm text-foreground">{d.observacao_solicitante}</p>

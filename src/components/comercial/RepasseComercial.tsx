@@ -128,6 +128,8 @@ export type DemandaNF = {
   observacao_financeiro: string | null;
   sou_o_aprovador: boolean | null;
   sou_o_solicitante: boolean | null;
+  prazo_resposta_em: string | null;
+  horas_para_expirar: number | null;
 };
 
 const PILL: Record<string, { bg: string; color: string; label: string }> = {
@@ -173,10 +175,27 @@ function BadgeFinanceiro({ d }: { d: DemandaNF | undefined }) {
       </Badge>
     );
   }
+  if (d.situacao === "EXPIRADA") {
+    return (
+      <div className="space-y-0.5">
+        <Badge variant="outline" className="border-transparent bg-muted text-muted-foreground">
+          Pedido expirado
+        </Badge>
+        <p className="text-xs text-muted-foreground">Sem resposta em 24 horas. Envie de novo.</p>
+      </div>
+    );
+  }
   return (
-    <Badge variant="outline" className="border-transparent bg-amber-100 text-amber-900">
-      Aguardando o financeiro
-    </Badge>
+    <div className="space-y-0.5">
+      <Badge variant="outline" className="border-transparent bg-amber-100 text-amber-900">
+        Aguardando o financeiro
+      </Badge>
+      <p className="text-xs text-muted-foreground">
+        {(d.horas_para_expirar ?? 0) === 0
+          ? "Prazo vencendo"
+          : `Resposta em até ${d.horas_para_expirar}h`}
+      </p>
+    </div>
   );
 }
 
@@ -207,6 +226,7 @@ export function RepasseComercial({
   const [pedido, setPedido] = useState<{ canal: string; linhas: number; valor: number } | null>(
     null,
   );
+  const [confirmacaoEnvio, setConfirmacaoEnvio] = useState(false);
   const queryClient = useQueryClient();
 
   const search = useSearch({ strict: false }) as { demanda?: string };
@@ -245,7 +265,8 @@ export function RepasseComercial({
       if (error) throw error;
       return (data || []) as DemandaNF[];
     },
-    staleTime: 60_000,
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
   });
 
   const demandaPorChave = useMemo(() => {
@@ -487,9 +508,28 @@ export function RepasseComercial({
         onSucesso={() => {
           void queryClient.invalidateQueries({ queryKey: ["canal-repasse-demandas"] });
           setPedido(null);
+          setConfirmacaoEnvio(true);
         }}
         onVerRelacao={() => setRelacao(pedido?.canal ?? null)}
       />
+
+      <Dialog open={confirmacaoEnvio} onOpenChange={setConfirmacaoEnvio}>
+        <DialogContent className="w-[calc(100vw-2rem)] min-w-0 sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Solicitação encaminhada ao Financeiro</DialogTitle>
+            <DialogDescription className="break-words">
+              O Financeiro tem até 24 horas para analisar. O retorno chega por e-mail e também
+              aparece aqui na tela.
+            </DialogDescription>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Enviou por engano? Dá para cancelar nos próximos 10 minutos pelo menu da linha.
+          </p>
+          <DialogFooter>
+            <Button onClick={() => setConfirmacaoEnvio(false)}>Entendi</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <DetalheRepasseCiclo
         aberto={relacao !== null}
@@ -692,6 +732,11 @@ function LinhaRepasse({
             <Button size="sm" variant="outline" onClick={onPedir} disabled={bloqueado24h}>
               <Send className="mr-2 h-4 w-4" />
               {bloqueado24h ? `Novo envio em ${horasParaReenvio}h` : "Pedir de novo"}
+            </Button>
+          ) : situacao === "EXPIRADA" ? (
+            <Button size="sm" variant="default" onClick={onPedir} disabled={cicloCorrente <= 0}>
+              <Send className="mr-2 h-4 w-4" />
+              Enviar ao financeiro
             </Button>
           ) : (
             <Button
@@ -910,8 +955,6 @@ function PedirNFDialog({
         } as never,
       );
       if (error) throw error;
-      const row = (Array.isArray(data) ? data[0] : data) as { mensagem?: string } | null;
-      toast.success(row?.mensagem ?? "Pedido enviado ao Financeiro.");
       onSucesso();
     } catch (e) {
       toast.error(mensagemDeErro(e));
@@ -922,10 +965,10 @@ function PedirNFDialog({
 
   return (
     <Dialog open={aberto} onOpenChange={(o) => (!o ? onFechar() : undefined)}>
-      <DialogContent>
+      <DialogContent className="w-[calc(100vw-2rem)] min-w-0 sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Enviar ao financeiro</DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="break-words">
             O Financeiro vai conferir o valor e autorizar a emissão da nota fiscal. Você recebe um
             aviso assim que ele responder.
           </DialogDescription>
