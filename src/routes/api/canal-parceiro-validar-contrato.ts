@@ -221,6 +221,29 @@ function extrair(texto: string) {
     vigFim = fecharPeloPrazo(vigIni);
   }
 
+  // Clausula de renovacao: primeira frase que fala de renovar/prorrogar,
+  // testando a negativa antes da positiva. Sobre o texto sem acento, em
+  // minusculas. null quando nenhuma frase decide.
+  let renovacaoAutomatica: boolean | null = null;
+  let renovacaoTrecho: string | null = null;
+  const reNegativa =
+    /(sem\s+(?:prorrogacao|renovacao)|nao\s+(?:have|sera|serao)[^.]{0,40}(?:renova|prorrog)|vedad[ao]\s+a?\s*(?:renovacao|prorrogacao)|nao\s+renovavel)/;
+  const rePositiva =
+    /((?:sendo\s+)?(?:renovad[oa]|prorrogad[oa])\s+(?:automaticamente|por\s+igual\s+periodo)|renovacao\s+automatica|prorrogacao\s+automatica|renovad[oa]\s+por\s+iguais?\s+periodos?)/;
+  for (const frase of plano.split(/(?<=[.;])\s+/)) {
+    if (!/renova|prorrog/.test(frase)) continue;
+    if (reNegativa.test(frase)) {
+      renovacaoAutomatica = false;
+      renovacaoTrecho = frase.trim().slice(0, 200);
+      break;
+    }
+    if (rePositiva.test(frase)) {
+      renovacaoAutomatica = true;
+      renovacaoTrecho = frase.trim().slice(0, 200);
+      break;
+    }
+  }
+
   // Tipo de documento
   const tipo = /aditivo/.test(plano) ? "ADITIVO" : /renova[cç][aã]o/.test(plano) ? "RENOVACAO" : "CONTRATO";
 
@@ -260,6 +283,7 @@ interface DadosManuais {
   pct_garantia?: number;
   pct_demais?: number;
   minimo?: number;
+  renovacao_automatica?: boolean;
 }
 
 async function handle(request: Request): Promise<Response> {
