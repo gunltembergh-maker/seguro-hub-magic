@@ -51,11 +51,21 @@ import { TIPOS_IA_CONTRATO, fluxoDaSelecao, rotuloTipoDocumento as rotuloTipoDoc
 import { BlocoRetornoCrm, MotivoDialog } from "@/components/garantia/retorno-crm";
 import { SolicitarDocumentoComercial } from "@/components/garantia/solicitar-documento";
 import {
+  nomeSeguradoraCotacao,
   useAprovacoesMinuta,
   useCotacoes,
   useRegistrarAceite,
   useSeguradoDaDemanda,
+  useSeguradorasGarantia,
 } from "@/hooks/use-garantia-crm";
+import {
+  PARAM_COMISSAO,
+  PARAM_TAXA,
+  useParametrosGarantia,
+  useTaxaMediaModalidade,
+  valorParametro,
+} from "@/hooks/use-garantia-parametros";
+import { comissaoEstimada, sugerirPremio } from "@/lib/garantia/estimativa-premio";
 import { useAnalisesDaDemanda, useDocumentosDaDemanda, type DocumentoDemanda } from "@/hooks/use-garantia-documentos";
 import {
   useConsultaAtual,
