@@ -3405,8 +3405,11 @@ export type Database = {
           importancia_segurada: number | null
           justificativa_excecao: string | null
           legenda: string | null
+          legenda_manual: boolean
           modalidade: string | null
           natureza_rotulo: string | null
+          numero: string
+          numero_contrato: string | null
           numero_processo: string | null
           objeto: string | null
           observacao: string | null
@@ -3449,8 +3452,11 @@ export type Database = {
           importancia_segurada?: number | null
           justificativa_excecao?: string | null
           legenda?: string | null
+          legenda_manual?: boolean
           modalidade?: string | null
           natureza_rotulo?: string | null
+          numero: string
+          numero_contrato?: string | null
           numero_processo?: string | null
           objeto?: string | null
           observacao?: string | null
@@ -3493,8 +3499,11 @@ export type Database = {
           importancia_segurada?: number | null
           justificativa_excecao?: string | null
           legenda?: string | null
+          legenda_manual?: boolean
           modalidade?: string | null
           natureza_rotulo?: string | null
+          numero?: string
+          numero_contrato?: string | null
           numero_processo?: string | null
           objeto?: string | null
           observacao?: string | null
