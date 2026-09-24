@@ -378,7 +378,7 @@ function TriagemDialog({
           responsavel_tecnico_id: respTecnico || null,
         },
       });
-      toast.success("Triagem concluída. A demanda seguiu para a análise técnica.");
+      toast.success("Conferência concluída. Para mudar de etapa, use “Mover card para fase”.");
       onFechar();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Não foi possível salvar a triagem.");
@@ -1172,19 +1172,22 @@ function ConteudoDaFase({
   onAceite: () => void;
   onPerda: () => void;
 }) {
-  if (demanda.etapa === "1") {
+  // Etapa fundida "Análise da demanda": documentos, IA e conferência, nesta ordem.
+  if (demanda.etapa === "1" || demanda.etapa === "2") {
     return (
-      <div className="space-y-3 rounded-md border p-4">
-        <p className="text-sm text-muted-foreground">
-          Confira segurado ou locador, natureza, modalidade, movimento, valores, objeto, vigência,
-          prazo e responsáveis.
-        </p>
-        <Button onClick={onTriagem}>Completar triagem</Button>
+      <div className="space-y-4">
+        <AnaliseTecnica demanda={demanda} />
+        <div className="space-y-3 rounded-md border p-4">
+          <p className="text-sm text-muted-foreground">
+            Confira segurado ou locador, natureza, modalidade, movimento, valores, objeto, vigência,
+            prazo e responsáveis.
+          </p>
+          <Button variant={demanda.triagem_completa ? "outline" : "default"} onClick={onTriagem}>
+            {demanda.triagem_completa ? "Revisar conferência dos dados" : "Conferir dados da demanda"}
+          </Button>
+        </div>
       </div>
     );
-  }
-  if (demanda.etapa === "2") {
-    return <AnaliseTecnica demanda={demanda} />;
   }
   if (demanda.etapa === "3" && demanda.produto !== "fianca_locaticia") return <AbaLimites demanda={demanda} />;
   if (demanda.etapa === "3b") return <AbaDocumentos demanda={demanda} />;
