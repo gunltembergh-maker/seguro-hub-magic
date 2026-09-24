@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useRouterState } from "@tanstack/react-router";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
+import { hasRole, useMeuPerfil } from "@/hooks/use-meu-perfil";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { TourGuiado, type TourPasso } from "@/components/tour-guiado";
@@ -103,6 +104,37 @@ export function PopupComunicado() {
   const [visible, setVisible] = useState(false);
   const [animating, setAnimating] = useState(false);
   const dismissedThisSession = useRef<Set<string>>(new Set());
+  const navigate = useNavigate();
+  const tourTeste = useRouterState({
+    select: (r) => {
+      const v = (r.location.search as Record<string, unknown>)?.tour_teste;
+      return typeof v === "string" ? v : null;
+    },
+  });
+  const { data: meuPerfil } = useMeuPerfil();
+  const souAdmin = hasRole(meuPerfil, "ADMIN");
+  const [tourDeTeste, setTourDeTeste] = useState<PopupData | null>(null);
+
+  useEffect(() => {
+    if (!tourTeste || !souAdmin) {
+      setTourDeTeste(null);
+      return;
+    }
+    let vivo = true;
+    (async () => {
+      const { data, error } = await supabase.rpc("rpc_admin_listar_popups");
+      if (!vivo) return;
+      if (error) {
+        console.warn("[tour teste]", error.message);
+        return;
+      }
+      const achado = ((data as unknown as PopupData[]) ?? []).find((p) => p.id === tourTeste);
+      setTourDeTeste(achado ?? null);
+    })();
+    return () => {
+      vivo = false;
+    };
+  }, [tourTeste, souAdmin]);
 
   const fetchPopups = useCallback(async () => {
     try {
@@ -164,6 +196,27 @@ export function PopupComunicado() {
     if (popup) dismissedThisSession.current.add(popup.id);
     closeOne();
   };
+
+  if (tourDeTeste) {
+    return (
+      <TourGuiado
+        key={`teste-${tourDeTeste.id}`}
+        popup={tourDeTeste}
+        registrarDispensa={false}
+        onFinalizar={() => {
+          setTourDeTeste(null);
+          void navigate({
+            to: ".",
+            search: (prev: Record<string, unknown>) => {
+              const { tour_teste: _t, ...resto } = prev ?? {};
+              return resto;
+            },
+            replace: true,
+          } as never);
+        }}
+      />
+    );
+  }
 
   if (!visible || popups.length === 0) return null;
   const popup = popups[currentIndex];

@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { mensagemDeErro } from "@/lib/erro";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { HUB_PAGINAS, HUB_PAGINAS_MAP } from "@/lib/hub-paginas";
@@ -15,6 +16,8 @@ import {
   ShieldAlert,
   ArrowUp,
   ArrowDown,
+  Play,
+  RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMeuPerfil, hasRole } from "@/hooks/use-meu-perfil";
@@ -129,6 +132,31 @@ function AdminComunicadosPage() {
   const { data: perfil } = useMeuPerfil();
   const isAdmin = hasRole(perfil, "ADMIN");
   const qc = useQueryClient();
+  const navigate = useNavigate();
+
+  const testarTour = (p: PopupRow) => {
+    const pagina = p.paginas?.[0];
+    if (!pagina) {
+      toast.error("Este tour não tem página definida.");
+      return;
+    }
+    void navigate({ to: pagina, search: { tour_teste: p.id } } as never);
+  };
+
+  const zerarVisualizacoes = async (p: PopupRow) => {
+    if (!window.confirm("Todos voltarão a ver este item na próxima visita. Continuar?")) return;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase.rpc as any)("rpc_admin_zerar_dispensas_popup", {
+        p_popup_id: p.id,
+      });
+      if (error) throw error;
+      toast.success(`${Number(data ?? 0)} visualização(ões) zerada(s)`);
+      qc.invalidateQueries({ queryKey: ["admin-popups"] });
+    } catch (e) {
+      toast.error(mensagemDeErro(e));
+    }
+  };
   const [modalOpen, setModalOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState({ ...defaultForm });
@@ -423,6 +451,26 @@ function AdminComunicadosPage() {
                     <TableCell className="text-center">{p.total_dismiss ?? 0}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
+                        {p.tipo === "TOUR" && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            title="Testar"
+                            onClick={() => testarTour(p)}
+                          >
+                            <Play className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          title="Zerar visualizações"
+                          onClick={() => zerarVisualizacoes(p)}
+                        >
+                          <RotateCcw className="h-3.5 w-3.5" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"

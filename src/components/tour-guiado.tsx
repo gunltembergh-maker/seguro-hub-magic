@@ -81,7 +81,16 @@ function posicaoCartao(caixa: Caixa | null, pedida: TourPasso["posicao"]) {
   };
 }
 
-export function TourGuiado({ popup, onFinalizar }: { popup: TourPopup; onFinalizar: () => void }) {
+export function TourGuiado({
+  popup,
+  onFinalizar,
+  registrarDispensa = true,
+}: {
+  popup: TourPopup;
+  onFinalizar: () => void;
+  /** Modo teste do administrador: não grava dispensa. */
+  registrarDispensa?: boolean;
+}) {
   const passos = useMemo(
     () =>
       (popup.passos ?? []).filter((passo) => {
@@ -126,12 +135,16 @@ export function TourGuiado({ popup, onFinalizar }: { popup: TourPopup; onFinaliz
   const finalizar = useCallback(async () => {
     if (finalizando) return;
     setFinalizando(true);
+    if (!registrarDispensa) {
+      onFinalizar();
+      return;
+    }
     const { error } = await supabase.rpc("rpc_dispensar_popup", {
       p_popup_id: popup.id,
     } as { p_popup_id: string });
     if (error) console.warn("[tour] dispense error:", error.message);
     onFinalizar();
-  }, [finalizando, onFinalizar, popup.id]);
+  }, [finalizando, onFinalizar, popup.id, registrarDispensa]);
 
   const avancar = useCallback(() => {
     if (indice >= passos.length - 1) {
