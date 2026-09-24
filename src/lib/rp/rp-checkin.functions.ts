@@ -106,6 +106,7 @@ export const fazerCheckin = createServerFn({ method: "POST" })
       await registrarNegado("ip_nao_identificado");
       return {
         ok: false as const,
+        codigo: "ip_nao_identificado" as const,
         erro: "Não foi possível identificar sua conexão. Tente novamente.",
         ip: null as string | null,
       };
@@ -125,6 +126,7 @@ export const fazerCheckin = createServerFn({ method: "POST" })
       await registrarNegado("ip_fora_da_lista");
       return {
         ok: false as const,
+        codigo: "ip_fora_da_lista" as const,
         erro: "Check-in disponível apenas conectado ao Wi-Fi do escritório.",
         ip: principal,
       };
@@ -138,7 +140,7 @@ export const fazerCheckin = createServerFn({ method: "POST" })
 
     if (error) {
       await registrarNegado(`rpc: ${error.message}`);
-      return { ok: false as const, erro: error.message, ip: principal };
+      return { ok: false as const, codigo: "rpc" as const, erro: error.message, ip: principal };
     }
 
     return { ok: true as const, resultado, ip: principal };
