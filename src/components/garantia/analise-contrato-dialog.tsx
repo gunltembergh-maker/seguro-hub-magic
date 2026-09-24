@@ -107,7 +107,7 @@ export function AnaliseContratoDialog({ aberto, onFechar, demanda, documento, an
     const mod = id ? buscarModalidade(id, produto) : null;
     setEscolhendo(false);
     setPasso(mod ? `Analisando ${mod.label}…` : "Analisando o contrato por partes…");
-    const retorno = await executar({ data: { analiseId: alvo.id, ...(mod ? { modalidadeId: mod.id } : {}) } });
+    const retorno = await executar({ data: { analiseId: alvo.id, ...(mod ? { modalidadeId: mod.chave } : {}) } });
     if (!retorno.ok) throw new Error(retorno.mensagem ?? "Não foi possível concluir a análise.");
     setLocal({ ...alvo, situacao: retorno.situacao, resultado: retorno.resultado ?? alvo.resultado, resumo: retorno.resumo ?? alvo.resumo, campos_sugeridos: (retorno.campos_sugeridos ?? alvo.campos_sugeridos) as never, modalidade_id: mod?.id ?? alvo.modalidade_id, modalidade_rotulo: mod?.label ?? alvo.modalidade_rotulo, fluxo: mod ? mod.produto : alvo.fluxo, atualizado_em: new Date().toISOString() });
     await qc.invalidateQueries({ queryKey: ["garantia", "analises-ia", demanda.id] });
