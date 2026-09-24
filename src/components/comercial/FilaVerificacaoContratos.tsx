@@ -313,20 +313,14 @@ export function usePendenciasVerificacao() {
   });
 }
 
-/** O usuário é o aprovador designado? Só ele vê a atestação de assinatura. */
+/** O usuário pode atestar assinatura? Mesma regra que o banco usa para aceitar. */
 function useSouAprovador() {
   return useQuery({
-    queryKey: ["canal-parceiro-sou-aprovador"],
+    queryKey: ["canal-parceiro-pode-atestar"],
     queryFn: async (): Promise<boolean> => {
-      const { data, error } = await supabase.rpc(
-        "rpc_canal_parceiro_liberacoes" as never,
-        {
-          p_status: null,
-        } as never,
-      );
+      const { data, error } = await supabase.rpc("pode_atestar_contrato" as never);
       if (error) throw error;
-      const linhas = (data ?? []) as Array<{ sou_o_aprovador?: boolean | null }>;
-      return linhas.some((l) => l?.sou_o_aprovador === true);
+      return data === true;
     },
     staleTime: 5 * 60_000,
   });
@@ -504,6 +498,8 @@ function ConferirDialog({
     motivo?: string | null;
     pode_exportar?: boolean | null;
   } | null>(null);
+  const [renovando, setRenovando] = useState(false);
+  const [erroRenovar, setErroRenovar] = useState<string | null>(null);
 
   useEffect(() => {
     if (!pendencia) return;
@@ -516,16 +512,58 @@ function ConferirDialog({
     setAtestar(false);
     setMotivo("");
     setResultado(null);
+    setErroRenovar(null);
   }, [pendencia]);
 
   if (!pendencia) return null;
+
+  const bloqueioAssinatura = /assinatura|assinad/i.test(pendencia.motivo_bloqueio ?? "");
+  const avisoEscaneado = souAprovador && bloqueioAssinatura;
 
   /** Campo intocado vira null: a RPC não mexe no que não foi mandado. */
   const mudou = (atual: string, original: string | null) =>
     atual.trim() === (original ?? "").trim() ? null : atual.trim() || null;
 
+  function invalidarTudo() {
+    queryClient.invalidateQueries({ queryKey: ["canal-parceiro-situacao"] });
+    queryClient.invalidateQueries({ queryKey: ["canal-parceiro-pendencias-verificacao"] });
+    queryClient.invalidateQueries({ queryKey: ["canal-parceiro-contratos"] });
+    queryClient.invalidateQueries({ queryKey: ["canal-parceiro-eventos"] });
+    queryClient.invalidateQueries({ queryKey: ["canal-parceiro-lista"] });
+    queryClient.invalidateQueries({ queryKey: ["canal-parceiro-vigencias"] });
+  }
+
+  async function renovar() {
+    if (!pendencia) return;
+    setRenovando(true);
+    setErroRenovar(null);
+    try {
+      const { data, error } = await supabase.rpc(
+        "rpc_juridico_renovar_contrato" as never,
+        { p_contrato_id: pendencia.contrato_id, p_justificativa: motivo.trim() } as never,
+      );
+      if (error) throw error;
+      const r = (Array.isArray(data) ? data[0] : data) as { mensagem?: string | null } | null;
+      toast.success(r?.mensagem ?? "Contrato renovado pela cláusula.");
+      invalidarTudo();
+      queryClient.invalidateQueries({ queryKey: ["juridico-contratos"] });
+      queryClient.invalidateQueries({ queryKey: ["minhas-notificacoes"] });
+      onFechar();
+    } catch (e) {
+      setErroRenovar(mensagemDeErro(e));
+    } finally {
+      setRenovando(false);
+    }
+  }
+
   async function confirmar() {
     if (!pendencia || !motivo.trim()) return;
+    if (
+      avisoEscaneado &&
+      !atestar &&
+      !window.confirm("Sem atestar a assinatura o contrato continua travado. Confirmar mesmo assim?")
+    )
+      return;
     setSalvando(true);
     try {
       const { data, error } = await supabase.rpc(
@@ -558,25 +596,24 @@ function ConferirDialog({
         pode_exportar?: boolean | null;
       } | null;
       setResultado(r ?? {});
+      invalidarTudo();
+      if (r?.situacao === "VENCIDO") return;
       toast.success(
         r?.motivo ??
           (r?.situacao === "ATIVO"
             ? "Contrato ativo. O repasse deste parceiro foi liberado."
-            : `Situação: ${r?.situacao ?? "—"}.`),
+            : `Situação: ${r?.situacao ?? "não informada"}.`),
       );
       onFechar();
-      queryClient.invalidateQueries({ queryKey: ["canal-parceiro-situacao"] });
-      queryClient.invalidateQueries({ queryKey: ["canal-parceiro-pendencias-verificacao"] });
-      queryClient.invalidateQueries({ queryKey: ["canal-parceiro-contratos"] });
-      queryClient.invalidateQueries({ queryKey: ["canal-parceiro-eventos"] });
-      queryClient.invalidateQueries({ queryKey: ["canal-parceiro-lista"] });
-      queryClient.invalidateQueries({ queryKey: ["canal-parceiro-vigencias"] });
     } catch (e) {
       toast.error(mensagemDeErro(e));
     } finally {
       setSalvando(false);
     }
   }
+
+  const vencido = resultado?.situacao === "VENCIDO";
+  const fimFormatado = fim ? fim.split("-").reverse().join("/") : "data não informada";
 
   return (
     <Dialog open onOpenChange={(o) => !o && !salvando && onFechar()}>
@@ -681,10 +718,18 @@ function ConferirDialog({
           </div>
         </div>
 
-        {/* 3. atestação — só o aprovador */}
+        {/* 3. atestação, só quem pode atestar */}
         {souAprovador ? (
           <>
             <Separator />
+            {avisoEscaneado ? (
+              <Alert className="border-amber-600/40 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+                <AlertDescription>
+                  Documento escaneado ou assinatura em imagem: o Hub não consegue ler a assinatura
+                  sozinho. Abra o documento e, se estiver assinado, marque a caixa abaixo.
+                </AlertDescription>
+              </Alert>
+            ) : null}
             <div className="rounded-lg border p-3">
               <div className="flex items-start gap-2">
                 <Checkbox
@@ -719,7 +764,16 @@ function ConferirDialog({
         </div>
 
         {resultado ? (
-          resultado.situacao === "ATIVO" ? (
+          vencido ? (
+            <Alert className="border-amber-600/40 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+              <AlertDescription>
+                Contrato válido, mas a vigência terminou em {fimFormatado}.
+                {erroRenovar ? (
+                  <span className="mt-2 block font-medium text-destructive">{erroRenovar}</span>
+                ) : null}
+              </AlertDescription>
+            </Alert>
+          ) : resultado.situacao === "ATIVO" ? (
             <Alert className="border-emerald-600/40 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-100">
               <AlertDescription>
                 Contrato ativo. O repasse deste parceiro foi liberado.
@@ -728,20 +782,27 @@ function ConferirDialog({
           ) : (
             <Alert className="border-amber-600/40 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
               <AlertDescription>
-                {resultado.motivo ?? `Situação: ${resultado.situacao ?? "—"}.`}
+                {resultado.motivo ?? `Situação: ${resultado.situacao ?? "não informada"}.`}
               </AlertDescription>
             </Alert>
           )
         ) : null}
 
         <DialogFooter>
-          <Button variant="outline" onClick={onFechar} disabled={salvando}>
+          <Button variant="outline" onClick={onFechar} disabled={salvando || renovando}>
             {resultado ? "Fechar" : "Cancelar"}
           </Button>
-          <Button onClick={confirmar} disabled={!motivo.trim() || salvando}>
-            {salvando && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Confirmar
-          </Button>
+          {vencido ? (
+            <Button onClick={renovar} disabled={renovando || !motivo.trim()}>
+              {renovando && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Renovar pela cláusula
+            </Button>
+          ) : (
+            <Button onClick={confirmar} disabled={!motivo.trim() || salvando}>
+              {salvando && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Confirmar
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

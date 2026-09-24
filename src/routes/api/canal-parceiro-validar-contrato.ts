@@ -121,7 +121,8 @@ function extrair(texto: string) {
   let vigIni: string | null = null;
   let vigFim: string | null = null;
   let vigOrigem: "INTERVALO" | "TEXTO" | "ASSINATURA" | null = null;
-  const mPrazo = plano.match(/prazo[^.]{0,160}?(\d{1,3})\s*\(?[a-z\s]*\)?\s*(mes|meses|ano|anos)/);
+  const planoLinear = plano.replace(/\s+/g, " ");
+  const mPrazo = planoLinear.match(/prazo[^.]{0,160}?(\d{1,3})\s*\(?[a-z\s]*\)?\s*(mes|meses|ano|anos)/);
 
   const mIntervalo = texto.match(
     /vig[eê]ncia[^.]{0,120}?(\d{1,2}[^\s]*\s*(?:de\s+)?[^\s,;]+\s*(?:de\s+)?\d{4}|\d{2}\/\d{2}\/\d{4})\s*(?:a|at[eé])\s*(\d{1,2}[^\s]*\s*(?:de\s+)?[^\s,;]+\s*(?:de\s+)?\d{4}|\d{2}\/\d{2}\/\d{4})/i,
@@ -137,23 +138,36 @@ function extrair(texto: string) {
   }
 
   if (!vigIni) {
+    // Texto com espaços normalizados e todas as ocorrências de cada padrão:
+    // a primeira ocorrência nem sempre traz data. Entre as que trazem,
+    // vale a que está a até 250 caracteres de "prazo".
+    const lin = texto.replace(/\s+/g, " ");
+    const linPlano = semAcento(lin).toLowerCase();
+    const posPrazo = [...linPlano.matchAll(/prazo/g)].map((x) => x.index ?? 0);
+    const pertoDePrazo = (i: number) => posPrazo.some((p) => Math.abs(p - i) <= 250);
     const padroes = [
-      /efeitos?\s+retroativos?\s+a\s+([^,.;]{6,60})/i,
-      /(?:com\s+)?in[ií]cio\s+(?:em|no\s+dia|a\s+partir\s+de)?\s*([^,.;]{6,60})/i,
-      /a\s+partir\s+de\s+([^,.;]{6,60})/i,
-      /viger[aá]\s+(?:de|a\s+partir\s+de)\s*([^,.;]{6,60})/i,
-      /vig[eê]ncia[^.]{0,80}/i,
+      /data\s+de\s+in[ií]cio\s+(?:em\s+)?([^,;]{6,40})/gi,
+      /efeitos?\s+retroativos?\s+a\s+([^,.;]{6,60})/gi,
+      /(?:com\s+)?in[ií]cio\s+(?:em|no\s+dia|a\s+partir\s+de)?\s*([^,.;]{6,60})/gi,
+      /a\s+partir\s+de\s+([^,.;]{6,60})/gi,
+      /viger[aá]\s+(?:de|a\s+partir\s+de)\s*([^,.;]{6,60})/gi,
+      /vig[eê]ncia[^.]{0,80}/gi,
     ];
+    let primeira: string | null = null;
     for (const re of padroes) {
-      const m = texto.match(re);
-      if (!m) continue;
-      const d = acharData(m[1] ?? m[0]);
-      if (d) {
-        vigIni = d;
-        vigOrigem = "TEXTO";
-        break;
+      for (const m of lin.matchAll(re)) {
+        const d = acharData(m[1] ?? m[0]);
+        if (!d) continue;
+        if (pertoDePrazo(m.index ?? 0)) {
+          vigIni = d;
+          break;
+        }
+        if (!primeira) primeira = d;
       }
+      if (vigIni) break;
     }
+    if (!vigIni && primeira) vigIni = primeira;
+    if (vigIni) vigOrigem = "TEXTO";
   }
 
   const fecharPeloPrazo = (inicio: string) => {
@@ -244,8 +258,14 @@ function extrair(texto: string) {
     }
   }
 
-  // Tipo de documento
-  const tipo = /aditivo/.test(plano) ? "ADITIVO" : /renova[cç][aã]o/.test(plano) ? "RENOVACAO" : "CONTRATO";
+  // Tipo de documento: só pelo cabeçalho (primeiros 800 caracteres), para a
+  // cláusula de renovação no corpo não virar RENOVACAO.
+  const cabecalho = planoLinear.slice(0, 800);
+  const tipo = /aditivo/.test(cabecalho)
+    ? "ADITIVO"
+    : /(termo|instrumento)\s+de\s+renovacao/.test(cabecalho)
+      ? "RENOVACAO"
+      : "CONTRATO";
 
   return {
     nomes, cnpj,
