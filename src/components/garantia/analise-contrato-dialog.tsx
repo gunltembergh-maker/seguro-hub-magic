@@ -24,7 +24,8 @@ import { useResponsaveis } from "@/hooks/use-entrada-demandas";
 const CAMPOS_ATUAIS: Record<keyof CamposSugeridosIA, keyof DemandaLista | null> = {
   objeto: "objeto", importancia_segurada: "importancia_segurada", vigencia_exigida: "vigencia_exigida",
   percentual_garantia: "percentual_garantia", numero_processo: "numero_processo", numero_contrato: "numero_contrato",
-  clausulas_obrigatorias: null, coberturas_adicionais: null,
+  data_limite: "data_limite", segurado: "segurado_id",
+  clausulas_obrigatorias: null, coberturas_adicionais: null, segurado_cnpj: null,
 };
 
 function paginaDaFonte(fonte?: string | null): number | null {
@@ -113,6 +114,7 @@ export function AnaliseContratoDialog({ aberto, onFechar, demanda, documento, an
       if (!marcado) continue;
       const sugerido = sugestoes[chave as keyof typeof sugestoes];
       if (sugerido && typeof sugerido === "object" && "valor" in sugerido) (campos as Record<string, unknown>)[chave] = sugerido.valor;
+      if (chave === "segurado" && sugestoes.segurado?.cnpj) campos.segurado_cnpj = sugestoes.segurado.cnpj;
     }
     try {
       await aplicarCamposSugeridos(demanda.id, campos, local?.id);

@@ -9,7 +9,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-export type FluxoIA = "seguro_garantia" | "fianca_locaticia";
+export type FluxoIA = "seguro_garantia" | "fianca_locaticia" | "financeiro";
 
 export type SituacaoIA = "solicitada" | "processando" | "concluida" | "erro";
 
@@ -29,6 +29,12 @@ export interface CamposSugeridosIA {
   percentual_garantia?: number | null;
   numero_processo?: string | null;
   numero_contrato?: string | null;
+  /** Nome do segurado/locador como está no documento. */
+  segurado?: string | null;
+  /** CNPJ do segurado, quando a leitura trouxe — ajuda a achar o cadastro. */
+  segurado_cnpj?: string | null;
+  /** Data limite (AAAA-MM-DD), lida do prazo do edital. */
+  data_limite?: string | null;
 }
 
 /**
@@ -88,12 +94,14 @@ export interface ResultadoIA {
 
 /** Campos aplicáveis diretamente em garantia_demandas (os demais são leitura). */
 export const CAMPOS_APLICAVEIS = [
+  { chave: "segurado", rotulo: "Segurado" },
   { chave: "objeto", rotulo: "Objeto" },
   { chave: "importancia_segurada", rotulo: "Importância segurada" },
   { chave: "vigencia_exigida", rotulo: "Vigência exigida" },
   { chave: "percentual_garantia", rotulo: "Percentual de garantia" },
   { chave: "numero_processo", rotulo: "Nº do processo" },
   { chave: "numero_contrato", rotulo: "Nº do contrato" },
+  { chave: "data_limite", rotulo: "Data limite" },
 ] as const;
 
 /** Campos que a IA sugere, mas que hoje só existem como leitura/observação. */
@@ -122,6 +130,32 @@ export interface AnaliseIA {
 }
 
 /**
+ * O segurado da demanda é uma referência ao cadastro, não texto solto. Acha
+ * pelo CNPJ (ou pelo nome exato); sem cadastro e com CNPJ, cadastra; sem os
+ * dois, pede para escolher na conferência em vez de inventar.
+ */
+async function resolverSegurado(nome: string, cnpj: string | null): Promise<string> {
+  const digitos = (cnpj ?? "").replace(/\D+/g, "");
+  if (digitos) {
+    const { data } = await supabase.from("garantia_segurados").select("id").eq("cpf_cnpj", digitos).maybeSingle();
+    if (data) return data.id;
+  }
+  const { data: porNome } = await supabase.from("garantia_segurados").select("id").ilike("nome", nome.trim()).limit(1).maybeSingle();
+  if (porNome) return porNome.id;
+  if (digitos.length !== 11 && digitos.length !== 14) {
+    throw new Error(`O segurado “${nome}” não está cadastrado e a leitura não trouxe o CNPJ. Escolha ou cadastre na conferência dos dados.`);
+  }
+  const { data: sessao } = await supabase.auth.getUser();
+  const { data: criado, error } = await supabase.from("garantia_segurados").insert({
+    nome: nome.trim(), cpf_cnpj: digitos, tipo_pessoa: digitos.length === 14 ? "PJ" : "PF",
+    criado_por: sessao.user?.id ?? null,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any).select("id").single();
+  if (error) throw error;
+  return criado.id;
+}
+
+/**
  * Grava na demanda os campos que a pessoa escolheu aplicar e carimba a
  * análise como aplicada. Funciona hoje, sem depender do motor: quando o
  * resultado chegar, é só chamar esta função com os campos conferidos.
@@ -140,6 +174,8 @@ export async function aplicarCamposSugeridos(
     valores.percentual_garantia = campos.percentual_garantia;
   if (campos.numero_processo !== undefined) valores.numero_processo = campos.numero_processo;
   if (campos.numero_contrato !== undefined) valores.numero_contrato = campos.numero_contrato;
+  if (campos.data_limite !== undefined) valores.data_limite = campos.data_limite;
+  if (campos.segurado) valores.segurado_id = await resolverSegurado(campos.segurado, campos.segurado_cnpj ?? null);
 
   if (Object.keys(valores).length) {
     const { error } = await supabase
