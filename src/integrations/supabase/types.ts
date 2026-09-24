@@ -4587,6 +4587,27 @@ export type Database = {
           },
         ]
       }
+      hub_config: {
+        Row: {
+          atualizado_em: string
+          atualizado_por: string | null
+          chave: string
+          valor: Json
+        }
+        Insert: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          chave: string
+          valor: Json
+        }
+        Update: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          chave?: string
+          valor?: Json
+        }
+        Relationships: []
+      }
       hub_entradas: {
         Row: {
           assunto: string | null
@@ -6385,6 +6406,7 @@ export type Database = {
         Args: { p_demanda_id: string; p_message_id?: string; p_tipo: string }
         Returns: boolean
       }
+      canal_treinamento_emails: { Args: never; Returns: string[] }
       divide_safe: {
         Args: { denominador: number; numerador: number }
         Returns: number
@@ -6920,6 +6942,10 @@ export type Database = {
           ultimo_acesso: string
           user_id: string
         }[]
+      }
+      rpc_admin_zerar_dispensas_popup: {
+        Args: { p_popup_id: string; p_user_id?: string }
+        Returns: number
       }
       rpc_atualizar_schedule_config: {
         Args: {
@@ -7539,6 +7565,19 @@ export type Database = {
           demanda_id: string
           mensagem: string
           situacao: string
+        }[]
+      }
+      rpc_canal_treinamento_definir: {
+        Args: { p_ativo: boolean; p_emails?: string[] }
+        Returns: undefined
+      }
+      rpc_canal_treinamento_status: {
+        Args: never
+        Returns: {
+          ativo: boolean
+          atualizado_em: string
+          atualizado_por_nome: string
+          emails: string[]
         }[]
       }
       rpc_comissao_vencida_por_canal:
