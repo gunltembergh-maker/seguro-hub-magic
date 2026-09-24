@@ -715,3 +715,97 @@ export function useInicioDoStatus(ativo: boolean) {
     },
   });
 }
+
+/* ------------------------------------------------------------------ */
+/* Retornos                                                           */
+/* ------------------------------------------------------------------ */
+
+/** Linha do catálogo de um status — a `ordem` decide se o movimento é retorno. */
+export async function carregarStatusCatalogo(codigo: string): Promise<StatusCatalogo | null> {
+  const { data } = await supabase
+    .from("garantia_status_catalogo")
+    .select("codigo, nome, etapa, fase, relogio, com_quem, sla_horas, ordem, ativo")
+    .eq("codigo", codigo)
+    .maybeSingle();
+  return (data as StatusCatalogo | null) ?? null;
+}
+
+/** Retorno de etapa: exige motivo, que vai para a observação do histórico. */
+export function useVoltarEtapa() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ demandaId, destino, motivo }: { demandaId: string; destino: string; motivo: string }) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.rpc as any)("rpc_garantia_voltar_etapa", {
+        _demanda_id: demandaId,
+        _status_destino: destino,
+        _motivo: motivo,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => invalidarPipeline(qc),
+  });
+}
+
+export interface RetornoSolicitacao {
+  id: string;
+  demanda_id: string;
+  motivo: string;
+  situacao: "pendente" | "aprovada" | "recusada";
+  solicitado_por: string | null;
+  solicitado_em: string;
+  demanda?: { legenda: string | null; codigo: string | null } | null;
+}
+
+/** Pedidos pendentes de volta do CRM (opcionalmente de uma demanda). */
+export function useRetornosPendentes(demandaId?: string | null, habilitado = true) {
+  return useQuery({
+    queryKey: ["garantia", "retornos", demandaId ?? "todos"],
+    enabled: habilitado,
+    queryFn: async (): Promise<RetornoSolicitacao[]> => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let q = (supabase.from as any)("garantia_retorno_solicitacoes")
+        .select("id, demanda_id, motivo, situacao, solicitado_por, solicitado_em, demanda:garantia_demandas(legenda, codigo)")
+        .eq("situacao", "pendente")
+        .order("solicitado_em");
+      if (demandaId) q = q.eq("demanda_id", demandaId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return (data ?? []) as RetornoSolicitacao[];
+    },
+  });
+}
+
+export function useSolicitarRetorno() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ demandaId, motivo }: { demandaId: string; motivo: string }) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.rpc as any)("rpc_garantia_solicitar_retorno", {
+        _demanda_id: demandaId,
+        _motivo: motivo,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["garantia", "retornos"] }),
+  });
+}
+
+export function useDecidirRetorno() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, aprovar, resposta }: { id: string; aprovar: boolean; resposta: string }) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.rpc as any)("rpc_garantia_decidir_retorno", {
+        _solicitacao_id: id,
+        _aprovar: aprovar,
+        _resposta: resposta,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["garantia", "retornos"] });
+      invalidarPipeline(qc);
+    },
+  });
+}
