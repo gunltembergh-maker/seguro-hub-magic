@@ -365,17 +365,27 @@ export function impedimentoDaTransicao(
   tiposPresentes?: Set<string>,
   /** Cotação escolhida, minuta e aprovações — travas das etapas 4, 6 e 7. */
   crm?: ContextoCrm,
+  /** Status atual no catálogo — sua `ordem` decide se o movimento é retorno. */
+  origem?: StatusCatalogo,
 ): string | null {
+  // REGRA: TRAVA É PARA AVANÇO; VOLTAR É LIVRE, PORQUE VOLTAR É COMO SE CONSERTA.
+  // Retorno = destino.ordem < origem.ordem (a ordem do catálogo já codifica
+  // a sequência inteira, inclusive a 3b). Num retorno NÃO se avalia nenhuma
+  // trava de "sair da etapa" (mercado completo, cotação escolhida, checklists
+  // das etapas 2/3b/6, minuta/aprovações, IS e data limite para a etapa 5).
+  // Valem em qualquer direção só as regras de coerência do fluxo: triagem
+  // incompleta, fiança nunca na etapa 3, entrada no CRM só pelo aceite e
+  // volta do CRM só por pedido aprovado pelo admin.
+  const retorno = !!origem && destino.ordem < origem.ordem;
+
   // O aceite não é troca de status: ele é o RPC que gera o código GAR-xxxxx.
   // Arrastar o cartão para o CRM pularia a geração do código.
   if (demanda.fase !== "crm" && destino.fase === "crm") {
     return "A entrada no CRM é feita pelo botão “Registrar aceite do cliente”, no detalhe da demanda: é ele que gera o código GAR e garante que não saiam dois códigos para o mesmo caso.";
   }
-  // Depois do aceite não há volta pelo quadro: o caminho de saída é perda ou emissão.
   if (demanda.fase === "crm" && destino.fase === "negociacao") {
-    return "Esta demanda já foi aceita pelo cliente e está no CRM. Ela não volta para a negociação pelo quadro: o caminho de saída é registrar a perda (desistência depois do aceite) ou seguir para a emissão.";
+    return "Esta demanda já foi aceita pelo cliente e está no CRM. A volta para a negociação é pedida pelo botão “Solicitar volta para a negociação” e decidida por um administrador.";
   }
-
 
   if (!demanda.triagem_completa && destino.codigo !== demanda.status_atual) {
     return "A triagem ainda não foi completada. Use “Completar triagem” no detalhe da demanda: sem os dados da etapa 1 as etapas seguintes não têm o que analisar.";
@@ -385,6 +395,7 @@ export function impedimentoDaTransicao(
   if (demanda.produto === "fianca_locaticia" && etapaDestino === "3") {
     return "Fiança locatícia não passa por consulta a mercado: as APIs das seguradoras não atendem esse produto. Da análise técnica ela segue direto para a cotação.";
   }
+  if (retorno) return null;
   if (etapaDestino === "3b" && !["3", "3b"].includes(demanda.etapa)) {
     return "Os documentos de cadastro só são pedidos depois da consulta a mercado (etapa 3). Leve a demanda à consulta antes.";
   }
