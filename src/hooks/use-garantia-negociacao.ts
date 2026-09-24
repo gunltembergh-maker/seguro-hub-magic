@@ -34,6 +34,9 @@ export interface DemandaLista {
   id: string;
   codigo: string | null;
   legenda: string | null;
+  numero: string;
+  legenda_manual: boolean;
+  numero_contrato: string | null;
   produto: string;
   entrada_id: string | null;
   solicitacao_id: string | null;
@@ -76,7 +79,7 @@ export interface DemandaLista {
 }
 
 const CAMPOS_DEMANDA =
-  "id, codigo, legenda, produto, entrada_id, solicitacao_id, fase, etapa, status_atual, triagem_completa, " +
+  "id, codigo, numero, legenda, legenda_manual, numero_contrato, produto, entrada_id, solicitacao_id, fase, etapa, status_atual, triagem_completa, " +
   "chegada_em, cadastrado_em, cadastrado_por, cliente_id, segurado_id, modalidade, publico_privado, " +
   "tipo_movimento, tipo_alteracao, importancia_segurada, percentual_garantia, objeto, vigencia_exigida, " +
   "data_limite, canal_id, responsavel_cliente_id, responsavel_tecnico_id, premio_estimado, comissao_estimada, " +

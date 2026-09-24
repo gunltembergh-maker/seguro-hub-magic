@@ -75,14 +75,16 @@ function Cartao({
       className="w-full rounded-lg border border-border bg-card p-3 text-left shadow-sm transition-colors hover:border-primary/50"
     >
       <div className="flex items-start justify-between gap-2">
-        <span className="text-sm font-semibold text-card-foreground">
-          {demanda.codigo ?? "sem código"}
+        <span className="line-clamp-2 text-sm font-semibold text-card-foreground">
+          {demanda.legenda ?? demanda.cliente?.nome ?? "—"}
         </span>
-        <SeloProduto produto={demanda.produto} />
+        <div className="flex shrink-0 items-center gap-1">
+          {demanda.codigo && (
+            <Badge variant="outline" className="text-[10px] font-normal">{demanda.codigo}</Badge>
+          )}
+          <SeloProduto produto={demanda.produto} />
+        </div>
       </div>
-      <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-        {demanda.legenda ?? demanda.cliente?.nome ?? "—"}
-      </p>
       <p className="mt-1 text-xs text-muted-foreground">
         {seguradora ?? "Seguradora a confirmar"} · {rotuloModalidade(demanda.modalidade)}
       </p>
