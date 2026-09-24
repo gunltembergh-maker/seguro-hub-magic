@@ -9,7 +9,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { AlertTriangle, Ban, Check, Loader2, Search } from "lucide-react";
+import { AlertTriangle, Ban, Check, Loader2, Pencil, Plus, RotateCcw, Search, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -60,6 +60,7 @@ import {
   type DemandaLista,
   type StatusCatalogo,
 } from "@/hooks/use-garantia-negociacao";
+import { mensagemDeErro } from "@/lib/erro";
 import { consultarCnpjEntrada } from "@/lib/entrada/entrada-cnpj.functions";
 import {
   A_DEFINIR,
@@ -613,6 +614,114 @@ function PerdaDialog({
 }
 
 /* ------------------------------------------------------------------ */
+/* Legenda editável                                                   */
+/* ------------------------------------------------------------------ */
+
+function EditorLegenda({ demanda }: { demanda: DemandaLista }) {
+  const atualizar = useAtualizarDemanda();
+  const [editando, setEditando] = useState(false);
+  const [valor, setValor] = useState(demanda.legenda ?? "");
+
+  useEffect(() => {
+    setValor(demanda.legenda ?? "");
+    setEditando(false);
+  }, [demanda.id, demanda.legenda]);
+
+  const atalhos = [
+    { rotulo: demanda.produto === "fianca_locaticia" ? "Locador" : "Segurado", texto: demanda.segurado?.nome },
+    { rotulo: "Nº do processo", texto: demanda.numero_processo },
+    { rotulo: "Nº do contrato", texto: demanda.numero_contrato },
+  ].filter((a): a is { rotulo: string; texto: string } => !!a.texto?.trim());
+
+  const acrescentar = (t: string) => {
+    setEditando(true);
+    setValor((v) => (v.trim() ? `${v} · ${t.trim()}` : t.trim()));
+  };
+
+  const salvar = async () => {
+    if (!valor.trim()) {
+      toast.error("A legenda não pode ficar vazia.");
+      return;
+    }
+    try {
+      await atualizar.mutateAsync({ id: demanda.id, valores: { legenda: valor.trim() } });
+      toast.success("Legenda atualizada.");
+      setEditando(false);
+    } catch (e) {
+      toast.error(mensagemDeErro(e));
+    }
+  };
+
+  const restaurar = async () => {
+    try {
+      await atualizar.mutateAsync({ id: demanda.id, valores: { legenda_manual: false } });
+      toast.success("Legenda restaurada para o padrão.");
+      setEditando(false);
+    } catch (e) {
+      toast.error(mensagemDeErro(e));
+    }
+  };
+
+  return (
+    <div className="mt-3 min-w-0 space-y-2 rounded-md border border-border bg-muted/40 p-3">
+      <div className="flex items-center justify-between gap-2">
+        <Label>Legenda</Label>
+        <span className="text-xs text-muted-foreground">{demanda.numero}</span>
+      </div>
+      <div className="flex min-w-0 gap-2">
+        <Input
+          className="min-w-0 flex-1"
+          value={valor}
+          readOnly={!editando}
+          onChange={(e) => setValor(e.target.value)}
+        />
+        {editando ? (
+          <>
+            <Button size="icon" onClick={salvar} disabled={atualizar.isPending} aria-label="Salvar legenda">
+              {atualizar.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+            </Button>
+            <Button
+              size="icon"
+              variant="outline"
+              aria-label="Cancelar"
+              onClick={() => {
+                setValor(demanda.legenda ?? "");
+                setEditando(false);
+              }}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </>
+        ) : (
+          <Button size="icon" variant="outline" onClick={() => setEditando(true)} aria-label="Editar legenda">
+            <Pencil className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        {atalhos.map((a) => (
+          <Button key={a.rotulo} size="sm" variant="outline" onClick={() => acrescentar(a.texto)}>
+            <Plus className="mr-1 h-3.5 w-3.5" />
+            {a.rotulo}
+          </Button>
+        ))}
+        {demanda.legenda_manual && (
+          <Button size="sm" variant="ghost" onClick={restaurar} disabled={atualizar.isPending}>
+            <RotateCcw className="mr-1 h-3.5 w-3.5" />
+            Restaurar padrão
+          </Button>
+        )}
+      </div>
+      <p className="text-xs text-muted-foreground">
+        {demanda.legenda_manual
+          ? "Legenda editada à mão: ela não se atualiza mais sozinha. Use Restaurar padrão para voltar a número · cliente."
+          : "Legenda padrão (número · cliente), atualizada sozinha. Ao editar à mão, ela deixa de se atualizar."}
+      </p>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Aba Dados (edição)                                                 */
 /* ------------------------------------------------------------------ */
 
@@ -636,6 +745,8 @@ function AbaDados({ demanda }: { demanda: DemandaLista }) {
     premio_estimado: demanda.premio_estimado?.toString() ?? "",
     comissao_estimada: demanda.comissao_estimada?.toString() ?? "",
     observacao: demanda.observacao ?? "",
+    numero_processo: demanda.numero_processo ?? "",
+    numero_contrato: demanda.numero_contrato ?? "",
   });
 
   useEffect(() => {
@@ -654,6 +765,8 @@ function AbaDados({ demanda }: { demanda: DemandaLista }) {
       premio_estimado: demanda.premio_estimado?.toString() ?? "",
       comissao_estimada: demanda.comissao_estimada?.toString() ?? "",
       observacao: demanda.observacao ?? "",
+      numero_processo: demanda.numero_processo ?? "",
+      numero_contrato: demanda.numero_contrato ?? "",
     });
   }, [demanda]);
 
@@ -678,6 +791,8 @@ function AbaDados({ demanda }: { demanda: DemandaLista }) {
           premio_estimado: num(f.premio_estimado),
           comissao_estimada: num(f.comissao_estimada),
           observacao: f.observacao.trim() || null,
+          numero_processo: f.numero_processo.trim() || null,
+          numero_contrato: f.numero_contrato.trim() || null,
         },
       });
       toast.success("Dados da demanda atualizados.");
@@ -823,6 +938,17 @@ function AbaDados({ demanda }: { demanda: DemandaLista }) {
             inputMode="decimal"
             onChange={(e) => setF({ ...f, comissao_estimada: e.target.value })}
           />
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-1">
+          <Label>Nº do processo</Label>
+          <Input value={f.numero_processo} placeholder={A_DEFINIR} onChange={(e) => setF({ ...f, numero_processo: e.target.value })} />
+        </div>
+        <div className="space-y-1">
+          <Label>Nº do contrato</Label>
+          <Input value={f.numero_contrato} placeholder={A_DEFINIR} onChange={(e) => setF({ ...f, numero_contrato: e.target.value })} />
         </div>
       </div>
 
@@ -982,8 +1108,8 @@ export function DemandaSheet({
     <Sheet open={!!demanda} onOpenChange={(o) => !o && onFechar()}>
       <SheetContent className="flex w-full min-w-0 flex-col gap-0 overflow-y-auto sm:max-w-xl lg:max-w-2xl">
         <SheetHeader>
-          <SheetTitle className="text-left">
-            {demanda.cliente?.nome ?? "Demanda"}
+          <SheetTitle className="break-words text-left">
+            {demanda.legenda ?? demanda.cliente?.nome ?? "Demanda"}
           </SheetTitle>
           <SheetDescription className="text-left">
             {ROTULO_PRODUTO[demanda.produto] ?? demanda.produto} ·{" "}
@@ -991,6 +1117,8 @@ export function DemandaSheet({
             {demanda.codigo ? ` · ${demanda.codigo}` : ""}
           </SheetDescription>
         </SheetHeader>
+
+        <EditorLegenda demanda={demanda} />
 
         <div className="mt-4 space-y-3">
           {!demanda.triagem_completa && (

@@ -113,9 +113,14 @@ function Cartao({
     >
       <div className="flex items-start justify-between gap-2">
         <span className="line-clamp-2 text-sm font-semibold text-card-foreground">
-          {demanda.cliente?.nome ?? "Cliente a definir"}
+          {demanda.legenda ?? demanda.cliente?.nome ?? "Cliente a definir"}
         </span>
-        <SeloProduto produto={demanda.produto} />
+        <div className="flex shrink-0 items-center gap-1">
+          {demanda.codigo && (
+            <Badge variant="outline" className="text-[10px] font-normal">{demanda.codigo}</Badge>
+          )}
+          <SeloProduto produto={demanda.produto} />
+        </div>
       </div>
 
       {demanda.segurado?.nome && (
