@@ -244,9 +244,9 @@ export default function ContratoParceriaTela() {
   const textoValido = justificativa.trim().length >= 10;
   const infoAcao: Record<TipoAcao, { titulo: string; efeito: string; botao: string; destrutivo?: boolean }> = {
     RENOVAR: {
-      titulo: "Renovar contrato",
-      efeito: "A vigência é prorrogada conforme a cláusula de renovação automática do documento, pelos períodos necessários até cobrir a data de hoje.",
-      botao: "Renovar",
+      titulo: "Renovação automática",
+      efeito: "O contrato prevê renovação por igual período. Confirmando, a vigência segue pelo próximo período e o repasse continua liberado.",
+      botao: "Renovação automática",
     },
     SUSPENDER: {
       titulo: "Suspender contrato",
@@ -393,7 +393,7 @@ export default function ContratoParceriaTela() {
                               {podeRenovar && l.contrato_id && (
                                 renovavel ? (
                                   <Button size="sm" variant="outline" onClick={() => { setJustificativa(""); setAcao({ tipo: "RENOVAR", linha: l }); }}>
-                                    <RefreshCw className="mr-1 h-4 w-4" /> Renovar
+                                    <RefreshCw className="mr-1 h-4 w-4" /> Renovação automática
                                   </Button>
                                 ) : l.renovacao_automatica !== true ? (
                                   <span className="max-w-[14rem] self-center text-right text-xs text-muted-foreground">

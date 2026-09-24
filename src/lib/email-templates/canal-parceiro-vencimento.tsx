@@ -74,11 +74,17 @@ function textoRenovacao(renovacao: boolean | null, parceiro: string, vigenciaFim
       paragrafo: (
         <>
           O contrato de <strong>{parceiro}</strong> vence em <strong>{vigenciaFim}</strong>. O
-          documento prevê renovação por igual período, então basta confirmar a renovação no Hub
-          para a vigência seguir sem travar o repasse.
+          documento prevê renovação automática por igual período, mas a renovação <strong>não
+          acontece sozinha no Hub</strong>: o Jurídico precisa confirmar.
         </>
       ),
-      nota: 'Confirme em Jurídico > Contrato de Parceria, no botão Renovar.',
+      nota: (
+        <>
+          Para renovar, o Jurídico deve entrar em Jurídico &gt; Contrato de Parceria e clicar em{' '}
+          <strong>Renovação automática</strong> antes de {vigenciaFim}. Sem isso, o repasse deste
+          parceiro trava no vencimento.
+        </>
+      ),
     }
   }
   return {
@@ -92,7 +98,47 @@ function textoRenovacao(renovacao: boolean | null, parceiro: string, vigenciaFim
   }
 }
 
-function textoDiario(vencido: boolean, parceiro: string, vigenciaFim: string) {
+function textoDiario(
+  vencido: boolean,
+  parceiro: string,
+  vigenciaFim: string,
+  renovacao: boolean | null,
+) {
+  if (renovacao === true) {
+    if (vencido) {
+      return {
+        paragrafo: (
+          <>
+            A vigência do contrato de <strong>{parceiro}</strong> terminou em{' '}
+            <strong>{vigenciaFim}</strong>. O contrato tem cláusula de renovação automática, mas
+            ela não foi confirmada no Hub, e o repasse está travado desde então. Este aviso se
+            repete todo dia até o Jurídico confirmar.
+          </>
+        ),
+        nota: (
+          <>
+            Jurídico: entre em Jurídico &gt; Contrato de Parceria e clique em{' '}
+            <strong>Renovação automática</strong> para destravar o repasse.
+          </>
+        ),
+      }
+    }
+    return {
+      paragrafo: (
+        <>
+          O contrato de <strong>{parceiro}</strong> vence em <strong>{vigenciaFim}</strong> e tem
+          cláusula de renovação automática, ainda não confirmada no Hub. Este lembrete é diário até
+          o Jurídico confirmar.
+        </>
+      ),
+      nota: (
+        <>
+          Jurídico: entre em Jurídico &gt; Contrato de Parceria e clique em{' '}
+          <strong>Renovação automática</strong>.
+        </>
+      ),
+    }
+  }
   if (vencido) {
     return {
       paragrafo: (
@@ -133,7 +179,7 @@ export const CanalParceiroVencimentoEmail = ({
 }: Partial<CanalParceiroVencimentoProps>) => {
   const caso =
     tipoAviso === 'VENCE_DIARIO'
-      ? textoDiario(vencido, parceiro, vigenciaFim)
+      ? textoDiario(vencido, parceiro, vigenciaFim, renovacaoAutomatica ?? null)
       : textoRenovacao(renovacaoAutomatica ?? null, parceiro, vigenciaFim)
   const n = Math.abs(diasParaVencer)
   const titulo = vencido ? 'Contrato de parceria vencido' : 'Contrato de parceria a vencer'
@@ -208,7 +254,13 @@ export const template = {
     const n = Math.abs(Number(d?.diasParaVencer ?? 0))
     if (d?.tipoAviso === 'VENCE_DIARIO') {
       if (d?.vencido === true) {
+        if (d?.renovacaoAutomatica === true) {
+          return `Contrato de ${parceiro} venceu há ${n} dias: confirme a renovação automática para destravar o repasse`
+        }
         return `Contrato de ${parceiro} venceu há ${n} dias e o repasse está travado`
+      }
+      if (d?.renovacaoAutomatica === true) {
+        return `Contrato de ${parceiro} vence em ${n} dias: confirme a renovação automática no Hub`
       }
       return `Faltam ${n} dias para o contrato de ${parceiro} vencer`
     }
@@ -216,7 +268,7 @@ export const template = {
       return `Contrato de ${parceiro} vence em ${n} dias e não tem renovação automática`
     }
     if (d?.renovacaoAutomatica === true) {
-      return `Contrato de ${parceiro} vence em ${n} dias, com renovação automática`
+      return `Contrato de ${parceiro} vence em ${n} dias: confirme a renovação automática no Hub`
     }
     return `Contrato de ${parceiro} vence em ${n} dias`
   },
