@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Json } from "@/integrations/supabase/types";
-import { buscarModalidade, flowDaModalidade, modalidadeValida } from "./modalidades";
+import { flowDaModalidade, modalidadeValida, resolverModalidade } from "./modalidades";
 import type { CamposSugeridosComFonteIA, ModalidadeSeguroGarantiaIA, ResultadoDocumentoIA, ResultadoFiancaIA, ResultadoSeguroGarantiaIA, ValorComFonte } from "./tipos";
 
 const MAX_JOB_ITERATIONS = 1200;
@@ -15,7 +15,9 @@ const FLUXOS: Record<string, string> = {
 const entrada = z.object({
   analiseId: z.string().uuid(),
   // Opcional: sem ela o comportamento é o de antes (análise de todas as modalidades).
+  // Aceita a chave "<produto>:<id>" ou o id sozinho (formato antigo).
   modalidadeId: z.string().refine((v) => modalidadeValida(v), "modalidade_invalida").optional(),
+  produto: z.enum(["seguro_garantia", "fianca_locaticia"]).optional(),
 });
 
 export type RetornoAnaliseDocumento =
@@ -128,7 +130,7 @@ export const analisarDocumento = createServerFn({ method: "POST" })
     if (!["solicitada", "erro"].includes(existente.situacao)) return { ok: false, erro: "estado_invalido" };
     const ids = (existente.documentos_ids?.length ? existente.documentos_ids : existente.documento_id ? [existente.documento_id] : []) as string[];
     const modalidade = data.modalidadeId
-      ? buscarModalidade(data.modalidadeId, existente.fluxo === "fianca_locaticia" ? "fianca_locaticia" : "seguro_garantia")
+      ? resolverModalidade(data.modalidadeId, data.produto ?? (existente.fluxo === "fianca_locaticia" ? "fianca_locaticia" : "seguro_garantia"))
       : null;
     if (data.modalidadeId && !modalidade) return { ok: false, erro: "modalidade_invalida" };
     if (modalidade && existente.fluxo === "financeiro") return { ok: false, erro: "fluxo_nao_suportado" };
