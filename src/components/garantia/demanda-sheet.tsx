@@ -51,11 +51,21 @@ import { TIPOS_IA_CONTRATO, fluxoDaSelecao, rotuloTipoDocumento as rotuloTipoDoc
 import { BlocoRetornoCrm, MotivoDialog } from "@/components/garantia/retorno-crm";
 import { SolicitarDocumentoComercial } from "@/components/garantia/solicitar-documento";
 import {
+  nomeSeguradoraCotacao,
   useAprovacoesMinuta,
   useCotacoes,
   useRegistrarAceite,
   useSeguradoDaDemanda,
+  useSeguradorasGarantia,
 } from "@/hooks/use-garantia-crm";
+import {
+  PARAM_COMISSAO,
+  PARAM_TAXA,
+  useParametrosGarantia,
+  useTaxaMediaModalidade,
+  valorParametro,
+} from "@/hooks/use-garantia-parametros";
+import { comissaoEstimada, sugerirPremio } from "@/lib/garantia/estimativa-premio";
 import { useAnalisesDaDemanda, useDocumentosDaDemanda, type DocumentoDemanda } from "@/hooks/use-garantia-documentos";
 import {
   useConsultaAtual,
@@ -649,16 +659,49 @@ function PerdaDialog({
   onFechar: () => void;
 }) {
   const registrar = useRegistrarPerda();
+  const { data: cotacoes = [] } = useCotacoes(aberto ? demanda.id : "");
+  const { data: seguradorasCat = [] } = useSeguradorasGarantia();
+  const { data: parametros } = useParametrosGarantia();
+  const { data: mediaMod } = useTaxaMediaModalidade(demanda.modalidade, aberto);
+  const comissaoPct = valorParametro(parametros, PARAM_COMISSAO);
   const [motivo, setMotivo] = useState("");
-  const [premio, setPremio] = useState(demanda.premio_estimado?.toString() ?? "");
-  const [comissao, setComissao] = useState(demanda.comissao_estimada?.toString() ?? "");
+  const [premio, setPremio] = useState<number | null>(null);
+  const [prazo, setPrazo] = useState("365");
+  const [editadoManual, setEditadoManual] = useState(false);
   const [concorrente, setConcorrente] = useState("");
   const [retomar, setRetomar] = useState("");
   const [obs, setObs] = useState("");
 
+  const sugestao = useMemo(
+    () =>
+      sugerirPremio({
+        cotacoes: cotacoes.map((c) => ({
+          premio: c.premio,
+          escolhida: c.escolhida,
+          seguradora: nomeSeguradoraCotacao(c, seguradorasCat),
+        })),
+        importanciaSegurada: demanda.importancia_segurada,
+        prazoDias: Number(prazo) || 365,
+        taxaReferenciaPct: valorParametro(parametros, PARAM_TAXA),
+        mediaModalidade: mediaMod ?? null,
+        rotuloModalidade: rotuloModalidade(demanda.modalidade),
+      }),
+    [cotacoes, seguradorasCat, demanda.importancia_segurada, demanda.modalidade, prazo, parametros, mediaMod],
+  );
+
+  useEffect(() => {
+    if (!editadoManual) setPremio(sugestao?.premio ?? null);
+  }, [sugestao, editadoManual]);
+
+  const comissao = comissaoEstimada(premio, comissaoPct);
+
   const salvar = async () => {
     if (!motivo) {
       toast.error("O motivo da perda é obrigatório.");
+      return;
+    }
+    if (premio == null || !(premio > 0)) {
+      toast.error("Informe o prêmio estimado (maior que zero) para registrar a perda.");
       return;
     }
     try {
@@ -666,8 +709,8 @@ function PerdaDialog({
         demanda,
         perda: {
           motivo,
-          premio_estimado: premio.trim() ? Number(premio.replace(",", ".")) : null,
-          comissao_estimada: comissao.trim() ? Number(comissao.replace(",", ".")) : null,
+          premio_estimado: premio,
+          comissao_estimada: comissao,
           concorrente: concorrente.trim() || null,
           data_retomar: retomar || null,
           observacao: obs.trim() || null,
@@ -676,7 +719,7 @@ function PerdaDialog({
       toast.success("Perda registrada. A demanda continua no Hub, agora como perdida.");
       onFechar();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Não foi possível registrar a perda.");
+      toast.error(mensagemDeErro(e));
     }
   };
 
@@ -706,13 +749,52 @@ function PerdaDialog({
             </Select>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1">
-              <Label>Prêmio estimado</Label>
-              <Input value={premio} onChange={(e) => setPremio(e.target.value)} inputMode="decimal" />
+            <div className="space-y-1 sm:col-span-2">
+              <Label>Prêmio estimado *</Label>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <CampoReal
+                    valor={premio}
+                    onChange={(v) => {
+                      setEditadoManual(true);
+                      setPremio(v);
+                    }}
+                  />
+                </div>
+                <div className="w-28">
+                  <Input
+                    aria-label="Prazo em dias"
+                    inputMode="numeric"
+                    value={prazo}
+                    onChange={(e) => setPrazo(e.target.value.replace(/\D+/g, ""))}
+                    title="Prazo em dias usado na estimativa"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {editadoManual
+                  ? "valor ajustado pelo corretor"
+                  : sugestao
+                    ? sugestao.descricao
+                    : "sem sugestão (demanda sem cotação e sem IS) — informe o prêmio"}
+                {" · prazo em dias à direita (padrão 365)"}
+              </p>
+              {editadoManual && sugestao && (
+                <button
+                  type="button"
+                  className="text-xs text-[#338B85] underline"
+                  onClick={() => setEditadoManual(false)}
+                >
+                  usar sugestão ({sugestao.descricao})
+                </button>
+              )}
             </div>
             <div className="space-y-1">
               <Label>Comissão estimada</Label>
-              <Input value={comissao} onChange={(e) => setComissao(e.target.value)} inputMode="decimal" />
+              <CampoReal valor={comissao} onChange={() => {}} disabled />
+              <p className="text-xs text-muted-foreground">
+                {comissaoPct.toLocaleString("pt-BR")}% do prêmio estimado
+              </p>
             </div>
             <div className="space-y-1">
               <Label>Concorrente</Label>

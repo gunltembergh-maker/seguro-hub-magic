@@ -5,6 +5,7 @@
 // `rpc_garantia_painel_*`, que devolvem vazio sem a permissão — a tela só
 // acompanha.
 
+import { ReferenciasEstimativa } from "@/components/garantia/referencias-estimativa";
 import { useMemo, useState } from "react";
 import { GarantiaShell } from "@/components/garantia/garantia-shell";
 import { Button } from "@/components/ui/button";
@@ -190,6 +191,7 @@ export default function Painel() {
 
   return (
     <GarantiaShell titulo="Painel da Gerência" trilha={["Painel"]}>
+      <ReferenciasEstimativa />
       {/* Filtros — valem para todos os blocos. */}
       <div className="mb-6 min-w-0 rounded-xl border border-border bg-card p-4 shadow-sm">
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
