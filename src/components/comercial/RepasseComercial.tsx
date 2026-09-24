@@ -314,8 +314,6 @@ export function RepasseComercial({
   podeExportarPorChave,
   pctPorChave,
   paradoPorChave,
-  onCobrar,
-  cobrando,
 }: {
   /** Chave normalizada do canal → pode exportar (trava do contrato, vinda do banco). */
   podeExportarPorChave: Map<string, boolean>;
@@ -331,8 +329,6 @@ export function RepasseComercial({
     }
   >;
   paradoPorChave: Map<string, ParadoInfo>;
-  onCobrar: (chavePlanilha: string) => Promise<void>;
-  cobrando: string | null;
 }) {
   const ciclo = useMemo(() => cicloPadrao(new Set<string>()), []);
   const { data: estadoCiclo } = useCicloRepasse(ciclo.ano, ciclo.mes);
@@ -614,8 +610,6 @@ export function RepasseComercial({
                         onPedirLiberacao={() =>
                           setLiberacao({ canal: l.canal, valor: l.cicloCorrente })
                         }
-                        onCobrar={() => void onCobrar(chave)}
-                        cobrando={cobrando === chave}
                         onEnviarNF={() => (d ? setEnviarNF(d) : undefined)}
                         onDocumentos={() =>
                           d?.canal_id
@@ -723,8 +717,6 @@ function LinhaRepasse({
   onVerRelacao,
   onVerContrato,
   onPedirLiberacao,
-  onCobrar,
-  cobrando,
   onCancelado,
   onEnviarNF,
   onDocumentos,
@@ -757,8 +749,6 @@ function LinhaRepasse({
   onVerRelacao: () => void;
   onVerContrato: () => void;
   onPedirLiberacao: () => void;
-  onCobrar: () => void;
-  cobrando: boolean;
   onCancelado: () => void;
   onEnviarNF: () => void;
   onDocumentos: () => void;
@@ -864,30 +854,8 @@ function LinhaRepasse({
       </TableCell>
       <TableCell className="text-right" data-tour={primeiraLinha ? "cp-repasse-acoes" : undefined}>
         <div className="flex flex-wrap items-center justify-end gap-1">
-          {liberado && parado?.situacao === "LIBERADO_SEM_CONTRATO" ? (
-            <div className="space-y-1 text-left">
-              <Badge variant="outline" className="border-cyan-600/40 bg-cyan-50 text-cyan-800">
-                Liberado sem contrato, 1 exportação
-              </Badge>
-              {parado.proximo_passo ? <p className="max-w-64 text-xs text-muted-foreground">{parado.proximo_passo}</p> : null}
-            </div>
-          ) : null}
           {!liberado ? (
-            <div className="space-y-1 text-left">
-              <BadgeParado parado={parado} />
-              {parado?.quem_libera ? <BadgeDependencia quem={parado.quem_libera} /> : null}
-              <p className="max-w-64 text-xs text-muted-foreground">
-                {parado?.liberacao_status === "USADA"
-                  ? `Liberação usada${parado.liberacao_usada_em ? ` em ${fmtCurto(parado.liberacao_usada_em)}` : ""}. Para exportar de novo, peça outra liberação.`
-                  : parado?.proximo_passo ?? parado?.motivo_parado}
-              </p>
-              {parado?.pode_cobrar ? (
-                <Button size="sm" variant="outline" onClick={onCobrar} disabled={cobrando}>
-                  {cobrando ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  Cobrar
-                </Button>
-              ) : null}
-            </div>
+            <BadgeParado parado={parado} />
           ) : !demanda ? (
             <Button size="sm" variant="default" onClick={onPedir} disabled={cicloCorrente <= 0}>
               <Send className="mr-2 h-4 w-4" />
@@ -1014,12 +982,6 @@ function LinhaRepasse({
       </TableCell>
     </TableRow>
   );
-}
-
-function BadgeDependencia({ quem }: { quem: NonNullable<ParadoInfo["quem_libera"]> }) {
-  const rotulo = quem === "COMERCIAL" ? "você" : quem === "ADMINISTRADOR" ? "Administrador" : quem === "FINANCEIRO" ? "Financeiro" : "Jurídico";
-  const classe = quem === "ADMINISTRADOR" ? "border-sky-600/40 bg-sky-50 text-sky-800" : quem === "FINANCEIRO" ? "border-emerald-600/40 bg-emerald-50 text-emerald-800" : quem === "JURIDICO" ? "border-violet-600/40 bg-violet-50 text-violet-800" : "border-amber-600/40 bg-amber-50 text-amber-800";
-  return <Badge variant="outline" className={classe}>Depende de: {rotulo}</Badge>;
 }
 
 function SeloDivergencia({ divergencia }: { divergencia: DivergenciaPct | undefined }) {
