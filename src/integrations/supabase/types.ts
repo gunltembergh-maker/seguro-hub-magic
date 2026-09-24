@@ -7042,6 +7042,13 @@ export type Database = {
           posso_definir: boolean
         }[]
       }
+      rpc_canal_parceiro_cobrar_pendencia: {
+        Args: { p_canal_planilha: string }
+        Returns: {
+          mensagem: string
+          quem: string
+        }[]
+      }
       rpc_canal_parceiro_contratos: {
         Args: { p_canal_id?: string }
         Returns: {
@@ -7278,16 +7285,24 @@ export type Database = {
           cadastro_origem: string
           canal_id: string
           chave_planilha: string
+          conferencia_desde: string
+          contrato_em_conferencia_id: string
           contrato_id: string
           dias_para_vencer: number
           eh_parceiro: boolean
+          liberacao_ciclo: string
+          liberacao_status: string
+          liberacao_usada_em: string
           minimo_repasse: number
           motivo_parado: string
           nome: string
           pct_beneficios: number
           pct_demais_efetivo: number
           pct_garantia: number
+          pode_cobrar: boolean
           pode_exportar: boolean
+          proximo_passo: string
+          quem_libera: string
           situacao: string
           vigencia_fim: string
           vigencia_inicio: string
