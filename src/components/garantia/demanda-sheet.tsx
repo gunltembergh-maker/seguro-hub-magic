@@ -10,7 +10,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { AlertTriangle, ArrowRight, Ban, Check, Loader2, Pencil, Plus, RotateCcw, Search, X } from "lucide-react";
+import { AlertTriangle, ArrowRight, Ban, Check, ChevronDown, Loader2, Pencil, Plus, RotateCcw, Search, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 import { useCanais, useResponsaveis } from "@/hooks/use-entrada-demandas";
 import { CampoReal } from "@/components/garantia/campo-real";
@@ -128,6 +129,27 @@ function Linha({ rotulo, valor }: { rotulo: string; valor: React.ReactNode }) {
 
 const ouDefinir = (v: string | null | undefined) =>
   v && v.trim() ? v : <span className="text-muted-foreground">{A_DEFINIR}</span>;
+
+function CampoLeitura({ rotulo, valor, amplo = false }: { rotulo: string; valor: React.ReactNode; amplo?: boolean }) {
+  return (
+    <div className={amplo ? "min-w-0 sm:col-span-2" : "min-w-0"}>
+      <p className="text-[10px] font-semibold uppercase text-muted-foreground">{rotulo}</p>
+      <div className="mt-1 min-w-0 text-sm font-medium text-foreground">{valor || <span className="font-normal text-muted-foreground">—</span>}</div>
+    </div>
+  );
+}
+
+function TextoRecolhivel({ texto }: { texto: string }) {
+  const [aberto, setAberto] = useState(false);
+  return (
+    <div className="min-w-0">
+      <p className={aberto ? "whitespace-pre-wrap font-normal" : "line-clamp-2 font-normal"}>{texto}</p>
+      <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setAberto((v) => !v)}>
+        {aberto ? "ver menos" : "ver mais"}
+      </Button>
+    </div>
+  );
+}
 
 /* ------------------------------------------------------------------ */
 /* Seletor de segurado / locador                                      */
@@ -936,6 +958,7 @@ function BlocoDadosDemanda({ demanda }: { demanda: DemandaLista }) {
   const atualizar = useAtualizarDemanda();
   const admin = useEhAdmin();
   const { data: origem } = useOrigemDaDemanda(demanda.entrada_id);
+  const { data: pessoas = [] } = useResponsaveis();
   const [f, setF] = useState<EstadoCampos>(() => estadoDaDemanda(demanda));
   const [editando, setEditando] = useState(false);
 
@@ -956,33 +979,22 @@ function BlocoDadosDemanda({ demanda }: { demanda: DemandaLista }) {
 
   const numero = demanda.numero_contrato ?? demanda.numero_processo;
   const pct = demanda.percentual_garantia != null ? `${String(demanda.percentual_garantia).replace(".", ",")} %` : null;
+  const nomePessoa = (id: string | null) => id ? pessoas.find((p) => p.user_id === id)?.nome ?? null : null;
+  const canal = demanda.canal?.nome ?? origem?.canal?.nome ?? null;
+  const protocolo = origem?.protocolo ?? null;
+  const resumoOrigem = [demanda.cliente?.nome, canal, protocolo].filter(Boolean).join(" · ") || "Sem dados de origem";
 
   return (
-    <section className="space-y-3 rounded-md border p-4">
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="font-semibold text-[#14405C]">Dados da demanda</h3>
+    <div className="space-y-5">
+      <section className="space-y-4">
+        <div className="flex items-center justify-between gap-2 border-b border-border pb-2">
+        <h3 className="font-semibold text-brand-navy">Resumo da demanda</h3>
         {!editando && (
           <Button size="sm" variant="outline" onClick={() => setEditando(true)}>
             <Pencil className="mr-1 h-3.5 w-3.5" /> Editar
           </Button>
         )}
-      </div>
-      <div className="grid gap-x-6 rounded-md bg-muted/40 px-3 py-1 text-sm sm:grid-cols-2">
-        <Linha rotulo="Cliente" valor={demanda.cliente?.nome ?? A_DEFINIR} />
-        <Linha rotulo="Chegada" valor={dataHora(demanda.chegada_em)} />
-        <Linha rotulo="Canal" valor={ouDefinir(demanda.canal?.nome ?? origem?.canal?.nome ?? null)} />
-        <Linha rotulo="Produto" valor={ROTULO_PRODUTO[demanda.produto] ?? demanda.produto} />
-        {origem?.protocolo && <Linha rotulo="Protocolo da entrada" valor={origem.protocolo} />}
-        {origem?.assunto && <Linha rotulo="Assunto" valor={origem.assunto} />}
-      </div>
-      {demanda.solicitacao_id && (
-        <p className="text-xs text-muted-foreground">
-          Veio do formulário público de Garantia Judicial.{" "}
-          <Link to="/garantia/formulario-admin" className="font-semibold text-primary underline-offset-4 hover:underline">
-            Abrir o Formulário Admin
-          </Link>
-        </p>
-      )}
+        </div>
       {editando ? (
         <div className="space-y-3">
           <CamposDemanda demanda={demanda} f={f} setF={setF} />
@@ -995,19 +1007,51 @@ function BlocoDadosDemanda({ demanda }: { demanda: DemandaLista }) {
           </div>
         </div>
       ) : (
-        <div className="grid gap-x-6 text-sm sm:grid-cols-2">
-          <Linha rotulo={demanda.produto === "fianca_locaticia" ? "Locador" : "Segurado"} valor={ouDefinir(demanda.segurado?.nome ?? null)} />
-          <Linha rotulo="Modalidade" valor={rotuloModalidade(demanda.modalidade)} />
-          <Linha rotulo="Importância segurada" valor={demanda.importancia_segurada != null ? moeda(demanda.importancia_segurada) : ouDefinir(null)} />
-          <Linha rotulo="% da garantia" valor={ouDefinir(pct)} />
-          <Linha rotulo="Vigência exigida" valor={ouDefinir(demanda.vigencia_exigida)} />
-          <Linha rotulo="Nº do contrato/processo" valor={ouDefinir(numero)} />
-          {demanda.objeto && (
-            <div className="sm:col-span-2"><Linha rotulo="Objeto" valor={<span className="line-clamp-3 font-normal">{demanda.objeto}</span>} /></div>
-          )}
+        <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
+          <CampoLeitura rotulo={demanda.produto === "fianca_locaticia" ? "Locador" : "Segurado"} valor={demanda.segurado?.nome ?? null} />
+          <CampoLeitura rotulo="Modalidade" valor={demanda.modalidade ? rotuloModalidade(demanda.modalidade) : null} />
+          <CampoLeitura rotulo="Importância segurada (R$)" valor={demanda.importancia_segurada != null ? moeda(demanda.importancia_segurada) : null} />
+          <CampoLeitura rotulo="% da garantia" valor={pct} />
+          <CampoLeitura rotulo="Nº do contrato/processo" valor={numero} />
+          <CampoLeitura rotulo="Responsável técnico" valor={nomePessoa(demanda.responsavel_tecnico_id)} />
+          <CampoLeitura amplo rotulo="Vigência exigida" valor={demanda.vigencia_exigida ? <TextoRecolhivel texto={demanda.vigencia_exigida} /> : null} />
+          <CampoLeitura amplo rotulo="Objeto" valor={demanda.objeto ? <TextoRecolhivel texto={demanda.objeto} /> : null} />
         </div>
       )}
-    </section>
+      </section>
+
+      <Collapsible>
+        <section className="rounded-md border border-border bg-muted/30 px-4 py-3">
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" className="group h-auto w-full justify-between p-0 text-left">
+              <span className="min-w-0">
+                <span className="block text-xs font-semibold uppercase text-muted-foreground">Origem</span>
+                <span className="mt-1 block truncate text-sm font-normal text-foreground">{resumoOrigem}</span>
+              </span>
+              <ChevronDown className="h-4 w-4 shrink-0 transition-transform group-data-[state=open]:rotate-180" />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-4">
+            <div className="grid gap-x-8 gap-y-4 border-t border-border pt-4 sm:grid-cols-2">
+              <CampoLeitura rotulo="Cliente" valor={demanda.cliente?.nome ?? null} />
+              <CampoLeitura rotulo="Chegada" valor={dataHora(demanda.chegada_em)} />
+              <CampoLeitura rotulo="Canal" valor={canal} />
+              <CampoLeitura rotulo="Responsável pelo cliente" valor={nomePessoa(demanda.responsavel_cliente_id)} />
+              <CampoLeitura rotulo="Protocolo" valor={protocolo} />
+              <CampoLeitura rotulo="Assunto" valor={origem?.assunto ?? null} />
+            </div>
+            {demanda.solicitacao_id && (
+              <p className="mt-4 text-xs text-muted-foreground">
+                Veio do formulário público de Garantia Judicial.{" "}
+                <Link to="/garantia/formulario-admin" className="font-semibold text-primary underline-offset-4 hover:underline">
+                  Abrir o Formulário Admin
+                </Link>
+              </p>
+            )}
+          </CollapsibleContent>
+        </section>
+      </Collapsible>
+    </div>
   );
 }
 
@@ -1414,7 +1458,7 @@ export function DemandaSheet({
 
   return (
     <Dialog open={!!demanda} onOpenChange={(o) => !o && onFechar()}>
-      <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] max-w-5xl min-w-0 overflow-y-auto p-4 sm:p-6">
+      <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] max-w-5xl min-w-0 overflow-y-auto p-4 sm:p-6 lg:h-[90dvh] lg:grid-rows-[auto_minmax(0,1fr)] lg:overflow-hidden">
         <DialogHeader className="min-w-0 pr-8">
           <div className="flex min-w-0 items-start gap-1">
             <span className="pt-1.5"><AjudaFase etapa={demanda.etapa} /></span>
@@ -1422,9 +1466,6 @@ export function DemandaSheet({
               {demanda.legenda ?? demanda.cliente?.nome ?? "Demanda"}
             </DialogTitle>
             <EditorLegenda demanda={demanda} />
-            <span className="ml-auto shrink-0 pt-2">
-              <HistoricoDialog demanda={demanda} catalogo={catalogo} podeVerTempo={podeVerTempo} />
-            </span>
           </div>
           <DialogDescription className="text-left">
             {ROTULO_PRODUTO[demanda.produto] ?? demanda.produto} ·{" "}
@@ -1433,14 +1474,57 @@ export function DemandaSheet({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
-          <aside className="min-w-0 space-y-3 lg:order-2">
-            <h3 className="font-semibold text-[#14405C]">Mover card para fase</h3>
+        <div className="grid min-h-0 min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
+          <aside className="min-w-0 space-y-5 lg:order-2 lg:max-h-full lg:overflow-y-auto lg:pr-1">
+            <div className="space-y-3" data-tour="gar-situacao">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="font-semibold text-brand-navy">Situação</h3>
+                <HistoricoDialog demanda={demanda} catalogo={catalogo} podeVerTempo={podeVerTempo} />
+              </div>
+              <CampoLeitura rotulo="Etapa" valor={rotuloEtapa(demanda.etapa, colunas)} />
+              <div className="space-y-1">
+                <Label>Com quem está agora</Label>
+                <Select value={demanda.status_atual} onValueChange={mudarSituacao} disabled={trocar.isPending}>
+                  <SelectTrigger className="w-full min-w-0"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {situacoes.map((s) => <SelectItem key={s.codigo} value={s.codigo}>{s.nome}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                {statusAtual?.com_quem && <p className="text-xs text-muted-foreground">{rotuloComQuem(statusAtual.com_quem)}</p>}
+              </div>
+              {podeVerTempo && statusAtual?.sla_horas != null && <p className="text-xs text-muted-foreground">SLA da fase: {statusAtual.sla_horas} h</p>}
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-brand-navy">O que falta nesta fase</h3>
+              {pendencias.length ? (
+                <ul className="mt-2 space-y-2">
+                  {pendencias.map((p, i) => (
+                    <li key={`${p.etapa}-${p.tipo ?? i}`} className="flex items-start gap-2 text-sm">
+                      {p.bloqueia ? <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" /> : <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />}
+                      <span className="min-w-0 flex-1">{p.texto}</span>
+                      <AjudaTexto texto={p.motivo} rotulo={`Por que: ${p.texto}`} />
+                    </li>
+                  ))}
+                </ul>
+              ) : impedimentosDaFase.length === 0 ? (
+                <p className="mt-2 flex items-center gap-2 text-sm text-primary"><Check className="h-4 w-4" /> Tudo pronto nesta fase</p>
+              ) : null}
+              {impedimentosDaFase.map((impedimento) => (
+                <p key={impedimento} className="mt-2 flex items-start gap-2 text-sm text-muted-foreground">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+                  <span>{impedimento}</span>
+                </p>
+              ))}
+            </div>
+
+            <div className="space-y-3 border-t border-border pt-4">
+            <h3 className="font-semibold text-brand-navy">Mover card para fase</h3>
             {impedimentos.map(({ coluna, destino, retorno, impedimento }) => (
               <div key={coluna.etapa} className="space-y-1">
                 <Button
                   className={`h-auto min-h-10 w-full justify-between whitespace-normal text-left ${
-                    tudoPronto && !impedimento && !retorno ? "bg-[#338B85] hover:bg-[#338B85]/90" : ""
+                    tudoPronto && !impedimento && !retorno ? "bg-primary hover:bg-primary/90" : ""
                   }`}
                   variant={retorno ? "outline" : "default"}
                   disabled={!!impedimento || trocar.isPending}
@@ -1458,6 +1542,7 @@ export function DemandaSheet({
               <p className="text-xs text-muted-foreground">Nenhuma outra etapa disponível.</p>
             )}
             {demanda.fase === "crm" && <BlocoRetornoCrm demandaId={demanda.id} />}
+            </div>
             <MotivoDialog
               aberto={!!retornoPara}
               titulo={`Voltar para “${retornoPara?.nome ?? ""}”`}
@@ -1478,53 +1563,13 @@ export function DemandaSheet({
             />
           </aside>
 
-          <main className="min-w-0 space-y-5 lg:order-1">
-            <div className="space-y-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge className="bg-[#14405C] hover:bg-[#14405C]">Etapa: {rotuloEtapa(demanda.etapa, colunas)}</Badge>
-              </div>
-              <div className="min-w-0 space-y-1" data-tour="gar-situacao">
-                <Label>Com quem está agora</Label>
-                <div className="flex min-w-0 flex-wrap items-center gap-2">
-                  <Select value={demanda.status_atual} onValueChange={mudarSituacao} disabled={trocar.isPending}>
-                    <SelectTrigger className="w-full min-w-0 sm:w-80"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {situacoes.map((s) => (
-                        <SelectItem key={s.codigo} value={s.codigo}>{s.nome}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {statusAtual?.com_quem && (
-                    <span className="text-xs text-muted-foreground">{rotuloComQuem(statusAtual.com_quem)}</span>
-                  )}
-                </div>
-              </div>
-              {podeVerTempo && statusAtual?.sla_horas != null && (
-                <p className="text-xs text-muted-foreground">SLA da fase: {statusAtual.sla_horas} h</p>
-              )}
-              <div>
-                <h3 className="font-semibold text-[#14405C]">O que falta nesta fase</h3>
-                {pendencias.length ? (
-                  <ul className="mt-2 space-y-2">
-                    {pendencias.map((p, i) => (
-                      <li key={`${p.etapa}-${p.tipo ?? i}`} className={`flex items-start gap-2 rounded-md border p-3 text-sm ${p.bloqueia ? "border-amber-300 bg-amber-50 text-amber-900" : "bg-muted/40 text-muted-foreground"}`}>
-                        {p.bloqueia ? <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /> : <Check className="mt-0.5 h-4 w-4 shrink-0" />}
-                        <span>{p.texto}<span className="mt-1 block text-xs">Motivo: {p.motivo}</span></span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : impedimentosDaFase.length === 0 ? (
-                  <p className="mt-2 flex items-center gap-2 text-sm text-[#338B85]"><Check className="h-4 w-4" /> Tudo pronto nesta fase</p>
-                ) : null}
-                {impedimentosDaFase.map((impedimento) => (
-                  <p key={impedimento} className="mt-2 flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
-                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                    <span>{impedimento}</span>
-                  </p>
-                ))}
-              </div>
-            </div>
+          <main className="min-w-0 space-y-6 lg:order-1 lg:overflow-y-auto lg:pr-2">
             <BlocoDadosDemanda demanda={demanda} />
+            <section className="space-y-4 border-t border-border pt-5">
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-brand-navy">{rotuloEtapa(demanda.etapa, colunas)}</h3>
+                <AjudaFase etapa={demanda.etapa} />
+              </div>
             <ConteudoDaFase
               demanda={demanda}
               catalogo={catalogo}
@@ -1533,11 +1578,8 @@ export function DemandaSheet({
               onAceite={() => registrarAceite(demanda.id)}
               onPerda={() => setPerdaAberta(true)}
             />
+            </section>
           </main>
-        </div>
-
-        <div className="text-xs text-muted-foreground">
-          Importância segurada: {moeda(demanda.importancia_segurada)}
         </div>
 
         <TriagemDialog aberto={triagemAberta} demanda={demanda} onFechar={() => setTriagemAberta(false)} />
