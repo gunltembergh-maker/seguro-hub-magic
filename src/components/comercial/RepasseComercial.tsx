@@ -871,7 +871,8 @@ function LinhaRepasse({
               </Badge>
               {parado.proximo_passo ? <p className="max-w-64 text-xs text-muted-foreground">{parado.proximo_passo}</p> : null}
             </div>
-          ) : !liberado ? (
+          ) : null}
+          {!liberado ? (
             <div className="space-y-1 text-left">
               <BadgeParado parado={parado} />
               {parado?.quem_libera ? <BadgeDependencia quem={parado.quem_libera} /> : null}

@@ -1011,6 +1011,11 @@ export function RepasseParceiro() {
           canalId={situacaoDe(bloqueado.canal)?.canal_id ?? null}
           situacao={situacaoDe(bloqueado.canal)?.situacao ?? null}
           motivo={motivoBloqueio(situacaoDe(bloqueado.canal))}
+          proximoPasso={situacaoDe(bloqueado.canal)?.proximo_passo ?? null}
+          liberacaoStatus={situacaoDe(bloqueado.canal)?.liberacao_status ?? null}
+          liberacaoUsadaEm={situacaoDe(bloqueado.canal)?.liberacao_usada_em ?? null}
+          quemLibera={situacaoDe(bloqueado.canal)?.quem_libera ?? null}
+          podeCobrar={situacaoDe(bloqueado.canal)?.pode_cobrar === true}
           valor={bloqueado.valor}
           ano={mesAncora.ano}
           mes={mesAncora.mes}

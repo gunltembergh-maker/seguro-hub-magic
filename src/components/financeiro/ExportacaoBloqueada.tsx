@@ -4,7 +4,10 @@
 // sem contrato anexando o De Acordo — que só Alessandro Oliveira aprova.
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Lock, Upload } from "lucide-react";
+import { Loader2, Lock, Upload } from "lucide-react";
+import { toast } from "sonner";
+import { mensagemDeErro } from "@/lib/erro";
+import { supabase } from "@/integrations/supabase/client";
 import EnviarContratoParceiro from "@/components/comercial/EnviarContratoParceiro";
 import { PedirLiberacaoSemContrato } from "@/components/repasse/PedirLiberacaoSemContrato";
 import { Button } from "@/components/ui/button";
@@ -32,6 +35,8 @@ export interface ExportacaoBloqueadaProps {
   proximoPasso?: string | null;
   liberacaoStatus?: "PENDENTE" | "APROVADA" | "USADA" | null;
   liberacaoUsadaEm?: string | null;
+  quemLibera?: "ADMINISTRADOR" | "FINANCEIRO" | "JURIDICO" | "COMERCIAL" | null;
+  podeCobrar?: boolean;
   valor: number;
   ano: number;
   mes: number;
@@ -48,6 +53,8 @@ export function ExportacaoBloqueada({
   proximoPasso,
   liberacaoStatus,
   liberacaoUsadaEm,
+  quemLibera,
+  podeCobrar,
   valor,
   ano,
   mes,
@@ -56,6 +63,26 @@ export function ExportacaoBloqueada({
   const queryClient = useQueryClient();
   const [enviarAberto, setEnviarAberto] = useState(false);
   const [pedirAberto, setPedirAberto] = useState(false);
+  const [cobrando, setCobrando] = useState(false);
+
+  async function cobrar() {
+    if (cobrando) return;
+    setCobrando(true);
+    try {
+      const { data, error } = await supabase.rpc("rpc_canal_parceiro_cobrar_pendencia" as never, {
+        p_canal_planilha: chavePlanilha,
+      } as never);
+      if (error) throw error;
+      const r = (Array.isArray(data) ? data[0] : data) as { mensagem?: string | null } | null;
+      toast.success(r?.mensagem ?? "Cobrança enviada.");
+      queryClient.invalidateQueries({ queryKey: ["canal-parceiro-situacao"] });
+      queryClient.invalidateQueries({ queryKey: ["minhas-notificacoes"] });
+    } catch (e) {
+      toast.error(mensagemDeErro(e));
+    } finally {
+      setCobrando(false);
+    }
+  }
 
   function fechar() {
     setPedirAberto(false);
@@ -99,10 +126,22 @@ export function ExportacaoBloqueada({
             </AlertDescription>
           </Alert>
 
+          {quemLibera ? (
+            <p className="text-sm font-medium text-foreground">
+              Depende de: {quemLibera === "COMERCIAL" ? "você" : quemLibera === "ADMINISTRADOR" ? "Administrador" : quemLibera === "FINANCEIRO" ? "Financeiro" : "Jurídico"}
+            </p>
+          ) : null}
+
           <DialogFooter className="flex-col gap-2 sm:flex-row">
             <Button variant="outline" onClick={fechar}>
               Cancelar
             </Button>
+            {podeCobrar ? (
+              <Button variant="outline" onClick={() => void cobrar()} disabled={cobrando}>
+                {cobrando ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Cobrar
+              </Button>
+            ) : null}
             <Button variant="outline" onClick={() => setEnviarAberto(true)}>
               <Upload className="mr-2 h-4 w-4" />
               Enviar contrato
