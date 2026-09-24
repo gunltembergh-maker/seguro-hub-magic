@@ -289,3 +289,53 @@ export function pendenciasDaDemanda(
 ): Pendencia[] {
   return [...pendenciasAnaliseDemanda(demanda, tiposPresentes), ...pendenciasEtapa3b(demanda, tiposPresentes)];
 }
+
+/* ------------------------------------------------------------------ */
+/* Entrada e seleção para a IA                                        */
+/* ------------------------------------------------------------------ */
+
+/** Tipos que podem subir já no registro da Entrada. */
+const VALORES_ENTRADA = [
+  "edital", "contrato", "contrato_locacao", "processo_judicial", "aditivo", "apostilamento",
+  "email_original", "dre", "balanco", "alteracao_contratual", "outro_cadastro",
+];
+
+export function tiposDaEntrada(produto: string): TipoDocumento[] {
+  return TIPOS_DOCUMENTO.filter(
+    (t) => VALORES_ENTRADA.includes(t.valor) && (!t.somenteProduto || t.somenteProduto === produto),
+  );
+}
+
+/** Documento que define o objeto — pelo menos um é obrigatório na Entrada. */
+export function tiposContratoObrigatorios(produto: string): string[] {
+  return produto === "fianca_locaticia" ? ["contrato_locacao"] : ["edital", "contrato", "processo_judicial"];
+}
+
+/** Família "contrato" da IA: vem marcada por padrão. */
+export const TIPOS_IA_CONTRATO = ["edital", "contrato", "contrato_locacao", "processo_judicial", "aditivo"];
+/** Família "financeiro" da IA: outro prompt, vem desmarcada. */
+export const TIPOS_IA_FINANCEIRO = ["dre", "balanco", "alteracao_contratual"];
+
+/**
+ * O prompt sai do que foi selecionado. Misturar famílias não roda: cada uma
+ * tem a sua leitura, e não existe prompt combinado.
+ */
+export function fluxoDaSelecao(
+  tipos: string[],
+  produto: string,
+): { fluxo: "seguro_garantia" | "fianca_locaticia" | "financeiro" } | { erro: string } {
+  if (!tipos.length) return { erro: "Selecione pelo menos um documento." };
+  const contrato = tipos.filter((t) => TIPOS_IA_CONTRATO.includes(t)).length;
+  const financeiro = tipos.filter((t) => TIPOS_IA_FINANCEIRO.includes(t)).length;
+  if (contrato + financeiro < tipos.length) {
+    return { erro: "Algum documento selecionado não é de contrato nem financeiro, e a IA não tem leitura para ele." };
+  }
+  if (contrato && financeiro) {
+    return {
+      erro:
+        "Contrato e documento financeiro usam leituras diferentes. Rode em duas vezes: primeiro os de contrato, depois DRE, balanço e alteração contratual.",
+    };
+  }
+  if (financeiro) return { fluxo: "financeiro" };
+  return { fluxo: produto === "fianca_locaticia" ? "fianca_locaticia" : "seguro_garantia" };
+}
