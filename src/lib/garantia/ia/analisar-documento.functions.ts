@@ -50,9 +50,8 @@ function mapearCampos(resultado: ResultadoDocumentoIA): CamposSugeridosComFonteI
     const modalidades = resultado.modalidades ?? [];
     const gerais: CamposSugeridosComFonteIA = {};
     const dados = resultado.dados_licitacao_contrato;
-    if (dados?.numero_processo) gerais.numero_processo = { valor: dados.numero_processo, fonte: "Dados da licitação/contrato identificados no documento" };
-    if (dados?.numero_contrato) gerais.numero_contrato = { valor: dados.numero_contrato, fonte: "Dados da licitação/contrato identificados no documento" };
-    if (!modalidades.length && dados?.objeto) gerais.objeto = { valor: dados.objeto, fonte: "Objeto em dados da licitação/contrato" };
+    // O JSON legado não traz `fonte` nesses três campos de dados gerais. Pela
+    // regra deste fluxo, valor sem fonte não é oferecido para preenchimento.
     return { ...gerais, modalidades: modalidades.map((m) => ({ nome: m.nome, campos: camposModalidade(m) })) };
   }
   const fianca = resultado as ResultadoFiancaIA;
@@ -114,6 +113,11 @@ export const analisarDocumento = createServerFn({ method: "POST" })
         .select("id, caminho, nome_arquivo, mime_type, externo")
         .eq("id", existente.documento_id).maybeSingle();
       if (erroDoc || !documento?.caminho || documento.externo) throw new Error("Documento interno não encontrado.");
+      const { data: arquivo, error: erroDownload } = await sb.storage
+        .from("garantia-pipeline-anexos")
+        .download(documento.caminho);
+      if (erroDownload || !arquivo) throw new Error(`Falha ao baixar documento: ${erroDownload?.message ?? "arquivo vazio"}`);
+      if (arquivo.size === 0) throw new Error("O documento armazenado está vazio.");
       const { mapArquivosParaJob } = await import("./extrair-texto");
       const extraido = data.arquivoExtraido;
       if (extraido.nome !== documento.nome_arquivo) throw new Error("O arquivo extraído não corresponde à análise.");

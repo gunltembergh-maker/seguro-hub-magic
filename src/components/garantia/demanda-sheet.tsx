@@ -7,7 +7,7 @@
 // Sem `menu_garantia_painel` esses elementos simplesmente NÃO são
 // renderizados (não são escondidos por CSS).
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { AlertTriangle, ArrowRight, Ban, Check, Loader2, Pencil, Plus, RotateCcw, Search, X } from "lucide-react";
 import { toast } from "sonner";
@@ -1078,6 +1078,7 @@ function AnaliseTecnica({ demanda }: { demanda: DemandaLista }) {
   const { data: docs = [] } = useDocumentosDaDemanda(demanda.id);
   const { data: analises = [], refetch } = useAnalisesDaDemanda(demanda.id);
   const [aberta, setAberta] = useState(false);
+  const criandoRef = useRef<Promise<AnaliseIA> | null>(null);
   const tipos = demanda.produto === "fianca_locaticia"
     ? ["contrato_locacao", "contrato"]
     : ["edital", "contrato", "processo_judicial"];
@@ -1089,6 +1090,8 @@ function AnaliseTecnica({ demanda }: { demanda: DemandaLista }) {
     : null;
 
   const obterOuCriar = async (): Promise<AnaliseIA> => {
+    if (criandoRef.current) return criandoRef.current;
+    const criar = (async () => {
     if (!documento) throw new Error("Anexe primeiro o documento do contrato.");
     const { data: existente } = await supabase.from("garantia_analises_ia")
       .select("id, demanda_id, documento_id, fluxo, situacao, resumo, resultado, campos_sugeridos, aplicada, aplicada_por, aplicada_em, erro_mensagem, solicitada_por, criado_em, atualizado_em, job_id")
@@ -1107,6 +1110,9 @@ function AnaliseTecnica({ demanda }: { demanda: DemandaLista }) {
     if (error) throw error;
     await refetch();
     return criada as unknown as AnaliseIA;
+    })();
+    criandoRef.current = criar;
+    try { return await criar; } finally { criandoRef.current = null; }
   };
 
   const analisarDeNovo = async (): Promise<AnaliseIA> => {

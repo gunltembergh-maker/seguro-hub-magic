@@ -1,9 +1,7 @@
 // Análise de contrato por IA — contrato de tipos e aplicação dos campos.
 //
-// O MOTOR NÃO ESTÁ LIGADO nesta etapa: nada aqui chama Worker, prompt ou
-// /api/tc-lavoro/analysis-jobs. Quando for ligado, ele usará esse mesmo
-// endpoint (o da tela de Operacional), com as credenciais Cloudflare Access
-// existindo só no servidor. Nenhuma chave vai para o navegador.
+// O motor é acionado pela função protegida de análise, que reutiliza o proxy
+// da tela Operacional. As credenciais Cloudflare Access existem só no servidor.
 //
 // A IA SUGERE, A PESSOA CONFERE E APLICA: nada do resultado é gravado na
 // demanda automaticamente. `aplicarCamposSugeridos` é a única porta de

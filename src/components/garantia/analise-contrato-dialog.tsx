@@ -20,6 +20,7 @@ import { analisarDocumento } from "@/lib/garantia/ia/analisar-documento.function
 import { extrairConteudoArquivo } from "@/lib/garantia/ia/extrair-texto";
 import { comoResultadoDocumento, type CamposSugeridosComFonteIA, type ResultadoFiancaIA, type ResultadoSeguroGarantiaIA, type TrechoRelevanteIA } from "@/lib/garantia/ia/tipos";
 import { dataHora, moeda } from "@/lib/garantia/formato";
+import { useResponsaveis } from "@/hooks/use-entrada-demandas";
 
 const CAMPOS_ATUAIS: Record<keyof CamposSugeridosIA, keyof DemandaLista | null> = {
   objeto: "objeto", importancia_segurada: "importancia_segurada", vigencia_exigida: "vigencia_exigida",
@@ -53,6 +54,7 @@ export function AnaliseContratoDialog({ aberto, onFechar, demanda, documento, an
   const [modalidade, setModalidade] = useState("");
   const [previa, setPrevia] = useState(false);
   const [selecionados, setSelecionados] = useState<Record<string, boolean>>({});
+  const { data: pessoas = [] } = useResponsaveis();
 
   useEffect(() => { setLocal(analise); }, [analise]);
   useEffect(() => {
@@ -129,6 +131,7 @@ export function AnaliseContratoDialog({ aberto, onFechar, demanda, documento, an
   const seguro = resultado?.tipo === "Seguro Garantia" ? resultado as ResultadoSeguroGarantiaIA : null;
   const fianca = resultado?.tipo === "Fianca Locaticia" ? resultado as ResultadoFiancaIA : null;
   const trechos: TrechoRelevanteIA[] = seguro?.trechos_relevantes ?? fianca?.trechos_relevantes ?? [];
+  const solicitante = pessoas.find((p) => p.user_id === local?.solicitada_por)?.nome;
   const listas = seguro ? [
     ["Pendências para emissão", seguro.pendencias_para_emissao],
     ["Perguntas para o cliente", seguro.perguntas_para_cliente_ou_comercial],
@@ -138,7 +141,7 @@ export function AnaliseContratoDialog({ aberto, onFechar, demanda, documento, an
   return (
     <Dialog open={aberto} onOpenChange={(o) => !o && onFechar()}>
       <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] max-w-6xl min-w-0 overflow-y-auto p-4 sm:p-6">
-        <DialogHeader><DialogTitle>Análise do contrato por IA</DialogTitle><DialogDescription>{documento.nome_arquivo}{local ? ` · solicitada em ${dataHora(local.criado_em)}` : ""}</DialogDescription></DialogHeader>
+        <DialogHeader><DialogTitle>Análise do contrato por IA</DialogTitle><DialogDescription>{documento.nome_arquivo}{local ? ` · solicitada em ${dataHora(local.criado_em)}` : ""}{solicitante ? ` por ${solicitante}` : ""}</DialogDescription></DialogHeader>
         <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.9fr)]">
           <div className="min-w-0">{blob ? <VisualizadorPdf blob={blob} paginaAlvo={paginaAlvo} /> : <div className="flex h-72 items-center justify-center"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Abrindo documento…</div>}</div>
           <div className="min-w-0 space-y-5">
