@@ -795,7 +795,7 @@ function ConferirDialog({
           {vencido ? (
             <Button onClick={renovar} disabled={renovando || !motivo.trim()}>
               {renovando && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Renovar pela cláusula
+              Renovação automática
             </Button>
           ) : (
             <Button onClick={confirmar} disabled={!motivo.trim() || salvando}>

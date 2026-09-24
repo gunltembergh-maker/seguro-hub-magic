@@ -6140,6 +6140,16 @@ export type Database = {
       ab_pode: { Args: { p_chave: string }; Returns: boolean }
       ab_seed_demo: { Args: never; Returns: string }
       assinatura_area_do_usuario: { Args: { p_user: string }; Returns: string }
+      canal_contrato_renovar_pela_clausula: {
+        Args: { p_contrato_id: string; p_motivo: string }
+        Returns: {
+          novo_id: string
+          periodos: number
+          vigencia_fim: string
+          vigencia_inicio: string
+        }[]
+      }
+      canal_contratos_renovar_vencidos: { Args: never; Returns: number }
       canal_liberacao_emails_pendentes: {
         Args: never
         Returns: {
