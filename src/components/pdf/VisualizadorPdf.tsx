@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 type PdfDoc = {
   numPages: number;
   getPage: (n: number) => Promise<any>;
-  destroy: () => Promise<void>;
 };
 
 function Pagina({ doc, numero, escala, largura, onVisivel, elementoRef }: {
@@ -74,7 +73,9 @@ export function VisualizadorPdf({ blob, paginaAlvo }: { blob: Blob; paginaAlvo?:
 
   useEffect(() => {
     let cancelado = false;
-    let aberto: PdfDoc | null = null;
+    let tarefa: { destroy?: () => Promise<void> } | null = null;
+    // Encerrar nunca pode lançar: erro em cleanup derruba a página inteira.
+    const encerrar = () => { void Promise.resolve().then(() => tarefa?.destroy?.()).catch(() => {}); };
     setDoc(null); setErro(false);
     (async () => {
       try {
@@ -82,14 +83,17 @@ export function VisualizadorPdf({ blob, paginaAlvo }: { blob: Blob; paginaAlvo?:
         const worker = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
         pdfjs.GlobalWorkerOptions.workerSrc = worker;
         const data = new Uint8Array(await blob.arrayBuffer());
-        aberto = (await pdfjs.getDocument({ data }).promise) as unknown as PdfDoc;
-        if (cancelado) { void aberto.destroy(); return; }
+        if (cancelado) return;
+        const carregamento = pdfjs.getDocument({ data });
+        tarefa = carregamento;
+        const aberto = (await carregamento.promise) as unknown as PdfDoc;
+        if (cancelado) { encerrar(); return; }
         setDoc(aberto);
       } catch {
         if (!cancelado) setErro(true);
       }
     })();
-    return () => { cancelado = true; void aberto?.destroy(); };
+    return () => { cancelado = true; encerrar(); };
   }, [blob]);
 
   useEffect(() => {

@@ -10,3 +10,4 @@
 - [x] Visualizador de contrato com pdf.js (sem iframe)
 - [x] Ajustar layout e responsividade de Entrada de Demandas e Garantia nas três larguras.
 - [x] Reorganizar o detalhe da demanda de Garantia em modal focado na fase atual.
+- [x] IA Garantia: extração servidor com unpdf, log/mensagem de erro, destroy do VisualizadorPdf
