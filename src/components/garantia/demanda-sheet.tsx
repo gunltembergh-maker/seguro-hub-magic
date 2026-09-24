@@ -968,10 +968,15 @@ function BlocoDadosDemanda({ demanda }: { demanda: DemandaLista }) {
   const { data: pessoas = [] } = useResponsaveis();
   const [f, setF] = useState<EstadoCampos>(() => estadoDaDemanda(demanda));
   const [editando, setEditando] = useState(false);
+  const [analiseAberta, setAnaliseAberta] = useState(demanda.etapa === "1");
 
   useEffect(() => {
     setF(estadoDaDemanda(demanda));
   }, [demanda]);
+
+  useEffect(() => {
+    setAnaliseAberta(demanda.etapa === "1");
+  }, [demanda.id, demanda.etapa]);
 
   const salvar = async () => {
     try {
@@ -993,39 +998,55 @@ function BlocoDadosDemanda({ demanda }: { demanda: DemandaLista }) {
 
   return (
     <div className="space-y-5">
-      <section className="space-y-4">
-        <div className="flex items-center justify-between gap-2 border-b border-border pb-2">
-        <h3 className="font-semibold text-brand-navy">Resumo da demanda</h3>
-        {!editando && (
-          <Button size="sm" variant="outline" onClick={() => setEditando(true)}>
-            <Pencil className="mr-1 h-3.5 w-3.5" /> Editar
-          </Button>
-        )}
-        </div>
-      {editando ? (
-        <div className="space-y-3">
-          <CamposDemanda demanda={demanda} f={f} setF={setF} />
-          <div className="flex gap-2">
-            <Button onClick={salvar} disabled={atualizar.isPending}>
-              {atualizar.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Salvar dados
-            </Button>
-            <Button variant="ghost" onClick={() => { setF(estadoDaDemanda(demanda)); setEditando(false); }}>Cancelar</Button>
+      <Collapsible open={analiseAberta} onOpenChange={setAnaliseAberta}>
+        <section className="space-y-4">
+          <div className="flex items-center gap-2 border-b border-border pb-2">
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" className="group h-auto min-w-0 flex-1 justify-start p-0 text-left">
+                <ChevronDown className="mr-2 h-4 w-4 shrink-0 transition-transform group-data-[state=open]:rotate-180" />
+                <span className="font-semibold text-brand-navy">Análise da demanda</span>
+              </Button>
+            </CollapsibleTrigger>
+            {!editando && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setAnaliseAberta(true);
+                  setEditando(true);
+                }}
+              >
+                <Pencil className="mr-1 h-3.5 w-3.5" /> Editar
+              </Button>
+            )}
           </div>
-        </div>
-      ) : (
-        <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
-          <CampoLeitura rotulo={demanda.produto === "fianca_locaticia" ? "Locador" : "Segurado"} valor={demanda.segurado?.nome ?? null} />
-          <CampoLeitura rotulo="Modalidade" valor={demanda.modalidade ? rotuloModalidade(demanda.modalidade) : null} />
-          <CampoLeitura rotulo="Importância segurada (R$)" valor={demanda.importancia_segurada != null ? moeda(demanda.importancia_segurada) : null} />
-          <CampoLeitura rotulo="% da garantia" valor={pct} />
-          <CampoLeitura rotulo="Nº do contrato/processo" valor={numero} />
-          <CampoLeitura rotulo="Responsável técnico" valor={nomePessoa(demanda.responsavel_tecnico_id)} />
-          <CampoLeitura amplo rotulo="Vigência exigida" valor={demanda.vigencia_exigida ? <TextoRecolhivel texto={demanda.vigencia_exigida} /> : null} />
-          <CampoLeitura amplo rotulo="Objeto" valor={demanda.objeto ? <TextoRecolhivel texto={demanda.objeto} /> : null} />
-        </div>
-      )}
-      </section>
+          <CollapsibleContent>
+            {editando ? (
+              <div className="space-y-3">
+                <CamposDemanda demanda={demanda} f={f} setF={setF} />
+                <div className="flex gap-2">
+                  <Button onClick={salvar} disabled={atualizar.isPending}>
+                    {atualizar.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Salvar dados
+                  </Button>
+                  <Button variant="ghost" onClick={() => { setF(estadoDaDemanda(demanda)); setEditando(false); }}>Cancelar</Button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
+                <CampoLeitura rotulo={demanda.produto === "fianca_locaticia" ? "Locador" : "Segurado"} valor={demanda.segurado?.nome ?? null} />
+                <CampoLeitura rotulo="Modalidade" valor={demanda.modalidade ? rotuloModalidade(demanda.modalidade) : null} />
+                <CampoLeitura rotulo="Importância segurada (R$)" valor={demanda.importancia_segurada != null ? moeda(demanda.importancia_segurada) : null} />
+                <CampoLeitura rotulo="% da garantia" valor={pct} />
+                <CampoLeitura rotulo="Nº do contrato/processo" valor={numero} />
+                <CampoLeitura rotulo="Responsável técnico" valor={nomePessoa(demanda.responsavel_tecnico_id)} />
+                <CampoLeitura amplo rotulo="Vigência exigida" valor={demanda.vigencia_exigida ? <TextoRecolhivel texto={demanda.vigencia_exigida} /> : null} />
+                <CampoLeitura amplo rotulo="Objeto" valor={demanda.objeto ? <TextoRecolhivel texto={demanda.objeto} /> : null} />
+              </div>
+            )}
+          </CollapsibleContent>
+        </section>
+      </Collapsible>
 
       <Collapsible>
         <section className="rounded-md border border-border bg-muted/30 px-4 py-3">
