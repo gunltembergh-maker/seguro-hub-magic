@@ -1,5 +1,5 @@
 // Detalhe da demanda de Garantia: fase atual, Dados da demanda e o conteúdo da fase.
-// Histórico abre num popup pelo link do cabeçalho.
+// Histórico fica sempre visível na coluna esquerda do diálogo.
 //
 // Documentos, Limites e IA entram nas partes seguintes — aqui não há aba
 // vazia esperando conteúdo.
@@ -1062,39 +1062,7 @@ function BlocoDadosDemanda({ demanda }: { demanda: DemandaLista }) {
   );
 }
 
-function HistoricoDialog({
-  demanda,
-  catalogo,
-  podeVerTempo,
-}: {
-  demanda: DemandaLista;
-  catalogo: StatusCatalogo[];
-  podeVerTempo: boolean;
-}) {
-  const [aberto, setAberto] = useState(false);
-  return (
-    <>
-      <button
-        type="button"
-        className="text-xs text-muted-foreground underline-offset-2 hover:underline"
-        onClick={() => setAberto(true)}
-      >
-        Histórico
-      </button>
-      <Dialog open={aberto} onOpenChange={setAberto}>
-        <DialogContent className="max-h-[85dvh] w-[calc(100%-2rem)] overflow-y-auto sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Histórico</DialogTitle>
-            <DialogDescription>{demanda.legenda ?? demanda.numero}</DialogDescription>
-          </DialogHeader>
-          {aberto && <AbaHistorico demanda={demanda} catalogo={catalogo} podeVerTempo={podeVerTempo} />}
-        </DialogContent>
-      </Dialog>
-    </>
-  );
-}
-
-function AbaHistorico({
+function ColunaHistorico({
   demanda,
   catalogo,
   podeVerTempo,
@@ -1104,29 +1072,71 @@ function AbaHistorico({
   podeVerTempo: boolean;
 }) {
   const { data: itens = [], isLoading } = useHistoricoDemanda(demanda.id);
+  const [expandido, setExpandido] = useState(false);
   const nomeStatus = (c: string) => catalogo.find((s) => s.codigo === c)?.nome ?? c;
-
-  if (isLoading) return <p className="text-sm text-muted-foreground">Carregando o histórico…</p>;
-  if (!itens.length) return <p className="text-sm text-muted-foreground">Ainda não há movimentações registradas.</p>;
+  const visiveis = expandido ? itens : itens.slice(0, 2);
 
   return (
-    <ol className="space-y-3">
-      {itens.map((h) => (
-        <li key={h.id} className="rounded-md border border-border p-3 text-sm">
-          <div className="flex items-center justify-between gap-3">
-            <span className="font-medium">{nomeStatus(h.status_codigo)}</span>
-            <span className="text-muted-foreground">{dataHora(h.inicio)}</span>
-          </div>
-          {/* Sem menu_garantia_painel, a duração não é renderizada. */}
-          {podeVerTempo && (
-            <p className="mt-1 text-xs text-muted-foreground">
-              {h.fim ? `Permaneceu ${duracaoLegivel(h.duracao_segundos)}` : "Status atual"}
-            </p>
+    <section className="min-w-0" aria-labelledby="titulo-historico">
+      <h3 id="titulo-historico" className="font-semibold text-brand-navy">Histórico</h3>
+      {isLoading ? (
+        <p className="mt-3 text-sm text-muted-foreground">Carregando o histórico…</p>
+      ) : !itens.length ? (
+        <p className="mt-3 text-sm text-muted-foreground">Ainda não há movimentações registradas.</p>
+      ) : (
+        <>
+          <ol className="mt-4">
+            {visiveis.map((h, indice) => {
+              const atual = indice === 0 && !h.fim;
+              const temProximo = indice < visiveis.length - 1;
+              return (
+                <li key={h.id} className="relative grid grid-cols-[12px_minmax(0,1fr)] gap-3 pb-5 last:pb-0">
+                  {temProximo && <span aria-hidden className="absolute bottom-0 left-[5px] top-3 w-px bg-border" />}
+                  <span
+                    aria-hidden
+                    className={`relative z-10 mt-1.5 h-3 w-3 rounded-full border ${
+                      atual ? "border-primary bg-primary" : "border-border bg-muted"
+                    }`}
+                  />
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <Badge
+                        variant="secondary"
+                        className={`max-w-full rounded-full whitespace-normal px-2 py-0.5 text-left leading-snug ${
+                          atual ? "border-primary bg-primary text-primary-foreground" : "bg-muted"
+                        }`}
+                      >
+                        {nomeStatus(h.status_codigo)}
+                      </Badge>
+                      {atual && <span className="text-xs font-medium text-primary">atual</span>}
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {dataHora(h.inicio)}
+                      {/* Sem menu_garantia_painel, a duração não é renderizada. */}
+                      {podeVerTempo && h.fim ? ` · permaneceu ${duracaoLegivel(h.duracao_segundos)}` : ""}
+                    </p>
+                    {h.observacao && (
+                      <p className="mt-2 whitespace-pre-line rounded-md bg-muted px-2 py-1.5 text-xs text-muted-foreground">
+                        {h.observacao}
+                      </p>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+          {itens.length > 2 && (
+            <button
+              type="button"
+              className="mt-4 text-xs text-muted-foreground underline underline-offset-2"
+              onClick={() => setExpandido((valor) => !valor)}
+            >
+              {expandido ? "Mostrar menos" : "Mostrar mais"}
+            </button>
           )}
-          {h.observacao && <p className="mt-1 text-xs text-muted-foreground">{h.observacao}</p>}
-        </li>
-      ))}
-    </ol>
+        </>
+      )}
+    </section>
   );
 }
 
@@ -1498,7 +1508,7 @@ export function DemandaSheet({
 
   return (
     <Dialog open={!!demanda} onOpenChange={(o) => !o && onFechar()}>
-      <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] max-w-5xl min-w-0 overflow-y-auto p-4 sm:p-6 lg:h-[90dvh] lg:grid-rows-[auto_minmax(0,1fr)] lg:overflow-hidden">
+      <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] max-w-7xl min-w-0 overflow-y-auto p-4 sm:p-6 lg:h-[90dvh] lg:grid-rows-[auto_minmax(0,1fr)] lg:overflow-hidden">
         <DialogHeader className="min-w-0 pr-8">
           <div className="flex min-w-0 items-start gap-1">
             <span className="pt-1.5"><AjudaFase etapa={demanda.etapa} /></span>
@@ -1514,13 +1524,14 @@ export function DemandaSheet({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid min-h-0 min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
-          <aside className="min-w-0 space-y-5 lg:order-2 lg:max-h-full lg:overflow-y-auto lg:pr-1">
+        <div className="grid min-h-0 min-w-0 gap-6 lg:grid-cols-[232px_minmax(0,1fr)_280px]">
+          <div className="min-w-0 lg:order-1 lg:max-h-full lg:overflow-y-auto lg:pr-1">
+            <ColunaHistorico demanda={demanda} catalogo={catalogo} podeVerTempo={podeVerTempo} />
+          </div>
+
+          <aside className="min-w-0 space-y-5 lg:order-3 lg:max-h-full lg:overflow-y-auto lg:pr-1">
             <div className="space-y-3" data-tour="gar-situacao">
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="font-semibold text-brand-navy">Situação</h3>
-                <HistoricoDialog demanda={demanda} catalogo={catalogo} podeVerTempo={podeVerTempo} />
-              </div>
+              <h3 className="font-semibold text-brand-navy">Situação</h3>
               <CampoLeitura rotulo="Etapa" valor={rotuloEtapa(demanda.etapa, colunas)} />
               <div className="space-y-1">
                 <Label>Com quem está agora</Label>
@@ -1627,7 +1638,7 @@ export function DemandaSheet({
             />
           </aside>
 
-          <main className="min-w-0 space-y-6 lg:order-1 lg:overflow-y-auto lg:pr-2">
+          <main className="min-w-0 space-y-6 lg:order-2 lg:overflow-y-auto lg:pr-2">
             <BlocoDadosDemanda demanda={demanda} />
             <section className="space-y-4 border-t border-border pt-5">
               <div className="flex items-center gap-2">
