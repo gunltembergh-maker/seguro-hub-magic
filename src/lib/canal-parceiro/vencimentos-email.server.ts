@@ -53,6 +53,14 @@ export async function avisarVencimentosPendentes(): Promise<
 > {
   const { lavoroAdmin } = await import("@/integrations/supabase/lavoro-admin.server");
 
+  const { emailsTreinamento, PREFIXO_TREINO } = await import("@/lib/canal-parceiro/avisos-email.server");
+  let treinamento: string[] | null;
+  try {
+    treinamento = await emailsTreinamento(lavoroAdmin);
+  } catch (e) {
+    return { ok: false, erro: mensagemDeErro(e) };
+  }
+
   const { data, error } = await lavoroAdmin.rpc(
     "rpc_canal_parceiro_vencimentos_pendentes" as never,
     { p_dias: 60 } as never,
@@ -77,9 +85,13 @@ export async function avisarVencimentosPendentes(): Promise<
 
     for (const destinatario of destinatarios) {
       const messageId = crypto.randomUUID();
+      const envios = treinamento ?? [destinatario];
       try {
-        const resultado = await sendTemplateEmail("canal-parceiro-vencimento", destinatario, {
-          idempotencyKey: messageId,
+        let algumOk = false;
+        for (const destinoReal of envios) {
+        const resultado = await sendTemplateEmail("canal-parceiro-vencimento", destinoReal, {
+          idempotencyKey: treinamento ? `${messageId}-${destinoReal}` : messageId,
+          assuntoPrefixo: treinamento ? PREFIXO_TREINO : undefined,
           templateData: {
             parceiro: p.parceiro ?? "—",
             razaoSocial: p.razao_social ?? "—",
@@ -96,7 +108,9 @@ export async function avisarVencimentosPendentes(): Promise<
           },
         });
 
-        if (!resultado.sent) {
+        if (resultado.sent) algumOk = true;
+        }
+        if (!algumOk) {
           falhas += 1;
           continue;
         }

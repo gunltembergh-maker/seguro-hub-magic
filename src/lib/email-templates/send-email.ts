@@ -25,6 +25,8 @@ export interface SendTemplateEmailOptions {
   /** Dedupes retries of the same logical send; defaults to a random UUID (no dedupe). */
   idempotencyKey?: string
   replyTo?: string
+  /** Prefixo do assunto (ex.: "[TREINAMENTO] "). */
+  assuntoPrefixo?: string
 }
 
 /**
@@ -60,10 +62,11 @@ export async function sendTemplateEmail(
   const element = React.createElement(template.component, templateData)
   const html = await render(element)
   const text = await render(element, { plainText: true })
-  const subject =
+  const subjectBase =
     typeof template.subject === 'function'
       ? template.subject(templateData)
       : template.subject
+  const subject = `${options.assuntoPrefixo ?? ''}${subjectBase}`
 
   const messageId = options.idempotencyKey || crypto.randomUUID()
   const { lavoroAdmin: supabaseAdmin } = await import('@/integrations/supabase/lavoro-admin.server')
