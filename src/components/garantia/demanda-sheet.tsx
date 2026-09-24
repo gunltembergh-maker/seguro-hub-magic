@@ -767,8 +767,6 @@ function AbaDados({ demanda }: { demanda: DemandaLista }) {
       observacao: demanda.observacao ?? "",
       numero_processo: demanda.numero_processo ?? "",
       numero_contrato: demanda.numero_contrato ?? "",
-    numero_processo: demanda.numero_processo ?? "",
-    numero_contrato: demanda.numero_contrato ?? "",
     });
   }, [demanda]);
 
