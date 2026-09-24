@@ -67,7 +67,7 @@ export function useAnalisesDaDemanda(demandaId: string) {
       const { data, error } = await supabase
         .from("garantia_analises_ia")
         .select(
-          "id, demanda_id, documento_id, fluxo, situacao, resumo, campos_sugeridos, aplicada, aplicada_por, aplicada_em, erro_mensagem, solicitada_por, criado_em",
+          "id, demanda_id, documento_id, fluxo, situacao, resumo, resultado, campos_sugeridos, aplicada, aplicada_por, aplicada_em, erro_mensagem, solicitada_por, criado_em, atualizado_em, job_id",
         )
         .eq("demanda_id", demandaId)
         .order("criado_em", { ascending: false });
@@ -255,4 +255,14 @@ export async function baixarDocumento(doc: DocumentoDemanda) {
   document.body.appendChild(a);
   a.click();
   a.remove();
+}
+
+/** Baixa o conteúdo para visualização e leitura local, sem tornar o bucket público. */
+export async function baixarDocumentoComoBlob(doc: DocumentoDemanda): Promise<Blob> {
+  const bucket = doc.externo ? BUCKET_ANEXOS : BUCKET_PIPELINE;
+  const caminho = doc.externo ? doc.caminho_externo : doc.caminho;
+  if (!caminho) throw new Error("Este registro não tem arquivo associado.");
+  const { data, error } = await supabase.storage.from(bucket).download(caminho);
+  if (error || !data) throw new Error(error?.message || "Não foi possível abrir o arquivo.");
+  return data;
 }
