@@ -80,6 +80,12 @@ const TODOS = "__todos__";
 /* Cartão                                                             */
 /* ------------------------------------------------------------------ */
 
+const CHIP_SITUACAO: Record<string, string> = {
+  aguard_comercial: "Com o comercial",
+  aguard_cliente_comercial: "Comercial aguardando cliente",
+  aguard_cliente: "Aguardando cliente",
+};
+
 function Cartao({
   demanda,
   statusNome,
@@ -244,7 +250,7 @@ function Quadro({
                 <Cartao
                   key={d.id}
                   demanda={d}
-                  statusNome={catalogo.find((s) => s.codigo === d.status_atual)?.nome ?? d.status_atual}
+                  statusNome={CHIP_SITUACAO[d.status_atual] ?? (catalogo.find((s) => s.codigo === d.status_atual)?.com_quem === "seguradora" ? "Com a seguradora" : catalogo.find((s) => s.codigo === d.status_atual)?.nome ?? d.status_atual)}
                   statusInterno={catalogo.find((s) => s.codigo === d.status_atual)?.relogio === "interno"}
                   chegouDocumento={docsAposPedido?.has(d.id)}
                   slaHoras={catalogo.find((s) => s.codigo === d.status_atual)?.sla_horas ?? null}

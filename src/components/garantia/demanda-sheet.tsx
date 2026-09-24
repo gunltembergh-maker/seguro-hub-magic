@@ -100,6 +100,9 @@ import { BlocoCocorretagem } from "@/components/garantia/bloco-cocorretagem";
 import { AjudaFase } from "@/components/garantia/ajuda-fase";
 import { fluxoIADoTipo } from "@/lib/garantia/documentos-regra";
 import { supabase } from "@/integrations/supabase/client";
+
+/** Status que só mudam sozinhos (RPC do pedido/retorno do comercial). */
+const STATUS_AUTOMATICOS = new Set(["aguard_comercial", "aguard_cliente_comercial", "aguard_doc_contrato", "aguard_doc_cadastro"]);
 import type { AnaliseIA } from "@/lib/garantia/garantia-ia";
 import { resumirConsulta } from "@/lib/garantia/limites-regra";
 import {
@@ -1447,7 +1450,8 @@ export function DemandaSheet({
       if (error) throw error;
       const destino = catalogo.find((s) => s.codigo === codigo);
       if (!destino) throw new Error("Status de trabalho da etapa não encontrado.");
-      await trocar.mutateAsync({ demanda, destino, observacao: `Retomado pelo corretor: ${motivo}` });
+      void motivo;
+      await trocar.mutateAsync({ demanda, destino });
       toast.success(`Situação: “${destino.nome}”.`);
       setRetomarAberto(false);
     } catch (e) {

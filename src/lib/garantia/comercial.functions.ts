@@ -45,7 +45,7 @@ export const responderComercial = createServerFn({ method: "POST" })
 
       const { data: dem, error: eDem } = await db
         .from("garantia_demandas")
-        .select("id, numero, legenda, status_atual, responsavel_tecnico_id, cadastrado_por")
+        .select("id, status_atual")
         .eq("id", data.demanda_id)
         .maybeSingle();
       if (eDem) {
@@ -53,12 +53,7 @@ export const responderComercial = createServerFn({ method: "POST" })
         return { ok: false, erro: "falha_leitura" };
       }
       if (!dem) return { ok: false, erro: "demanda_nao_aguarda_comercial" };
-      const { data: st } = await db
-        .from("garantia_status_catalogo")
-        .select("com_quem")
-        .eq("codigo", dem.status_atual)
-        .maybeSingle();
-      if (!st || !["comercial", "cliente_ou_comercial"].includes(st.com_quem)) {
+      if (!["aguard_comercial", "aguard_cliente_comercial", "aguard_doc_contrato", "aguard_doc_cadastro"].includes(dem.status_atual)) {
         return { ok: false, erro: "demanda_nao_aguarda_comercial" };
       }
 
@@ -90,39 +85,16 @@ export const responderComercial = createServerFn({ method: "POST" })
         }
       }
 
-      // Acrescenta à observação da linha aberta do histórico.
-      const { data: abertas } = await db
-        .from("garantia_status_historico")
-        .select("id, observacao")
-        .eq("demanda_id", dem.id)
-        .is("fim", null);
-      for (const h of abertas ?? []) {
-        const novo = [h.observacao, `Retorno do comercial: ${data.resposta}`].filter(Boolean).join("\n");
-        const { error: eH } = await db.from("garantia_status_historico").update({ observacao: novo }).eq("id", h.id);
-        if (eH) {
-          console.error("responderComercial: historico", eH);
-          return { ok: false, erro: "falha_historico" };
-        }
-      }
-
-      const destinos = [...new Set([dem.responsavel_tecnico_id, dem.cadastrado_por].filter(Boolean))] as string[];
-      if (destinos.length) {
-        const titulo = `Retorno do comercial: ${dem.legenda || dem.numero || "demanda de Garantia"}`;
-        const { error: eN } = await db.from("hub_notificacoes").insert(
-          destinos.map((u) => ({
-            user_id: u,
-            tipo: "garantia_retorno_comercial",
-            titulo,
-            mensagem: data.resposta,
-            link: `/garantia/negociacao?demanda=${dem.id}`,
-            dados: { demanda_id: dem.id },
-            criado_por: userId,
-          })),
-        );
-        if (eN) {
-          console.error("responderComercial: aviso", eN);
-          return { ok: false, erro: "falha_aviso", detalhe: "O retorno foi gravado, mas o corretor não foi avisado." };
-        }
+      // Status, histórico ("Retorno do comercial: ...") e aviso ao corretor: tudo na RPC,
+      // com o cliente do próprio usuário para o histórico registrar quem respondeu.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: eR } = await (supabase as any).rpc("rpc_garantia_comercial_responder", {
+        _demanda_id: dem.id,
+        _resposta: data.resposta,
+      });
+      if (eR) {
+        console.error("responderComercial: responder", eR);
+        return { ok: false, erro: "falha_historico", detalhe: eR.message };
       }
       return { ok: true };
     } catch (e) {
