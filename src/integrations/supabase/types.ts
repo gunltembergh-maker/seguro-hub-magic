@@ -2898,6 +2898,7 @@ export type Database = {
           apolice_id: string | null
           atualizado_em: string
           campos_sugeridos: Json | null
+          classificacao: Json | null
           criado_em: string
           demanda_id: string | null
           documento_id: string | null
@@ -2906,6 +2907,8 @@ export type Database = {
           fluxo: string
           id: string
           job_id: string | null
+          modalidade_id: string | null
+          modalidade_rotulo: string | null
           resultado: Json | null
           resumo: string | null
           situacao: string
@@ -2918,6 +2921,7 @@ export type Database = {
           apolice_id?: string | null
           atualizado_em?: string
           campos_sugeridos?: Json | null
+          classificacao?: Json | null
           criado_em?: string
           demanda_id?: string | null
           documento_id?: string | null
@@ -2926,6 +2930,8 @@ export type Database = {
           fluxo: string
           id?: string
           job_id?: string | null
+          modalidade_id?: string | null
+          modalidade_rotulo?: string | null
           resultado?: Json | null
           resumo?: string | null
           situacao?: string
@@ -2938,6 +2944,7 @@ export type Database = {
           apolice_id?: string | null
           atualizado_em?: string
           campos_sugeridos?: Json | null
+          classificacao?: Json | null
           criado_em?: string
           demanda_id?: string | null
           documento_id?: string | null
@@ -2946,6 +2953,8 @@ export type Database = {
           fluxo?: string
           id?: string
           job_id?: string | null
+          modalidade_id?: string | null
+          modalidade_rotulo?: string | null
           resultado?: Json | null
           resumo?: string | null
           situacao?: string
