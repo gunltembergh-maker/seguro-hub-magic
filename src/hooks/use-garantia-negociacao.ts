@@ -71,6 +71,11 @@ export interface DemandaLista {
   precisa_nomeacao: boolean;
   precisa_ccg: boolean;
   ia_analise_solicitada: boolean;
+  cadastro_dispensado_motivo: string | null;
+  cadastro_dispensado_por: string | null;
+  cadastro_dispensado_em: string | null;
+  /** Linhas do cosseguro (só a IS) — a soma decide a saída B do cadastro. */
+  cosseguro?: { importancia_segurada: number }[] | null;
 
   atualizado_em: string;
   cliente: { id: string; nome: string; cpf_cnpj: string } | null;
@@ -85,6 +90,8 @@ const CAMPOS_DEMANDA =
   "data_limite, canal_id, responsavel_cliente_id, responsavel_tecnico_id, premio_estimado, comissao_estimada, " +
   "numero_processo, observacao, atualizado_em, exige_cadastro, balancos_assinados, dre_assinados, " +
   "precisa_nomeacao, precisa_ccg, ia_analise_solicitada, " +
+  "cadastro_dispensado_motivo, cadastro_dispensado_por, cadastro_dispensado_em, " +
+  "cosseguro:garantia_cosseguro(importancia_segurada), " +
 
   "cliente:hub_clientes(id, nome, cpf_cnpj), segurado:garantia_segurados(id, nome, cpf_cnpj), canal:canais(id, nome)";
 
@@ -463,6 +470,9 @@ export function impedimentoDaTransicao(
   return null;
 }
 
+export const totalCosseguro = (d: { cosseguro?: { importancia_segurada: number }[] | null }) =>
+  (d.cosseguro ?? []).reduce((s, c) => s + Number(c.importancia_segurada ?? 0), 0);
+
 /** Pendências de documento da etapa em que a demanda está hoje. */
 function pendenciasDaEtapa(demanda: DemandaLista, tipos: Set<string>, etapa: string) {
   const alvo = {
@@ -472,6 +482,9 @@ function pendenciasDaEtapa(demanda: DemandaLista, tipos: Set<string>, etapa: str
     dre_assinados: demanda.dre_assinados,
     precisa_nomeacao: demanda.precisa_nomeacao,
     precisa_ccg: demanda.precisa_ccg,
+    importancia_segurada: demanda.importancia_segurada,
+    cosseguro_total: totalCosseguro(demanda),
+    cadastro_dispensado_motivo: demanda.cadastro_dispensado_motivo,
   };
   if (etapa === "1" || etapa === "2") return pendenciasAnaliseDemanda(alvo, tipos);
   if (etapa === "3b") return pendenciasEtapa3b(alvo, tipos);
@@ -519,6 +532,8 @@ export async function carregarContextoMercado(clienteId: string): Promise<Contex
     (config ?? []) as any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (limites ?? []) as any,
+    // Esta trava só usa completa/faltantes; a regra do cadastro não entra aqui.
+    null,
   );
   return { consultaValida: true, completa: resumo.completa, faltantes: resumo.faltantes };
 }

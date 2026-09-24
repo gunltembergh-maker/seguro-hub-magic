@@ -3318,6 +3318,57 @@ export type Database = {
           },
         ]
       }
+      garantia_cosseguro: {
+        Row: {
+          chave_mercado: string | null
+          criado_em: string
+          criado_por: string | null
+          demanda_id: string
+          id: string
+          importancia_segurada: number
+          lider: boolean
+          observacao: string | null
+          seguradora_livre: string | null
+        }
+        Insert: {
+          chave_mercado?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          demanda_id: string
+          id?: string
+          importancia_segurada: number
+          lider?: boolean
+          observacao?: string | null
+          seguradora_livre?: string | null
+        }
+        Update: {
+          chave_mercado?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          demanda_id?: string
+          id?: string
+          importancia_segurada?: number
+          lider?: boolean
+          observacao?: string | null
+          seguradora_livre?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "garantia_cosseguro_chave_mercado_fkey"
+            columns: ["chave_mercado"]
+            isOneToOne: false
+            referencedRelation: "garantia_seguradoras_config"
+            referencedColumns: ["chave_mercado"]
+          },
+          {
+            foreignKeyName: "garantia_cosseguro_demanda_id_fkey"
+            columns: ["demanda_id"]
+            isOneToOne: false
+            referencedRelation: "garantia_demandas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       garantia_cotacoes: {
         Row: {
           chave_mercado: string | null
@@ -3391,6 +3442,9 @@ export type Database = {
           balancos_assinados: boolean | null
           cadastrado_em: string
           cadastrado_por: string | null
+          cadastro_dispensado_em: string | null
+          cadastro_dispensado_motivo: string | null
+          cadastro_dispensado_por: string | null
           canal_id: string | null
           chegada_em: string
           cliente_id: string
@@ -3438,6 +3492,9 @@ export type Database = {
           balancos_assinados?: boolean | null
           cadastrado_em?: string
           cadastrado_por?: string | null
+          cadastro_dispensado_em?: string | null
+          cadastro_dispensado_motivo?: string | null
+          cadastro_dispensado_por?: string | null
           canal_id?: string | null
           chegada_em: string
           cliente_id: string
@@ -3485,6 +3542,9 @@ export type Database = {
           balancos_assinados?: boolean | null
           cadastrado_em?: string
           cadastrado_por?: string | null
+          cadastro_dispensado_em?: string | null
+          cadastro_dispensado_motivo?: string | null
+          cadastro_dispensado_por?: string | null
           canal_id?: string | null
           chegada_em?: string
           cliente_id?: string
