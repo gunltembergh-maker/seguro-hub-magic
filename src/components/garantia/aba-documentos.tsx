@@ -307,7 +307,7 @@ export function AbaDocumentos({
             <span>
               {perguntaIA(tipo)}
               <span className="block text-xs text-muted-foreground">
-                O pedido fica registrado e pode ser aberto na etapa de análise técnica.
+                O pedido fica registrado e pode ser aberto na etapa de análise da demanda.
               </span>
             </span>
           </label>
@@ -321,7 +321,7 @@ export function AbaDocumentos({
           {analises.map((a) => (
             <p key={a.id} className="text-muted-foreground">
               {a.situacao === "solicitada"
-                ? "Análise solicitada — abra a etapa de análise técnica para iniciar."
+                ? "Análise solicitada — abra a etapa de análise da demanda para iniciar."
                 : `Situação: ${a.situacao}`}{" "}
               · {dataHora(a.criado_em)}
               {a.aplicada ? " · campos aplicados na demanda" : ""}
