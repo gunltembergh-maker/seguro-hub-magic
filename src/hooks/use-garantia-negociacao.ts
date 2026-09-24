@@ -532,6 +532,8 @@ export async function carregarContextoMercado(clienteId: string): Promise<Contex
     (config ?? []) as any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (limites ?? []) as any,
+    // Esta trava só usa completa/faltantes; a regra do cadastro não entra aqui.
+    null,
   );
   return { consultaValida: true, completa: resumo.completa, faltantes: resumo.faltantes };
 }

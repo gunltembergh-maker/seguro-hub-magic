@@ -1305,7 +1305,7 @@ export function DemandaSheet({
     { ...demanda, cosseguro_total: totalCosseguro(demanda) },
     tiposPresentes,
   ).filter((p) => p.etapa === demanda.etapa);
-  const resumoMercado = resumirConsulta(seguradorasConfig, limites);
+  const resumoMercado = resumirConsulta(seguradorasConfig, limites, demanda.importancia_segurada);
   const contextoMercado = {
     consultaValida: !!consulta && new Date(consulta.valida_ate).getTime() > Date.now(),
     completa: resumoMercado.completa,
