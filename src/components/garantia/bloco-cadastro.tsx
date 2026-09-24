@@ -95,10 +95,6 @@ function SaidaCosseguro({ demanda }: { demanda: DemandaLista }) {
         <h5 className="font-semibold text-[#14405C]">B · Cosseguro</h5>
         {cobre ? <Badge className="bg-[#338B85] hover:bg-[#338B85]">Alcança a IS</Badge> : <Badge variant="outline">Não alcança a IS</Badge>}
       </div>
-      <p className="text-xs text-muted-foreground">
-        Junte duas ou mais seguradoras para o mesmo risco. Só resolve quando a soma alcança a
-        importância segurada — aí os documentos de cadastro deixam de ser exigidos.
-      </p>
 
       {linhas.length > 0 && (
         <ul className="space-y-1.5">
@@ -192,7 +188,6 @@ function SaidaDispensa({ demanda }: { demanda: DemandaLista }) {
   return (
     <div className="rounded-md border p-3 text-sm">
       <h5 className="font-semibold text-[#14405C]">C · Dispensa</h5>
-      <p className="text-xs text-muted-foreground">Passar de fase sem documentos nem cosseguro, com o motivo escrito.</p>
       <Button variant="link" className="h-auto px-0" onClick={() => setAberto(true)}>
         Seguir sem os documentos de cadastro
       </Button>
@@ -248,10 +243,6 @@ export function BlocoCadastro({ demanda }: { demanda: DemandaLista }) {
       <div className="grid gap-3 lg:grid-cols-3">
         <div className="rounded-md border p-3 text-sm">
           <h5 className="font-semibold text-[#14405C]">A · Documentos de cadastro</h5>
-          <p className="text-xs text-muted-foreground">
-            Um documento basta: DRE, balanço ou alteração contratual. Anexe na área de documentos abaixo e
-            responda as conferências de assinatura.
-          </p>
         </div>
         <SaidaDispensa demanda={demanda} />
         <div className="lg:col-span-3"><SaidaCosseguro demanda={demanda} /></div>

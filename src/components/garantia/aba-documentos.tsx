@@ -339,19 +339,6 @@ export function AbaDocumentos({
       <div className="space-y-3 rounded-md border p-3">
         <h4 className="font-semibold text-[#14405C]">Conferência de documentos</h4>
 
-        {demanda.exige_cadastro ? (
-          <p className="rounded-md bg-amber-50 p-2 text-amber-900">
-            Nenhuma seguradora com portal cobre sozinha a importância segurada, então o cadastro
-            passa a ser exigido. <strong>Um documento basta</strong>: DRE, balanço ou alteração
-            contratual. O cosseguro e a dispensa justificada, acima, também resolvem.
-          </p>
-        ) : (
-          <p className="text-muted-foreground">
-            Documentos de cadastro não são obrigatórios neste caso: só passam a ser quando nenhuma
-            seguradora com portal cobre sozinha a importância segurada.
-          </p>
-        )}
-
         {demanda.exige_cadastro && (
           <div className="flex flex-wrap gap-4">
             <TresEstados

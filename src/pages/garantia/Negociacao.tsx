@@ -38,6 +38,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { GarantiaShell } from "@/components/garantia/garantia-shell";
 import { DemandaSheet, SeloProduto } from "@/components/garantia/demanda-sheet";
+import { AjudaFase } from "@/components/garantia/ajuda-fase";
 import { useMeuPerfilEfetivo } from "@/contexts/view-as-context";
 import { hasPermission } from "@/hooks/use-meu-perfil";
 import { useCanais, useResponsaveis } from "@/hooks/use-entrada-demandas";
@@ -119,9 +120,11 @@ function Cartao({
       )}
     >
       {/* Situação: com quem está a bola. Teal = trabalho interno; neutro = espera externa. */}
+      <div className="mb-2 flex items-center gap-1.5">
+      <AjudaFase etapa={demanda.etapa} />
       <Badge
         className={cn(
-          "mb-2 max-w-full whitespace-normal text-left text-[11px] font-medium",
+          "max-w-full whitespace-normal text-left text-[11px] font-medium",
           statusInterno
             ? "bg-[#338B85] text-white hover:bg-[#338B85]"
             : "bg-muted text-muted-foreground hover:bg-muted",
@@ -129,6 +132,7 @@ function Cartao({
       >
         {statusNome}
       </Badge>
+      </div>
       {chegouDocumento && (
         <p className="mb-2 text-[11px] text-[#338B85]">Chegou documento depois do pedido</p>
       )}

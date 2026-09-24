@@ -166,10 +166,6 @@ function EdicaoDialog({
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">
-              O grupo ({ROTULO_GRUPO[grupoDoStatusMercado(status)]}) vem do status e não é
-              escolhido à mão — falha técnica não vira recusa.
-            </p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
@@ -341,10 +337,6 @@ export function AbaLimites({ demanda }: { demanda: DemandaLista }) {
           <p className="text-muted-foreground">Não consultado</p>
         </div>
       </div>
-      <p className="text-xs text-muted-foreground">
-        “Não consultado” é falha técnica na consulta (portal fora do ar, sem resposta, erro) —
-        não é recusa da seguradora e não conta como “sem limite” em lugar nenhum.
-      </p>
       <p className="text-sm">
         Capacidade total das que têm limite: <strong>{moeda(resumo.capacidade_total)}</strong>
       </p>
@@ -392,7 +384,7 @@ export function AbaLimites({ demanda }: { demanda: DemandaLista }) {
             ? "Gravando todos os lançamentos manuais…"
             : salvoEm
               ? `Salvo às ${salvoEm.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`
-              : "Cada lançamento já grava ao salvar a seguradora; este botão confirma tudo de uma vez."}
+              : null}
         </span>
       </div>
 
@@ -416,9 +408,6 @@ export function AbaLimites({ demanda }: { demanda: DemandaLista }) {
         <h4 className="text-sm font-semibold text-[#14405C]">
           Com portal, sem API ({comPortalSemApi.length}) — lançamento manual obrigatório
         </h4>
-        <p className="text-xs text-muted-foreground">
-          A consulta só fica completa quando as 18 com portal tiverem resposta registrada.
-        </p>
         {comPortalSemApi.map((c) => (
           <LinhaSeguradora
             key={c.chave_mercado}
@@ -437,9 +426,6 @@ export function AbaLimites({ demanda }: { demanda: DemandaLista }) {
         >
           {semPortalAberto ? "▾" : "▸"} Sem portal ({semPortal.length}) — lançamento opcional
         </button>
-        <p className="text-xs text-muted-foreground">
-          Estas não têm portal de consulta: lançar é opcional e não trava nada.
-        </p>
         {semPortalAberto &&
           semPortal.map((c) => (
             <LinhaSeguradora

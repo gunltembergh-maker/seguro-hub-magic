@@ -244,10 +244,6 @@ function BlocoFinanceiro({ apolice }: { apolice: ApoliceGarantia }) {
   return (
     <div className="space-y-3 rounded-md border p-3 text-sm">
       <h4 className="font-semibold text-[#14405C]">Financeiro</h4>
-      <p className="text-xs text-muted-foreground">
-        Esta etapa não conta tempo: o relógio da demanda termina quando a apólice é conferida,
-        lançada e enviada ao financeiro. Prêmio não pago não cancela a apólice — o financeiro cobra.
-      </p>
       <div className="grid gap-3 md:grid-cols-2">
         <div className="space-y-1">
           <Label>Vencimento do boleto</Label>

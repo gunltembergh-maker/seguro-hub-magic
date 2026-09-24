@@ -82,6 +82,7 @@ import { mensagemDeErro } from "@/lib/erro";
 import { consultarCnpjEntrada } from "@/lib/entrada/entrada-cnpj.functions";
 import { pendenciasDaDemanda } from "@/lib/garantia/documentos-regra";
 import { BlocoCadastro } from "@/components/garantia/bloco-cadastro";
+import { AjudaFase } from "@/components/garantia/ajuda-fase";
 import { fluxoIADoTipo } from "@/lib/garantia/documentos-regra";
 import { supabase } from "@/integrations/supabase/client";
 import type { AnaliseIA } from "@/lib/garantia/garantia-ia";
@@ -1207,10 +1208,6 @@ function ConteudoDaFase({
       <div className="space-y-4">
         <AnaliseTecnica demanda={demanda} />
         <div className="space-y-3 rounded-md border p-4">
-          <p className="text-sm text-muted-foreground">
-            Confira segurado ou locador, natureza, modalidade, movimento, valores, objeto, vigência,
-            prazo e responsáveis.
-          </p>
           <div className="flex flex-wrap gap-2">
             <Button variant={demanda.triagem_completa ? "outline" : "default"} onClick={onTriagem}>
               {demanda.triagem_completa ? "Revisar conferência dos dados" : "Conferir dados da demanda"}
@@ -1375,6 +1372,7 @@ export function DemandaSheet({
       <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] max-w-5xl min-w-0 overflow-y-auto p-4 sm:p-6">
         <DialogHeader className="min-w-0 pr-8">
           <div className="flex min-w-0 items-start gap-1">
+            <span className="pt-1.5"><AjudaFase etapa={demanda.etapa} /></span>
             <DialogTitle className="min-w-0 break-words text-left">
               {demanda.legenda ?? demanda.cliente?.nome ?? "Demanda"}
             </DialogTitle>

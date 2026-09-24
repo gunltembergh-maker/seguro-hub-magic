@@ -192,10 +192,6 @@ export function AbaCotacoes({ demanda }: { demanda: DemandaLista }) {
             <Label>Observação</Label>
             <Textarea value={obs} onChange={(e) => setObs(e.target.value)} rows={2} />
           </div>
-          <p className="text-xs text-muted-foreground">
-            O valor da comissão é calculado pelo banco a partir do prêmio e do percentual — por isso
-            não há campo para ele.
-          </p>
           <div className="flex gap-2">
             <Button onClick={gravar} disabled={salvar.isPending}>
               {salvar.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
