@@ -8,6 +8,7 @@
 // outra fase. Nada é redigitado na passagem.
 
 import { useMemo, useState } from "react";
+import { AjudaFase } from "@/components/garantia/ajuda-fase";
 import { Clock, Search } from "lucide-react";
 import { toast } from "sonner";
 
@@ -76,8 +77,11 @@ function Cartao({
       className="w-full rounded-lg border border-border bg-card p-3 text-left shadow-sm transition-colors hover:border-primary/50"
     >
       <div className="flex items-start justify-between gap-2">
-        <span className="line-clamp-2 text-sm font-semibold text-card-foreground">
-          {demanda.legenda ?? demanda.cliente?.nome ?? "—"}
+        <span className="flex min-w-0 items-start gap-1.5">
+          <span className="pt-0.5"><AjudaFase etapa={demanda.etapa} /></span>
+          <span className="line-clamp-2 text-sm font-semibold text-card-foreground">
+            {demanda.legenda ?? demanda.cliente?.nome ?? "—"}
+          </span>
         </span>
         <div className="flex shrink-0 items-center gap-1">
           {demanda.codigo && (
@@ -222,11 +226,6 @@ export default function Crm() {
                     </h2>
                     <Badge variant="secondary">{daColuna.length}</Badge>
                   </div>
-                  {coluna.etapa === "9" && (
-                    <p className="mb-2 text-[11px] text-muted-foreground">
-                      Esta etapa não conta tempo.
-                    </p>
-                  )}
                   <div className="space-y-2">
                     {daColuna.map((d) => (
                       <Cartao
