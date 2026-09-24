@@ -192,4 +192,37 @@ export function useSalvarLimiteManual() {
   });
 }
 
+/**
+ * "Salvar limites": regrava de uma vez as linhas lançadas à mão da consulta e
+ * recalcula os totais e o exige_cadastro. É o sinal visível de que está gravado.
+ */
+export function useSalvarLimitesEmLote() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ consultaId, demandaId }: { consultaId: string; demandaId: string | null }) => {
+      const { data, error } = await supabase
+        .from("garantia_limites_tomador")
+        .select(CAMPOS_LIMITE)
+        .eq("consulta_id", consultaId)
+        .eq("origem", "manual");
+      if (error) throw error;
+      const linhas = (data ?? []) as unknown as LimiteLinha[];
+      if (linhas.length) {
+        const agora = new Date().toISOString();
+        const { error: e2 } = await supabase.from("garantia_limites_tomador").upsert(
+          linhas.map((l) => ({
+            ...l,
+            grupo_mercado: grupoDoStatusMercado(l.status_mercado),
+            atualizado_em: agora,
+          })) as never,
+          { onConflict: "consulta_id,chave_mercado" },
+        );
+        if (e2) throw e2;
+      }
+      return await recalcularConsulta(supabase, consultaId, demandaId);
+    },
+    onSuccess: () => invalidarLimites(qc),
+  });
+}
+
 export { resumirConsulta };

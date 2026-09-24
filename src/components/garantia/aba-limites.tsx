@@ -5,7 +5,9 @@
 // consultado" é falha técnica, NUNCA recusa — está escrito na tela de propósito.
 
 import { useMemo, useState } from "react";
-import { AlertTriangle, Loader2, RefreshCw } from "lucide-react";
+import { AlertTriangle, Loader2, RefreshCw, Save } from "lucide-react";
+import { CampoReal } from "@/components/garantia/campo-real";
+import { mensagemDeErro } from "@/lib/erro";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +37,7 @@ import {
   useConsultarMercado,
   useLimitesDaConsulta,
   useSalvarLimiteManual,
+  useSalvarLimitesEmLote,
   useSeguradorasConfig,
   type ValoresLimiteManual,
 } from "@/hooks/use-garantia-limites";
@@ -136,8 +139,8 @@ function EdicaoDialog({
   salvando: boolean;
 }) {
   const [status, setStatus] = useState<string>(limite?.status_mercado ?? "aprovado");
-  const [limiteTotal, setLimiteTotal] = useState<string>(
-    limite?.limite_total != null ? String(limite.limite_total) : "",
+  const [limiteTotal, setLimiteTotal] = useState<number | null>(
+    limite?.limite_total != null ? Number(limite.limite_total) : null,
   );
   const [taxa, setTaxa] = useState<string>(limite?.taxa != null ? String(limite.taxa) : "");
   const [cadastro, setCadastro] = useState<string>(limite?.data_ultimo_cadastro ?? "");
@@ -170,8 +173,8 @@ function EdicaoDialog({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label>Limite total (R$)</Label>
-              <Input value={limiteTotal} onChange={(e) => setLimiteTotal(e.target.value)} inputMode="decimal" />
+              <Label>Limite total</Label>
+              <CampoReal valor={limiteTotal} onChange={setLimiteTotal} />
             </div>
             <div className="space-y-1">
               <Label>Taxa (%)</Label>
@@ -206,7 +209,7 @@ function EdicaoDialog({
             onClick={() =>
               onSalvar({
                 status_mercado: status,
-                limite_total: limiteTotal.trim() ? Number(limiteTotal.replace(",", ".")) : null,
+                limite_total: limiteTotal,
                 taxa: taxa.trim() ? Number(taxa.replace(",", ".")) : null,
                 data_ultimo_cadastro: cadastro || null,
                 nomeacao,
@@ -230,6 +233,8 @@ export function AbaLimites({ demanda }: { demanda: DemandaLista }) {
   const consultar = useConsultarMercado();
   const abrirManual = useAbrirConsultaManual();
   const salvar = useSalvarLimiteManual();
+  const salvarTudo = useSalvarLimitesEmLote();
+  const [salvoEm, setSalvoEm] = useState<Date | null>(null);
 
   const [emEdicao, setEmEdicao] = useState<string | null>(null);
 
@@ -237,7 +242,7 @@ export function AbaLimites({ demanda }: { demanda: DemandaLista }) {
     () => new Map(limites.map((l) => [l.chave_mercado, l])),
     [limites],
   );
-  const resumo = useMemo(() => resumirConsulta(config, limites), [config, limites]);
+  const resumo = useMemo(() => resumirConsulta(config, limites, demanda.importancia_segurada), [config, limites, demanda.importancia_segurada]);
 
   const comApi = config.filter((c) => c.identificador_api && c.ativa_garantia);
   const comPortalSemApi = config.filter((c) => c.tem_portal && !c.identificador_api);
@@ -344,15 +349,52 @@ export function AbaLimites({ demanda }: { demanda: DemandaLista }) {
         Capacidade total das que têm limite: <strong>{moeda(resumo.capacidade_total)}</strong>
       </p>
 
-      {resumo.exige_cadastro && limites.length > 0 && (
+      {resumo.exige_cadastro === null ? (
+        <p className="rounded-md bg-muted/50 p-2 text-sm text-muted-foreground">
+          A decisão de exigir cadastro depende da importância segurada, que ainda não foi preenchida
+          na aba Dados. Até lá, nada é concluído.
+        </p>
+      ) : resumo.exige_cadastro && limites.length > 0 ? (
         <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <p>
-            Nenhuma seguradora liberou limite. DRE e balanços passam a ser necessários: leve a
-            demanda à etapa 3b (Documentos de cadastro) se quiser seguir por esse caminho.
+            Nenhuma seguradora com portal tem limite disponível que cubra sozinha{" "}
+            {moeda(resumo.importancia_segurada)}. O cadastro passa a ser exigido: na etapa Cadastro
+            dá para seguir com documentos, cosseguro ou dispensa justificada.
           </p>
         </div>
-      )}
+      ) : resumo.cobrem_sozinhas.length > 0 ? (
+        <p className="text-sm text-muted-foreground">
+          Cobrem sozinhas a IS: {resumo.cobrem_sozinhas.join(", ")}. Cadastro não exigido.
+        </p>
+      ) : null}
+
+      <div className="flex flex-wrap items-center gap-3">
+        <Button
+          size="sm"
+          disabled={salvarTudo.isPending || !consulta}
+          onClick={async () => {
+            if (!consulta) return;
+            try {
+              await salvarTudo.mutateAsync({ consultaId: consulta.id, demandaId: demanda.id });
+              setSalvoEm(new Date());
+              toast.success("Limites salvos.");
+            } catch (e) {
+              toast.error(mensagemDeErro(e));
+            }
+          }}
+        >
+          {salvarTudo.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+          {salvarTudo.isPending ? "Salvando…" : "Salvar limites"}
+        </Button>
+        <span className="text-xs text-muted-foreground">
+          {salvarTudo.isPending
+            ? "Gravando todos os lançamentos manuais…"
+            : salvoEm
+              ? `Salvo às ${salvoEm.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`
+              : "Cada lançamento já grava ao salvar a seguradora; este botão confirma tudo de uma vez."}
+        </span>
+      </div>
 
       <Separator />
 
@@ -418,6 +460,7 @@ export function AbaLimites({ demanda }: { demanda: DemandaLista }) {
           salvando={salvar.isPending}
           onFechar={() => setEmEdicao(null)}
           onSalvar={async (valores) => {
+            setSalvoEm(null);
             let consultaId = consulta?.id;
             if (!consultaId) {
               consultaId = await abrirManual.mutateAsync({
@@ -435,8 +478,9 @@ export function AbaLimites({ demanda }: { demanda: DemandaLista }) {
               });
               setEmEdicao(null);
               toast.success("Limite registrado.");
+              setSalvoEm(new Date());
             } catch (e) {
-              toast.error(e instanceof Error ? e.message : "Não foi possível salvar.");
+              toast.error(mensagemDeErro(e));
             }
           }}
         />
