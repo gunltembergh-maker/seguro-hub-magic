@@ -1491,7 +1491,7 @@ export function DemandaSheet({
 
         <Separator />
 
-        <Tabs defaultValue="fechado" className="min-w-0">
+        <Tabs defaultValue="dados" className="min-w-0">
           <div className="w-full overflow-x-auto">
             <TabsList className="w-max min-w-full justify-start">
             <TabsTrigger value="dados">Dados completos</TabsTrigger>
