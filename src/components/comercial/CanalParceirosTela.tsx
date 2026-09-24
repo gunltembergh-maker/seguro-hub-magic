@@ -31,6 +31,7 @@ import {
 import { SolicitarAlteracaoPercentual } from "@/components/comercial/SolicitarAlteracaoPercentual";
 import { RepasseComercial } from "@/components/comercial/RepasseComercial";
 import { SuperAdminGate } from "@/components/admin/SuperAdminGate";
+import { ModoTreinamentoCanal } from "@/components/comercial/ModoTreinamentoCanal";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -488,6 +489,7 @@ export default function CanalParceirosTela() {
 
   return (
     <div className="space-y-6">
+      {isAdmin && <ModoTreinamentoCanal />}
       {/* cabeçalho */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>

@@ -201,6 +201,18 @@ function mudancas(a: AlteracaoPendente) {
   return linhas;
 }
 
+export const PREFIXO_TREINO = "[TREINAMENTO] ";
+
+/** Modo treinamento: lista que substitui todos os destinatários, ou null quando desligado. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function emailsTreinamento(admin: any): Promise<string[] | null> {
+  const { data, error } = await admin.rpc("canal_treinamento_emails" as never);
+  if (error) throw new Error(`modo treinamento: ${error.message}`);
+  if (!Array.isArray(data)) return null;
+  const lista = (data as unknown[]).filter((x): x is string => typeof x === "string" && x.includes("@"));
+  return lista.length ? lista : null;
+}
+
 export async function enviarAvisosCanalParceiro(): Promise<
   { ok: true; enviados: number; falhas?: number } | { ok: false; erro: string }
 > {
@@ -214,6 +226,13 @@ export async function enviarAvisosCanalParceiro(): Promise<
     lavoroAdmin.rpc("canal_parceiro_contrato_decisoes_para_email" as never, {} as never),
     lavoroAdmin.rpc("canal_repasse_docs_emails_pendentes" as never, {} as never),
   ]);
+
+  let treinamento: string[] | null;
+  try {
+    treinamento = await emailsTreinamento(lavoroAdmin);
+  } catch (e) {
+    return { ok: false, erro: mensagemDeErro(e) };
+  }
 
   const erro =
     repasse.error ??
@@ -255,7 +274,7 @@ export async function enviarAvisosCanalParceiro(): Promise<
     /** Prefixo estável da idempotência (fila de documentos): `${documento_id}-${tipo}`. */
     chaveEstavel?: string,
   ): Promise<string | null> {
-    const destinos = (e.destinatarios ?? []).filter((d) => typeof d === "string" && d.includes("@"));
+    const destinos = treinamento ?? (e.destinatarios ?? []).filter((d) => typeof d === "string" && d.includes("@"));
     if (destinos.length === 0) {
       console.error(`[canal-parceiro-avisos] sem destinatários`, contexto);
       return null;
@@ -265,7 +284,8 @@ export async function enviarAvisosCanalParceiro(): Promise<
     for (const destino of destinos) {
       try {
         const r = await sendTemplateEmail(e.template, destino, {
-          idempotencyKey: chaveEstavel ? `${chaveEstavel}-${destino}` : `${messageId}-${destino}`,
+          idempotencyKey: `${chaveEstavel ?? messageId}-${destino}${treinamento ? "-treino" : ""}`,
+          assuntoPrefixo: treinamento ? PREFIXO_TREINO : undefined,
           templateData: {
             assunto: e.assunto,
             eyebrowTexto: "Canal Parceiros",
@@ -715,7 +735,7 @@ export async function enviarAvisosCanalParceiro(): Promise<
       }
 
       if (!d.anexos_ja_enviados) {
-        const ok = await enviarPagamentoComAnexos(d, lavoroAdmin);
+        const ok = await enviarPagamentoComAnexos(d, lavoroAdmin, treinamento);
         if (ok) {
           await marcar("PAGAMENTO_ANEXOS", `${d.documento_id}-PAGAMENTO_ANEXOS`);
           algum = true;
@@ -781,8 +801,9 @@ async function enviarPagamentoComAnexos(
   d: DocPendente,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   admin: any,
+  treinamento: string[] | null,
 ): Promise<boolean> {
-  const destinos = (d.destinatarios_anexos ?? []).filter((x) => typeof x === "string" && x.includes("@"));
+  const destinos = treinamento ?? (d.destinatarios_anexos ?? []).filter((x) => typeof x === "string" && x.includes("@"));
   if (destinos.length === 0) {
     console.error("[canal-parceiro-avisos] pagamento sem destinatários de anexos", d.documento_id);
     return false;
@@ -821,7 +842,7 @@ async function enviarPagamentoComAnexos(
 
     const parceiro = d.parceiro ?? "parceiro";
     const ciclo = d.ciclo ?? "atual";
-    const assunto = `Comprovante e base do repasse de ${parceiro}, ciclo ${ciclo}`;
+    const assunto = `${treinamento ? PREFIXO_TREINO : ""}Comprovante e base do repasse de ${parceiro}, ciclo ${ciclo}`;
     const [{ render }, React, { AvisoCanalParceiroEmail }, { obterTokenGraph }] = await Promise.all([
       import("@react-email/render"),
       import("react"),
