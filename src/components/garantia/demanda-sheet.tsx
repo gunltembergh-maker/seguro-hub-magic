@@ -1277,36 +1277,55 @@ export function DemandaSheet({
     aprovouSegurado: aprovacoes.some((a) => a.quem === "segurado"),
     seguradoExigeTexto: !!segurado?.exige_texto_proprio,
   };
-  const destinos = catalogo
-    .filter((s) => s.ativo && s.fase === demanda.fase && s.codigo !== demanda.status_atual)
-    .filter((s) => !(demanda.produto === "fianca_locaticia" && s.etapa === "3"))
-    .sort((a, b) => a.ordem - b.ordem);
-  const impedimentos = destinos.map((destino) => ({
+  // Destino = mudança de ETAPA. Um botão por etapa, apontando para o status
+  // interno de entrada dela. Status da etapa atual e de etapa "qualquer" não
+  // são destino: são situação (quem está com a bola), no seletor do topo.
+  const colunas = colunasDoCatalogo(catalogo.filter((s) => s.ativo && s.fase === demanda.fase));
+  const posicaoAtual = colunas.find((c) => c.etapa === demanda.etapa)?.posicao ?? 0;
+  const destinos = colunas
+    .filter((c) => c.etapa !== demanda.etapa && c.entrada)
+    .filter((c) => !(demanda.produto === "fianca_locaticia" && c.etapa === "3"))
+    .map((c) => ({ coluna: c, destino: c.entrada as StatusCatalogo }));
+  const impedimentos = destinos.map(({ coluna, destino }) => ({
+    coluna,
     destino,
+    retorno: coluna.posicao < posicaoAtual,
     impedimento: impedimentoDaTransicao(demanda, destino, contextoMercado, tiposPresentes, contextoCrm, statusAtual),
   }));
-  const impedimentosDaFase = [...new Set(impedimentos.map((item) => item.impedimento).filter(Boolean))];
+  const impedimentosDaFase = [...new Set(impedimentos.filter((i) => !i.retorno).map((i) => i.impedimento).filter(Boolean))];
   const tudoPronto = pendencias.length === 0 && impedimentosDaFase.length === 0;
+  const situacoes = catalogo
+    .filter((s) => s.ativo && s.fase === demanda.fase && (s.etapa === demanda.etapa || s.etapa === "qualquer"))
+    .sort((a, b) => a.ordem - b.ordem);
 
-  const mudarStatus = async (codigo: string) => {
-    const destino = catalogo.find((s) => s.codigo === codigo);
-    if (!destino) return;
+  const mudarEtapa = async (coluna: (typeof colunas)[number], destino: StatusCatalogo) => {
     const impedimento = impedimentoDaTransicao(demanda, destino, contextoMercado, tiposPresentes, contextoCrm, statusAtual);
     if (impedimento) {
       toast.error(impedimento);
       return;
     }
-    // Voltar DE ETAPA pede motivo (vai para o histórico). Dentro da etapa, um clique.
-    const etapaDestino = destino.etapa === "qualquer" ? demanda.etapa : destino.etapa;
-    if (statusAtual && destino.ordem < statusAtual.ordem && etapaDestino !== demanda.etapa) {
+    // Voltar de etapa pede motivo (vai para o histórico).
+    if (coluna.posicao < posicaoAtual) {
       setRetornoPara(destino);
       return;
     }
     try {
       await trocar.mutateAsync({ demanda, destino });
-      toast.success(`Status alterado para “${destino.nome}”.`);
+      toast.success(`Demanda movida para ${rotuloEtapa(coluna.etapa, colunas)}.`);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Não foi possível mudar o status.");
+      toast.error(mensagemDeErro(e, "Não foi possível mover a demanda."));
+    }
+  };
+
+  // Troca de situação dentro da mesma etapa: um clique, sem motivo, sem trava.
+  const mudarSituacao = async (codigo: string) => {
+    const destino = situacoes.find((s) => s.codigo === codigo);
+    if (!destino || codigo === demanda.status_atual) return;
+    try {
+      await trocar.mutateAsync({ demanda, destino });
+      toast.success(`Situação: “${destino.nome}”.`);
+    } catch (e) {
+      toast.error(mensagemDeErro(e, "Não foi possível mudar a situação."));
     }
   };
 
@@ -1322,7 +1341,7 @@ export function DemandaSheet({
           </div>
           <DialogDescription className="text-left">
             {ROTULO_PRODUTO[demanda.produto] ?? demanda.produto} ·{" "}
-            {rotuloModalidade(demanda.modalidade)} · {rotuloEtapa(demanda.etapa)}
+            {rotuloModalidade(demanda.modalidade)} · {rotuloEtapa(demanda.etapa, colunas)}
             {demanda.codigo ? ` · ${demanda.codigo}` : ""}
           </DialogDescription>
         </DialogHeader>
@@ -1330,26 +1349,27 @@ export function DemandaSheet({
         <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
           <aside className="min-w-0 space-y-3 lg:order-2">
             <h3 className="font-semibold text-[#14405C]">Mover card para fase</h3>
-            {impedimentos.map(({ destino, impedimento }) => {
-              const retorno = destino.ordem < (statusAtual?.ordem ?? 0);
-              return (
-                <div key={destino.codigo} className="space-y-1">
-                  <Button
-                    className={`h-auto min-h-10 w-full justify-between whitespace-normal text-left ${
-                      tudoPronto && !impedimento && !retorno && !destino.com_quem && destino.fase !== "perdida"
-                        ? "bg-[#338B85] hover:bg-[#338B85]/90"
-                        : ""
-                    }`}
-                    variant={destino.fase === "perdida" ? "destructive" : retorno || destino.com_quem ? "outline" : "default"}
-                    disabled={!!impedimento || trocar.isPending}
-                    onClick={() => mudarStatus(destino.codigo)}
-                  >
-                    <span>{destino.nome}</span><ArrowRight className="h-4 w-4 shrink-0" />
-                  </Button>
-                  {impedimento && <p className="text-xs text-destructive">{impedimento}</p>}
-                </div>
-              );
-            })}
+            {impedimentos.map(({ coluna, destino, retorno, impedimento }) => (
+              <div key={coluna.etapa} className="space-y-1">
+                <Button
+                  className={`h-auto min-h-10 w-full justify-between whitespace-normal text-left ${
+                    tudoPronto && !impedimento && !retorno ? "bg-[#338B85] hover:bg-[#338B85]/90" : ""
+                  }`}
+                  variant={retorno ? "outline" : "default"}
+                  disabled={!!impedimento || trocar.isPending}
+                  onClick={() => mudarEtapa(coluna, destino)}
+                >
+                  <span>{retorno ? "Voltar para " : ""}{rotuloEtapa(coluna.etapa, colunas)}</span>
+                  <ArrowRight className="h-4 w-4 shrink-0" />
+                </Button>
+                {impedimento && !impedimentosDaFase.includes(impedimento) && (
+                  <p className="text-xs text-destructive">{impedimento}</p>
+                )}
+              </div>
+            ))}
+            {!impedimentos.length && (
+              <p className="text-xs text-muted-foreground">Nenhuma outra etapa disponível.</p>
+            )}
             {demanda.fase === "crm" && <BlocoRetornoCrm demandaId={demanda.id} />}
             <MotivoDialog
               aberto={!!retornoPara}
@@ -1373,7 +1393,25 @@ export function DemandaSheet({
 
           <main className="min-w-0 space-y-5 lg:order-1">
             <div className="space-y-3">
-              <Badge className="bg-[#14405C] hover:bg-[#14405C]">Fase atual: {statusAtual?.nome ?? rotuloEtapa(demanda.etapa)}</Badge>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge className="bg-[#14405C] hover:bg-[#14405C]">Etapa: {rotuloEtapa(demanda.etapa, colunas)}</Badge>
+              </div>
+              <div className="min-w-0 space-y-1" data-tour="gar-situacao">
+                <Label>Com quem está agora</Label>
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                  <Select value={demanda.status_atual} onValueChange={mudarSituacao} disabled={trocar.isPending}>
+                    <SelectTrigger className="w-full min-w-0 sm:w-80"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {situacoes.map((s) => (
+                        <SelectItem key={s.codigo} value={s.codigo}>{s.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {statusAtual?.com_quem && (
+                    <span className="text-xs text-muted-foreground">{rotuloComQuem(statusAtual.com_quem)}</span>
+                  )}
+                </div>
+              </div>
               {podeVerTempo && statusAtual?.sla_horas != null && (
                 <p className="text-xs text-muted-foreground">SLA da fase: {statusAtual.sla_horas} h</p>
               )}
