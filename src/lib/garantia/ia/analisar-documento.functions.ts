@@ -65,11 +65,10 @@ function mapearCampos(resultado: ResultadoDocumentoIA): CamposSugeridosComFonteI
     // O prompt não pede `fonte` para os números do edital nem para o prazo de
     // apresentação. A citação diz isso com todas as letras, em vez de omitir.
     const semPagina = "dados do edital/contrato (a leitura não indicou a página)";
-    if (dados?.numero_processo) gerais.numero_processo = { valor: String(dados.numero_processo), fonte: semPagina };
-    if (dados?.numero_contrato) gerais.numero_contrato = { valor: String(dados.numero_contrato), fonte: semPagina };
-    const prazo = (resultado.prazo_e_forma_de_apresentacao as { prazo?: string | null } | undefined)?.prazo;
-    const iso = dataIso(prazo);
-    if (iso) gerais.data_limite = { valor: iso, fonte: `prazo de apresentação da garantia: "${prazo}" (a leitura não indicou a página)` };
+    // Nº do contrato/processo: o de contrato quando vier; senão o de processo.
+    // Data limite não é mais sugerida (saiu da Negociação).
+    const numero = dados?.numero_contrato || dados?.numero_processo;
+    if (numero) gerais.numero_contrato = { valor: String(numero), fonte: semPagina };
     return { ...gerais, modalidades: modalidades.map((m) => ({ nome: m.nome, campos: camposModalidade(m) })) };
   }
   const fianca = resultado as ResultadoFiancaIA;
@@ -85,15 +84,6 @@ function mapearCampos(resultado: ResultadoDocumentoIA): CamposSugeridosComFonteI
     ...(temFonte(gerais.valor_garantia) && typeof gerais.valor_garantia.valor === "number" ? { importancia_segurada: { valor: gerais.valor_garantia.valor, fonte: gerais.valor_garantia.fonte } } : {}),
     ...(vigenciaPartes.length && vigenciaFontes.length ? { vigencia_exigida: { valor: vigenciaPartes.join(" · "), fonte: [...new Set(vigenciaFontes)].join(" · ") } } : {}),
   };
-}
-
-/** DD/MM/AAAA ou AAAA-MM-DD no texto → AAAA-MM-DD; qualquer outra coisa é descartada. */
-function dataIso(texto?: string | null): string | null {
-  if (!texto) return null;
-  const br = texto.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-  if (br) return `${br[3]}-${br[2]}-${br[1]}`;
-  const iso = texto.match(/(\d{4})-(\d{2})-(\d{2})/);
-  return iso ? iso[0] : null;
 }
 
 function parseResultado(valor: unknown): ResultadoDocumentoIA {

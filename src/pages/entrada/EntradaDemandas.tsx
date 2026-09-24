@@ -67,6 +67,7 @@ import {
   useCanais,
   useCriarCanal,
   useCriarCliente,
+  useAtualizarCliente,
   useCriarEntrada,
   useDuplicidadeCliente,
   useEntradas,
