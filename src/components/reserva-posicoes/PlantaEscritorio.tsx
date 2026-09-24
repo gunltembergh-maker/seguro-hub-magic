@@ -176,7 +176,7 @@ export function PlantaEscritorio({
     ? frenteOrdenada
     : frenteAtual;
 
-  const W = 980;
+  const W = 920;
   const H = 560;
 
   // Bancada do fundo: 3 mesas contínuas encostadas na janela.
@@ -217,8 +217,8 @@ export function PlantaEscritorio({
               <stop offset="100%" stopColor="#7FB6D9" />
             </linearGradient>
             <linearGradient id="vidroVaranda" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#78AFCF" stopOpacity={0.75} />
-              <stop offset="100%" stopColor="#BFE6FA" stopOpacity={0.4} />
+              <stop offset="0%" stopColor="#78AFCF" stopOpacity={0.1} />
+              <stop offset="100%" stopColor="#BFE6FA" stopOpacity={0.1} />
             </linearGradient>
             <pattern id="placasCarpete" width="52" height="52" patternUnits="userSpaceOnUse">
               <path d="M52 0H0V52" fill="none" stroke="#AAB2BB" strokeWidth={1} opacity={0.08} />
@@ -378,7 +378,7 @@ export function PlantaEscritorio({
           <rect
             x={frenteX - 10}
             y={frenteYBase - 8}
-            width={mesaW * 3 + gapX * 2 + 12}
+            width={mesaW * 3 + gapX * 2 + 10}
             height={mesaH * 2 + 16}
             rx={14}
             className="fill-black/20"
