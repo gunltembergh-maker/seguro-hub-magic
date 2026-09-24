@@ -1099,7 +1099,7 @@ function ConteudoDaFase({
   if (demanda.etapa === "2") {
     return (
       <div className="space-y-4">
-        <AbaDocumentos demanda={demanda} />
+        <AbaDocumentos demanda={demanda} ocultarIA />
         <div className="rounded-md border border-dashed p-3">
           <Button disabled>Analisar com IA</Button>
           <p className="mt-2 text-xs text-muted-foreground">Disponível na próxima etapa do desenvolvimento.</p>
@@ -1125,7 +1125,7 @@ function ConteudoDaFase({
   if (demanda.etapa === "7") {
     return (
       <div className="space-y-5">
-        <AbaDocumentos demanda={demanda} tipoInicial="minuta" />
+        <AbaDocumentos demanda={demanda} tipoInicial="minuta" ocultarIA />
         <AbaMinuta demanda={demanda} catalogo={catalogo} />
       </div>
     );
@@ -1201,6 +1201,7 @@ export function DemandaSheet({
     destino,
     impedimento: impedimentoDaTransicao(demanda, destino, contextoMercado, tiposPresentes, contextoCrm),
   }));
+  const impedimentosDaFase = [...new Set(impedimentos.map((item) => item.impedimento).filter(Boolean))];
 
   const mudarStatus = async (codigo: string) => {
     const destino = catalogo.find((s) => s.codigo === codigo);
@@ -1280,6 +1281,12 @@ export function DemandaSheet({
                 ) : (
                   <p className="mt-2 flex items-center gap-2 text-sm text-[#338B85]"><Check className="h-4 w-4" /> Tudo pronto nesta fase</p>
                 )}
+                {impedimentosDaFase.map((impedimento) => (
+                  <p key={impedimento} className="mt-2 flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span>{impedimento}</span>
+                  </p>
+                ))}
               </div>
             </div>
             <ConteudoDaFase

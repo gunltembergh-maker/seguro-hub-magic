@@ -134,10 +134,13 @@ function TresEstados({
 export function AbaDocumentos({
   demanda,
   tipoInicial,
+  ocultarIA = false,
 }: {
   demanda: DemandaLista;
   /** Tipo pré-selecionado (a etapa 7 abre a aba já com "Minuta" escolhida). */
   tipoInicial?: string;
+  /** O fluxo focado reserva a IA para a próxima rodada, sem remover a função existente da aba secundária. */
+  ocultarIA?: boolean;
 }) {
   const { data: docs = [] } = useDocumentosDaDemanda(demanda.id);
   const { data: analises = [] } = useAnalisesDaDemanda(demanda.id);
@@ -298,7 +301,7 @@ export function AbaDocumentos({
           </Button>
         </div>
 
-        {podeAnalisarPorIA(tipo) && (
+        {!ocultarIA && podeAnalisarPorIA(tipo) && (
           <label className="flex items-start gap-2">
             <Checkbox checked={comIA} onCheckedChange={(v) => setComIA(v === true)} />
             <span>
