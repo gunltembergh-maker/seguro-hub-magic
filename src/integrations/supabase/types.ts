@@ -4041,6 +4041,30 @@ export type Database = {
           },
         ]
       }
+      garantia_parametros: {
+        Row: {
+          atualizado_em: string
+          atualizado_por: string | null
+          chave: string
+          descricao: string | null
+          valor: number
+        }
+        Insert: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          chave: string
+          descricao?: string | null
+          valor: number
+        }
+        Update: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          chave?: string
+          descricao?: string | null
+          valor?: number
+        }
+        Relationships: []
+      }
       garantia_perdas: {
         Row: {
           comissao_estimada: number | null
@@ -7798,6 +7822,13 @@ export type Database = {
         Returns: {
           demanda_id: string
           inicio: string
+        }[]
+      }
+      rpc_garantia_taxa_media_modalidade: {
+        Args: { _modalidade: string }
+        Returns: {
+          amostras: number
+          media: number
         }[]
       }
       rpc_garantia_time_comercial_acesso: {
