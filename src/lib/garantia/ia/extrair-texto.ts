@@ -64,9 +64,9 @@ async function extrairPDFcomOCR(pdf: any, totalPaginas: number): Promise<{ texto
       const canvasContext = canvas.getContext("2d");
       if (!canvasContext) throw new Error("Não foi possível preparar a página para leitura.");
       await page.render({ canvas, canvasContext, viewport }).promise;
-      const entradaOcr = typeof document !== "undefined"
+      const entradaOcr = (typeof document !== "undefined"
         ? canvas
-        : (canvas as import("@napi-rs/canvas").Canvas).toBuffer("image/png");
+        : (canvas as import("@napi-rs/canvas").Canvas).toBuffer("image/png")) as Parameters<typeof worker.recognize>[0];
       const { data } = await worker.recognize(entradaOcr);
       const pageText = data.text.replace(/\s+/g, " ").trim();
       if (!pageText) continue;
