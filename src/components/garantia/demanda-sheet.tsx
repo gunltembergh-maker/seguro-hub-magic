@@ -1202,6 +1202,7 @@ export function DemandaSheet({
     impedimento: impedimentoDaTransicao(demanda, destino, contextoMercado, tiposPresentes, contextoCrm),
   }));
   const impedimentosDaFase = [...new Set(impedimentos.map((item) => item.impedimento).filter(Boolean))];
+  const tudoPronto = pendencias.length === 0 && impedimentosDaFase.length === 0;
 
   const mudarStatus = async (codigo: string) => {
     const destino = catalogo.find((s) => s.codigo === codigo);
@@ -1245,7 +1246,7 @@ export function DemandaSheet({
                 <div key={destino.codigo} className="space-y-1">
                   <Button
                     className={`h-auto min-h-10 w-full justify-between whitespace-normal text-left ${
-                      !impedimento && !retorno && !destino.com_quem && destino.fase !== "perdida"
+                      tudoPronto && !impedimento && !retorno && !destino.com_quem && destino.fase !== "perdida"
                         ? "bg-[#338B85] hover:bg-[#338B85]/90"
                         : ""
                     }`}
@@ -1278,9 +1279,9 @@ export function DemandaSheet({
                       </li>
                     ))}
                   </ul>
-                ) : (
+                ) : impedimentosDaFase.length === 0 ? (
                   <p className="mt-2 flex items-center gap-2 text-sm text-[#338B85]"><Check className="h-4 w-4" /> Tudo pronto nesta fase</p>
-                )}
+                ) : null}
                 {impedimentosDaFase.map((impedimento) => (
                   <p key={impedimento} className="mt-2 flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
                     <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
