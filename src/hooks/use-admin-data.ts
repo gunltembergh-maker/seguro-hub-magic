@@ -94,6 +94,7 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
       { key: "menu_garantia_negociacao", label: "↳ Negociação", desc: "Pipeline de negociação do ramo Garantia", child: true },
       { key: "menu_garantia_crm", label: "↳ CRM", desc: "CRM pós-aceite e apólices de Garantia", child: true },
       { key: "menu_garantia_painel", label: "↳ Painel da Gerência", desc: "Gargalos, tempos e conversão — restrito à gerência", child: true },
+      { key: "menu_garantia_comercial", label: "↳ Comercial (fila de pendências)", desc: "Fila das demandas de Garantia que estão aguardando retorno do comercial", child: true },
       { key: "menu_ramo_beneficios", label: "Benefícios" },
       { key: "menu_ramo_demais", label: "Demais Ramos" },
     ],

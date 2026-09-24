@@ -82,6 +82,7 @@ import { mensagemDeErro } from "@/lib/erro";
 import { consultarCnpjEntrada } from "@/lib/entrada/entrada-cnpj.functions";
 import { pendenciasDaDemanda } from "@/lib/garantia/documentos-regra";
 import { BlocoCadastro } from "@/components/garantia/bloco-cadastro";
+import { BlocoCocorretagem } from "@/components/garantia/bloco-cocorretagem";
 import { AjudaFase } from "@/components/garantia/ajuda-fase";
 import { fluxoIADoTipo } from "@/lib/garantia/documentos-regra";
 import { supabase } from "@/integrations/supabase/client";
@@ -1223,6 +1224,7 @@ function ConteudoDaFase({
     return (
       <div className="space-y-4">
         <BlocoCadastro demanda={demanda} />
+        <BlocoCocorretagem demandaId={demanda.id} />
         <AbaDocumentos demanda={demanda} />
       </div>
     );

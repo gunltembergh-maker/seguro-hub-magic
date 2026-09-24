@@ -38,7 +38,11 @@ export function SolicitarDocumentoComercial({ demanda }: { demanda: DemandaLista
         faltando: faltando.trim(),
         observacao: obs.trim() || null,
       });
-      toast.success(`Pedido enviado a ${qtd} ${qtd === 1 ? "pessoa" : "pessoas"} do comercial.`);
+      if (qtd === 0) {
+        toast.warning("Pedido registrado. Nenhum comercial com acesso à aba foi avisado — avise por fora até a permissão ser liberada.");
+      } else {
+        toast.success(`Pedido enviado a ${qtd} ${qtd === 1 ? "pessoa" : "pessoas"} do comercial.`);
+      }
       setAberto(false);
     } catch (e) {
       toast.error(mensagemDeErro(e, "Não foi possível enviar o pedido."));
