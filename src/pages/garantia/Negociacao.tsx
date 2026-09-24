@@ -70,6 +70,7 @@ import {
   rotuloModalidade,
 } from "@/lib/garantia/formato";
 import { cn } from "@/lib/utils";
+import { mensagemDeErro } from "@/lib/erro";
 
 const TODOS = "__todos__";
 
@@ -201,7 +202,13 @@ function Quadro({
     if (!d) return;
     const destino = coluna.status[0];
     if (!destino) return;
-    const impedimento = impedimentoDaTransicao(d, destino);
+    const origem = catalogo.find((s) => s.codigo === d.status_atual);
+    // Voltar de etapa pede motivo: pelo quadro não há onde digitar, então abre o card.
+    if (origem && destino.ordem < origem.ordem && destino.etapa !== "qualquer" && destino.etapa !== d.etapa) {
+      toast.info("Para voltar de etapa, abra o card e escolha o destino: o motivo do retorno é obrigatório.");
+      return;
+    }
+    const impedimento = impedimentoDaTransicao(d, destino, undefined, undefined, undefined, origem);
     if (impedimento) {
       toast.error(impedimento);
       return;
@@ -210,7 +217,7 @@ function Quadro({
       await trocar.mutateAsync({ demanda: d, destino });
       toast.success(`Movida para ${rotuloEtapa(coluna.etapa)}.`);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Não foi possível mover a demanda.");
+      toast.error(mensagemDeErro(e, "Não foi possível mover a demanda."));
     }
   };
 
