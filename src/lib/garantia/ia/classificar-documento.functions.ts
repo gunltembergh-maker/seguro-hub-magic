@@ -115,7 +115,7 @@ export const classificarDocumento = createServerFn({ method: "POST" })
       let sugerida: string | null = null;
       if (final.modalidades.length === 1) sugerida = final.modalidades[0].id;
       else if (final.modalidades.length > 1) {
-        const { data: demanda } = await sb.from("garantia_demandas").select("modalidade").eq("id", analise.demanda_id).maybeSingle();
+        const { data: demanda } = await sb.from("garantia_demandas").select("modalidade").eq("id", analise.demanda_id ?? "").maybeSingle();
         const doHub = modalidadeDoHubParaWorker(demanda?.modalidade ?? null);
         sugerida = doHub && final.modalidades.some((m) => m.id === doHub.id) ? doHub.id : null;
       }
