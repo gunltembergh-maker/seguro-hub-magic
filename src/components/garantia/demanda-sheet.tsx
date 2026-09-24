@@ -9,7 +9,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { AlertTriangle, Ban, Check, Loader2, Pencil, Plus, RotateCcw, Search, X } from "lucide-react";
+import { AlertTriangle, ArrowRight, Ban, Check, Loader2, Pencil, Plus, RotateCcw, Search, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -32,7 +32,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -43,7 +42,18 @@ import { AbaCotacoes } from "@/components/garantia/aba-cotacoes";
 import { AbaCuradoria } from "@/components/garantia/aba-curadoria";
 import { AbaMinuta } from "@/components/garantia/aba-minuta";
 import { AbaApolice } from "@/components/garantia/aba-apolice";
-import { useRegistrarAceite } from "@/hooks/use-garantia-crm";
+import {
+  useAprovacoesMinuta,
+  useCotacoes,
+  useRegistrarAceite,
+  useSeguradoDaDemanda,
+} from "@/hooks/use-garantia-crm";
+import { useDocumentosDaDemanda } from "@/hooks/use-garantia-documentos";
+import {
+  useConsultaAtual,
+  useLimitesDaConsulta,
+  useSeguradorasConfig,
+} from "@/hooks/use-garantia-limites";
 
 
 import {
@@ -62,6 +72,8 @@ import {
 } from "@/hooks/use-garantia-negociacao";
 import { mensagemDeErro } from "@/lib/erro";
 import { consultarCnpjEntrada } from "@/lib/entrada/entrada-cnpj.functions";
+import { pendenciasDaDemanda } from "@/lib/garantia/documentos-regra";
+import { resumirConsulta } from "@/lib/garantia/limites-regra";
 import {
   A_DEFINIR,
   MODALIDADES,
