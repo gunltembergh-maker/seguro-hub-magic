@@ -10,6 +10,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, ArrowRight, Ban, Check, ChevronDown, Loader2, Pencil, Plus, RotateCcw, Search, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -1367,6 +1368,7 @@ export function DemandaSheet({
   const [perdaAberta, setPerdaAberta] = useState(false);
   const trocar = useTrocarStatus();
   const voltar = useVoltarEtapa();
+  const qc = useQueryClient();
   const [retornoPara, setRetornoPara] = useState<StatusCatalogo | null>(null);
   const [retomarAberto, setRetomarAberto] = useState(false);
   const { data: historico = [] } = useHistoricoDemanda(demanda?.id ?? null);
