@@ -70,7 +70,7 @@ export function AbaCotacoes({ demanda }: { demanda: DemandaLista }) {
     setEditando(c);
     setChave(c.chave_mercado ?? LIVRE);
     setLivre(c.seguradora_livre ?? "");
-    setTaxa(c.taxa?.toString() ?? "");
+    setTaxa(c.taxa?.toString().replace(".", ",") ?? "");
     setPremio(c.premio?.toString() ?? "");
     setComissao(c.comissao_pct?.toString() ?? "");
     setCosseguro(c.cosseguro);

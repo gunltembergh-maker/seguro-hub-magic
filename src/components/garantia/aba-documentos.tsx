@@ -354,22 +354,24 @@ export function AbaDocumentos({
           </div>
         )}
 
-        <div className="flex flex-wrap gap-6">
-          <label className="flex items-center gap-2">
-            <Checkbox
-              checked={demanda.precisa_nomeacao}
-              onCheckedChange={(v) => salvarCampo("precisa_nomeacao", v === true)}
-            />
-            Esse caso precisa de nomeação?
-          </label>
-          <label className="flex items-center gap-2">
-            <Checkbox
-              checked={demanda.precisa_ccg}
-              onCheckedChange={(v) => salvarCampo("precisa_ccg", v === true)}
-            />
-            Esse caso precisa de CCG?
-          </label>
-        </div>
+        {!['1', '2', '3'].includes(demanda.etapa) && (
+          <div className="flex flex-wrap gap-6">
+            <label className="flex items-center gap-2">
+              <Checkbox
+                checked={demanda.precisa_nomeacao}
+                onCheckedChange={(v) => salvarCampo("precisa_nomeacao", v === true)}
+              />
+              Esse caso precisa de nomeação?
+            </label>
+            <label className="flex items-center gap-2">
+              <Checkbox
+                checked={demanda.precisa_ccg}
+                onCheckedChange={(v) => salvarCampo("precisa_ccg", v === true)}
+              />
+              Esse caso precisa de CCG?
+            </label>
+          </div>
+        )}
 
         {pendencias.length === 0 ? (
           <p className="text-[#338B85]">Nenhuma pendência de documento.</p>
