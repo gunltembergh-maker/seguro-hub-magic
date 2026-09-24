@@ -160,7 +160,7 @@ function DialogoRetorno({ item, onFechar }: { item: ItemFila; onFechar: () => vo
   const [enviando, setEnviando] = useState(false);
   const [obsCliente, setObsCliente] = useState("");
   const [modoCliente, setModoCliente] = useState(false);
-  const podeAguardarCliente = item.status_atual ? item.status_atual === "aguard_comercial" : !aguardaCliente(item);
+  const podeAguardarCliente = item.status_atual === "aguard_comercial";
   const grande = arquivos.some((f) => f.size > TAMANHO_MAXIMO_BYTES);
 
   const enviar = async () => {
