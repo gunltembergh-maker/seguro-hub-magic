@@ -12,6 +12,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { slugCanal } from "@/lib/repasse/exportar-repasse";
 
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -65,6 +67,7 @@ export function PedirLiberacaoSemContrato({
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [arquivo, setArquivo] = useState<File | null>(null);
+  const [entendeuUsoUnico, setEntendeuUsoUnico] = useState(false);
   const [enviando, setEnviando] = useState(false);
 
   useEffect(() => {
@@ -73,6 +76,7 @@ export function PedirLiberacaoSemContrato({
     setNome("");
     setEmail("");
     setArquivo(null);
+    setEntendeuUsoUnico(false);
   }, [aberto]);
 
   const podeEnviar =
@@ -80,6 +84,7 @@ export function PedirLiberacaoSemContrato({
     nome.trim().length > 0 &&
     emailValido(email) &&
     arquivo !== null &&
+    entendeuUsoUnico &&
     !enviando;
 
   async function enviar() {
@@ -111,6 +116,7 @@ export function PedirLiberacaoSemContrato({
       toast.success(r?.mensagem ?? "Pedido registrado.");
       queryClient.invalidateQueries({ queryKey: ["canal-parceiro-liberacoes"] });
       queryClient.invalidateQueries({ queryKey: ["canal-parceiro-situacao"] });
+      queryClient.invalidateQueries({ queryKey: ["minhas-notificacoes"] });
       onSucesso?.();
       onFechar();
     } catch (e) {
@@ -127,6 +133,13 @@ export function PedirLiberacaoSemContrato({
           <DialogTitle>Pedir liberação sem contrato</DialogTitle>
           <DialogDescription>{parceiro}</DialogDescription>
         </DialogHeader>
+
+        <Alert className="border-amber-600/40 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+          <AlertDescription className="font-medium">
+            Esta liberação vale para UMA única exportação ao parceiro no ciclo {String(mes).padStart(2, "0")}/{ano}.
+            Depois de exportar, para exportar de novo será preciso pedir outra liberação.
+          </AlertDescription>
+        </Alert>
 
         <p className="text-sm text-muted-foreground">
           Este parceiro não tem contrato assinado no Hub. Anexe o De Acordo do Jurídico ou da
@@ -194,6 +207,17 @@ export function PedirLiberacaoSemContrato({
               accept=".pdf,image/*,.msg,.eml"
               onChange={(e) => setArquivo(e.target.files?.[0] ?? null)}
             />
+          </div>
+
+          <div className="flex items-start gap-2">
+            <Checkbox
+              id="lib-uso-unico"
+              checked={entendeuUsoUnico}
+              onCheckedChange={(v) => setEntendeuUsoUnico(v === true)}
+            />
+            <Label htmlFor="lib-uso-unico" className="cursor-pointer leading-4">
+              Entendi que vale para uma única exportação
+            </Label>
           </div>
         </div>
 

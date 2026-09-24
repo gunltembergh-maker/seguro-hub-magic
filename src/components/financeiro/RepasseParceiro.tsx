@@ -75,6 +75,7 @@ type SituacaoContrato = {
     | "VENCIDO"
     | "VINCULO_A_CONFIRMAR"
     | "AGUARDANDO_JURIDICO"
+    | "EM_CONFERENCIA"
     | "SUSPENSO"
     | "LIBERADO_SEM_CONTRATO";
   pode_exportar: boolean;
@@ -87,6 +88,12 @@ type SituacaoContrato = {
   motivo_parado?: string | null;
   bloqueado?: boolean | null;
   bloqueio_motivo?: string | null;
+  quem_libera?: "ADMINISTRADOR" | "FINANCEIRO" | "JURIDICO" | "COMERCIAL" | null;
+  proximo_passo?: string | null;
+  liberacao_status?: "PENDENTE" | "APROVADA" | "USADA" | null;
+  liberacao_ciclo?: string | null;
+  liberacao_usada_em?: string | null;
+  pode_cobrar?: boolean | null;
 };
 
 const fmtBR = (iso: string | null | undefined) =>
@@ -94,6 +101,7 @@ const fmtBR = (iso: string | null | undefined) =>
 
 function motivoBloqueio(s?: SituacaoContrato | null) {
   if (!s) return "Parceiro sem contrato assinado no Hub";
+  if (s.motivo_parado?.trim()) return s.motivo_parado;
   if (s.situacao === "VENCIDO") return `Contrato vencido em ${fmtBR(s.vigencia_fim)}`;
   if (s.situacao === "VINCULO_A_CONFIRMAR")
     return "Contrato recebido, aguardando um administrador confirmar o vínculo";
@@ -110,6 +118,8 @@ function rotuloParado(s?: SituacaoContrato | null) {
       return "Contrato suspenso";
     case "VENCIDO":
       return "Contrato vencido";
+    case "EM_CONFERENCIA":
+      return "Contrato em conferência";
     default:
       return "Sem contrato";
   }
@@ -129,6 +139,8 @@ function BadgeContrato({ s }: { s?: SituacaoContrato | null }) {
     VINCULO_A_CONFIRMAR: { bg: "#FEF3C7", color: "#92400E", label: "A confirmar" },
     SEM_CONTRATO: { bg: "#FEE2E2", color: "#991B1B", label: "Sem contrato" },
     VENCIDO: { bg: "#FEE2E2", color: "#991B1B", label: "Vencido" },
+    EM_CONFERENCIA: { bg: "#FEF3C7", color: "#92400E", label: "Contrato em conferência" },
+    LIBERADO_SEM_CONTRATO: { bg: "#CFFAFE", color: "#155E75", label: "Liberado sem contrato, 1 exportação" },
   };
   const st = estilos[situacao] ?? estilos.SEM_CONTRATO;
   return (
@@ -264,6 +276,9 @@ export function RepasseParceiro() {
   /** Clique no Exportar de um parceiro liberado. A data vem do ciclo. */
   const pedirExport = async (canalClicado: string, modo: ModoExport) => {
     if (exportando) return;
+    const situacaoContrato = situacaoDe(canalClicado);
+    const usaLiberacao = modo === "PARCEIRO" && situacaoContrato?.situacao === "LIBERADO_SEM_CONTRATO";
+    if (usaLiberacao && !window.confirm("Esta exportação usa a liberação sem contrato. Depois dela, para exportar de novo será preciso pedir outra. Continuar?")) return;
     setExportando(canalClicado);
     const toastId = toast.loading("Gerando planilha…");
     try {
@@ -279,6 +294,9 @@ export function RepasseParceiro() {
         toast.warning("Resultado truncado em 20.000 linhas. Ajuste os filtros para exportar tudo.", { duration: 8000 });
       }
       toast.success(r.arquivo, { id: toastId });
+      if (usaLiberacao) toast.success("Liberação usada. Para exportar de novo, peça outra.");
+      queryClient.invalidateQueries({ queryKey: ["canal-parceiro-situacao"] });
+      queryClient.invalidateQueries({ queryKey: ["minhas-notificacoes"] });
     } catch (e: any) {
       toast.error(e?.message || "Falha ao gerar a planilha", { id: toastId });
     } finally {
@@ -993,6 +1011,11 @@ export function RepasseParceiro() {
           canalId={situacaoDe(bloqueado.canal)?.canal_id ?? null}
           situacao={situacaoDe(bloqueado.canal)?.situacao ?? null}
           motivo={motivoBloqueio(situacaoDe(bloqueado.canal))}
+          proximoPasso={situacaoDe(bloqueado.canal)?.proximo_passo ?? null}
+          liberacaoStatus={situacaoDe(bloqueado.canal)?.liberacao_status ?? null}
+          liberacaoUsadaEm={situacaoDe(bloqueado.canal)?.liberacao_usada_em ?? null}
+          quemLibera={situacaoDe(bloqueado.canal)?.quem_libera ?? null}
+          podeCobrar={situacaoDe(bloqueado.canal)?.pode_cobrar === true}
           valor={bloqueado.valor}
           ano={mesAncora.ano}
           mes={mesAncora.mes}
@@ -1364,6 +1387,18 @@ function LinhaCanal({
           )}
         </div>
         {info && <div className="text-[11px] text-gray-500">{info.parcelas} parcelas</div>}
+        {situacao?.pode_exportar !== true && situacao?.quem_libera ? (
+          <div className="mt-1 space-y-1">
+            <BadgeQuemLiberaFinanceiro quem={situacao.quem_libera} />
+            <p className="max-w-72 text-[11px] text-gray-500">
+              {situacao.liberacao_status === "USADA"
+                ? `Liberação usada${situacao.liberacao_usada_em ? ` em ${new Date(situacao.liberacao_usada_em).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}` : ""}. Para exportar de novo, peça outra liberação.`
+                : situacao.proximo_passo ?? situacao.motivo_parado}
+            </p>
+          </div>
+        ) : situacao?.situacao === "LIBERADO_SEM_CONTRATO" && situacao.proximo_passo ? (
+          <p className="mt-1 max-w-72 text-[11px] text-gray-500">{situacao.proximo_passo}</p>
+        ) : null}
       </TableCell>
       <TableCell className="border-l text-right font-mono tabular-nums" style={{ borderColor: border }}>
         {valorCell(l.m1avencer)}
@@ -1385,6 +1420,12 @@ function LinhaCanal({
       <TableCell className="text-right">{pill(l.situacao)}</TableCell>
     </TableRow>
   );
+}
+
+function BadgeQuemLiberaFinanceiro({ quem }: { quem: NonNullable<SituacaoContrato["quem_libera"]> }) {
+  const rotulo = quem === "COMERCIAL" ? "você" : quem === "ADMINISTRADOR" ? "Administrador" : quem === "FINANCEIRO" ? "Financeiro" : "Jurídico";
+  const classe = quem === "ADMINISTRADOR" ? "border-sky-600/40 bg-sky-50 text-sky-800" : quem === "FINANCEIRO" ? "border-emerald-600/40 bg-emerald-50 text-emerald-800" : quem === "JURIDICO" ? "border-violet-600/40 bg-violet-50 text-violet-800" : "border-amber-600/40 bg-amber-50 text-amber-800";
+  return <Badge variant="outline" className={classe}>Depende de: {rotulo}</Badge>;
 }
 
 function SubtotalRow({
