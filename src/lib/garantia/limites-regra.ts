@@ -88,9 +88,24 @@ export interface ResumoConsulta {
   total_sem_limite: number;
   total_nao_consultado: number;
   capacidade_total: number;
-  /** DRE e balanço só viram obrigação quando NINGUÉM liberou limite. */
-  exige_cadastro: boolean;
+  /**
+   * true/false quando a IS está preenchida; null quando ainda não dá para
+   * concluir (sem IS). Com null, o exige_cadastro da demanda fica como está.
+   */
+  exige_cadastro: boolean | null;
+  /** Seguradoras com portal cujo limite disponível cobre sozinho a IS. */
+  cobrem_sozinhas: string[];
+  /** IS usada na conta (null = não preenchida). */
+  importancia_segurada: number | null;
 }
+
+/** Limite disponível da linha; lançamento manual só traz o total. */
+export const limiteDisponivel = (l: LimiteLinha): number | null =>
+  l.limite_disponivel != null
+    ? Number(l.limite_disponivel)
+    : l.limite_total != null
+      ? Number(l.limite_total)
+      : null;
 
 /**
  * Obrigatórias são só as 18 com portal. As 17 sem portal são opcionais e não
@@ -99,6 +114,7 @@ export interface ResumoConsulta {
 export function resumirConsulta(
   config: SeguradoraConfig[],
   limites: LimiteLinha[],
+  importanciaSegurada: number | null,
 ): ResumoConsulta {
   const porChave = new Map(limites.map((l) => [l.chave_mercado, l]));
   const obrigatorias = config.filter((c) => c.tem_portal && c.ativa_garantia);
@@ -125,6 +141,27 @@ export function resumirConsulta(
     }
   }
 
+  // REGRA DO CADASTRO (mudou duas vezes — esta é a vigente):
+  //   exige_cadastro = true quando NENHUMA seguradora com portal
+  //   (tem_portal = true) tem limite disponível >= importância segurada.
+  //   Não é "ninguém liberou nada": é "ninguém cobre sozinho o valor".
+  //   · As sem portal não entram na conta: são opcionais e não decidem nada.
+  //   · Só conta linha em com_limite (falha técnica e recusa não cobrem).
+  //   · Sem IS preenchida, a regra não conclui (null).
+  //   Versões anteriores: (1) três exercícios de DRE/balanço sempre;
+  //   (2) exige quando nenhuma seguradora tem limite algum.
+  const comPortal = new Set(config.filter((c) => c.tem_portal).map((c) => c.chave_mercado));
+  const rotulo = new Map(config.map((c) => [c.chave_mercado, c.rotulo]));
+  const is = importanciaSegurada != null && Number(importanciaSegurada) > 0 ? Number(importanciaSegurada) : null;
+  const cobrem =
+    is == null
+      ? []
+      : limites
+          .filter((l) => comPortal.has(l.chave_mercado))
+          .filter((l) => (l.grupo_mercado ?? grupoDoStatusMercado(l.status_mercado)) === "com_limite")
+          .filter((l) => (limiteDisponivel(l) ?? 0) >= is)
+          .map((l) => rotulo.get(l.chave_mercado) ?? l.chave_mercado);
+
   return {
     faltantes,
     completa: faltantes.length === 0,
@@ -132,10 +169,9 @@ export function resumirConsulta(
     total_sem_limite: sem,
     total_nao_consultado: nao,
     capacidade_total: capacidade,
-    // Exige cadastro quando, e somente quando, ninguém ficou em com_limite.
-    // Limite insuficiente para a IS não dispara isso sozinho: quem decide é a
-    // pessoa, marcando à mão.
-    exige_cadastro: com === 0,
+    exige_cadastro: is == null ? null : cobrem.length === 0,
+    cobrem_sozinhas: cobrem,
+    importancia_segurada: is,
   };
 }
 
@@ -150,7 +186,7 @@ export async function recalcularConsulta(
   consultaId: string,
   demandaId: string | null,
 ): Promise<ResumoConsulta | null> {
-  const [{ data: config }, { data: limites }] = await Promise.all([
+  const [{ data: config }, { data: limites }, { data: demanda }] = await Promise.all([
     cliente
       .from("garantia_seguradoras_config")
       .select("chave_mercado, rotulo, identificador_api, tem_portal, ativa_garantia, observacao"),
@@ -160,12 +196,16 @@ export async function recalcularConsulta(
         "id, consulta_id, cliente_id, chave_mercado, status_mercado, grupo_mercado, limite_total, limite_disponivel, taxa, modalidades, data_ultimo_cadastro, nomeacao, mensagem, origem, atualizado_em",
       )
       .eq("consulta_id", consultaId),
+    demandaId
+      ? cliente.from("garantia_demandas").select("importancia_segurada").eq("id", demandaId).maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
   if (!config) return null;
 
   const resumo = resumirConsulta(
     (config ?? []) as SeguradoraConfig[],
     (limites ?? []) as LimiteLinha[],
+    (demanda?.importancia_segurada ?? null) as number | null,
   );
 
   await cliente
@@ -179,7 +219,8 @@ export async function recalcularConsulta(
     })
     .eq("id", consultaId);
 
-  if (demandaId) {
+  // Sem IS a regra não conclui: exige_cadastro da demanda fica como está.
+  if (demandaId && resumo.exige_cadastro !== null) {
     await cliente
       .from("garantia_demandas")
       .update({ exige_cadastro: resumo.exige_cadastro })
