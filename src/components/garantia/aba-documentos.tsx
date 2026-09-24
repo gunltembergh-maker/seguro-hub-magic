@@ -32,7 +32,7 @@ import {
   useVincularAnexosJudiciais,
   type DocumentoDemanda,
 } from "@/hooks/use-garantia-documentos";
-import { useAtualizarDemanda, type DemandaLista } from "@/hooks/use-garantia-negociacao";
+import { totalCosseguro, useAtualizarDemanda, type DemandaLista } from "@/hooks/use-garantia-negociacao";
 import {
   ROTULO_GRUPO_DOC,
   TAMANHO_MAXIMO_BYTES,
@@ -194,6 +194,9 @@ export function AbaDocumentos({
           dre_assinados: demanda.dre_assinados,
           precisa_nomeacao: demanda.precisa_nomeacao,
           precisa_ccg: demanda.precisa_ccg,
+          importancia_segurada: demanda.importancia_segurada,
+          cosseguro_total: totalCosseguro(demanda),
+          cadastro_dispensado_motivo: demanda.cadastro_dispensado_motivo,
         },
         tiposPresentes,
       ),
@@ -338,14 +341,14 @@ export function AbaDocumentos({
 
         {demanda.exige_cadastro ? (
           <p className="rounded-md bg-amber-50 p-2 text-amber-900">
-            A consulta a mercado não encontrou limite em nenhuma seguradora, então DRE e balanço
-            passam a ser exigidos. <strong>Não há mínimo de exercícios</strong>: um DRE e um balanço
-            já bastam — anexe o que o cliente conseguir enviar.
+            Nenhuma seguradora com portal cobre sozinha a importância segurada, então o cadastro
+            passa a ser exigido. <strong>Um documento basta</strong>: DRE, balanço ou alteração
+            contratual. O cosseguro e a dispensa justificada, acima, também resolvem.
           </p>
         ) : (
           <p className="text-muted-foreground">
-            Documentos de cadastro não são obrigatórios neste caso: só passam a ser quando a consulta
-            a mercado não encontra limite em nenhuma seguradora.
+            Documentos de cadastro não são obrigatórios neste caso: só passam a ser quando nenhuma
+            seguradora com portal cobre sozinha a importância segurada.
           </p>
         )}
 

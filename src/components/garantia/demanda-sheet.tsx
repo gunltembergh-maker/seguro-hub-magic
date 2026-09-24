@@ -80,6 +80,7 @@ import {
 import { mensagemDeErro } from "@/lib/erro";
 import { consultarCnpjEntrada } from "@/lib/entrada/entrada-cnpj.functions";
 import { pendenciasDaDemanda } from "@/lib/garantia/documentos-regra";
+import { BlocoCadastro } from "@/components/garantia/bloco-cadastro";
 import { fluxoIADoTipo } from "@/lib/garantia/documentos-regra";
 import { supabase } from "@/integrations/supabase/client";
 import type { AnaliseIA } from "@/lib/garantia/garantia-ia";
@@ -1220,7 +1221,13 @@ function ConteudoDaFase({
     );
   }
   if (demanda.etapa === "3" && demanda.produto !== "fianca_locaticia") return <AbaLimites demanda={demanda} />;
-  if (demanda.etapa === "3b") return <AbaDocumentos demanda={demanda} />;
+  if (demanda.etapa === "3b")
+    return (
+      <div className="space-y-4">
+        <BlocoCadastro demanda={demanda} />
+        <AbaDocumentos demanda={demanda} />
+      </div>
+    );
   if (demanda.etapa === "4") return <AbaCotacoes demanda={demanda} />;
   if (demanda.etapa === "5") {
     return (
@@ -1293,7 +1300,10 @@ export function DemandaSheet({
 
   const statusAtual = catalogo.find((s) => s.codigo === demanda.status_atual);
   const tiposPresentes = new Set(docs.filter((d) => !d.substituido_por_id).map((d) => d.tipo));
-  const pendencias = pendenciasDaDemanda(demanda, tiposPresentes).filter((p) => p.etapa === demanda.etapa);
+  const pendencias = pendenciasDaDemanda(
+    { ...demanda, cosseguro_total: totalCosseguro(demanda) },
+    tiposPresentes,
+  ).filter((p) => p.etapa === demanda.etapa);
   const resumoMercado = resumirConsulta(seguradorasConfig, limites);
   const contextoMercado = {
     consultaValida: !!consulta && new Date(consulta.valida_ate).getTime() > Date.now(),
