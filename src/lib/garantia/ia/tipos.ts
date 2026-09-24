@@ -69,6 +69,8 @@ export type ResultadoDocumentoIA = ResultadoSeguroGarantiaIA | ResultadoFiancaIA
 export interface CampoSugeridoComFonte<T = string | number | null> {
   valor: T;
   fonte: string;
+  /** Página exata localizada no texto (localizar-pagina.ts), quando houver. */
+  pagina?: number | null;
 }
 
 export interface CamposSugeridosComFonteIA {
@@ -80,6 +82,7 @@ export interface CamposSugeridosComFonteIA {
   percentual_garantia?: CampoSugeridoComFonte<number>;
   /** Nome do segurado (ou locador); o CNPJ ajuda a achar o cadastro. */
   segurado?: CampoSugeridoComFonte<string> & { cnpj?: string | null };
+  tomador?: CampoSugeridoComFonte<string> & { cnpj?: string | null };
   /** AAAA-MM-DD. */
   data_limite?: CampoSugeridoComFonte<string>;
   modalidades?: Array<{ nome: string; campos: CamposSugeridosComFonteIA }>;

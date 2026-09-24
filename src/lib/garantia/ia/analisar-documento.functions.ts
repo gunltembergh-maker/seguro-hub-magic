@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Json } from "@/integrations/supabase/types";
+import { buscarModalidade, flowDaModalidade, modalidadeValida } from "./modalidades";
 import type { CamposSugeridosComFonteIA, ModalidadeSeguroGarantiaIA, ResultadoDocumentoIA, ResultadoFiancaIA, ResultadoSeguroGarantiaIA, ValorComFonte } from "./tipos";
 
 const MAX_JOB_ITERATIONS = 1200;
@@ -11,7 +12,11 @@ const FLUXOS: Record<string, string> = {
   fianca_locaticia: "fianca-locaticia",
   financeiro: "analise-financeira",
 };
-const entrada = z.object({ analiseId: z.string().uuid() });
+const entrada = z.object({
+  analiseId: z.string().uuid(),
+  // Opcional: sem ela o comportamento é o de antes (análise de todas as modalidades).
+  modalidadeId: z.string().refine((v) => modalidadeValida(v), "modalidade_invalida").optional(),
+});
 
 export type RetornoAnaliseDocumento =
   | { ok: true; situacao: string; analiseId: string; resultado?: Json | null; resumo?: string | null; campos_sugeridos?: Json | null }
@@ -50,6 +55,10 @@ function mapearCampos(resultado: ResultadoDocumentoIA): CamposSugeridosComFonteI
     const segurado = resultado.segurado as { valor?: string | null; cnpj?: string | null; fonte?: string | null } | undefined;
     if (segurado?.valor && segurado.fonte?.trim()) {
       gerais.segurado = { valor: String(segurado.valor), fonte: segurado.fonte, cnpj: segurado.cnpj ?? null };
+    }
+    const tomador = resultado.tomador as { valor?: string | null; cnpj?: string | null; fonte?: string | null } | undefined;
+    if (tomador?.valor && tomador.fonte?.trim()) {
+      gerais.tomador = { valor: String(tomador.valor), fonte: tomador.fonte, cnpj: tomador.cnpj ?? null };
     }
     // O prompt não pede `fonte` para os números do edital nem para o prazo de
     // apresentação. A citação diz isso com todas as letras, em vez de omitir.
@@ -118,7 +127,13 @@ export const analisarDocumento = createServerFn({ method: "POST" })
     }
     if (!["solicitada", "erro"].includes(existente.situacao)) return { ok: false, erro: "estado_invalido" };
     const ids = (existente.documentos_ids?.length ? existente.documentos_ids : existente.documento_id ? [existente.documento_id] : []) as string[];
-    if (!ids.length || !FLUXOS[existente.fluxo]) return { ok: false, erro: "documento_invalido" };
+    const modalidade = data.modalidadeId
+      ? buscarModalidade(data.modalidadeId, existente.fluxo === "fianca_locaticia" ? "fianca_locaticia" : "seguro_garantia")
+      : null;
+    if (data.modalidadeId && !modalidade) return { ok: false, erro: "modalidade_invalida" };
+    if (modalidade && existente.fluxo === "financeiro") return { ok: false, erro: "fluxo_nao_suportado" };
+    const fluxoFinal = modalidade ? modalidade.produto : existente.fluxo;
+    if (!ids.length || !FLUXOS[fluxoFinal]) return { ok: false, erro: "documento_invalido" };
 
     const { data: travada, error: erroTrava } = await sb.from("garantia_analises_ia")
       .update({ situacao: "processando", erro_mensagem: null })
@@ -128,28 +143,23 @@ export const analisarDocumento = createServerFn({ method: "POST" })
     if (!travada) return { ok: true, situacao: "processando", analiseId: existente.id };
 
     try {
-      const { data: documentos, error: erroDoc } = await sb.from("garantia_documentos")
-        .select("id, caminho, nome_arquivo, mime_type, externo")
-        .in("id", ids);
-      if (erroDoc || !documentos || documentos.length !== ids.length) throw new Error("Documento interno não encontrado.");
-      const { extrairConteudoArquivo, mapArquivosParaJob } = await import("./extrair-texto");
-      const extraidos = [];
-      // Mesma ordem em que a pessoa escolheu: o primeiro é o documento principal.
-      for (const id of ids) {
-        const documento = documentos.find((d) => d.id === id)!;
-        if (!documento.caminho || documento.externo) throw new Error("Documento interno não encontrado.");
-        const { data: arquivo, error: erroDownload } = await sb.storage
-          .from("garantia-pipeline-anexos")
-          .download(documento.caminho);
-        if (erroDownload || !arquivo) throw new Error(`Falha ao baixar documento: ${erroDownload?.message ?? "arquivo vazio"}`);
-        if (arquivo.size === 0) throw new Error("O documento armazenado está vazio.");
-        const extraido = await extrairConteudoArquivo(new File([arquivo], documento.nome_arquivo, {
-          type: documento.mime_type ?? "application/pdf",
-        }));
-        if (!extraido.partes.length && !extraido.conteudo.trim()) throw new Error(`O documento ${documento.nome_arquivo} não possui texto legível.`);
-        extraidos.push(extraido);
+      const { baixarEExtrair } = await import("./documentos-analise.server");
+      const { mapArquivosParaJob } = await import("./extrair-texto");
+      const extraidos = await baixarEExtrair(sb, ids);
+      const paginas = extraidos.flatMap((e) => e.paginas ?? []);
+      let payload: Record<string, unknown> = { flow: FLUXOS[existente.fluxo], files: mapArquivosParaJob(extraidos) };
+      if (modalidade) {
+        const ajuste: { modalidade_id: string; modalidade_rotulo: string; fluxo?: string } = { modalidade_id: modalidade.id, modalidade_rotulo: modalidade.label };
+        if (existente.fluxo !== modalidade.produto) ajuste.fluxo = modalidade.produto;
+        await sb.from("garantia_analises_ia").update(ajuste).eq("id", existente.id);
+        // Mesmo formato de executarAnaliseEmLotes (public/analise-limite/deepseek.js).
+        payload = {
+          flow: flowDaModalidade(modalidade),
+          files: mapArquivosParaJob(extraidos),
+          context: { modalidade: { id: modalidade.id, label: modalidade.label }, consideracoes: "" },
+        };
       }
-      const inicio = await postJob("", { flow: FLUXOS[existente.fluxo], files: mapArquivosParaJob(extraidos) });
+      const inicio = await postJob("", payload);
       const jobId = typeof inicio.jobId === "string" ? inicio.jobId : null;
       if (!jobId || !/^[A-Za-z0-9_-]{1,128}$/.test(jobId)) throw new Error("O serviço não retornou um identificador válido.");
       await sb.from("garantia_analises_ia").update({ job_id: jobId }).eq("id", existente.id);
@@ -169,6 +179,11 @@ export const analisarDocumento = createServerFn({ method: "POST" })
         : resultado.tipo === "Seguro Garantia" ? (resultado as ResultadoSeguroGarantiaIA).resumo_executivo : (resultado as ResultadoFiancaIA).resumo;
       // A leitura financeira não preenche campos da demanda: é só leitura.
       const campos = existente.fluxo === "financeiro" ? {} : mapearCampos(resultado);
+      if (existente.fluxo !== "financeiro" && paginas.length) {
+        const { anotarPaginasCampos, anotarPaginasTrechos } = await import("./localizar-pagina");
+        anotarPaginasCampos(campos as Record<string, unknown>, paginas);
+        anotarPaginasTrechos(resultado as unknown as Record<string, unknown>, paginas);
+      }
       const { error: erroSalvar } = await sb.from("garantia_analises_ia").update({ situacao: "concluida", resultado: resultado as unknown as Json, resumo: resumo || null, campos_sugeridos: campos as unknown as Json, erro_mensagem: null }).eq("id", existente.id);
       if (erroSalvar) throw erroSalvar;
       return { ok: true, situacao: "concluida", analiseId: existente.id, resultado: resultado as unknown as Json, resumo: resumo || null, campos_sugeridos: campos as unknown as Json };
@@ -180,8 +195,8 @@ export const analisarDocumento = createServerFn({ method: "POST" })
         stack: erro instanceof Error ? erro.stack : undefined,
       });
       // Só mensagens já escritas para o usuário neste fluxo chegam à tela.
-      const paraUsuario = /^(Este PDF parece escaneado|O documento .+ não possui texto legível\.|O documento armazenado está vazio\.)/.test(detalhe);
-      const mensagem = paraUsuario ? detalhe : "Não foi possível concluir a análise deste documento. Tente novamente.";
+      const { mensagemParaUsuario } = await import("./documentos-analise.server");
+      const mensagem = mensagemParaUsuario(detalhe, "Não foi possível concluir a análise deste documento. Tente novamente.");
       await sb.from("garantia_analises_ia").update({ situacao: "erro", erro_mensagem: mensagem }).eq("id", existente.id);
       return { ok: false, erro: "analise_falhou", mensagem };
     }
