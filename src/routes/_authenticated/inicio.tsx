@@ -36,17 +36,27 @@ function InicioHome() {
             onRefresh={refetch}
           />
 
-          <BlocoLavoroKpis canSee={canSeeLavoro} />
+          {canSeeLavoro ? (
+            <>
+              <BlocoLavoroKpis canSee={canSeeLavoro} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
-            <div className="lg:col-span-3 space-y-5">
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+                <div className="lg:col-span-3 space-y-5">
+                  <UltimasAtualizacoesCard timestamps={timestamps} isLoading={isLoading} />
+                  <MuralNoticias />
+                </div>
+                <div className="lg:col-span-2">
+                  <AcessoRapidoCard role={effectiveRole} permissoes={effectivePermissoes} />
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <AcessoRapidoCard role={effectiveRole} permissoes={effectivePermissoes} destaque />
               <UltimasAtualizacoesCard timestamps={timestamps} isLoading={isLoading} />
               <MuralNoticias />
-            </div>
-            <div className="lg:col-span-2">
-              <AcessoRapidoCard role={effectiveRole} permissoes={effectivePermissoes} />
-            </div>
-          </div>
+            </>
+          )}
         </div>
       </div>
     </div>
