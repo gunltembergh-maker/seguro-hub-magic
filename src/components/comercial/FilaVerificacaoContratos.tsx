@@ -764,7 +764,16 @@ function ConferirDialog({
         </div>
 
         {resultado ? (
-          resultado.situacao === "ATIVO" ? (
+          vencido ? (
+            <Alert className="border-amber-600/40 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+              <AlertDescription>
+                Contrato válido, mas a vigência terminou em {fimFormatado}.
+                {erroRenovar ? (
+                  <span className="mt-2 block font-medium text-destructive">{erroRenovar}</span>
+                ) : null}
+              </AlertDescription>
+            </Alert>
+          ) : resultado.situacao === "ATIVO" ? (
             <Alert className="border-emerald-600/40 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-100">
               <AlertDescription>
                 Contrato ativo. O repasse deste parceiro foi liberado.
@@ -773,20 +782,27 @@ function ConferirDialog({
           ) : (
             <Alert className="border-amber-600/40 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
               <AlertDescription>
-                {resultado.motivo ?? `Situação: ${resultado.situacao ?? "—"}.`}
+                {resultado.motivo ?? `Situação: ${resultado.situacao ?? "não informada"}.`}
               </AlertDescription>
             </Alert>
           )
         ) : null}
 
         <DialogFooter>
-          <Button variant="outline" onClick={onFechar} disabled={salvando}>
+          <Button variant="outline" onClick={onFechar} disabled={salvando || renovando}>
             {resultado ? "Fechar" : "Cancelar"}
           </Button>
-          <Button onClick={confirmar} disabled={!motivo.trim() || salvando}>
-            {salvando && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Confirmar
-          </Button>
+          {vencido ? (
+            <Button onClick={renovar} disabled={renovando || !motivo.trim()}>
+              {renovando && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Renovar pela cláusula
+            </Button>
+          ) : (
+            <Button onClick={confirmar} disabled={!motivo.trim() || salvando}>
+              {salvando && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Confirmar
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
