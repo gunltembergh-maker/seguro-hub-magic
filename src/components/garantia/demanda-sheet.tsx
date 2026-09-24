@@ -61,6 +61,7 @@ import {
 import {
   MOTIVOS_PERDA,
   impedimentoDaTransicao,
+  colunasDoCatalogo,
   useAtualizarDemanda,
   useBuscaSegurados,
   useCompletarTriagem,
@@ -91,6 +92,7 @@ import {
   duracaoLegivel,
   moeda,
   rotuloEtapa,
+  rotuloComQuem,
   rotuloModalidade,
 } from "@/lib/garantia/formato";
 

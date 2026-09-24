@@ -133,7 +133,7 @@ export interface DemandaChecklist {
 
 export interface Pendencia {
   /** Etapa a que a pendência pertence. */
-  etapa: "2" | "3b" | "8";
+  etapa: "1" | "3b" | "8";
   /** Tipo de documento que resolve a pendência, quando houver um só. */
   tipo?: string;
   /** O que falta, em uma frase. */
@@ -145,10 +145,10 @@ export interface Pendencia {
 }
 
 /**
- * Etapa 2 (análise técnica): o documento do contrato é obrigatório.
+ * Etapa 1 (análise da demanda): o documento do contrato é obrigatório.
  * Aditivo e apostilamento são opcionais e nunca travam.
  */
-export function pendenciasEtapa2(
+export function pendenciasAnaliseDemanda(
   demanda: DemandaChecklist,
   tiposPresentes: Set<string>,
 ): Pendencia[] {
@@ -160,10 +160,10 @@ export function pendenciasEtapa2(
   const nomes = aceitos.map(rotuloTipoDocumento).join(", ");
   return [
     {
-      etapa: "2",
+      etapa: "1",
       texto: `Anexe o documento do contrato (${nomes}).`,
       motivo:
-        "A análise técnica é feita em cima do documento que define o objeto e as exigências. Sem ele não há o que analisar.",
+        "A análise da demanda é feita em cima do documento que define o objeto e as exigências. Sem ele não há o que analisar.",
       bloqueia: true,
     },
   ];
@@ -287,5 +287,5 @@ export function pendenciasDaDemanda(
   demanda: DemandaChecklist,
   tiposPresentes: Set<string>,
 ): Pendencia[] {
-  return [...pendenciasEtapa2(demanda, tiposPresentes), ...pendenciasEtapa3b(demanda, tiposPresentes)];
+  return [...pendenciasAnaliseDemanda(demanda, tiposPresentes), ...pendenciasEtapa3b(demanda, tiposPresentes)];
 }

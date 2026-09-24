@@ -73,17 +73,43 @@ export const TIPOS_ALTERACAO = [
   { valor: "outro", rotulo: "Outro" },
 ];
 
-export const ROTULO_ETAPA: Record<string, string> = {
-  "1": "1 Triagem",
-  "2": "2 Análise técnica",
-  "3": "3 Consulta a mercado",
-  "3b": "3b Documentos de cadastro",
-  "4": "4 Cotação",
-  "5": "5 Proposta",
-  "6": "6 Curadoria",
-  "7": "7 Minuta",
-  "8": "8 Emissão",
-  "9": "9 Financeiro",
+/** Nome de cada etapa. O NÚMERO mostrado é a posição no catálogo, não o código. */
+export const NOME_ETAPA: Record<string, string> = {
+  "1": "Análise da demanda",
+  // "2" foi fundida com a "1"; fica só para ler histórico antigo.
+  "2": "Análise da demanda",
+  "3": "Consulta a mercado",
+  "3b": "Cadastro",
+  "4": "Cotação",
+  "5": "Proposta",
+  "6": "Curadoria",
+  "7": "Minuta",
+  "8": "Emissão",
+  "9": "Financeiro",
 };
 
-export const rotuloEtapa = (etapa: string) => ROTULO_ETAPA[etapa] ?? `Etapa ${etapa}`;
+/** Posição padrão (ordem atual do catálogo), usada quando não há colunas à mão. */
+const POSICAO_PADRAO: Record<string, number> = {
+  "1": 1, "2": 1, "3": 2, "3b": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9,
+};
+
+export const ROTULO_ETAPA: Record<string, string> = Object.fromEntries(
+  Object.entries(NOME_ETAPA).map(([k, v]) => [k, `${POSICAO_PADRAO[k]} ${v}`]),
+);
+
+/**
+ * Rótulo da etapa. Com as colunas do catálogo (colunasDoCatalogo), o número é a
+ * posição da etapa ali; sem elas, a posição padrão da ordem atual.
+ */
+export const rotuloEtapa = (
+  etapa: string,
+  colunas?: { etapa: string; posicao: number }[],
+) => {
+  const nome = NOME_ETAPA[etapa] ?? `Etapa ${etapa}`;
+  const pos = colunas?.find((c) => c.etapa === (etapa === "2" ? "1" : etapa))?.posicao;
+  if (pos != null) return `${pos} ${nome}`;
+  return ROTULO_ETAPA[etapa] ?? nome;
+};
+
+/** De quem é a espera, lido de garantia_status_catalogo.com_quem. */
+export const rotuloComQuem = (comQuem: string) => `com ${comQuem.replace(/_/g, " ")}`;
