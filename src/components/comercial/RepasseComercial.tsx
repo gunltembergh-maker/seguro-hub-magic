@@ -294,6 +294,11 @@ export type ParadoInfo = {
   motivo_parado: string | null;
   bloqueado: boolean;
   bloqueio_motivo: string | null;
+  quem_libera: "ADMINISTRADOR" | "FINANCEIRO" | "JURIDICO" | "COMERCIAL" | null;
+  proximo_passo: string | null;
+  liberacao_status: "PENDENTE" | "APROVADA" | "USADA" | null;
+  liberacao_usada_em: string | null;
+  pode_cobrar: boolean;
 };
 
 export function RepasseComercial({
@@ -455,6 +460,9 @@ export function RepasseComercial({
 
   async function exportar(canal: string) {
     if (exportando) return;
+    const estado = paradoPorChave.get(chaveCanal(canal));
+    const usaLiberacao = estado?.situacao === "LIBERADO_SEM_CONTRATO";
+    if (usaLiberacao && !window.confirm("Esta exportação usa a liberação sem contrato. Depois dela, para exportar de novo será preciso pedir outra. Continuar?")) return;
     setExportando(canal);
     const toastId = toast.loading("Gerando a relação do parceiro…");
     try {
@@ -467,6 +475,9 @@ export function RepasseComercial({
         situacaoRepasse: null,
       });
       toast.success(r.arquivo, { id: toastId });
+      if (usaLiberacao) toast.success("Liberação usada. Para exportar de novo, peça outra.");
+      queryClient.invalidateQueries({ queryKey: ["canal-parceiro-situacao"] });
+      queryClient.invalidateQueries({ queryKey: ["minhas-notificacoes"] });
     } catch (e) {
       toast.error(mensagemDeErro(e), { id: toastId });
     } finally {
@@ -835,7 +846,15 @@ function LinhaRepasse({
       <TableCell className="text-right" data-tour={primeiraLinha ? "cp-repasse-acoes" : undefined}>
         <div className="flex flex-wrap items-center justify-end gap-1">
           {!liberado ? (
-            <BadgeParado parado={parado} />
+            <div className="space-y-1 text-left">
+              <BadgeParado parado={parado} />
+              {parado?.quem_libera ? <BadgeDependencia quem={parado.quem_libera} /> : null}
+              <p className="max-w-64 text-xs text-muted-foreground">
+                {parado?.liberacao_status === "USADA"
+                  ? `Liberação usada${parado.liberacao_usada_em ? ` em ${fmtCurto(parado.liberacao_usada_em)}` : ""}. Para exportar de novo, peça outra liberação.`
+                  : parado?.proximo_passo ?? parado?.motivo_parado}
+              </p>
+            </div>
           ) : !demanda ? (
             <Button size="sm" variant="default" onClick={onPedir} disabled={cicloCorrente <= 0}>
               <Send className="mr-2 h-4 w-4" />
@@ -915,7 +934,7 @@ function LinhaRepasse({
                 <FileText className="mr-2 h-4 w-4" />
                 Ver o contrato
               </DropdownMenuItem>
-              {!liberado ? (
+              {!liberado || parado?.liberacao_status === "USADA" ? (
                 <DropdownMenuItem onSelect={onPedirLiberacao}>
                   <Lock className="mr-2 h-4 w-4" />
                   Pedir liberação sem contrato
@@ -962,6 +981,12 @@ function LinhaRepasse({
       </TableCell>
     </TableRow>
   );
+}
+
+function BadgeDependencia({ quem }: { quem: NonNullable<ParadoInfo["quem_libera"]> }) {
+  const rotulo = quem === "COMERCIAL" ? "você" : quem === "ADMINISTRADOR" ? "Administrador" : quem === "FINANCEIRO" ? "Financeiro" : "Jurídico";
+  const classe = quem === "ADMINISTRADOR" ? "border-sky-600/40 bg-sky-50 text-sky-800" : quem === "FINANCEIRO" ? "border-emerald-600/40 bg-emerald-50 text-emerald-800" : quem === "JURIDICO" ? "border-violet-600/40 bg-violet-50 text-violet-800" : "border-amber-600/40 bg-amber-50 text-amber-800";
+  return <Badge variant="outline" className={classe}>Depende de: {rotulo}</Badge>;
 }
 
 function SeloDivergencia({ divergencia }: { divergencia: DivergenciaPct | undefined }) {

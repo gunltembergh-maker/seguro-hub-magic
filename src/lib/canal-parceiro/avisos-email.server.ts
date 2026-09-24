@@ -544,7 +544,7 @@ export async function enviarAvisosCanalParceiro(): Promise<
             : null,
           botao: { rotulo: "Ver solicitação", href: telaComercial() },
           notaFinal:
-            "O Financeiro tem até 24 horas para responder. Sem resposta, o pedido cai e o Comercial precisa pedir de novo.",
+            "O Financeiro tem até 24 horas para responder. Sem resposta, o pedido cai e o Comercial precisa pedir de novo. Se aprovada, a liberação vale para uma única exportação ao parceiro.",
         },
       };
     } else {
@@ -552,7 +552,7 @@ export async function enviarAvisosCanalParceiro(): Promise<
       const aprovador = l.aprovador_nome ?? "O Financeiro";
       const paragrafo =
         situacao === "APROVADA"
-          ? `${aprovador} aprovou a liberação de **${parceiro}**, ciclo ${ciclo}. O parceiro está destravado e você já pode enviar o pedido de repasse ao Financeiro.`
+          ? `${aprovador} aprovou a liberação de **${parceiro}**, ciclo ${ciclo}. Ela vale para **uma única exportação** ao parceiro: depois de exportar, para exportar de novo será preciso pedir outra liberação. Você já pode enviar o pedido de repasse ao Financeiro.`
           : situacao === "EXPIRADA"
             ? `O pedido de liberação de **${parceiro}**, ciclo ${ciclo}, caiu por falta de resposta em 24 horas. Se ainda for necessário, peça de novo.`
             : `${aprovador} não aprovou a liberação de **${parceiro}**, ciclo ${ciclo}.`;

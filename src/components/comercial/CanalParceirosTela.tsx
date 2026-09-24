@@ -94,6 +94,14 @@ interface Situacao {
   motivo_parado: string | null;
   bloqueado: boolean | null;
   bloqueio_motivo: string | null;
+  quem_libera: "ADMINISTRADOR" | "FINANCEIRO" | "JURIDICO" | "COMERCIAL" | null;
+  proximo_passo: string | null;
+  liberacao_status: "PENDENTE" | "APROVADA" | "USADA" | null;
+  liberacao_ciclo: string | null;
+  liberacao_usada_em: string | null;
+  contrato_em_conferencia_id: string | null;
+  conferencia_desde: string | null;
+  pode_cobrar: boolean | null;
 }
 
 interface Parceiro {
@@ -183,6 +191,8 @@ const rotuloSituacao: Record<string, string> = {
   VINCULO_A_CONFIRMAR: "Vínculo a confirmar",
   SEM_CONTRATO: "Sem contrato",
   VENCIDO: "Vencido",
+  EM_CONFERENCIA: "Contrato em conferência",
+  LIBERADO_SEM_CONTRATO: "Liberado sem contrato, 1 exportação",
 };
 
 function BadgeContrato({ situacao }: { situacao?: string | null }) {
@@ -195,7 +205,7 @@ function BadgeContrato({ situacao }: { situacao?: string | null }) {
       </Badge>
     );
   }
-  if (s === "VINCULO_A_CONFIRMAR") {
+  if (s === "VINCULO_A_CONFIRMAR" || s === "EM_CONFERENCIA") {
     return (
       <Badge className="border-amber-600/40 bg-amber-50 text-amber-800 hover:bg-amber-50 dark:bg-amber-950/40 dark:text-amber-200">
         {texto}
@@ -281,6 +291,26 @@ export default function CanalParceirosTela() {
     null,
   );
   const [detalhe, setDetalhe] = useState<{ canalId: string; nome: string } | null>(null);
+  const [cobrando, setCobrando] = useState<string | null>(null);
+
+  async function cobrar(chavePlanilha: string) {
+    if (cobrando) return;
+    setCobrando(chavePlanilha);
+    try {
+      const { data, error } = await supabase.rpc("rpc_canal_parceiro_cobrar_pendencia" as never, {
+        p_canal_planilha: chavePlanilha,
+      } as never);
+      if (error) throw error;
+      const r = (Array.isArray(data) ? data[0] : data) as { mensagem?: string | null } | null;
+      toast.success(r?.mensagem ?? "Cobrança enviada.");
+      queryClient.invalidateQueries({ queryKey: ["canal-parceiro-situacao"] });
+      queryClient.invalidateQueries({ queryKey: ["minhas-notificacoes"] });
+    } catch (e) {
+      toast.error(mensagemDeErro(e));
+    } finally {
+      setCobrando(null);
+    }
+  }
 
   const situacoes = useQuery({
     queryKey: ["canal-parceiro-situacao"],
@@ -393,6 +423,11 @@ export default function CanalParceirosTela() {
         motivo_parado: string | null;
         bloqueado: boolean;
         bloqueio_motivo: string | null;
+        quem_libera: Situacao["quem_libera"];
+        proximo_passo: string | null;
+        liberacao_status: Situacao["liberacao_status"];
+        liberacao_usada_em: string | null;
+        pode_cobrar: boolean;
       }
     >();
     for (const s of linhasSituacao) {
@@ -402,6 +437,11 @@ export default function CanalParceirosTela() {
           motivo_parado: s.motivo_parado,
           bloqueado: s.bloqueado === true,
           bloqueio_motivo: s.bloqueio_motivo,
+          quem_libera: s.quem_libera,
+          proximo_passo: s.proximo_passo,
+          liberacao_status: s.liberacao_status,
+          liberacao_usada_em: s.liberacao_usada_em,
+          pode_cobrar: s.pode_cobrar === true,
         });
       }
     }
@@ -674,7 +714,21 @@ export default function CanalParceirosTela() {
                               )}
                             </TableCell>
                             <TableCell>
-                              <BadgeContrato situacao={l.s?.situacao ?? "SEM_CONTRATO"} />
+                              <div className="space-y-1">
+                                <BadgeContrato situacao={l.s?.situacao ?? "SEM_CONTRATO"} />
+                                {l.s?.pode_exportar !== true && l.s?.quem_libera ? (
+                                  <BadgeQuemLibera quem={l.s.quem_libera} />
+                                ) : null}
+                                {l.s?.liberacao_status === "USADA" ? (
+                                  <p className="max-w-64 text-xs text-muted-foreground">
+                                    Liberação usada{l.s.liberacao_usada_em ? ` em ${dia(l.s.liberacao_usada_em)}` : ""}. Para exportar de novo, peça outra liberação.
+                                  </p>
+                                ) : l.s?.proximo_passo ? (
+                                  <p className="max-w-64 text-xs text-muted-foreground">{l.s.proximo_passo}</p>
+                                ) : l.s?.motivo_parado ? (
+                                  <p className="max-w-64 text-xs text-muted-foreground">{l.s.motivo_parado}</p>
+                                ) : null}
+                              </div>
                             </TableCell>
                             <TableCell>
                               {l.s?.vigencia_fim ? (
@@ -718,6 +772,21 @@ export default function CanalParceirosTela() {
                               {l.origem}
                             </TableCell>
                             <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                              {l.s?.pode_cobrar && l.s.chave_planilha ? (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={cobrando !== null}
+                                  onClick={(ev) => {
+                                    ev.stopPropagation();
+                                    void cobrar(l.s?.chave_planilha ?? "");
+                                  }}
+                                >
+                                  {cobrando === l.s.chave_planilha ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                  Cobrar
+                                </Button>
+                              ) : null}
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -729,6 +798,7 @@ export default function CanalParceirosTela() {
                                 <Upload className="mr-2 h-4 w-4" />
                                 Enviar contrato
                               </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         );
@@ -832,6 +902,16 @@ export default function CanalParceirosTela() {
       />
     </div>
   );
+}
+
+function BadgeQuemLibera({ quem }: { quem: NonNullable<Situacao["quem_libera"]> }) {
+  const dados = {
+    ADMINISTRADOR: { texto: "Administrador", classe: "border-sky-600/40 bg-sky-50 text-sky-800 dark:bg-sky-950/40 dark:text-sky-200" },
+    FINANCEIRO: { texto: "Financeiro", classe: "border-emerald-600/40 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200" },
+    JURIDICO: { texto: "Jurídico", classe: "border-violet-600/40 bg-violet-50 text-violet-800 dark:bg-violet-950/40 dark:text-violet-200" },
+    COMERCIAL: { texto: "você", classe: "border-amber-600/40 bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200" },
+  }[quem];
+  return <Badge variant="outline" className={dados.classe}>Depende de: {dados.texto}</Badge>;
 }
 
 /* ------------------------------------------------------------------- KPI */
