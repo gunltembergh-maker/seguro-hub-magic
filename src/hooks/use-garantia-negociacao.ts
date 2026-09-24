@@ -365,17 +365,27 @@ export function impedimentoDaTransicao(
   tiposPresentes?: Set<string>,
   /** Cotação escolhida, minuta e aprovações — travas das etapas 4, 6 e 7. */
   crm?: ContextoCrm,
+  /** Status atual no catálogo — sua `ordem` decide se o movimento é retorno. */
+  origem?: StatusCatalogo,
 ): string | null {
+  // REGRA: TRAVA É PARA AVANÇO; VOLTAR É LIVRE, PORQUE VOLTAR É COMO SE CONSERTA.
+  // Retorno = destino.ordem < origem.ordem (a ordem do catálogo já codifica
+  // a sequência inteira, inclusive a 3b). Num retorno NÃO se avalia nenhuma
+  // trava de "sair da etapa" (mercado completo, cotação escolhida, checklists
+  // das etapas 2/3b/6, minuta/aprovações, IS e data limite para a etapa 5).
+  // Valem em qualquer direção só as regras de coerência do fluxo: triagem
+  // incompleta, fiança nunca na etapa 3, entrada no CRM só pelo aceite e
+  // volta do CRM só por pedido aprovado pelo admin.
+  const retorno = !!origem && destino.ordem < origem.ordem;
+
   // O aceite não é troca de status: ele é o RPC que gera o código GAR-xxxxx.
   // Arrastar o cartão para o CRM pularia a geração do código.
   if (demanda.fase !== "crm" && destino.fase === "crm") {
     return "A entrada no CRM é feita pelo botão “Registrar aceite do cliente”, no detalhe da demanda: é ele que gera o código GAR e garante que não saiam dois códigos para o mesmo caso.";
   }
-  // Depois do aceite não há volta pelo quadro: o caminho de saída é perda ou emissão.
   if (demanda.fase === "crm" && destino.fase === "negociacao") {
-    return "Esta demanda já foi aceita pelo cliente e está no CRM. Ela não volta para a negociação pelo quadro: o caminho de saída é registrar a perda (desistência depois do aceite) ou seguir para a emissão.";
+    return "Esta demanda já foi aceita pelo cliente e está no CRM. A volta para a negociação é pedida pelo botão “Solicitar volta para a negociação” e decidida por um administrador.";
   }
-
 
   if (!demanda.triagem_completa && destino.codigo !== demanda.status_atual) {
     return "A triagem ainda não foi completada. Use “Completar triagem” no detalhe da demanda: sem os dados da etapa 1 as etapas seguintes não têm o que analisar.";
@@ -385,6 +395,7 @@ export function impedimentoDaTransicao(
   if (demanda.produto === "fianca_locaticia" && etapaDestino === "3") {
     return "Fiança locatícia não passa por consulta a mercado: as APIs das seguradoras não atendem esse produto. Da análise técnica ela segue direto para a cotação.";
   }
+  if (retorno) return null;
   if (etapaDestino === "3b" && !["3", "3b"].includes(demanda.etapa)) {
     return "Os documentos de cadastro só são pedidos depois da consulta a mercado (etapa 3). Leve a demanda à consulta antes.";
   }
@@ -511,16 +522,21 @@ export function useTrocarStatus() {
       destino: StatusCatalogo;
     }) => {
       const etapaDestino = destino.etapa === "qualquer" ? demanda.etapa : destino.etapa;
-      const precisaMercado =
-        demanda.produto !== "fianca_locaticia" && demanda.etapa === "3" && etapaDestino !== "3";
-      const contexto = precisaMercado ? await carregarContextoMercado(demanda.cliente_id) : undefined;
+      const origem = await carregarStatusCatalogo(demanda.status_atual);
+      const retorno = !!origem && destino.ordem < origem.ordem;
       const mudaEtapa = etapaDestino !== demanda.etapa;
-      const tipos = mudaEtapa ? await carregarTiposPresentes(demanda.id) : undefined;
-      // Cotação escolhida, minuta e aprovações: só é lido quando a etapa muda.
-      const crm = mudaEtapa
+      if (retorno && mudaEtapa) {
+        throw new Error("Voltar de etapa exige motivo: use o botão do destino no detalhe da demanda.");
+      }
+      const precisaMercado =
+        !retorno && demanda.produto !== "fianca_locaticia" && demanda.etapa === "3" && etapaDestino !== "3";
+      const contexto = precisaMercado ? await carregarContextoMercado(demanda.cliente_id) : undefined;
+      const tipos = mudaEtapa && !retorno ? await carregarTiposPresentes(demanda.id) : undefined;
+      // Cotação escolhida, minuta e aprovações: só é lido quando a etapa avança.
+      const crm = mudaEtapa && !retorno
         ? await (await import("@/hooks/use-garantia-crm")).carregarContextoCrm(demanda)
         : undefined;
-      const impedimento = impedimentoDaTransicao(demanda, destino, contexto, tipos, crm);
+      const impedimento = impedimentoDaTransicao(demanda, destino, contexto, tipos, crm, origem ?? undefined);
       if (impedimento) throw new Error(impedimento);
 
       const { error } = await supabase
@@ -696,6 +712,100 @@ export function useInicioDoStatus(ativo: boolean) {
       const mapa: Record<string, string> = {};
       for (const linha of data ?? []) mapa[linha.demanda_id as string] = linha.inicio as string;
       return mapa;
+    },
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* Retornos                                                           */
+/* ------------------------------------------------------------------ */
+
+/** Linha do catálogo de um status — a `ordem` decide se o movimento é retorno. */
+export async function carregarStatusCatalogo(codigo: string): Promise<StatusCatalogo | null> {
+  const { data } = await supabase
+    .from("garantia_status_catalogo")
+    .select("codigo, nome, etapa, fase, relogio, com_quem, sla_horas, ordem, ativo")
+    .eq("codigo", codigo)
+    .maybeSingle();
+  return (data as StatusCatalogo | null) ?? null;
+}
+
+/** Retorno de etapa: exige motivo, que vai para a observação do histórico. */
+export function useVoltarEtapa() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ demandaId, destino, motivo }: { demandaId: string; destino: string; motivo: string }) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.rpc as any)("rpc_garantia_voltar_etapa", {
+        _demanda_id: demandaId,
+        _status_destino: destino,
+        _motivo: motivo,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => invalidarPipeline(qc),
+  });
+}
+
+export interface RetornoSolicitacao {
+  id: string;
+  demanda_id: string;
+  motivo: string;
+  situacao: "pendente" | "aprovada" | "recusada";
+  solicitado_por: string | null;
+  solicitado_em: string;
+  demanda?: { legenda: string | null; codigo: string | null } | null;
+}
+
+/** Pedidos pendentes de volta do CRM (opcionalmente de uma demanda). */
+export function useRetornosPendentes(demandaId?: string | null, habilitado = true) {
+  return useQuery({
+    queryKey: ["garantia", "retornos", demandaId ?? "todos"],
+    enabled: habilitado,
+    queryFn: async (): Promise<RetornoSolicitacao[]> => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let q = (supabase.from as any)("garantia_retorno_solicitacoes")
+        .select("id, demanda_id, motivo, situacao, solicitado_por, solicitado_em, demanda:garantia_demandas(legenda, codigo)")
+        .eq("situacao", "pendente")
+        .order("solicitado_em");
+      if (demandaId) q = q.eq("demanda_id", demandaId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return (data ?? []) as RetornoSolicitacao[];
+    },
+  });
+}
+
+export function useSolicitarRetorno() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ demandaId, motivo }: { demandaId: string; motivo: string }) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.rpc as any)("rpc_garantia_solicitar_retorno", {
+        _demanda_id: demandaId,
+        _motivo: motivo,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["garantia", "retornos"] }),
+  });
+}
+
+export function useDecidirRetorno() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, aprovar, resposta }: { id: string; aprovar: boolean; resposta: string }) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.rpc as any)("rpc_garantia_decidir_retorno", {
+        _solicitacao_id: id,
+        _aprovar: aprovar,
+        _resposta: resposta,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["garantia", "retornos"] });
+      invalidarPipeline(qc);
     },
   });
 }

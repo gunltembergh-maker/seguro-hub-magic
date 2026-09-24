@@ -27,6 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Carteira } from "@/components/garantia/carteira";
 import { DemandaSheet, SeloProduto } from "@/components/garantia/demanda-sheet";
 import { GarantiaShell } from "@/components/garantia/garantia-shell";
+import { FaixaRetornosPendentes } from "@/components/garantia/retorno-crm";
 import { useMeuPerfilEfetivo } from "@/contexts/view-as-context";
 import { useResponsaveis } from "@/hooks/use-entrada-demandas";
 import { useSeguradorasEscolhidas, useStatusCrm } from "@/hooks/use-garantia-crm";
@@ -139,6 +140,7 @@ export default function Crm() {
           <Carteira />
         </TabsContent>
         <TabsContent value="quadro" className="space-y-6">
+        <FaixaRetornosPendentes />
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <div className="min-w-0 space-y-1">
             <Label>Produto</Label>

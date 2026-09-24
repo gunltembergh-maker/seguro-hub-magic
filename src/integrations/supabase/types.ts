@@ -3981,6 +3981,50 @@ export type Database = {
           },
         ]
       }
+      garantia_retorno_solicitacoes: {
+        Row: {
+          decidido_em: string | null
+          decidido_por: string | null
+          demanda_id: string
+          id: string
+          motivo: string
+          resposta: string | null
+          situacao: string
+          solicitado_em: string
+          solicitado_por: string | null
+        }
+        Insert: {
+          decidido_em?: string | null
+          decidido_por?: string | null
+          demanda_id: string
+          id?: string
+          motivo: string
+          resposta?: string | null
+          situacao?: string
+          solicitado_em?: string
+          solicitado_por?: string | null
+        }
+        Update: {
+          decidido_em?: string | null
+          decidido_por?: string | null
+          demanda_id?: string
+          id?: string
+          motivo?: string
+          resposta?: string | null
+          situacao?: string
+          solicitado_em?: string
+          solicitado_por?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "garantia_retorno_solicitacoes_demanda_id_fkey"
+            columns: ["demanda_id"]
+            isOneToOne: false
+            referencedRelation: "garantia_demandas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       garantia_seguradoras_config: {
         Row: {
           ativa_garantia: boolean
@@ -7374,6 +7418,10 @@ export type Database = {
           limite_devolvido: boolean
         }[]
       }
+      rpc_garantia_decidir_retorno: {
+        Args: { _aprovar: boolean; _resposta: string; _solicitacao_id: string }
+        Returns: undefined
+      }
       rpc_garantia_historico_demanda: {
         Args: { _demanda_id: string }
         Returns: {
@@ -7535,12 +7583,20 @@ export type Database = {
           legenda: string
         }[]
       }
+      rpc_garantia_solicitar_retorno: {
+        Args: { _demanda_id: string; _motivo: string }
+        Returns: string
+      }
       rpc_garantia_status_abertos: {
         Args: never
         Returns: {
           demanda_id: string
           inicio: string
         }[]
+      }
+      rpc_garantia_voltar_etapa: {
+        Args: { _demanda_id: string; _motivo: string; _status_destino: string }
+        Returns: undefined
       }
       rpc_get_meta_anual: { Args: { _ano: number }; Returns: number }
       rpc_get_popups_ativos: {
