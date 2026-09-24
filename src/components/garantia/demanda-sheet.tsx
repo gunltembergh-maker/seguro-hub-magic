@@ -97,7 +97,6 @@ import {
   ROTULO_PRODUTO,
   TIPOS_ALTERACAO,
   TIPOS_MOVIMENTO,
-  dataCurta,
   dataHora,
   duracaoLegivel,
   moeda,

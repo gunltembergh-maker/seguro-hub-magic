@@ -104,7 +104,6 @@ function Cartao({
   onAbrir: () => void;
   onArrastar: (e: React.DragEvent) => void;
 }) {
-  const dias = diasAte(demanda.data_limite);
   const horasNoStatus = podeVerTempo && inicioStatus ? horasDesde(inicioStatus) : null;
   const slaEstourado = horasNoStatus != null && slaHoras != null && horasNoStatus > slaHoras;
 
@@ -158,19 +157,6 @@ function Cartao({
         {rotuloModalidade(demanda.modalidade)} · {moeda(demanda.importancia_segurada)}
       </p>
 
-      <p
-        className={cn(
-          "mt-1 text-xs",
-          dias != null && dias < 0
-            ? "font-semibold text-red-600"
-            : dias != null && dias <= 3
-              ? "font-semibold text-amber-600"
-              : "text-muted-foreground",
-        )}
-      >
-        Data limite: {dataCurta(demanda.data_limite)}
-        {dias != null && dias < 0 ? " (vencida)" : dias != null && dias <= 3 ? ` (em ${dias} dia(s))` : ""}
-      </p>
 
       <p className="mt-1 text-xs text-muted-foreground">
         Responsável técnico: {responsavel ?? "a definir"}
