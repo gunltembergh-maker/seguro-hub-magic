@@ -81,6 +81,7 @@ const TODOS = "__todos__";
 function Cartao({
   demanda,
   statusNome,
+  statusInterno,
   slaHoras,
   inicioStatus,
   podeVerTempo,
@@ -90,6 +91,7 @@ function Cartao({
 }: {
   demanda: DemandaLista;
   statusNome: string;
+  statusInterno: boolean;
   slaHoras: number | null;
   inicioStatus?: string;
   podeVerTempo: boolean;
@@ -112,6 +114,17 @@ function Cartao({
         !demanda.triagem_completa && "border-amber-300",
       )}
     >
+      {/* Situação: com quem está a bola. Teal = trabalho interno; neutro = espera externa. */}
+      <Badge
+        className={cn(
+          "mb-2 max-w-full whitespace-normal text-left text-[11px] font-medium",
+          statusInterno
+            ? "bg-[#338B85] text-white hover:bg-[#338B85]"
+            : "bg-muted text-muted-foreground hover:bg-muted",
+        )}
+      >
+        {statusNome}
+      </Badge>
       <div className="flex items-start justify-between gap-2">
         <span className="line-clamp-2 text-sm font-semibold text-card-foreground">
           {demanda.legenda ?? demanda.cliente?.nome ?? "Cliente a definir"}
@@ -153,10 +166,9 @@ function Cartao({
       </p>
 
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
-        <Badge variant="outline" className="text-[11px]">{statusNome}</Badge>
         {!demanda.triagem_completa && (
           <Badge className="bg-amber-100 text-[11px] text-amber-900 hover:bg-amber-100">
-            triagem incompleta
+            conferência pendente
           </Badge>
         )}
         {/* Tempo no status e SLA: só para quem tem o Painel da Gerência. */}
@@ -196,11 +208,12 @@ function Quadro({
   const trocar = useTrocarStatus();
   const [arrastando, setArrastando] = useState<DemandaLista | null>(null);
 
-  const soltarEm = async (coluna: { etapa: string; status: StatusCatalogo[] }) => {
+  const soltarEm = async (coluna: (typeof colunas)[number]) => {
     const d = arrastando;
     setArrastando(null);
     if (!d) return;
-    const destino = coluna.status[0];
+    if (coluna.etapa === d.etapa) return;
+    const destino = coluna.entrada;
     if (!destino) return;
     const origem = catalogo.find((s) => s.codigo === d.status_atual);
     // Voltar de etapa pede motivo: pelo quadro não há onde digitar, então abre o card.
@@ -215,7 +228,7 @@ function Quadro({
     }
     try {
       await trocar.mutateAsync({ demanda: d, destino });
-      toast.success(`Movida para ${rotuloEtapa(coluna.etapa)}.`);
+      toast.success(`Movida para ${rotuloEtapa(coluna.etapa, colunas)}.`);
     } catch (e) {
       toast.error(mensagemDeErro(e, "Não foi possível mover a demanda."));
     }
@@ -233,7 +246,7 @@ function Quadro({
             className="flex w-[280px] shrink-0 flex-col rounded-lg bg-muted/40 p-3 sm:w-[320px]"
           >
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-foreground">{rotuloEtapa(coluna.etapa)}</h2>
+              <h2 className="text-sm font-semibold text-foreground">{rotuloEtapa(coluna.etapa, colunas)}</h2>
               <Badge variant="secondary">{daColuna.length}</Badge>
             </div>
             <div className="space-y-2">
@@ -242,6 +255,7 @@ function Quadro({
                   key={d.id}
                   demanda={d}
                   statusNome={catalogo.find((s) => s.codigo === d.status_atual)?.nome ?? d.status_atual}
+                  statusInterno={catalogo.find((s) => s.codigo === d.status_atual)?.relogio === "interno"}
                   slaHoras={catalogo.find((s) => s.codigo === d.status_atual)?.sla_horas ?? null}
                   inicioStatus={inicios[d.id]}
                   podeVerTempo={podeVerTempo}

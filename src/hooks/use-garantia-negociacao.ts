@@ -10,7 +10,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { pendenciasEtapa2, pendenciasEtapa3b } from "@/lib/garantia/documentos-regra";
+import { pendenciasAnaliseDemanda, pendenciasEtapa3b } from "@/lib/garantia/documentos-regra";
 // Só o tipo: o contexto do CRM é carregado pelo hook do CRM, que por sua vez
 // reusa `carregarTiposPresentes` daqui. Import de tipo não cria ciclo.
 import type { ContextoCrm } from "@/hooks/use-garantia-crm";
@@ -123,7 +123,19 @@ export function colunasDoCatalogo(catalogo: StatusCatalogo[]) {
       mapa.set(s.etapa, { etapa: s.etapa, ordem: s.ordem, status: [s] });
     }
   }
-  return [...mapa.values()].sort((a, b) => a.ordem - b.ordem);
+  return [...mapa.values()]
+    .sort((a, b) => a.ordem - b.ordem)
+    .map((c, i) => {
+      const status = [...c.status].sort((a, b) => a.ordem - b.ordem);
+      return {
+        ...c,
+        status,
+        /** Número mostrado ao usuário: posição na ordem do catálogo. */
+        posicao: i + 1,
+        /** Status interno de entrada: relogio interno com a menor ordem. */
+        entrada: status.find((s) => s.relogio === "interno") ?? status[0] ?? null,
+      };
+    });
 }
 
 export interface FiltrosNegociacao {
@@ -387,17 +399,17 @@ export function impedimentoDaTransicao(
     return "Esta demanda já foi aceita pelo cliente e está no CRM. A volta para a negociação é pedida pelo botão “Solicitar volta para a negociação” e decidida por um administrador.";
   }
 
-  if (!demanda.triagem_completa && destino.codigo !== demanda.status_atual) {
-    return "A triagem ainda não foi completada. Use “Completar triagem” no detalhe da demanda: sem os dados da etapa 1 as etapas seguintes não têm o que analisar.";
-  }
   const etapaDestino = destino.etapa === "qualquer" ? demanda.etapa : destino.etapa;
+  if (!demanda.triagem_completa && etapaDestino !== demanda.etapa) {
+    return "A conferência dos dados ainda não foi feita. Use “Conferir dados da demanda” na análise da demanda: sem esses dados as etapas seguintes não têm o que analisar.";
+  }
 
   if (demanda.produto === "fianca_locaticia" && etapaDestino === "3") {
-    return "Fiança locatícia não passa por consulta a mercado: as APIs das seguradoras não atendem esse produto. Da análise técnica ela segue direto para a cotação.";
+    return "Fiança locatícia não passa por consulta a mercado: as APIs das seguradoras não atendem esse produto. Da análise da demanda ela segue direto para a cotação.";
   }
   if (retorno) return null;
   if (etapaDestino === "3b" && !["3", "3b"].includes(demanda.etapa)) {
-    return "Os documentos de cadastro só são pedidos depois da consulta a mercado (etapa 3). Leve a demanda à consulta antes.";
+    return "Os documentos de cadastro só são pedidos depois da consulta a mercado. Leve a demanda à consulta antes.";
   }
   // Sair da consulta a mercado exige consulta válida e completa. Fiança
   // locatícia nem passa pela etapa 3, então não é alcançada por esta regra.
@@ -461,7 +473,7 @@ function pendenciasDaEtapa(demanda: DemandaLista, tipos: Set<string>, etapa: str
     precisa_nomeacao: demanda.precisa_nomeacao,
     precisa_ccg: demanda.precisa_ccg,
   };
-  if (etapa === "2") return pendenciasEtapa2(alvo, tipos);
+  if (etapa === "1" || etapa === "2") return pendenciasAnaliseDemanda(alvo, tipos);
   if (etapa === "3b") return pendenciasEtapa3b(alvo, tipos);
   // Etapa 6 (curadoria): a única exigência documental é o CCG, e só quando o
   // caso foi marcado como precisando dele. Reusa a MESMA função da etapa 3b.
@@ -570,8 +582,8 @@ export interface DadosTriagem {
 }
 
 /**
- * Fecha a triagem: grava os campos, marca triagem_completa e leva a demanda
- * à análise técnica (etapa 2). Nada é escrito no histórico pela interface.
+ * Fecha a conferência dos dados: grava os campos e marca triagem_completa.
+ * NÃO muda de etapa — quem move é a pessoa, pelo botão de destino.
  */
 export function useCompletarTriagem() {
   const qc = useQueryClient();
@@ -582,9 +594,6 @@ export function useCompletarTriagem() {
         .update({
           ...dados,
           triagem_completa: true,
-          fase: "negociacao",
-          etapa: "2",
-          status_atual: "analise_tecnica",
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any)
         .eq("id", id);
