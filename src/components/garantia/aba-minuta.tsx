@@ -210,9 +210,6 @@ export function AbaMinuta({
               <strong>{moeda(escolhida.premio)}</strong> · Taxa:{" "}
               <strong>{escolhida.taxa ?? A_DEFINIR}</strong>
             </p>
-            <p className="text-xs text-muted-foreground">
-              Conferir e confirmar grava esses valores na demanda. Nada é redigitado.
-            </p>
             <Button size="sm" variant="outline" onClick={confirmarHeranca} disabled={atualizar.isPending}>
               Confirmar seguradora, prêmio e taxa
             </Button>
