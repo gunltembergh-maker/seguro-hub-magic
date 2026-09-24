@@ -21,6 +21,8 @@ export interface ArquivoExtraido {
   conteudo: string;
   partes: ParteExtraida[];
   meta: Record<string, string | number>;
+  /** Texto de cada página lida (só PDF). Fica no servidor; não vai ao motor. */
+  paginas?: { pagina: number; texto: string }[];
 }
 
 export function quebrarTextoEmPartes(texto: string, maxChars: number, metaBase: Record<string, unknown> = {}) {
@@ -48,7 +50,7 @@ function comAvisoTruncado(partes: ParteExtraida[], aviso: string) {
   return partes.map((parte) => ({ ...parte, conteudo: `${aviso}\n${parte.conteudo}` }));
 }
 
-async function extrairPDFcomOCR(pdf: any, totalPaginas: number): Promise<{ textoCompleto: string; partes: ParteExtraida[] }> {
+async function extrairPDFcomOCR(pdf: any, totalPaginas: number): Promise<{ textoCompleto: string; partes: ParteExtraida[]; paginas: { pagina: number; texto: string }[] }> {
   if (typeof document === "undefined") {
     // O servidor (Worker) não tem canvas nativo; OCR só roda no navegador.
     throw new Error("Este PDF parece escaneado (sem texto digital). A leitura por imagem não está disponível nesta análise.");
@@ -57,6 +59,7 @@ async function extrairPDFcomOCR(pdf: any, totalPaginas: number): Promise<{ texto
   const worker = await createWorker(["por", "eng"]);
   let textoCompleto = "";
   const partes: ParteExtraida[] = [];
+  const paginas: { pagina: number; texto: string }[] = [];
   let chunkBuffer = "";
   let chunkStartPage: number | null = null;
   try {
@@ -72,6 +75,7 @@ async function extrairPDFcomOCR(pdf: any, totalPaginas: number): Promise<{ texto
       const { data } = await worker.recognize(canvas);
       const pageText = data.text.replace(/\s+/g, " ").trim();
       if (!pageText) continue;
+      paginas.push({ pagina: i, texto: pageText });
       textoCompleto += `[Pagina ${i}]\n${pageText}\n\n`;
       const bloco = `[Pagina ${i}]\n${pageText}\n\n`;
       if (!chunkBuffer) { chunkBuffer = bloco; chunkStartPage = i; continue; }
@@ -81,7 +85,7 @@ async function extrairPDFcomOCR(pdf: any, totalPaginas: number): Promise<{ texto
       chunkStartPage = i;
     }
     if (chunkBuffer && chunkStartPage !== null) partes.push({ indice: partes.length + 1, pagina: chunkStartPage, rotulo: chunkStartPage === totalPaginas ? `Pagina ${chunkStartPage}` : `Paginas ${chunkStartPage}-${totalPaginas}`, conteudo: chunkBuffer.trim() });
-    return { textoCompleto: textoCompleto.trim(), partes };
+    return { textoCompleto: textoCompleto.trim(), partes, paginas };
   } finally { await worker.terminate(); }
 }
 
@@ -102,6 +106,7 @@ export async function extrairPDF(file: File): Promise<ArquivoExtraido> {
   const totalPaginas = Math.min(pdf.numPages, MAX_PDF_PAGES);
   let textoCompleto = "";
   const partes: ParteExtraida[] = [];
+  const paginas: { pagina: number; texto: string }[] = [];
   let chunkBuffer = "";
   let chunkStartPage: number | null = null;
   for (let i = 1; i <= totalPaginas; i++) {
@@ -109,6 +114,7 @@ export async function extrairPDF(file: File): Promise<ArquivoExtraido> {
     const content = await page.getTextContent();
     const pageText = content.items.map((item: any) => item.str).join(" ").replace(/\s+/g, " ").trim();
     if (!pageText) continue;
+    paginas.push({ pagina: i, texto: pageText });
     textoCompleto += `[Pagina ${i}]\n${pageText}\n\n`;
     const blocoPagina = `[Pagina ${i}]\n${pageText}\n\n`;
     if (!chunkBuffer) { chunkBuffer = blocoPagina; chunkStartPage = i; continue; }
@@ -122,10 +128,10 @@ export async function extrairPDF(file: File): Promise<ArquivoExtraido> {
   if (textoCompleto.trim().length < Math.max(OCR_TEXT_THRESHOLD, totalPaginas * 100)) {
     const ocr = await extrairPDFcomOCR(pdf, totalPaginas);
     const finais = comAvisoTruncado(ocr.partes, aviso);
-    return { nome: file.name, tipo: "texto", conteudo: [ocr.textoCompleto, aviso].filter(Boolean).join("\n\n"), partes: finais, meta: { origem: "pdf-ocr", totalPaginas, paginasNoArquivo: pdf.numPages, totalPartes: finais.length } };
+    return { nome: file.name, tipo: "texto", conteudo: [ocr.textoCompleto, aviso].filter(Boolean).join("\n\n"), partes: finais, meta: { origem: "pdf-ocr", totalPaginas, paginasNoArquivo: pdf.numPages, totalPartes: finais.length }, paginas: ocr.paginas };
   }
   const finais = comAvisoTruncado(partes, aviso);
-  return { nome: file.name, tipo: "texto", conteudo: [textoCompleto.trim(), aviso].filter(Boolean).join("\n\n"), partes: finais, meta: { origem: "pdf", totalPaginas, paginasNoArquivo: pdf.numPages, totalPartes: finais.length } };
+  return { nome: file.name, tipo: "texto", conteudo: [textoCompleto.trim(), aviso].filter(Boolean).join("\n\n"), partes: finais, meta: { origem: "pdf", totalPaginas, paginasNoArquivo: pdf.numPages, totalPartes: finais.length }, paginas };
 }
 
 export async function extrairConteudoArquivo(file: File): Promise<ArquivoExtraido> {
