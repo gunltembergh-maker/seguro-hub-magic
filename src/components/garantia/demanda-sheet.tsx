@@ -1126,7 +1126,7 @@ function ConteudoDaFase({
     return (
       <div className="space-y-5">
         <AbaDocumentos demanda={demanda} tipoInicial="minuta" ocultarIA />
-        <AbaMinuta demanda={demanda} catalogo={catalogo} />
+        <AbaMinuta demanda={demanda} catalogo={catalogo} moverAoReceberMinuta={false} />
       </div>
     );
   }
