@@ -227,7 +227,12 @@ export async function enviarAvisosCanalParceiro(): Promise<
     lavoroAdmin.rpc("canal_repasse_docs_emails_pendentes" as never, {} as never),
   ]);
 
-  const treinamento = await emailsTreinamento(lavoroAdmin);
+  let treinamento: string[] | null;
+  try {
+    treinamento = await emailsTreinamento(lavoroAdmin);
+  } catch (e) {
+    return { ok: false, erro: mensagemDeErro(e) };
+  }
 
   const erro =
     repasse.error ??
