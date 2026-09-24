@@ -37,6 +37,7 @@ import { hasPermission, hasRole, type MeuPerfil } from "@/hooks/use-meu-perfil";
 import { useMeuPerfilEfetivo } from "@/contexts/view-as-context";
 
 import { cn } from "@/lib/utils";
+import { NAV_AREAS, NAV_RAMOS, NAV_DASHBOARDS, NAV_ADMIN, NAV_EMAILS } from "@/lib/navegacao";
 import {
   Sidebar,
   SidebarContent,
@@ -62,71 +63,7 @@ const RESERVA_ITEM = { title: "Reserva de Posições", url: "/reserva-posicoes",
 // Porta compartilhada de todos os ramos: fica no topo, fora de "Ramos".
 const ENTRADA_ITEM = { title: "Entrada de Demandas", url: "/entrada-demandas", icon: Inbox };
 
-const areasAll: AreaItem[] = [
-  {
-    title: "Financeiro",
-    icon: Landmark,
-    tooltip: "Financeiro",
-    perm: "menu_area_financeiro",
-    children: [
-      {
-        title: "Fluxo Diário",
-        url: "/financeiro/fluxo-diario",
-        icon: CalendarClock,
-        perms: ["menu_financeiro_fluxo_diario"],
-      },
-    ],
-  },
-  {
-    title: "Comercial",
-    icon: Handshake,
-    tooltip: "Comercial",
-    perm: "menu_area_comercial",
-    children: [
-      {
-        title: "Canal Parceiros",
-        url: "/comercial/canal-parceiros",
-        icon: FileSignature,
-        perms: ["menu_comercial_canal_parceiros"],
-      },
-      {
-        title: "Garantia",
-        url: "/garantia/comercial",
-        icon: ClipboardList,
-        perms: ["menu_garantia_comercial"],
-      },
-    ],
-  },
-  {
-    title: "Jurídico",
-    url: "/juridico",
-    icon: Scale,
-    perm: "menu_area_juridico",
-    children: [
-      { title: "Background Check", url: "/juridico/analise-background", icon: SearchCheck,
-        perms: ["ab_juridico", "ab_compliance", "ab_rh"] },
-      { title: "Contrato de Parceria", url: "/juridico/contrato-parceria", icon: FileSignature,
-        perms: ["menu_juridico_contratos"] },
-    ],
-  },
-  { title: "Operacional", url: "/operacional", icon: Cog, perm: "menu_area_operacional" },
-  { title: "Middle", url: "/middle", icon: Layers, perm: "menu_area_middle" },
-  { title: "Facilities", url: "/facilities", icon: Wrench, perm: "menu_area_facilities" },
-  {
-    title: "RH",
-    icon: UserSquare2,
-    tooltip: "RH",
-    perm: "menu_rh_controle_posicoes",
-    children: [
-      {
-        title: "Controle de Posições",
-        url: "/rh/controle-posicoes",
-        icon: ClipboardList,
-        perms: ["menu_rh_controle_posicoes"],
-      },
-    ],
-  },
-];
+const areasAll = NAV_AREAS as AreaItem[];
 
 type ChildItem = { title: string; url: string; icon: LucideIcon; perms?: string[] };
 
@@ -148,30 +85,7 @@ type AreaItem = {
   children?: ChildItem[];
 };
 
-const ramosAll: CollapsibleItem[] = [
-  {
-    title: "Garantia",
-    icon: ShieldCheck,
-    tooltip: "Garantia",
-    perm: "menu_ramo_garantia",
-    children: [
-      { title: "Operacional", url: "/garantia/analise-limite", icon: FileSearch,
-        perms: ["menu_garantia_operacional"] },
-      { title: "Análise de Processos", url: "/garantia/analise-background", icon: SearchCheck,
-        perms: ["menu_garantia_analise_processos", "ab_garantia"] },
-      { title: "Formulário Admin", url: "/garantia/formulario-admin", icon: ClipboardList,
-        perms: ["menu_garantia_formulario_admin"] },
-      { title: "Negociação", url: "/garantia/negociacao", icon: ClipboardList,
-        perms: ["menu_garantia_negociacao"] },
-      { title: "CRM", url: "/garantia/crm", icon: ClipboardList,
-        perms: ["menu_garantia_crm"] },
-      { title: "Painel da Gerência", url: "/garantia/painel", icon: BarChart3,
-        perms: ["menu_garantia_painel"] },
-    ],
-  },
-  { title: "Benefícios", url: "/beneficios", icon: HeartPulse, tooltip: "Benefícios", perm: "menu_ramo_beneficios" },
-  { title: "Demais Ramos", url: "/demais-ramos", icon: Boxes, tooltip: "Demais Ramos", perm: "menu_ramo_demais" },
-];
+const ramosAll: CollapsibleItem[] = NAV_RAMOS;
 
 /**
  * Item de menu com subitens recolhíveis.
@@ -316,42 +230,15 @@ export function AppSidebar() {
     )
     .map((i) => semFilhosProibidos(i, meuPerfil, isAdmin));
 
-  const dashboardItems = [
-    { title: "Receita", url: "/dashboard/receita",
-      show: isAdmin || hasPermission(meuPerfil, "menu_dashboard_receita") },
-    { title: "Receita Caixa", url: "/dashboard/receita-caixa",
-      show: isAdmin || hasPermission(meuPerfil, "menu_dashboard_receita_caixa") },
-    { title: "Resumo Executivo", url: "/dashboard/receita-executivo",
-      show: isAdmin || hasPermission(meuPerfil, "menu_dashboard_receita_executivo") },
-    { title: "Report Fechamento", url: "/dashboard/report-fechamento",
-      show: isAdmin || hasPermission(meuPerfil, "menu_dashboard_report_fechamento") },
-  ].filter((i) => i.show);
+  const podeVer = (perms: string[]) => isAdmin || perms.some((p) => hasPermission(meuPerfil, p));
+  const dashboardItems = NAV_DASHBOARDS.filter((i) => podeVer(i.perms));
   const showDashboards = dashboardItems.length > 0;
   const hasActiveDashboardChild = dashboardItems.some((i) => isActive(i.url));
 
-  const adminItems = [
-    { title: "Usuários", url: "/admin/usuarios", icon: Users, show: isAdmin || hasPermission(meuPerfil, "menu_admin_usuarios") },
-    { title: "Perfis", url: "/admin/perfis", icon: KeyRound, show: isAdmin || hasPermission(meuPerfil, "menu_admin_perfis") },
-    { title: "Comunicados", url: "/admin/comunicados", icon: Megaphone, show: isAdmin || hasPermission(meuPerfil, "menu_admin_comunicados") },
-    { title: "Importar Bases", url: "/admin/importar-bases", icon: Upload,
-      show: isAdmin || hasPermission(meuPerfil, "menu_admin_importar") || hasPermission(meuPerfil, "menu_importar_gerencial") || hasPermission(meuPerfil, "menu_importar_caixa") },
-    { title: "Relatório de Uso", url: "/admin/uso", icon: Activity,
-      show: isAdmin || hasPermission(meuPerfil, "menu_admin_uso") },
-    { title: "Reserva de Posições", url: "/admin/reservas", icon: CalendarCheck,
-      show: isAdmin || hasPermission(meuPerfil, "menu_admin_reservas") },
-    { title: "Configurações", url: "/admin/configuracoes", icon: Settings,
-      show: isAdmin || hasPermission(meuPerfil, "menu_admin_configuracoes") },
-  ].filter((i) => i.show);
+  const adminItems = NAV_ADMIN.filter((i) => podeVer(i.perms));
 
   // Todos os itens de e-mail ficam dentro de uma única caixa "E-mails"
-  const emailChildren = [
-    { title: "Envio e testes", url: "/admin/emails", icon: CornerDownRight,
-      show: isAdmin || hasPermission(meuPerfil, "menu_admin_emails") },
-    { title: "Agendamentos", url: "/admin/emails/schedules", icon: CornerDownRight,
-      show: isAdmin || hasPermission(meuPerfil, "menu_admin_emails_schedules") },
-    { title: "Log de E-mails", url: "/admin/emails/log", icon: CornerDownRight,
-      show: isAdmin || hasPermission(meuPerfil, "menu_admin_emails_log") },
-  ].filter((i) => i.show).map(({ title, url, icon }) => ({ title, url, icon }));
+  const emailChildren = NAV_EMAILS.filter((i) => podeVer(i.perms)).map(({ title, url, icon }) => ({ title, url, icon }));
 
   const emailsCollapsible: CollapsibleItem = {
     title: "E-mails",
