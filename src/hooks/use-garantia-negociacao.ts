@@ -522,16 +522,21 @@ export function useTrocarStatus() {
       destino: StatusCatalogo;
     }) => {
       const etapaDestino = destino.etapa === "qualquer" ? demanda.etapa : destino.etapa;
-      const precisaMercado =
-        demanda.produto !== "fianca_locaticia" && demanda.etapa === "3" && etapaDestino !== "3";
-      const contexto = precisaMercado ? await carregarContextoMercado(demanda.cliente_id) : undefined;
+      const origem = await carregarStatusCatalogo(demanda.status_atual);
+      const retorno = !!origem && destino.ordem < origem.ordem;
       const mudaEtapa = etapaDestino !== demanda.etapa;
-      const tipos = mudaEtapa ? await carregarTiposPresentes(demanda.id) : undefined;
-      // Cotação escolhida, minuta e aprovações: só é lido quando a etapa muda.
-      const crm = mudaEtapa
+      if (retorno && mudaEtapa) {
+        throw new Error("Voltar de etapa exige motivo: use o botão do destino no detalhe da demanda.");
+      }
+      const precisaMercado =
+        !retorno && demanda.produto !== "fianca_locaticia" && demanda.etapa === "3" && etapaDestino !== "3";
+      const contexto = precisaMercado ? await carregarContextoMercado(demanda.cliente_id) : undefined;
+      const tipos = mudaEtapa && !retorno ? await carregarTiposPresentes(demanda.id) : undefined;
+      // Cotação escolhida, minuta e aprovações: só é lido quando a etapa avança.
+      const crm = mudaEtapa && !retorno
         ? await (await import("@/hooks/use-garantia-crm")).carregarContextoCrm(demanda)
         : undefined;
-      const impedimento = impedimentoDaTransicao(demanda, destino, contexto, tipos, crm);
+      const impedimento = impedimentoDaTransicao(demanda, destino, contexto, tipos, crm, origem ?? undefined);
       if (impedimento) throw new Error(impedimento);
 
       const { error } = await supabase
