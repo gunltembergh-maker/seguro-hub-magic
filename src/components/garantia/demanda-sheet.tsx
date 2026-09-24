@@ -739,13 +739,52 @@ function PerdaDialog({
             </Select>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1">
-              <Label>Prêmio estimado</Label>
-              <Input value={premio} onChange={(e) => setPremio(e.target.value)} inputMode="decimal" />
+            <div className="space-y-1 sm:col-span-2">
+              <Label>Prêmio estimado *</Label>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <CampoReal
+                    valor={premio}
+                    onChange={(v) => {
+                      setEditadoManual(true);
+                      setPremio(v);
+                    }}
+                  />
+                </div>
+                <div className="w-28">
+                  <Input
+                    aria-label="Prazo em dias"
+                    inputMode="numeric"
+                    value={prazo}
+                    onChange={(e) => setPrazo(e.target.value.replace(/\D+/g, ""))}
+                    title="Prazo em dias usado na estimativa"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {editadoManual
+                  ? "valor ajustado pelo corretor"
+                  : sugestao
+                    ? sugestao.descricao
+                    : "sem sugestão (demanda sem cotação e sem IS) — informe o prêmio"}
+                {" · prazo em dias à direita (padrão 365)"}
+              </p>
+              {editadoManual && sugestao && (
+                <button
+                  type="button"
+                  className="text-xs text-[#338B85] underline"
+                  onClick={() => setEditadoManual(false)}
+                >
+                  usar sugestão ({sugestao.descricao})
+                </button>
+              )}
             </div>
             <div className="space-y-1">
               <Label>Comissão estimada</Label>
-              <Input value={comissao} onChange={(e) => setComissao(e.target.value)} inputMode="decimal" />
+              <CampoReal valor={comissao} onChange={() => {}} disabled />
+              <p className="text-xs text-muted-foreground">
+                {comissaoPct.toLocaleString("pt-BR")}% do prêmio estimado
+              </p>
             </div>
             <div className="space-y-1">
               <Label>Concorrente</Label>
