@@ -169,7 +169,12 @@ export function PlantaEscritorio({
   onSelecionar: (pos: RpPosicaoGrade) => void;
 }) {
   const fundo = posicoes.filter((p) => p.bloco === "fundo").sort((a, b) => a.numero - b.numero);
-  const frente = posicoes.filter((p) => p.bloco !== "fundo").sort((a, b) => a.numero - b.numero);
+  const frenteAtual = posicoes.filter((p) => p.bloco !== "fundo").sort((a, b) => a.numero - b.numero);
+  const ordemFrente = [6, 5, 4, 7, 8, 9];
+  const frenteOrdenada = ordemFrente.map((numero) => frenteAtual.find((p) => p.numero === numero));
+  const frente = frenteOrdenada.every((p): p is RpPosicaoGrade => p !== undefined)
+    ? frenteOrdenada
+    : frenteAtual;
 
   const W = 900;
   const H = 560;
