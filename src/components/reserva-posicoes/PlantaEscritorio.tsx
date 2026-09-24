@@ -170,13 +170,13 @@ export function PlantaEscritorio({
 }) {
   const fundo = posicoes.filter((p) => p.bloco === "fundo").sort((a, b) => a.numero - b.numero);
   const frenteAtual = posicoes.filter((p) => p.bloco !== "fundo").sort((a, b) => a.numero - b.numero);
-  const ordemFrente = [4, 5, 6, 7, 8, 9];
+  const ordemFrente = [6, 5, 4, 7, 8, 9];
   const frenteOrdenada = ordemFrente.map((numero) => frenteAtual.find((p) => p.numero === numero));
   const frente = frenteOrdenada.every((p): p is RpPosicaoGrade => p !== undefined)
     ? frenteOrdenada
     : frenteAtual;
 
-  const W = 920;
+  const W = 980;
   const H = 560;
 
   // Bancada do fundo: 3 mesas contínuas encostadas na janela.
