@@ -1387,6 +1387,18 @@ function LinhaCanal({
           )}
         </div>
         {info && <div className="text-[11px] text-gray-500">{info.parcelas} parcelas</div>}
+        {situacao?.pode_exportar !== true && situacao?.quem_libera ? (
+          <div className="mt-1 space-y-1">
+            <BadgeQuemLiberaFinanceiro quem={situacao.quem_libera} />
+            <p className="max-w-72 text-[11px] text-gray-500">
+              {situacao.liberacao_status === "USADA"
+                ? `Liberação usada${situacao.liberacao_usada_em ? ` em ${new Date(situacao.liberacao_usada_em).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}` : ""}. Para exportar de novo, peça outra liberação.`
+                : situacao.proximo_passo ?? situacao.motivo_parado}
+            </p>
+          </div>
+        ) : situacao?.situacao === "LIBERADO_SEM_CONTRATO" && situacao.proximo_passo ? (
+          <p className="mt-1 max-w-72 text-[11px] text-gray-500">{situacao.proximo_passo}</p>
+        ) : null}
       </TableCell>
       <TableCell className="border-l text-right font-mono tabular-nums" style={{ borderColor: border }}>
         {valorCell(l.m1avencer)}
@@ -1408,6 +1420,12 @@ function LinhaCanal({
       <TableCell className="text-right">{pill(l.situacao)}</TableCell>
     </TableRow>
   );
+}
+
+function BadgeQuemLiberaFinanceiro({ quem }: { quem: NonNullable<SituacaoContrato["quem_libera"]> }) {
+  const rotulo = quem === "COMERCIAL" ? "você" : quem === "ADMINISTRADOR" ? "Administrador" : quem === "FINANCEIRO" ? "Financeiro" : "Jurídico";
+  const classe = quem === "ADMINISTRADOR" ? "border-sky-600/40 bg-sky-50 text-sky-800" : quem === "FINANCEIRO" ? "border-emerald-600/40 bg-emerald-50 text-emerald-800" : quem === "JURIDICO" ? "border-violet-600/40 bg-violet-50 text-violet-800" : "border-amber-600/40 bg-amber-50 text-amber-800";
+  return <Badge variant="outline" className={classe}>Depende de: {rotulo}</Badge>;
 }
 
 function SubtotalRow({

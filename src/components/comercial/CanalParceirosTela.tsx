@@ -183,6 +183,9 @@ const dia = (v?: string | null) =>
 
 const dataHora = (v?: string | null) => (v ? new Date(v).toLocaleString("pt-BR") : "—");
 
+const diaMes = (v?: string | null) =>
+  v ? new Date(v).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) : "";
+
 const pct = (v?: number | null) =>
   v == null ? "—" : `${(v * 100).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`;
 
@@ -730,7 +733,7 @@ export default function CanalParceirosTela() {
                                 ) : null}
                                 {l.s?.liberacao_status === "USADA" ? (
                                   <p className="max-w-64 text-xs text-muted-foreground">
-                                    Liberação usada{l.s.liberacao_usada_em ? ` em ${dia(l.s.liberacao_usada_em)}` : ""}. Para exportar de novo, peça outra liberação.
+                                    Liberação usada{l.s.liberacao_usada_em ? ` em ${diaMes(l.s.liberacao_usada_em)}` : ""}. Para exportar de novo, peça outra liberação.
                                   </p>
                                 ) : l.s?.proximo_passo ? (
                                   <p className="max-w-64 text-xs text-muted-foreground">{l.s.proximo_passo}</p>
