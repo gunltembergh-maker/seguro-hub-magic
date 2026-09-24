@@ -129,6 +129,10 @@ export interface AnaliseIA {
   criado_em: string;
   atualizado_em: string;
   job_id: string | null;
+  /** Saída do agente 1 (classificador); null em análises antigas. */
+  classificacao?: import("@/integrations/supabase/types").Json | null;
+  modalidade_id?: string | null;
+  modalidade_rotulo?: string | null;
 }
 
 /**

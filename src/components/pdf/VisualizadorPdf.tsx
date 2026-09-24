@@ -108,7 +108,12 @@ export function VisualizadorPdf({ blob, paginaAlvo }: { blob: Blob; paginaAlvo?:
 
   useEffect(() => {
     if (!doc || paginaAlvo === undefined || paginaAlvo < 1 || paginaAlvo > doc.numPages) return;
-    paginas.current.get(paginaAlvo)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    // Rola só o contêiner do PDF (scrollIntoView também rolaria o diálogo/página).
+    const el = paginas.current.get(paginaAlvo);
+    const caixa = area.current;
+    if (!el || !caixa) return;
+    const topo = el.getBoundingClientRect().top - caixa.getBoundingClientRect().top + caixa.scrollTop - 12;
+    caixa.scrollTo({ top: Math.max(0, topo), behavior: "smooth" });
   }, [doc, paginaAlvo]);
 
   const aoVer = (n: number) => {
