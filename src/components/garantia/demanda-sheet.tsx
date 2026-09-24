@@ -1148,7 +1148,7 @@ function AnaliseTecnica({ demanda }: { demanda: DemandaLista }) {
           demanda={demanda}
           documento={documento}
           analise={analiseSelecionada ?? analise}
-          onNovaAnalise={analise?.situacao === "concluida" ? analisarDeNovo : obterOuCriar}
+          onNovaAnalise={analisarDeNovo}
         />
       )}
     </div>
