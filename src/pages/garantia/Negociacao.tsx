@@ -212,6 +212,7 @@ function Quadro({
 }) {
   const colunas = useMemo(() => colunasDoCatalogo(catalogo), [catalogo]);
   const { data: inicios = {} } = useInicioDoStatus(podeVerTempo);
+  const { data: docsAposPedido } = useDocsAposPedido();
   const trocar = useTrocarStatus();
   const [arrastando, setArrastando] = useState<DemandaLista | null>(null);
 
@@ -445,6 +446,12 @@ export default function Negociacao() {
 
   const demandaAberta = demandas.find((d) => d.id === aberta) ?? null;
 
+  // Link do sino: /garantia/negociacao?demanda=<id> abre o card.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("demanda");
+    if (id) setAberta(id);
+  }, []);
+
   return (
     <GarantiaShell titulo="Negociação" trilha={["Negociação"]}>
       <Tabs value={aba} onValueChange={setAba} className="space-y-6">
@@ -454,6 +461,9 @@ export default function Negociacao() {
         </TabsList>
 
         <TabsContent value="quadro" className="space-y-6">
+          <div className="flex justify-end">
+            <TimeComercialBotao />
+          </div>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <div className="min-w-0 space-y-1">
               <Label>Produto</Label>
