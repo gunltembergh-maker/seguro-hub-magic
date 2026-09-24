@@ -7,7 +7,7 @@
 // Sem `menu_garantia_painel` esses elementos simplesmente NÃO são
 // renderizados (não são escondidos por CSS).
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { AlertTriangle, ArrowRight, Ban, Check, Loader2, Pencil, Plus, RotateCcw, Search, X } from "lucide-react";
 import { toast } from "sonner";
@@ -42,13 +42,14 @@ import { AbaCotacoes } from "@/components/garantia/aba-cotacoes";
 import { AbaCuradoria } from "@/components/garantia/aba-curadoria";
 import { AbaMinuta } from "@/components/garantia/aba-minuta";
 import { AbaApolice } from "@/components/garantia/aba-apolice";
+import { AnaliseContratoDialog } from "@/components/garantia/analise-contrato-dialog";
 import {
   useAprovacoesMinuta,
   useCotacoes,
   useRegistrarAceite,
   useSeguradoDaDemanda,
 } from "@/hooks/use-garantia-crm";
-import { useDocumentosDaDemanda } from "@/hooks/use-garantia-documentos";
+import { useAnalisesDaDemanda, useDocumentosDaDemanda, type DocumentoDemanda } from "@/hooks/use-garantia-documentos";
 import {
   useConsultaAtual,
   useLimitesDaConsulta,
@@ -73,6 +74,9 @@ import {
 import { mensagemDeErro } from "@/lib/erro";
 import { consultarCnpjEntrada } from "@/lib/entrada/entrada-cnpj.functions";
 import { pendenciasDaDemanda } from "@/lib/garantia/documentos-regra";
+import { fluxoIADoTipo } from "@/lib/garantia/documentos-regra";
+import { supabase } from "@/integrations/supabase/client";
+import type { AnaliseIA } from "@/lib/garantia/garantia-ia";
 import { resumirConsulta } from "@/lib/garantia/limites-regra";
 import {
   A_DEFINIR,
@@ -1070,6 +1074,87 @@ function AbaHistorico({
 /* Diálogo focado na fase atual                                       */
 /* ------------------------------------------------------------------ */
 
+function AnaliseTecnica({ demanda }: { demanda: DemandaLista }) {
+  const { data: docs = [] } = useDocumentosDaDemanda(demanda.id);
+  const { data: analises = [], refetch } = useAnalisesDaDemanda(demanda.id);
+  const [aberta, setAberta] = useState(false);
+  const [analiseSelecionada, setAnaliseSelecionada] = useState<AnaliseIA | null>(null);
+  const criandoRef = useRef<Promise<AnaliseIA> | null>(null);
+  const tipos = demanda.produto === "fianca_locaticia"
+    ? ["contrato_locacao", "contrato"]
+    : ["edital", "contrato", "processo_judicial"];
+  const documento = docs
+    .filter((doc) => !doc.substituido_por_id && !doc.externo && tipos.includes(doc.tipo))
+    .sort((a, b) => b.versao - a.versao)[0] as DocumentoDemanda | undefined;
+  const analise = documento
+    ? analises.find((item) => item.documento_id === documento.id && ["solicitada", "processando", "concluida", "erro"].includes(item.situacao)) ?? null
+    : null;
+
+  const obterOuCriar = async (): Promise<AnaliseIA> => {
+    if (criandoRef.current) return criandoRef.current;
+    const criar = (async () => {
+    if (!documento) throw new Error("Anexe primeiro o documento do contrato.");
+    const { data: existente } = await supabase.from("garantia_analises_ia")
+      .select("id, demanda_id, documento_id, fluxo, situacao, resumo, resultado, campos_sugeridos, aplicada, aplicada_por, aplicada_em, erro_mensagem, solicitada_por, criado_em, atualizado_em, job_id")
+      .eq("documento_id", documento.id)
+      .in("situacao", ["solicitada", "processando", "concluida"])
+      .order("criado_em", { ascending: false }).limit(1).maybeSingle();
+    if (existente) return existente as unknown as AnaliseIA;
+    const { data: sessao } = await supabase.auth.getUser();
+    const { data: criada, error } = await supabase.from("garantia_analises_ia").insert({
+      demanda_id: demanda.id,
+      documento_id: documento.id,
+      fluxo: fluxoIADoTipo(documento.tipo, demanda.produto),
+      situacao: "solicitada",
+      solicitada_por: sessao.user?.id ?? null,
+    }).select("id, demanda_id, documento_id, fluxo, situacao, resumo, resultado, campos_sugeridos, aplicada, aplicada_por, aplicada_em, erro_mensagem, solicitada_por, criado_em, atualizado_em, job_id").single();
+    if (error) throw error;
+    await refetch();
+    return criada as unknown as AnaliseIA;
+    })();
+    criandoRef.current = criar;
+    try { return await criar; } finally { criandoRef.current = null; }
+  };
+
+  const analisarDeNovo = async (): Promise<AnaliseIA> => {
+    if (!documento) throw new Error("Anexe primeiro o documento do contrato.");
+    const { data: sessao } = await supabase.auth.getUser();
+    const { data: criada, error } = await supabase.from("garantia_analises_ia").insert({
+      demanda_id: demanda.id, documento_id: documento.id,
+      fluxo: fluxoIADoTipo(documento.tipo, demanda.produto), situacao: "solicitada",
+      solicitada_por: sessao.user?.id ?? null,
+    }).select("id, demanda_id, documento_id, fluxo, situacao, resumo, resultado, campos_sugeridos, aplicada, aplicada_por, aplicada_em, erro_mensagem, solicitada_por, criado_em, atualizado_em, job_id").single();
+    if (error) throw error;
+    return criada as unknown as AnaliseIA;
+  };
+
+  return (
+    <div className="space-y-4">
+      <AbaDocumentos demanda={demanda} ocultarIA />
+      <div className="rounded-md border border-dashed p-3">
+        <Button disabled={!documento} onClick={async () => {
+          try { setAnaliseSelecionada(await obterOuCriar()); setAberta(true); } catch (e) { toast.error(mensagemDeErro(e)); }
+        }}>
+          Analisar com IA
+        </Button>
+        <p className="mt-2 text-xs text-muted-foreground">
+          {documento ? "A análise usa o documento vigente e guarda as citações nesta demanda." : "Anexe o documento do contrato para liberar a análise."}
+        </p>
+      </div>
+      {aberta && documento && (
+        <AnaliseContratoDialog
+          aberto
+          onFechar={() => setAberta(false)}
+          demanda={demanda}
+          documento={documento}
+          analise={analiseSelecionada ?? analise}
+          onNovaAnalise={analisarDeNovo}
+        />
+      )}
+    </div>
+  );
+}
+
 function ConteudoDaFase({
   demanda,
   catalogo,
@@ -1097,15 +1182,7 @@ function ConteudoDaFase({
     );
   }
   if (demanda.etapa === "2") {
-    return (
-      <div className="space-y-4">
-        <AbaDocumentos demanda={demanda} ocultarIA />
-        <div className="rounded-md border border-dashed p-3">
-          <Button disabled>Analisar com IA</Button>
-          <p className="mt-2 text-xs text-muted-foreground">Disponível na próxima etapa do desenvolvimento.</p>
-        </div>
-      </div>
-    );
+    return <AnaliseTecnica demanda={demanda} />;
   }
   if (demanda.etapa === "3" && demanda.produto !== "fianca_locaticia") return <AbaLimites demanda={demanda} />;
   if (demanda.etapa === "3b") return <AbaDocumentos demanda={demanda} />;

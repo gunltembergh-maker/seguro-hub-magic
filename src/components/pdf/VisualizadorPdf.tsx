@@ -9,8 +9,9 @@ type PdfDoc = {
   destroy: () => Promise<void>;
 };
 
-function Pagina({ doc, numero, escala, largura, onVisivel }: {
+function Pagina({ doc, numero, escala, largura, onVisivel, elementoRef }: {
   doc: PdfDoc; numero: number; escala: number; largura: number; onVisivel: (n: number) => void;
+  elementoRef?: (elemento: HTMLDivElement | null) => void;
 }) {
   const wrap = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -55,13 +56,13 @@ function Pagina({ doc, numero, escala, largura, onVisivel }: {
 
   const cssLargura = largura * escala;
   return (
-    <div ref={wrap} className="mx-auto mb-3 bg-white shadow" style={{ width: cssLargura, minHeight: cssLargura * proporcao }}>
+    <div ref={(elemento) => { wrap.current = elemento; elementoRef?.(elemento); }} className="mx-auto mb-3 bg-white shadow" style={{ width: cssLargura, minHeight: cssLargura * proporcao }}>
       <canvas ref={canvas} className="block" />
     </div>
   );
 }
 
-export function VisualizadorPdf({ blob }: { blob: Blob }) {
+export function VisualizadorPdf({ blob, paginaAlvo }: { blob: Blob; paginaAlvo?: number }) {
   const area = useRef<HTMLDivElement>(null);
   const [doc, setDoc] = useState<PdfDoc | null>(null);
   const [erro, setErro] = useState(false);
@@ -69,6 +70,7 @@ export function VisualizadorPdf({ blob }: { blob: Blob }) {
   const [largura, setLargura] = useState(0);
   const [atual, setAtual] = useState(1);
   const visiveis = useRef(new Set<number>());
+  const paginas = useRef(new Map<number, HTMLDivElement>());
 
   useEffect(() => {
     let cancelado = false;
@@ -99,6 +101,11 @@ export function VisualizadorPdf({ blob }: { blob: Blob }) {
     ro.observe(el);
     return () => ro.disconnect();
   }, [doc]);
+
+  useEffect(() => {
+    if (!doc || paginaAlvo === undefined || paginaAlvo < 1 || paginaAlvo > doc.numPages) return;
+    paginas.current.get(paginaAlvo)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [doc, paginaAlvo]);
 
   const aoVer = (n: number) => {
     visiveis.current.add(n);
@@ -141,7 +148,8 @@ export function VisualizadorPdf({ blob }: { blob: Blob }) {
       </div>
       <div ref={area} className="h-[75vh] overflow-auto rounded border bg-muted p-3">
         {largura > 0 && Array.from({ length: doc.numPages }, (_, i) => (
-          <Pagina key={i + 1} doc={doc} numero={i + 1} escala={escala} largura={largura} onVisivel={aoVer} />
+          <Pagina key={i + 1} doc={doc} numero={i + 1} escala={escala} largura={largura} onVisivel={aoVer}
+            elementoRef={(elemento) => elemento ? paginas.current.set(i + 1, elemento) : paginas.current.delete(i + 1)} />
         ))}
       </div>
     </div>

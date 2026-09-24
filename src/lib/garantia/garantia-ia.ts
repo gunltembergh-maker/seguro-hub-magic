@@ -1,9 +1,7 @@
 // Análise de contrato por IA — contrato de tipos e aplicação dos campos.
 //
-// O MOTOR NÃO ESTÁ LIGADO nesta etapa: nada aqui chama Worker, prompt ou
-// /api/tc-lavoro/analysis-jobs. Quando for ligado, ele usará esse mesmo
-// endpoint (o da tela de Operacional), com as credenciais Cloudflare Access
-// existindo só no servidor. Nenhuma chave vai para o navegador.
+// O motor é acionado pela função protegida de análise, que reutiliza o proxy
+// da tela Operacional. As credenciais Cloudflare Access existem só no servidor.
 //
 // A IA SUGERE, A PESSOA CONFERE E APLICA: nada do resultado é gravado na
 // demanda automaticamente. `aplicarCamposSugeridos` é a única porta de
@@ -29,6 +27,8 @@ export interface CamposSugeridosIA {
   coberturas_adicionais?: string[] | null;
   /** Percentual de garantia exigido, em pontos percentuais (5 = 5%). */
   percentual_garantia?: number | null;
+  numero_processo?: string | null;
+  numero_contrato?: string | null;
 }
 
 /**
@@ -92,6 +92,8 @@ export const CAMPOS_APLICAVEIS = [
   { chave: "importancia_segurada", rotulo: "Importância segurada" },
   { chave: "vigencia_exigida", rotulo: "Vigência exigida" },
   { chave: "percentual_garantia", rotulo: "Percentual de garantia" },
+  { chave: "numero_processo", rotulo: "Nº do processo" },
+  { chave: "numero_contrato", rotulo: "Nº do contrato" },
 ] as const;
 
 /** Campos que a IA sugere, mas que hoje só existem como leitura/observação. */
@@ -107,6 +109,7 @@ export interface AnaliseIA {
   fluxo: string;
   situacao: string;
   resumo: string | null;
+  resultado: import("@/integrations/supabase/types").Json | null;
   campos_sugeridos: CamposSugeridosIA | null;
   aplicada: boolean;
   aplicada_por: string | null;
@@ -114,6 +117,8 @@ export interface AnaliseIA {
   erro_mensagem: string | null;
   solicitada_por: string | null;
   criado_em: string;
+  atualizado_em: string;
+  job_id: string | null;
 }
 
 /**
@@ -133,6 +138,8 @@ export async function aplicarCamposSugeridos(
   if (campos.vigencia_exigida !== undefined) valores.vigencia_exigida = campos.vigencia_exigida;
   if (campos.percentual_garantia !== undefined)
     valores.percentual_garantia = campos.percentual_garantia;
+  if (campos.numero_processo !== undefined) valores.numero_processo = campos.numero_processo;
+  if (campos.numero_contrato !== undefined) valores.numero_contrato = campos.numero_contrato;
 
   if (Object.keys(valores).length) {
     const { error } = await supabase
