@@ -1243,7 +1243,11 @@ export function DemandaSheet({
               return (
                 <div key={destino.codigo} className="space-y-1">
                   <Button
-                    className="h-auto min-h-10 w-full justify-between whitespace-normal text-left"
+                    className={`h-auto min-h-10 w-full justify-between whitespace-normal text-left ${
+                      !impedimento && !retorno && !destino.com_quem && destino.fase !== "perdida"
+                        ? "bg-[#338B85] hover:bg-[#338B85]/90"
+                        : ""
+                    }`}
                     variant={destino.fase === "perdida" ? "destructive" : retorno || destino.com_quem ? "outline" : "default"}
                     disabled={!!impedimento || trocar.isPending}
                     onClick={() => mudarStatus(destino.codigo)}
@@ -1259,6 +1263,9 @@ export function DemandaSheet({
           <main className="min-w-0 space-y-5 lg:order-1">
             <div className="space-y-3">
               <Badge className="bg-[#14405C] hover:bg-[#14405C]">Fase atual: {statusAtual?.nome ?? rotuloEtapa(demanda.etapa)}</Badge>
+              {podeVerTempo && statusAtual?.sla_horas != null && (
+                <p className="text-xs text-muted-foreground">SLA da fase: {statusAtual.sla_horas} h</p>
+              )}
               <div>
                 <h3 className="font-semibold text-[#14405C]">O que falta nesta fase</h3>
                 {pendencias.length ? (

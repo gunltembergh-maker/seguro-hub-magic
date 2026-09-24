@@ -709,7 +709,9 @@ export function AbaApolice({
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
 
-  if (!apolice) return <FormularioLancamento demanda={demanda} />;
+  if (demanda.etapa === "8" || !apolice) return <FormularioLancamento demanda={demanda} />;
+
+  if (demanda.etapa === "9") return <BlocoFinanceiro apolice={apolice} />;
 
   const dias = diasParaVencer(apolice);
 

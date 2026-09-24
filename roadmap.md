@@ -9,3 +9,4 @@
 - [x] Planilha Comissão Vencida: coluna ID
 - [x] Visualizador de contrato com pdf.js (sem iframe)
 - [x] Ajustar layout e responsividade de Entrada de Demandas e Garantia nas três larguras.
+- [ ] Reorganizar o detalhe da demanda de Garantia em modal focado na fase atual.
