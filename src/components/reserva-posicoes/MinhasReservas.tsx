@@ -154,11 +154,15 @@ export function MinhasReservas() {
     try {
       const res = await fazerCheckin({ data: { reserva_id: r.id } });
       if (!res.ok) {
-        const rede = /wifi|rede|escrit[oó]rio|ip/i.test(res.erro ?? "");
+        const erro = (res.erro ?? "").trim();
+        const rede =
+          res.codigo === "ip_fora_da_lista" ||
+          res.codigo === "ip_nao_identificado" ||
+          /wi-?fi|escrit[oó]rio/i.test(erro);
         setCheckinModal({
           open: true,
           type: "error",
-          message: res.erro ?? "Não foi possível confirmar o check-in.",
+          message: erro || "Não foi possível confirmar o check-in.",
           rede,
           ip: res.ip ?? null,
         });
@@ -170,8 +174,8 @@ export function MinhasReservas() {
       setCheckinModal({ open: true, type: "success", reserva: r, hora });
       toast.success("Check-in confirmado, boa jornada!");
     } catch (e) {
-      const msg = mensagemErro(e);
-      const rede = /wifi|rede|escrit[oó]rio|ip/i.test(msg);
+      const msg = (mensagemErro(e) ?? "").trim() || "Não foi possível confirmar o check-in.";
+      const rede = /wi-?fi|escrit[oó]rio/i.test(msg);
       setCheckinModal({ open: true, type: "error", message: msg, rede });
     } finally {
       setCheckinEm(null);
