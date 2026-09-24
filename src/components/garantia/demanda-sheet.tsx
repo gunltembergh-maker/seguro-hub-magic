@@ -141,12 +141,15 @@ function CampoLeitura({ rotulo, valor, amplo = false }: { rotulo: string; valor:
 
 function TextoRecolhivel({ texto }: { texto: string }) {
   const [aberto, setAberto] = useState(false);
+  const precisaRecolher = texto.length > 100;
   return (
     <div className="min-w-0">
-      <p className={aberto ? "whitespace-pre-wrap font-normal" : "line-clamp-2 font-normal"}>{texto}</p>
-      <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setAberto((v) => !v)}>
-        {aberto ? "ver menos" : "ver mais"}
-      </Button>
+      <p className={aberto || !precisaRecolher ? "whitespace-pre-wrap font-normal" : "line-clamp-2 font-normal"}>{texto}</p>
+      {precisaRecolher && (
+        <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setAberto((v) => !v)}>
+          {aberto ? "ver menos" : "ver mais"}
+        </Button>
+      )}
     </div>
   );
 }
