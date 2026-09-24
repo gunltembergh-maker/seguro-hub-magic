@@ -43,6 +43,8 @@ import { AbaCuradoria } from "@/components/garantia/aba-curadoria";
 import { AbaMinuta } from "@/components/garantia/aba-minuta";
 import { AbaApolice } from "@/components/garantia/aba-apolice";
 import { AnaliseContratoDialog } from "@/components/garantia/analise-contrato-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { TIPOS_IA_CONTRATO, fluxoDaSelecao, rotuloTipoDocumento as rotuloTipoDocIA } from "@/lib/garantia/documentos-regra";
 import { BlocoRetornoCrm, MotivoDialog } from "@/components/garantia/retorno-crm";
 import {
   useAprovacoesMinuta,
@@ -1057,81 +1059,124 @@ function AbaHistorico({
 /* Diálogo focado na fase atual                                       */
 /* ------------------------------------------------------------------ */
 
+const CAMPOS_ANALISE =
+  "id, demanda_id, documento_id, documentos_ids, fluxo, situacao, resumo, resultado, campos_sugeridos, aplicada, aplicada_por, aplicada_em, erro_mensagem, solicitada_por, criado_em, atualizado_em, job_id";
+
+const mesmoConjunto = (a: string[] | null | undefined, b: string[]) =>
+  !!a && a.length === b.length && b.every((id) => a.includes(id));
+
+/**
+ * Bloco de IA da Análise da demanda: o corretor escolhe o que a IA lê. O
+ * prompt sai da seleção (contrato ou financeiro), nunca de um seletor.
+ */
 function AnaliseTecnica({ demanda }: { demanda: DemandaLista }) {
   const { data: docs = [] } = useDocumentosDaDemanda(demanda.id);
   const { data: analises = [], refetch } = useAnalisesDaDemanda(demanda.id);
   const [aberta, setAberta] = useState(false);
   const [analiseSelecionada, setAnaliseSelecionada] = useState<AnaliseIA | null>(null);
+  const [marcados, setMarcados] = useState<Record<string, boolean>>({});
   const criandoRef = useRef<Promise<AnaliseIA> | null>(null);
-  const tipos = demanda.produto === "fianca_locaticia"
-    ? ["contrato_locacao", "contrato"]
-    : ["edital", "contrato", "processo_judicial"];
-  const documento = docs
-    .filter((doc) => !doc.substituido_por_id && !doc.externo && tipos.includes(doc.tipo))
-    .sort((a, b) => b.versao - a.versao)[0] as DocumentoDemanda | undefined;
-  const analise = documento
-    ? analises.find((item) => item.documento_id === documento.id && ["solicitada", "processando", "concluida", "erro"].includes(item.situacao)) ?? null
-    : null;
 
-  const obterOuCriar = async (): Promise<AnaliseIA> => {
-    if (criandoRef.current) return criandoRef.current;
-    const criar = (async () => {
-    if (!documento) throw new Error("Anexe primeiro o documento do contrato.");
-    const { data: existente } = await supabase.from("garantia_analises_ia")
-      .select("id, demanda_id, documento_id, fluxo, situacao, resumo, resultado, campos_sugeridos, aplicada, aplicada_por, aplicada_em, erro_mensagem, solicitada_por, criado_em, atualizado_em, job_id")
-      .eq("documento_id", documento.id)
-      .in("situacao", ["solicitada", "processando", "concluida"])
-      .order("criado_em", { ascending: false }).limit(1).maybeSingle();
-    if (existente) return existente as unknown as AnaliseIA;
+  // Versão substituída e anexo externo (só leitura, outro bucket) não entram.
+  const vigentes = useMemo(
+    () => docs.filter((d) => !d.substituido_por_id && !d.externo && d.caminho),
+    [docs],
+  );
+  // Padrão: só os de contrato marcados. Documento novo recebe o padrão; o que
+  // a pessoa já mexeu fica como ela deixou.
+  useEffect(() => {
+    setMarcados((atual) => {
+      const prox = { ...atual };
+      for (const d of vigentes) if (!(d.id in prox)) prox[d.id] = TIPOS_IA_CONTRATO.includes(d.tipo);
+      return prox;
+    });
+  }, [vigentes]);
+
+  const escolhidos = vigentes.filter((d) => marcados[d.id]);
+  const ids = escolhidos.map((d) => d.id);
+  const decisao = fluxoDaSelecao(escolhidos.map((d) => d.tipo), demanda.produto);
+  const erroSelecao = escolhidos.length && "erro" in decisao ? decisao.erro : null;
+  const principal = escolhidos[0] as DocumentoDemanda | undefined;
+  const analise = analises.find((a) => mesmoConjunto(a.documentos_ids, ids) && ["solicitada", "processando", "concluida", "erro"].includes(a.situacao)) ?? null;
+
+  const criar = async (): Promise<AnaliseIA> => {
+    if (!principal || "erro" in decisao) throw new Error("erro" in decisao ? decisao.erro : "Selecione os documentos.");
     const { data: sessao } = await supabase.auth.getUser();
     const { data: criada, error } = await supabase.from("garantia_analises_ia").insert({
       demanda_id: demanda.id,
-      documento_id: documento.id,
-      fluxo: fluxoIADoTipo(documento.tipo, demanda.produto),
+      documento_id: principal.id,
+      documentos_ids: ids,
+      fluxo: decisao.fluxo,
       situacao: "solicitada",
       solicitada_por: sessao.user?.id ?? null,
-    }).select("id, demanda_id, documento_id, fluxo, situacao, resumo, resultado, campos_sugeridos, aplicada, aplicada_por, aplicada_em, erro_mensagem, solicitada_por, criado_em, atualizado_em, job_id").single();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any).select(CAMPOS_ANALISE).single();
     if (error) throw error;
     await refetch();
     return criada as unknown as AnaliseIA;
-    })();
-    criandoRef.current = criar;
-    try { return await criar; } finally { criandoRef.current = null; }
   };
 
-  const analisarDeNovo = async (): Promise<AnaliseIA> => {
-    if (!documento) throw new Error("Anexe primeiro o documento do contrato.");
-    const { data: sessao } = await supabase.auth.getUser();
-    const { data: criada, error } = await supabase.from("garantia_analises_ia").insert({
-      demanda_id: demanda.id, documento_id: documento.id,
-      fluxo: fluxoIADoTipo(documento.tipo, demanda.produto), situacao: "solicitada",
-      solicitada_por: sessao.user?.id ?? null,
-    }).select("id, demanda_id, documento_id, fluxo, situacao, resumo, resultado, campos_sugeridos, aplicada, aplicada_por, aplicada_em, erro_mensagem, solicitada_por, criado_em, atualizado_em, job_id").single();
-    if (error) throw error;
-    return criada as unknown as AnaliseIA;
+  const obterOuCriar = async (): Promise<AnaliseIA> => {
+    if (criandoRef.current) return criandoRef.current;
+    const p = (async () => {
+      const { data: existentes } = await supabase.from("garantia_analises_ia")
+        .select(CAMPOS_ANALISE)
+        .eq("demanda_id", demanda.id)
+        .in("situacao", ["solicitada", "processando", "concluida"])
+        .order("criado_em", { ascending: false });
+      const igual = ((existentes ?? []) as unknown as AnaliseIA[]).find((a) => mesmoConjunto(a.documentos_ids, ids));
+      return igual ?? criar();
+    })();
+    criandoRef.current = p;
+    try { return await p; } finally { criandoRef.current = null; }
   };
 
   return (
     <div className="space-y-4">
       <AbaDocumentos demanda={demanda} ocultarIA />
-      <div className="rounded-md border border-dashed p-3">
-        <Button disabled={!documento} onClick={async () => {
-          try { setAnaliseSelecionada(await obterOuCriar()); setAberta(true); } catch (e) { toast.error(mensagemDeErro(e)); }
-        }}>
+      <div className="space-y-3 rounded-md border border-dashed p-3">
+        <p className="text-sm font-medium">O que a IA deve ler</p>
+        {vigentes.length === 0 ? (
+          <p className="text-xs text-muted-foreground">Nenhum documento anexado nesta demanda.</p>
+        ) : (
+          <ul className="space-y-1.5">
+            {vigentes.map((d) => (
+              <li key={d.id}>
+                <label className="flex min-w-0 items-start gap-2 text-sm">
+                  <Checkbox
+                    checked={!!marcados[d.id]}
+                    onCheckedChange={(v) => setMarcados((m) => ({ ...m, [d.id]: v === true }))}
+                  />
+                  <span className="min-w-0">
+                    <span className="font-medium">{rotuloTipoDocIA(d.tipo)}</span>
+                    <span className="block break-all text-xs text-muted-foreground">{d.nome_arquivo}</span>
+                  </span>
+                </label>
+              </li>
+            ))}
+          </ul>
+        )}
+        {erroSelecao && (
+          <p className="flex gap-2 text-xs text-destructive"><AlertTriangle className="h-4 w-4 shrink-0" />{erroSelecao}</p>
+        )}
+        <Button
+          disabled={!escolhidos.length || !!erroSelecao}
+          onClick={async () => {
+            try { setAnaliseSelecionada(await obterOuCriar()); setAberta(true); } catch (e) { toast.error(mensagemDeErro(e)); }
+          }}
+        >
           Analisar com IA
         </Button>
-        <p className="mt-2 text-xs text-muted-foreground">
-          {documento ? "A análise usa o documento vigente e guarda as citações nesta demanda." : "Anexe o documento do contrato para liberar a análise."}
-        </p>
+        <p className="text-xs text-muted-foreground">A IA pode errar. Confira os dados antes de aplicar.</p>
       </div>
-      {aberta && documento && (
+      {aberta && principal && (
         <AnaliseContratoDialog
           aberto
           onFechar={() => setAberta(false)}
           demanda={demanda}
-          documento={documento}
+          documento={principal}
           analise={analiseSelecionada ?? analise}
-          onNovaAnalise={analisarDeNovo}
+          onNovaAnalise={criar}
         />
       )}
     </div>
