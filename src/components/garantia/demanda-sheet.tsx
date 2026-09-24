@@ -9,7 +9,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { AlertTriangle, Ban, Check, Loader2, Pencil, Plus, RotateCcw, Search, X } from "lucide-react";
+import { AlertTriangle, ArrowRight, Ban, Check, Loader2, Pencil, Plus, RotateCcw, Search, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -32,7 +32,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -43,7 +42,18 @@ import { AbaCotacoes } from "@/components/garantia/aba-cotacoes";
 import { AbaCuradoria } from "@/components/garantia/aba-curadoria";
 import { AbaMinuta } from "@/components/garantia/aba-minuta";
 import { AbaApolice } from "@/components/garantia/aba-apolice";
-import { useRegistrarAceite } from "@/hooks/use-garantia-crm";
+import {
+  useAprovacoesMinuta,
+  useCotacoes,
+  useRegistrarAceite,
+  useSeguradoDaDemanda,
+} from "@/hooks/use-garantia-crm";
+import { useDocumentosDaDemanda } from "@/hooks/use-garantia-documentos";
+import {
+  useConsultaAtual,
+  useLimitesDaConsulta,
+  useSeguradorasConfig,
+} from "@/hooks/use-garantia-limites";
 
 
 import {
@@ -62,6 +72,8 @@ import {
 } from "@/hooks/use-garantia-negociacao";
 import { mensagemDeErro } from "@/lib/erro";
 import { consultarCnpjEntrada } from "@/lib/entrada/entrada-cnpj.functions";
+import { pendenciasDaDemanda } from "@/lib/garantia/documentos-regra";
+import { resumirConsulta } from "@/lib/garantia/limites-regra";
 import {
   A_DEFINIR,
   MODALIDADES,
@@ -663,60 +675,59 @@ function EditorLegenda({ demanda }: { demanda: DemandaLista }) {
   };
 
   return (
-    <div className="mt-3 min-w-0 space-y-2 rounded-md border border-border bg-muted/40 p-3">
-      <div className="flex items-center justify-between gap-2">
-        <Label>Legenda</Label>
-        <span className="text-xs text-muted-foreground">{demanda.numero}</span>
-      </div>
-      <div className="flex min-w-0 gap-2">
+    <div className="min-w-0">
+      {!editando ? (
+        <Button size="icon" variant="ghost" onClick={() => setEditando(true)} aria-label="Editar legenda">
+          <Pencil className="h-4 w-4" />
+        </Button>
+      ) : (
+        <div className="mt-3 min-w-0 space-y-2 rounded-md border border-border bg-muted/40 p-3">
+          <div className="flex items-center justify-between gap-2">
+            <Label>Legenda</Label>
+            <span className="text-xs text-muted-foreground">{demanda.numero}</span>
+          </div>
+          <div className="flex min-w-0 gap-2">
         <Input
           className="min-w-0 flex-1"
           value={valor}
-          readOnly={!editando}
           onChange={(e) => setValor(e.target.value)}
         />
-        {editando ? (
-          <>
-            <Button size="icon" onClick={salvar} disabled={atualizar.isPending} aria-label="Salvar legenda">
-              {atualizar.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-            </Button>
-            <Button
-              size="icon"
-              variant="outline"
-              aria-label="Cancelar"
-              onClick={() => {
-                setValor(demanda.legenda ?? "");
-                setEditando(false);
-              }}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </>
-        ) : (
-          <Button size="icon" variant="outline" onClick={() => setEditando(true)} aria-label="Editar legenda">
-            <Pencil className="h-4 w-4" />
+          <Button size="icon" onClick={salvar} disabled={atualizar.isPending} aria-label="Salvar legenda">
+            {atualizar.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
           </Button>
-        )}
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        {atalhos.map((a) => (
-          <Button key={a.rotulo} size="sm" variant="outline" onClick={() => acrescentar(a.texto)}>
-            <Plus className="mr-1 h-3.5 w-3.5" />
-            {a.rotulo}
+          <Button
+            size="icon"
+            variant="outline"
+            aria-label="Cancelar"
+            onClick={() => {
+              setValor(demanda.legenda ?? "");
+              setEditando(false);
+            }}
+          >
+            <X className="h-4 w-4" />
           </Button>
-        ))}
-        {demanda.legenda_manual && (
-          <Button size="sm" variant="ghost" onClick={restaurar} disabled={atualizar.isPending}>
-            <RotateCcw className="mr-1 h-3.5 w-3.5" />
-            Restaurar padrão
-          </Button>
-        )}
-      </div>
-      <p className="text-xs text-muted-foreground">
-        {demanda.legenda_manual
-          ? "Legenda editada à mão: ela não se atualiza mais sozinha. Use Restaurar padrão para voltar a número · cliente."
-          : "Legenda padrão (número · cliente), atualizada sozinha. Ao editar à mão, ela deixa de se atualizar."}
-      </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {atalhos.map((a) => (
+              <Button key={a.rotulo} size="sm" variant="outline" onClick={() => acrescentar(a.texto)}>
+                <Plus className="mr-1 h-3.5 w-3.5" />
+                {a.rotulo}
+              </Button>
+            ))}
+            {demanda.legenda_manual && (
+              <Button size="sm" variant="ghost" onClick={restaurar} disabled={atualizar.isPending}>
+                <RotateCcw className="mr-1 h-3.5 w-3.5" />
+                Restaurar padrão
+              </Button>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {demanda.legenda_manual
+              ? "Legenda editada à mão: ela não se atualiza mais sozinha. Use Restaurar padrão para voltar a número · cliente."
+              : "Legenda padrão (número · cliente), atualizada sozinha. Ao editar à mão, ela deixa de se atualizar."}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -1056,8 +1067,79 @@ function AbaHistorico({
 }
 
 /* ------------------------------------------------------------------ */
-/* Sheet                                                              */
+/* Diálogo focado na fase atual                                       */
 /* ------------------------------------------------------------------ */
+
+function ConteudoDaFase({
+  demanda,
+  catalogo,
+  podeVerTempo,
+  onTriagem,
+  onAceite,
+  onPerda,
+}: {
+  demanda: DemandaLista;
+  catalogo: StatusCatalogo[];
+  podeVerTempo: boolean;
+  onTriagem: () => void;
+  onAceite: () => void;
+  onPerda: () => void;
+}) {
+  if (demanda.etapa === "1") {
+    return (
+      <div className="space-y-3 rounded-md border p-4">
+        <p className="text-sm text-muted-foreground">
+          Confira segurado ou locador, natureza, modalidade, movimento, valores, objeto, vigência,
+          prazo e responsáveis.
+        </p>
+        <Button onClick={onTriagem}>Completar triagem</Button>
+      </div>
+    );
+  }
+  if (demanda.etapa === "2") {
+    return (
+      <div className="space-y-4">
+        <AbaDocumentos demanda={demanda} ocultarIA />
+        <div className="rounded-md border border-dashed p-3">
+          <Button disabled>Analisar com IA</Button>
+          <p className="mt-2 text-xs text-muted-foreground">Disponível na próxima etapa do desenvolvimento.</p>
+        </div>
+      </div>
+    );
+  }
+  if (demanda.etapa === "3" && demanda.produto !== "fianca_locaticia") return <AbaLimites demanda={demanda} />;
+  if (demanda.etapa === "3b") return <AbaDocumentos demanda={demanda} />;
+  if (demanda.etapa === "4") return <AbaCotacoes demanda={demanda} />;
+  if (demanda.etapa === "5") {
+    return (
+      <div className="space-y-4">
+        <AbaDocumentos demanda={demanda} tipoInicial="comparativo" />
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={onAceite}>Registrar aceite do cliente</Button>
+          <Button variant="destructive" onClick={onPerda}>Registrar perda</Button>
+        </div>
+      </div>
+    );
+  }
+  if (demanda.etapa === "6") return <AbaCuradoria demanda={demanda} />;
+  if (demanda.etapa === "7") {
+    return (
+      <div className="space-y-5">
+        <AbaDocumentos demanda={demanda} tipoInicial="minuta" ocultarIA />
+        <AbaMinuta demanda={demanda} catalogo={catalogo} moverAoReceberMinuta={false} />
+      </div>
+    );
+  }
+  if (["8", "9"].includes(demanda.etapa)) {
+    return (
+      <div className="space-y-5">
+        {demanda.etapa === "8" && <AbaDocumentos demanda={demanda} tipoInicial="apolice" />}
+        <AbaApolice demanda={demanda} podeVerTempo={podeVerTempo} />
+      </div>
+    );
+  }
+  return <AbaDados demanda={demanda} />;
+}
 
 export function DemandaSheet({
   demanda,
@@ -1074,6 +1156,15 @@ export function DemandaSheet({
   const [perdaAberta, setPerdaAberta] = useState(false);
   const trocar = useTrocarStatus();
   const aceite = useRegistrarAceite();
+  const demandaId = demanda?.id ?? "";
+  const clienteId = demanda?.cliente_id ?? null;
+  const { data: docs = [] } = useDocumentosDaDemanda(demandaId);
+  const { data: consulta } = useConsultaAtual(clienteId, !!demanda && demanda.produto !== "fianca_locaticia");
+  const { data: limites = [] } = useLimitesDaConsulta(consulta?.id ?? null);
+  const { data: seguradorasConfig = [] } = useSeguradorasConfig();
+  const { data: cotacoes = [] } = useCotacoes(demandaId);
+  const { data: aprovacoes = [] } = useAprovacoesMinuta(demandaId);
+  const { data: segurado } = useSeguradoDaDemanda(demanda?.segurado_id ?? null);
 
   const registrarAceite = async (id: string) => {
     try {
@@ -1087,11 +1178,36 @@ export function DemandaSheet({
   if (!demanda) return null;
 
   const statusAtual = catalogo.find((s) => s.codigo === demanda.status_atual);
+  const tiposPresentes = new Set(docs.filter((d) => !d.substituido_por_id).map((d) => d.tipo));
+  const pendencias = pendenciasDaDemanda(demanda, tiposPresentes).filter((p) => p.etapa === demanda.etapa);
+  const resumoMercado = resumirConsulta(seguradorasConfig, limites);
+  const contextoMercado = {
+    consultaValida: !!consulta && new Date(consulta.valida_ate).getTime() > Date.now(),
+    completa: resumoMercado.completa,
+    faltantes: resumoMercado.faltantes,
+  };
+  const contextoCrm = {
+    temCotacaoEscolhida: cotacoes.some((c) => c.escolhida),
+    temMinuta: tiposPresentes.has("minuta"),
+    aprovouCliente: aprovacoes.some((a) => a.quem === "cliente"),
+    aprovouSegurado: aprovacoes.some((a) => a.quem === "segurado"),
+    seguradoExigeTexto: !!segurado?.exige_texto_proprio,
+  };
+  const destinos = catalogo
+    .filter((s) => s.ativo && s.fase === demanda.fase && s.codigo !== demanda.status_atual)
+    .filter((s) => !(demanda.produto === "fianca_locaticia" && s.etapa === "3"))
+    .sort((a, b) => a.ordem - b.ordem);
+  const impedimentos = destinos.map((destino) => ({
+    destino,
+    impedimento: impedimentoDaTransicao(demanda, destino, contextoMercado, tiposPresentes, contextoCrm),
+  }));
+  const impedimentosDaFase = [...new Set(impedimentos.map((item) => item.impedimento).filter(Boolean))];
+  const tudoPronto = pendencias.length === 0 && impedimentosDaFase.length === 0;
 
   const mudarStatus = async (codigo: string) => {
     const destino = catalogo.find((s) => s.codigo === codigo);
     if (!destino) return;
-    const impedimento = impedimentoDaTransicao(demanda, destino);
+    const impedimento = impedimentoDaTransicao(demanda, destino, contextoMercado, tiposPresentes, contextoCrm);
     if (impedimento) {
       toast.error(impedimento);
       return;
@@ -1105,99 +1221,101 @@ export function DemandaSheet({
   };
 
   return (
-    <Sheet open={!!demanda} onOpenChange={(o) => !o && onFechar()}>
-      <SheetContent className="flex w-full min-w-0 flex-col gap-0 overflow-y-auto sm:max-w-xl lg:max-w-2xl">
-        <SheetHeader>
-          <SheetTitle className="break-words text-left">
-            {demanda.legenda ?? demanda.cliente?.nome ?? "Demanda"}
-          </SheetTitle>
-          <SheetDescription className="text-left">
+    <Dialog open={!!demanda} onOpenChange={(o) => !o && onFechar()}>
+      <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] max-w-5xl min-w-0 overflow-y-auto p-4 sm:p-6">
+        <DialogHeader className="min-w-0 pr-8">
+          <div className="flex min-w-0 items-start gap-1">
+            <DialogTitle className="min-w-0 break-words text-left">
+              {demanda.legenda ?? demanda.cliente?.nome ?? "Demanda"}
+            </DialogTitle>
+            <EditorLegenda demanda={demanda} />
+          </div>
+          <DialogDescription className="text-left">
             {ROTULO_PRODUTO[demanda.produto] ?? demanda.produto} ·{" "}
             {rotuloModalidade(demanda.modalidade)} · {rotuloEtapa(demanda.etapa)}
             {demanda.codigo ? ` · ${demanda.codigo}` : ""}
-          </SheetDescription>
-        </SheetHeader>
+          </DialogDescription>
+        </DialogHeader>
 
-        <EditorLegenda demanda={demanda} />
+        <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
+          <aside className="min-w-0 space-y-3 lg:order-2">
+            <h3 className="font-semibold text-[#14405C]">Mover card para fase</h3>
+            {impedimentos.map(({ destino, impedimento }) => {
+              const retorno = destino.ordem < (statusAtual?.ordem ?? 0);
+              return (
+                <div key={destino.codigo} className="space-y-1">
+                  <Button
+                    className={`h-auto min-h-10 w-full justify-between whitespace-normal text-left ${
+                      tudoPronto && !impedimento && !retorno && !destino.com_quem && destino.fase !== "perdida"
+                        ? "bg-[#338B85] hover:bg-[#338B85]/90"
+                        : ""
+                    }`}
+                    variant={destino.fase === "perdida" ? "destructive" : retorno || destino.com_quem ? "outline" : "default"}
+                    disabled={!!impedimento || trocar.isPending}
+                    onClick={() => mudarStatus(destino.codigo)}
+                  >
+                    <span>{destino.nome}</span><ArrowRight className="h-4 w-4 shrink-0" />
+                  </Button>
+                  {impedimento && <p className="text-xs text-destructive">{impedimento}</p>}
+                </div>
+              );
+            })}
+          </aside>
 
-        <div className="mt-4 space-y-3">
-          {!demanda.triagem_completa && (
-            <div className="flex items-start gap-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-              <div className="flex-1">
-                <p className="font-medium">Triagem incompleta</p>
-                <p>Enquanto a etapa 1 não estiver fechada, a demanda não avança de coluna.</p>
-                <Button size="sm" className="mt-2" onClick={() => setTriagemAberta(true)}>
-                  Completar triagem
-                </Button>
+          <main className="min-w-0 space-y-5 lg:order-1">
+            <div className="space-y-3">
+              <Badge className="bg-[#14405C] hover:bg-[#14405C]">Fase atual: {statusAtual?.nome ?? rotuloEtapa(demanda.etapa)}</Badge>
+              {podeVerTempo && statusAtual?.sla_horas != null && (
+                <p className="text-xs text-muted-foreground">SLA da fase: {statusAtual.sla_horas} h</p>
+              )}
+              <div>
+                <h3 className="font-semibold text-[#14405C]">O que falta nesta fase</h3>
+                {pendencias.length ? (
+                  <ul className="mt-2 space-y-2">
+                    {pendencias.map((p, i) => (
+                      <li key={`${p.etapa}-${p.tipo ?? i}`} className={`flex items-start gap-2 rounded-md border p-3 text-sm ${p.bloqueia ? "border-amber-300 bg-amber-50 text-amber-900" : "bg-muted/40 text-muted-foreground"}`}>
+                        {p.bloqueia ? <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /> : <Check className="mt-0.5 h-4 w-4 shrink-0" />}
+                        <span>{p.texto}<span className="mt-1 block text-xs">Motivo: {p.motivo}</span></span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : impedimentosDaFase.length === 0 ? (
+                  <p className="mt-2 flex items-center gap-2 text-sm text-[#338B85]"><Check className="h-4 w-4" /> Tudo pronto nesta fase</p>
+                ) : null}
+                {impedimentosDaFase.map((impedimento) => (
+                  <p key={impedimento} className="mt-2 flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span>{impedimento}</span>
+                  </p>
+                ))}
               </div>
             </div>
-          )}
-
-          <div className="space-y-1">
-            <Label>Status</Label>
-            <Select value={demanda.status_atual} onValueChange={mudarStatus} disabled={trocar.isPending}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {catalogo.map((s) => (
-                  <SelectItem key={s.codigo} value={s.codigo}>{s.nome}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {podeVerTempo && statusAtual?.sla_horas != null && (
-              <p className="text-xs text-muted-foreground">
-                SLA do status: {statusAtual.sla_horas} h
-              </p>
-            )}
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {demanda.fase === "negociacao" ? (
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={aceite.isPending}
-                onClick={() => registrarAceite(demanda.id)}
-                title="Gera o código GAR e leva a demanda para o CRM, em curadoria."
-              >
-                {aceite.isPending ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Check className="mr-2 h-4 w-4" />
-                )}
-                Registrar aceite do cliente
-              </Button>
-            ) : (
-              <Badge variant="outline" className="self-center">
-                {demanda.codigo ? `Aceito · ${demanda.codigo}` : "Aceito"}
-              </Badge>
-            )}
-            <Button variant="destructive" size="sm" onClick={() => setPerdaAberta(true)}>
-              Registrar perda
-            </Button>
-          </div>
+            <ConteudoDaFase
+              demanda={demanda}
+              catalogo={catalogo}
+              podeVerTempo={podeVerTempo}
+              onTriagem={() => setTriagemAberta(true)}
+              onAceite={() => registrarAceite(demanda.id)}
+              onPerda={() => setPerdaAberta(true)}
+            />
+          </main>
         </div>
 
-        <Separator className="my-4" />
+        <Separator />
 
-        <Tabs defaultValue="dados" className="flex-1">
-          <TabsList className="flex-wrap">
-            <TabsTrigger value="dados">Dados</TabsTrigger>
+        <Tabs defaultValue="fechado" className="min-w-0">
+          <div className="w-full overflow-x-auto">
+            <TabsList className="w-max min-w-full justify-start">
+            <TabsTrigger value="dados">Dados completos</TabsTrigger>
             <TabsTrigger value="documentos">Documentos</TabsTrigger>
-            {/* Fiança locatícia não faz consulta a mercado: a aba nem aparece. */}
             {demanda.produto === "seguro_garantia" && (
               <TabsTrigger value="limites">Limites</TabsTrigger>
             )}
             <TabsTrigger value="cotacoes">Cotações</TabsTrigger>
-            {/* Abas do CRM: mesma demanda, outra fase — o detalhe é o mesmo. */}
-            {demanda.fase === "crm" && <TabsTrigger value="curadoria">Curadoria</TabsTrigger>}
-            {demanda.fase === "crm" && <TabsTrigger value="minuta">Minuta</TabsTrigger>}
-            {(demanda.fase === "crm" || demanda.fase === "encerrada") && (
-              <TabsTrigger value="apolice">Apólice</TabsTrigger>
-            )}
             <TabsTrigger value="origem">Origem</TabsTrigger>
             <TabsTrigger value="historico">Histórico</TabsTrigger>
-          </TabsList>
+            </TabsList>
+          </div>
           <TabsContent value="dados" className="mt-4">
             <AbaDados demanda={demanda} />
           </TabsContent>
@@ -1208,22 +1326,6 @@ export function DemandaSheet({
           <TabsContent value="cotacoes" className="mt-4">
             <AbaCotacoes demanda={demanda} />
           </TabsContent>
-          {demanda.fase === "crm" && (
-            <TabsContent value="curadoria" className="mt-4">
-              <AbaCuradoria demanda={demanda} />
-            </TabsContent>
-          )}
-          {demanda.fase === "crm" && (
-            <TabsContent value="minuta" className="mt-4">
-              <AbaMinuta demanda={demanda} catalogo={catalogo} />
-            </TabsContent>
-          )}
-          {(demanda.fase === "crm" || demanda.fase === "encerrada") && (
-            <TabsContent value="apolice" className="mt-4">
-              <AbaApolice demanda={demanda} podeVerTempo={podeVerTempo} />
-            </TabsContent>
-          )}
-
           {demanda.produto === "seguro_garantia" && (
             <TabsContent value="limites" className="mt-4">
               <AbaLimites demanda={demanda} />
@@ -1238,15 +1340,15 @@ export function DemandaSheet({
         </Tabs>
 
 
-        <div className="mt-4 text-xs text-muted-foreground">
+        <div className="text-xs text-muted-foreground">
           Importância segurada: {moeda(demanda.importancia_segurada)} · Data limite:{" "}
           {dataCurta(demanda.data_limite)}
         </div>
 
         <TriagemDialog aberto={triagemAberta} demanda={demanda} onFechar={() => setTriagemAberta(false)} />
         <PerdaDialog aberto={perdaAberta} demanda={demanda} onFechar={() => setPerdaAberta(false)} />
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }
 

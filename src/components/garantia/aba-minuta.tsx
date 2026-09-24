@@ -128,9 +128,11 @@ function BlocoAprovacao({
 export function AbaMinuta({
   demanda,
   catalogo,
+  moverAoReceberMinuta = true,
 }: {
   demanda: DemandaLista;
   catalogo: StatusCatalogo[];
+  moverAoReceberMinuta?: boolean;
 }) {
   const { data: cotacoes = [] } = useCotacoes(demanda.id);
   const { data: seguradoras = [] } = useSeguradorasGarantia();
@@ -151,6 +153,7 @@ export function AbaMinuta({
   // Chegou a primeira minuta (ou a versão nova depois de um ajuste): o status
   // vai para a conferência. O relógio continua sendo do trigger do banco.
   useEffect(() => {
+    if (!moverAoReceberMinuta) return;
     if (!temMinuta || carimbouRef.current) return;
     if (!["aguard_minuta", "ajuste_minuta"].includes(demanda.status_atual)) return;
     const destino = catalogo.find((s) => s.codigo === "conferencia_minuta");
@@ -163,7 +166,7 @@ export function AbaMinuta({
         onError: () => undefined,
       },
     );
-  }, [temMinuta, demanda, catalogo, trocar]);
+  }, [moverAoReceberMinuta, temMinuta, demanda, catalogo, trocar]);
 
   const mudarStatus = async (codigo: string) => {
     const destino = catalogo.find((s) => s.codigo === codigo);
