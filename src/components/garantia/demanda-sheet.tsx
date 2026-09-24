@@ -46,6 +46,7 @@ import { AnaliseContratoDialog } from "@/components/garantia/analise-contrato-di
 import { Checkbox } from "@/components/ui/checkbox";
 import { TIPOS_IA_CONTRATO, fluxoDaSelecao, rotuloTipoDocumento as rotuloTipoDocIA } from "@/lib/garantia/documentos-regra";
 import { BlocoRetornoCrm, MotivoDialog } from "@/components/garantia/retorno-crm";
+import { SolicitarDocumentoComercial } from "@/components/garantia/solicitar-documento";
 import {
   useAprovacoesMinuta,
   useCotacoes,
@@ -1208,9 +1209,12 @@ function ConteudoDaFase({
             Confira segurado ou locador, natureza, modalidade, movimento, valores, objeto, vigência,
             prazo e responsáveis.
           </p>
-          <Button variant={demanda.triagem_completa ? "outline" : "default"} onClick={onTriagem}>
-            {demanda.triagem_completa ? "Revisar conferência dos dados" : "Conferir dados da demanda"}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant={demanda.triagem_completa ? "outline" : "default"} onClick={onTriagem}>
+              {demanda.triagem_completa ? "Revisar conferência dos dados" : "Conferir dados da demanda"}
+            </Button>
+            <SolicitarDocumentoComercial demanda={demanda} />
+          </div>
         </div>
       </div>
     );

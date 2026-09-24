@@ -10,7 +10,7 @@
 // Nada é escrito em garantia_status_historico pela interface — o relógio é do
 // trigger do banco.
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { AlertTriangle, Clock, Inbox, Loader2, RotateCcw, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -71,6 +71,8 @@ import {
 } from "@/lib/garantia/formato";
 import { cn } from "@/lib/utils";
 import { mensagemDeErro } from "@/lib/erro";
+import { useDocsAposPedido } from "@/hooks/use-garantia-comercial";
+import { TimeComercialBotao } from "@/components/garantia/time-comercial";
 
 const TODOS = "__todos__";
 
@@ -82,6 +84,7 @@ function Cartao({
   demanda,
   statusNome,
   statusInterno,
+  chegouDocumento,
   slaHoras,
   inicioStatus,
   podeVerTempo,
@@ -92,6 +95,7 @@ function Cartao({
   demanda: DemandaLista;
   statusNome: string;
   statusInterno: boolean;
+  chegouDocumento?: boolean;
   slaHoras: number | null;
   inicioStatus?: string;
   podeVerTempo: boolean;
@@ -125,6 +129,9 @@ function Cartao({
       >
         {statusNome}
       </Badge>
+      {chegouDocumento && (
+        <p className="mb-2 text-[11px] text-[#338B85]">Chegou documento depois do pedido</p>
+      )}
       <div className="flex items-start justify-between gap-2">
         <span className="line-clamp-2 text-sm font-semibold text-card-foreground">
           {demanda.legenda ?? demanda.cliente?.nome ?? "Cliente a definir"}
@@ -205,6 +212,7 @@ function Quadro({
 }) {
   const colunas = useMemo(() => colunasDoCatalogo(catalogo), [catalogo]);
   const { data: inicios = {} } = useInicioDoStatus(podeVerTempo);
+  const { data: docsAposPedido } = useDocsAposPedido();
   const trocar = useTrocarStatus();
   const [arrastando, setArrastando] = useState<DemandaLista | null>(null);
 
@@ -256,6 +264,7 @@ function Quadro({
                   demanda={d}
                   statusNome={catalogo.find((s) => s.codigo === d.status_atual)?.nome ?? d.status_atual}
                   statusInterno={catalogo.find((s) => s.codigo === d.status_atual)?.relogio === "interno"}
+                  chegouDocumento={docsAposPedido?.has(d.id)}
                   slaHoras={catalogo.find((s) => s.codigo === d.status_atual)?.sla_horas ?? null}
                   inicioStatus={inicios[d.id]}
                   podeVerTempo={podeVerTempo}
@@ -437,6 +446,12 @@ export default function Negociacao() {
 
   const demandaAberta = demandas.find((d) => d.id === aberta) ?? null;
 
+  // Link do sino: /garantia/negociacao?demanda=<id> abre o card.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("demanda");
+    if (id) setAberta(id);
+  }, []);
+
   return (
     <GarantiaShell titulo="Negociação" trilha={["Negociação"]}>
       <Tabs value={aba} onValueChange={setAba} className="space-y-6">
@@ -446,6 +461,9 @@ export default function Negociacao() {
         </TabsList>
 
         <TabsContent value="quadro" className="space-y-6">
+          <div className="flex justify-end">
+            <TimeComercialBotao />
+          </div>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <div className="min-w-0 space-y-1">
               <Label>Produto</Label>

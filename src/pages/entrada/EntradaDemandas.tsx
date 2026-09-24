@@ -400,17 +400,18 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
     setResultado(null);
   }
 
-  // Sem documento não é demanda: sem ele não dá para saber o que é pedido.
+  // Sem documento não é demanda: exige pelo menos um, de qualquer tipo (muitas
+  // vezes só há o que o comercial mandou). O documento do contrato é exigido
+  // depois, para sair da Análise da demanda (pendenciasAnaliseDemanda).
   const ehGarantia = ramo === "garantia";
-  const obrigatorios = produto ? tiposContratoObrigatorios(produto) : [];
   const razaoBloqueio = !ehGarantia
     ? null
     : !produto
       ? "Escolha o produto para anexar os documentos."
-      : anexos.some((a) => !a.tipo)
-        ? "Escolha o tipo de cada arquivo anexado."
-        : !anexos.some((a) => obrigatorios.includes(a.tipo))
-          ? `Anexe pelo menos um documento de contrato (${obrigatorios.map(rotuloTipoDocumento).join(", ")}).`
+      : anexos.length === 0
+        ? "Anexe pelo menos um documento."
+        : anexos.some((a) => !a.tipo)
+          ? "Escolha o tipo de cada arquivo anexado."
           : null;
 
   function adicionarArquivos(lista: FileList | null) {
@@ -673,7 +674,8 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
                       </ul>
                     )}
                     <p className="text-xs text-muted-foreground">
-                      Até 20 MB por arquivo. DRE, balanço e outros documentos podem ir juntos.
+                      Anexe pelo menos um documento, de qualquer tipo (edital, contrato, DRE, balanço, alteração
+                      contratual). Até 20 MB por arquivo.
                     </p>
                   </>
                 )}

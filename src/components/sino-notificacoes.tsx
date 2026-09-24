@@ -8,6 +8,7 @@ import { Bell, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { CHAVE_AVISOS_PESSOAIS, marcarAvisosLidos, useAvisosPessoais } from "@/hooks/use-garantia-comercial";
 
 export const CHAVE_NOTIFICACOES = ["minhas-notificacoes"] as const;
 
@@ -74,8 +75,23 @@ export function SinoNotificacoes() {
     });
   }, [qc]);
 
-  const itens = data ?? [];
-  const naoVistos = itens.filter((i) => !i.vista);
+  // Fonte nova, ao lado da existente: avisos pessoais (hub_notificacoes).
+  const { data: pessoais = [] } = useAvisosPessoais();
+  const pessoaisNaoLidos = pessoais.filter((p) => !p.lida);
+  const itensPessoais: Notificacao[] = pessoais.map((p) => ({
+    chave: `hub:${p.id}`,
+    categoria: "Para você",
+    titulo: p.titulo,
+    descricao: p.mensagem,
+    link: p.link,
+    urgencia: "media",
+    desde: p.criado_em,
+    vista: p.lida,
+  }));
+
+  const itens = [...itensPessoais, ...(data ?? [])];
+  const naoVistos = (data ?? []).filter((i) => !i.vista);
+  const totalNaoVistos = naoVistos.length + pessoaisNaoLidos.length;
   const temAlta = naoVistos.some((i) => i.urgencia === "alta");
 
   const grupos = useMemo(() => {
@@ -89,7 +105,12 @@ export function SinoNotificacoes() {
 
   async function abrir(o: boolean) {
     setAberto(o);
-    if (!o || naoVistos.length === 0) return;
+    if (!o) return;
+    if (pessoaisNaoLidos.length > 0) {
+      const erro = await marcarAvisosLidos(pessoaisNaoLidos.map((p) => p.id));
+      if (!erro) void qc.invalidateQueries({ queryKey: CHAVE_AVISOS_PESSOAIS });
+    }
+    if (naoVistos.length === 0) return;
     const { error } = await supabase.rpc("rpc_notificacoes_marcar_vistas" as never, {
       p_chaves: naoVistos.map((i) => i.chave),
     } as never);
@@ -105,7 +126,7 @@ export function SinoNotificacoes() {
           className="relative rounded-full p-2 text-primary-foreground transition-colors hover:bg-white/10"
         >
           <Bell className="h-5 w-5" />
-          {naoVistos.length > 0 ? (
+          {totalNaoVistos > 0 ? (
             <span
               className={cn(
                 "absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none",
@@ -114,7 +135,7 @@ export function SinoNotificacoes() {
                   : "bg-white text-primary",
               )}
             >
-              {naoVistos.length > 9 ? "9+" : naoVistos.length}
+              {totalNaoVistos > 9 ? "9+" : totalNaoVistos}
             </span>
           ) : null}
         </button>
