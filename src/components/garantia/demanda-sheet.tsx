@@ -1078,6 +1078,7 @@ function AnaliseTecnica({ demanda }: { demanda: DemandaLista }) {
   const { data: docs = [] } = useDocumentosDaDemanda(demanda.id);
   const { data: analises = [], refetch } = useAnalisesDaDemanda(demanda.id);
   const [aberta, setAberta] = useState(false);
+  const [analiseSelecionada, setAnaliseSelecionada] = useState<AnaliseIA | null>(null);
   const criandoRef = useRef<Promise<AnaliseIA> | null>(null);
   const tipos = demanda.produto === "fianca_locaticia"
     ? ["contrato_locacao", "contrato"]
@@ -1132,7 +1133,7 @@ function AnaliseTecnica({ demanda }: { demanda: DemandaLista }) {
       <AbaDocumentos demanda={demanda} ocultarIA />
       <div className="rounded-md border border-dashed p-3">
         <Button disabled={!documento} onClick={async () => {
-          try { await obterOuCriar(); setAberta(true); } catch (e) { toast.error(mensagemDeErro(e)); }
+          try { setAnaliseSelecionada(await obterOuCriar()); setAberta(true); } catch (e) { toast.error(mensagemDeErro(e)); }
         }}>
           Analisar com IA
         </Button>
@@ -1146,7 +1147,7 @@ function AnaliseTecnica({ demanda }: { demanda: DemandaLista }) {
           onFechar={() => setAberta(false)}
           demanda={demanda}
           documento={documento}
-          analise={analise}
+          analise={analiseSelecionada ?? analise}
           onNovaAnalise={analise?.situacao === "concluida" ? analisarDeNovo : obterOuCriar}
         />
       )}

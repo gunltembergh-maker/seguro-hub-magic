@@ -5,16 +5,7 @@ import type { Json } from "@/integrations/supabase/types";
 import type { CamposSugeridosComFonteIA, ModalidadeSeguroGarantiaIA, ResultadoDocumentoIA, ResultadoFiancaIA, ResultadoSeguroGarantiaIA, ValorComFonte } from "./tipos";
 
 const MAX_JOB_ITERATIONS = 1200;
-const entrada = z.object({
-  analiseId: z.string().uuid(),
-  arquivoExtraido: z.object({
-    nome: z.string(),
-    tipo: z.literal("texto"),
-    conteudo: z.string(),
-    partes: z.array(z.object({ indice: z.number(), pagina: z.number().nullable(), rotulo: z.string(), conteudo: z.string() })),
-    meta: z.record(z.union([z.string(), z.number()])),
-  }),
-});
+const entrada = z.object({ analiseId: z.string().uuid() });
 
 export type RetornoAnaliseDocumento =
   | { ok: true; situacao: string; analiseId: string; resultado?: Json | null; resumo?: string | null; campos_sugeridos?: Json | null }
@@ -118,11 +109,13 @@ export const analisarDocumento = createServerFn({ method: "POST" })
         .download(documento.caminho);
       if (erroDownload || !arquivo) throw new Error(`Falha ao baixar documento: ${erroDownload?.message ?? "arquivo vazio"}`);
       if (arquivo.size === 0) throw new Error("O documento armazenado está vazio.");
-      const { mapArquivosParaJob } = await import("./extrair-texto");
-      const extraido = data.arquivoExtraido;
-      if (extraido.nome !== documento.nome_arquivo) throw new Error("O arquivo extraído não corresponde à análise.");
+      const { extrairConteudoArquivo, mapArquivosParaJob } = await import("./extrair-texto");
+      const extraido = await extrairConteudoArquivo(new File([arquivo], documento.nome_arquivo, {
+        type: documento.mime_type ?? "application/pdf",
+      }));
       if (!extraido.partes.length && !extraido.conteudo.trim()) throw new Error("O documento não possui texto legível.");
-      const inicio = await postJob("", { flow: existente.fluxo, files: mapArquivosParaJob([extraido]) });
+      const flow = existente.fluxo === "seguro_garantia" ? "seguro-garantia" : "fianca-locaticia";
+      const inicio = await postJob("", { flow, files: mapArquivosParaJob([extraido]) });
       const jobId = typeof inicio.jobId === "string" ? inicio.jobId : null;
       if (!jobId || !/^[A-Za-z0-9_-]{1,128}$/.test(jobId)) throw new Error("O serviço não retornou um identificador válido.");
       await sb.from("garantia_analises_ia").update({ job_id: jobId }).eq("id", existente.id);

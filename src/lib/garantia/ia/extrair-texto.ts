@@ -56,7 +56,9 @@ async function extrairPDFcomOCR(pdf: any, totalPaginas: number): Promise<{ texto
     for (let i = 1; i <= totalPaginas; i++) {
       const page = await pdf.getPage(i);
       const viewport = page.getViewport({ scale: 2 });
-      const canvas = document.createElement("canvas");
+      const canvas = typeof document !== "undefined"
+        ? document.createElement("canvas")
+        : (await import("@napi-rs/canvas")).createCanvas(Math.ceil(viewport.width), Math.ceil(viewport.height));
       canvas.width = viewport.width;
       canvas.height = viewport.height;
       const canvasContext = canvas.getContext("2d");
@@ -79,9 +81,13 @@ async function extrairPDFcomOCR(pdf: any, totalPaginas: number): Promise<{ texto
 }
 
 export async function extrairPDF(file: File): Promise<ArquivoExtraido> {
-  const pdfjs = await import("pdfjs-dist");
-  const workerUrl = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
-  pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+  const pdfjs = typeof window === "undefined"
+    ? await import("pdfjs-dist/legacy/build/pdf.mjs")
+    : await import("pdfjs-dist");
+  if (typeof window !== "undefined") {
+    const workerUrl = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
+    pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+  }
   const pdf = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
   const totalPaginas = Math.min(pdf.numPages, MAX_PDF_PAGES);
   let textoCompleto = "";
