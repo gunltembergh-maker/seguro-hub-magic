@@ -10,6 +10,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, ArrowRight, Ban, Check, ChevronDown, Loader2, Pencil, Plus, RotateCcw, Search, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -1367,6 +1368,7 @@ export function DemandaSheet({
   const [perdaAberta, setPerdaAberta] = useState(false);
   const trocar = useTrocarStatus();
   const voltar = useVoltarEtapa();
+  const qc = useQueryClient();
   const [retornoPara, setRetornoPara] = useState<StatusCatalogo | null>(null);
   const [retomarAberto, setRetomarAberto] = useState(false);
   const { data: historico = [] } = useHistoricoDemanda(demanda?.id ?? null);
@@ -1445,14 +1447,18 @@ export function DemandaSheet({
 
   const retomarComigo = async (motivo: string) => {
     try {
+      // A RPC troca o status para o de trabalho da etapa e grava o motivo no histórico.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: codigo, error } = await (supabase as any).rpc("garantia_status_trabalho", { _etapa: demanda.etapa });
+      const { data: codigo, error } = await (supabase as any).rpc("rpc_garantia_retomar_do_comercial", {
+        _demanda_id: demanda.id,
+        _motivo: motivo,
+      });
       if (error) throw error;
       const destino = catalogo.find((s) => s.codigo === codigo);
-      if (!destino) throw new Error("Status de trabalho da etapa não encontrado.");
-      void motivo;
-      await trocar.mutateAsync({ demanda, destino });
-      toast.success(`Situação: “${destino.nome}”.`);
+      qc.invalidateQueries({ queryKey: ["garantia", "demandas"] });
+      qc.invalidateQueries({ queryKey: ["garantia", "historico"] });
+      qc.invalidateQueries({ queryKey: ["garantia", "perdas"] });
+      toast.success(destino ? `Situação: “${destino.nome}”.` : "Demanda retomada com você.");
       setRetomarAberto(false);
     } catch (e) {
       toast.error(mensagemDeErro(e, "Não foi possível retomar a demanda."));

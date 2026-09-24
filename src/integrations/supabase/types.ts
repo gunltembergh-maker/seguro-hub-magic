@@ -7654,6 +7654,7 @@ export type Database = {
           legenda: string
           numero: string
           o_que_falta: string
+          status_atual: string
           status_nome: string
         }[]
       }
@@ -7817,6 +7818,10 @@ export type Database = {
           codigo: string
           legenda: string
         }[]
+      }
+      rpc_garantia_retomar_do_comercial: {
+        Args: { _demanda_id: string; _motivo: string }
+        Returns: string
       }
       rpc_garantia_solicitar_documento: {
         Args: { _demanda_id: string; _faltando: string; _observacao?: string }

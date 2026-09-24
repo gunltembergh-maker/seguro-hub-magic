@@ -45,9 +45,8 @@ interface ItemFila {
   status_atual?: string | null;
 }
 
-// A RPC distingue pelo nome; o código entra quando vier.
-const aguardaCliente = (i: ItemFila) =>
-  i.status_atual ? i.status_atual === "aguard_cliente_comercial" : /cliente/i.test(i.status_nome);
+// A fila já devolve status_atual; não há mais fallback pelo nome.
+const aguardaCliente = (i: ItemFila) => i.status_atual === "aguard_cliente_comercial";
 
 const CHAVE = ["garantia", "fila-comercial"];
 
@@ -161,7 +160,7 @@ function DialogoRetorno({ item, onFechar }: { item: ItemFila; onFechar: () => vo
   const [enviando, setEnviando] = useState(false);
   const [obsCliente, setObsCliente] = useState("");
   const [modoCliente, setModoCliente] = useState(false);
-  const podeAguardarCliente = item.status_atual ? item.status_atual === "aguard_comercial" : !aguardaCliente(item);
+  const podeAguardarCliente = item.status_atual === "aguard_comercial";
   const grande = arquivos.some((f) => f.size > TAMANHO_MAXIMO_BYTES);
 
   const enviar = async () => {
