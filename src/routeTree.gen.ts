@@ -47,6 +47,7 @@ import { Route as AuthenticatedGarantiaPainelRouteImport } from './routes/_authe
 import { Route as AuthenticatedGarantiaNegociacaoRouteImport } from './routes/_authenticated/garantia_.negociacao'
 import { Route as AuthenticatedGarantiaFormularioAdminRouteImport } from './routes/_authenticated/garantia_.formulario-admin'
 import { Route as AuthenticatedGarantiaCrmRouteImport } from './routes/_authenticated/garantia_.crm'
+import { Route as AuthenticatedGarantiaComercialRouteImport } from './routes/_authenticated/garantia_.comercial'
 import { Route as AuthenticatedGarantiaAnaliseLimiteRouteImport } from './routes/_authenticated/garantia_.analise-limite'
 import { Route as AuthenticatedGarantiaAnaliseBackgroundRouteImport } from './routes/_authenticated/garantia_.analise-background'
 import { Route as AuthenticatedFinanceiroFluxoDiarioRouteImport } from './routes/_authenticated/financeiro_.fluxo-diario'
@@ -290,6 +291,12 @@ const AuthenticatedGarantiaCrmRoute =
   AuthenticatedGarantiaCrmRouteImport.update({
     id: '/garantia_/crm',
     path: '/garantia/crm',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedGarantiaComercialRoute =
+  AuthenticatedGarantiaComercialRouteImport.update({
+    id: '/garantia_/comercial',
+    path: '/garantia/comercial',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedGarantiaAnaliseLimiteRoute =
@@ -556,6 +563,7 @@ export interface FileRoutesByFullPath {
   '/financeiro/fluxo-diario': typeof AuthenticatedFinanceiroFluxoDiarioRoute
   '/garantia/analise-background': typeof AuthenticatedGarantiaAnaliseBackgroundRoute
   '/garantia/analise-limite': typeof AuthenticatedGarantiaAnaliseLimiteRoute
+  '/garantia/comercial': typeof AuthenticatedGarantiaComercialRoute
   '/garantia/crm': typeof AuthenticatedGarantiaCrmRoute
   '/garantia/formulario-admin': typeof AuthenticatedGarantiaFormularioAdminRoute
   '/garantia/negociacao': typeof AuthenticatedGarantiaNegociacaoRoute
@@ -632,6 +640,7 @@ export interface FileRoutesByTo {
   '/financeiro/fluxo-diario': typeof AuthenticatedFinanceiroFluxoDiarioRoute
   '/garantia/analise-background': typeof AuthenticatedGarantiaAnaliseBackgroundRoute
   '/garantia/analise-limite': typeof AuthenticatedGarantiaAnaliseLimiteRoute
+  '/garantia/comercial': typeof AuthenticatedGarantiaComercialRoute
   '/garantia/crm': typeof AuthenticatedGarantiaCrmRoute
   '/garantia/formulario-admin': typeof AuthenticatedGarantiaFormularioAdminRoute
   '/garantia/negociacao': typeof AuthenticatedGarantiaNegociacaoRoute
@@ -711,6 +720,7 @@ export interface FileRoutesById {
   '/_authenticated/financeiro_/fluxo-diario': typeof AuthenticatedFinanceiroFluxoDiarioRoute
   '/_authenticated/garantia_/analise-background': typeof AuthenticatedGarantiaAnaliseBackgroundRoute
   '/_authenticated/garantia_/analise-limite': typeof AuthenticatedGarantiaAnaliseLimiteRoute
+  '/_authenticated/garantia_/comercial': typeof AuthenticatedGarantiaComercialRoute
   '/_authenticated/garantia_/crm': typeof AuthenticatedGarantiaCrmRoute
   '/_authenticated/garantia_/formulario-admin': typeof AuthenticatedGarantiaFormularioAdminRoute
   '/_authenticated/garantia_/negociacao': typeof AuthenticatedGarantiaNegociacaoRoute
@@ -790,6 +800,7 @@ export interface FileRouteTypes {
     | '/financeiro/fluxo-diario'
     | '/garantia/analise-background'
     | '/garantia/analise-limite'
+    | '/garantia/comercial'
     | '/garantia/crm'
     | '/garantia/formulario-admin'
     | '/garantia/negociacao'
@@ -866,6 +877,7 @@ export interface FileRouteTypes {
     | '/financeiro/fluxo-diario'
     | '/garantia/analise-background'
     | '/garantia/analise-limite'
+    | '/garantia/comercial'
     | '/garantia/crm'
     | '/garantia/formulario-admin'
     | '/garantia/negociacao'
@@ -944,6 +956,7 @@ export interface FileRouteTypes {
     | '/_authenticated/financeiro_/fluxo-diario'
     | '/_authenticated/garantia_/analise-background'
     | '/_authenticated/garantia_/analise-limite'
+    | '/_authenticated/garantia_/comercial'
     | '/_authenticated/garantia_/crm'
     | '/_authenticated/garantia_/formulario-admin'
     | '/_authenticated/garantia_/negociacao'
@@ -1282,6 +1295,13 @@ declare module '@tanstack/react-router' {
       path: '/garantia/crm'
       fullPath: '/garantia/crm'
       preLoaderRoute: typeof AuthenticatedGarantiaCrmRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/garantia_/comercial': {
+      id: '/_authenticated/garantia_/comercial'
+      path: '/garantia/comercial'
+      fullPath: '/garantia/comercial'
+      preLoaderRoute: typeof AuthenticatedGarantiaComercialRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/garantia_/analise-limite': {
@@ -1630,6 +1650,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFinanceiroFluxoDiarioRoute: typeof AuthenticatedFinanceiroFluxoDiarioRoute
   AuthenticatedGarantiaAnaliseBackgroundRoute: typeof AuthenticatedGarantiaAnaliseBackgroundRoute
   AuthenticatedGarantiaAnaliseLimiteRoute: typeof AuthenticatedGarantiaAnaliseLimiteRoute
+  AuthenticatedGarantiaComercialRoute: typeof AuthenticatedGarantiaComercialRoute
   AuthenticatedGarantiaCrmRoute: typeof AuthenticatedGarantiaCrmRoute
   AuthenticatedGarantiaFormularioAdminRoute: typeof AuthenticatedGarantiaFormularioAdminRoute
   AuthenticatedGarantiaNegociacaoRoute: typeof AuthenticatedGarantiaNegociacaoRoute
@@ -1668,6 +1689,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedGarantiaAnaliseBackgroundRoute,
   AuthenticatedGarantiaAnaliseLimiteRoute:
     AuthenticatedGarantiaAnaliseLimiteRoute,
+  AuthenticatedGarantiaComercialRoute: AuthenticatedGarantiaComercialRoute,
   AuthenticatedGarantiaCrmRoute: AuthenticatedGarantiaCrmRoute,
   AuthenticatedGarantiaFormularioAdminRoute:
     AuthenticatedGarantiaFormularioAdminRoute,

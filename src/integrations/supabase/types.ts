@@ -3235,6 +3235,53 @@ export type Database = {
           },
         ]
       }
+      garantia_cocorretagem: {
+        Row: {
+          cnpj: string | null
+          corretora: string
+          criado_em: string
+          criado_por: string | null
+          demanda_id: string
+          eh_lavoro: boolean
+          id: string
+          lider: boolean
+          observacao: string | null
+          percentual_comissao: number
+        }
+        Insert: {
+          cnpj?: string | null
+          corretora: string
+          criado_em?: string
+          criado_por?: string | null
+          demanda_id: string
+          eh_lavoro?: boolean
+          id?: string
+          lider?: boolean
+          observacao?: string | null
+          percentual_comissao: number
+        }
+        Update: {
+          cnpj?: string | null
+          corretora?: string
+          criado_em?: string
+          criado_por?: string | null
+          demanda_id?: string
+          eh_lavoro?: boolean
+          id?: string
+          lider?: boolean
+          observacao?: string | null
+          percentual_comissao?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "garantia_cocorretagem_demanda_id_fkey"
+            columns: ["demanda_id"]
+            isOneToOne: false
+            referencedRelation: "garantia_demandas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       garantia_consultas_mercado: {
         Row: {
           capacidade_total: number
@@ -7546,6 +7593,18 @@ export type Database = {
         Returns: undefined
       }
       rpc_garantia_docs_apos_pedido: { Args: never; Returns: string[] }
+      rpc_garantia_fila_comercial: {
+        Args: never
+        Returns: {
+          aguardando_desde: string
+          cliente_nome: string
+          demanda_id: string
+          legenda: string
+          numero: string
+          o_que_falta: string
+          status_nome: string
+        }[]
+      }
       rpc_garantia_historico_demanda: {
         Args: { _demanda_id: string }
         Returns: {
@@ -7720,6 +7779,14 @@ export type Database = {
         Returns: {
           demanda_id: string
           inicio: string
+        }[]
+      }
+      rpc_garantia_time_comercial_acesso: {
+        Args: never
+        Returns: {
+          nome: string
+          tem_acesso: boolean
+          user_id: string
         }[]
       }
       rpc_garantia_voltar_etapa: {

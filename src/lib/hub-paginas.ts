@@ -56,6 +56,7 @@ export const HUB_PAGINAS: GrupoPaginas[] = [
       { rota: "/garantia/negociacao", nome: "Negociação" },
       { rota: "/garantia/crm", nome: "CRM" },
       { rota: "/garantia/painel", nome: "Painel da Gerência" },
+      { rota: "/garantia/comercial", nome: "Comercial (fila de pendências)" },
     ],
   },
   {
