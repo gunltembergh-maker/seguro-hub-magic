@@ -1546,7 +1546,7 @@ export function DemandaSheet({
         </DialogHeader>
 
         <div className="grid min-h-0 min-w-0 gap-6 lg:grid-cols-[232px_minmax(0,1fr)_280px]">
-          <div className="min-w-0 lg:order-1 lg:max-h-full lg:overflow-y-auto lg:pr-1">
+          <div className="min-w-0 lg:order-1 lg:max-h-full lg:self-start lg:overflow-y-auto lg:pr-1">
             <ColunaHistorico demanda={demanda} catalogo={catalogo} podeVerTempo={podeVerTempo} />
           </div>
 
