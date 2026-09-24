@@ -99,9 +99,8 @@ export const CAMPOS_APLICAVEIS = [
   { chave: "importancia_segurada", rotulo: "Importância segurada" },
   { chave: "vigencia_exigida", rotulo: "Vigência exigida" },
   { chave: "percentual_garantia", rotulo: "Percentual de garantia" },
-  { chave: "numero_processo", rotulo: "Nº do processo" },
-  { chave: "numero_contrato", rotulo: "Nº do contrato" },
-  { chave: "data_limite", rotulo: "Data limite" },
+  // Um campo só: contrato, ou processo quando não houver contrato. Data limite saiu da Negociação.
+  { chave: "numero_contrato", rotulo: "Nº do contrato/processo" },
 ] as const;
 
 /** Campos que a IA sugere, mas que hoje só existem como leitura/observação. */
@@ -178,9 +177,12 @@ export async function aplicarCamposSugeridos(
   if (campos.vigencia_exigida !== undefined) valores.vigencia_exigida = campos.vigencia_exigida;
   if (campos.percentual_garantia !== undefined)
     valores.percentual_garantia = campos.percentual_garantia;
-  if (campos.numero_processo !== undefined) valores.numero_processo = campos.numero_processo;
-  if (campos.numero_contrato !== undefined) valores.numero_contrato = campos.numero_contrato;
-  if (campos.data_limite !== undefined) valores.data_limite = campos.data_limite;
+  // Nº do contrato/processo é um campo só na tela: grava igual nas duas colunas.
+  const numero = campos.numero_contrato ?? campos.numero_processo;
+  if (numero !== undefined) {
+    valores.numero_contrato = numero;
+    valores.numero_processo = numero;
+  }
   if (campos.segurado) valores.segurado_id = await resolverSegurado(campos.segurado, campos.segurado_cnpj ?? null);
 
   if (Object.keys(valores).length) {

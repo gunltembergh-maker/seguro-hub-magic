@@ -4425,6 +4425,7 @@ export type Database = {
           ativo: boolean
           atualizado_em: string
           bairro: string | null
+          canal_id: string | null
           capital_social: number | null
           cartao_atualizado_em: string | null
           cartao_fonte: string | null
@@ -4459,6 +4460,7 @@ export type Database = {
           ativo?: boolean
           atualizado_em?: string
           bairro?: string | null
+          canal_id?: string | null
           capital_social?: number | null
           cartao_atualizado_em?: string | null
           cartao_fonte?: string | null
@@ -4493,6 +4495,7 @@ export type Database = {
           ativo?: boolean
           atualizado_em?: string
           bairro?: string | null
+          canal_id?: string | null
           capital_social?: number | null
           cartao_atualizado_em?: string | null
           cartao_fonte?: string | null
@@ -4543,6 +4546,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "ab_v_fila"
             referencedColumns: ["empresa_id"]
+          },
+          {
+            foreignKeyName: "hub_clientes_canal_id_fkey"
+            columns: ["canal_id"]
+            isOneToOne: false
+            referencedRelation: "canais"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "hub_clientes_cliente_id_fkey"

@@ -1,4 +1,5 @@
-// Detalhe da demanda de Garantia: Dados · Origem · Histórico.
+// Detalhe da demanda de Garantia: fase atual, Dados da demanda e o conteúdo da fase.
+// Histórico abre num popup pelo link do cabeçalho.
 //
 // Documentos, Limites e IA entram nas partes seguintes — aqui não há aba
 // vazia esperando conteúdo.
@@ -31,11 +32,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 
-import { useResponsaveis } from "@/hooks/use-entrada-demandas";
+import { useCanais, useResponsaveis } from "@/hooks/use-entrada-demandas";
+import { CampoReal } from "@/components/garantia/campo-real";
+import { AjudaTexto, AJUDA_CANAL_RESPONSAVEL } from "@/components/garantia/ajuda-texto";
+import { useMeuPerfilEfetivo } from "@/contexts/view-as-context";
+import { hasRole } from "@/hooks/use-meu-perfil";
 import { AbaLimites } from "@/components/garantia/aba-limites";
 import { AbaDocumentos } from "@/components/garantia/aba-documentos";
 import { AbaCotacoes } from "@/components/garantia/aba-cotacoes";
@@ -94,7 +97,6 @@ import {
   ROTULO_PRODUTO,
   TIPOS_ALTERACAO,
   TIPOS_MOVIMENTO,
-  dataCurta,
   dataHora,
   duracaoLegivel,
   moeda,
@@ -322,6 +324,248 @@ function NovoSeguradoDialog({
 }
 
 /* ------------------------------------------------------------------ */
+/* Campos da demanda: um componente só para "Dados da demanda" e para  */
+/* "Completar triagem", para os dois nunca divergirem.                */
+/* ------------------------------------------------------------------ */
+
+type EstadoCampos = {
+  segurado_id: string | null;
+  segurado_nome: string | null;
+  publico_privado: string;
+  modalidade: string;
+  tipo_movimento: string;
+  tipo_alteracao: string;
+  importancia_segurada: number | null;
+  percentual_garantia: string;
+  vigencia_exigida: string;
+  responsavel_tecnico_id: string;
+  responsavel_cliente_id: string;
+  canal_id: string;
+  numero: string;
+  objeto: string;
+  observacao: string;
+};
+
+function estadoDaDemanda(d: DemandaLista): EstadoCampos {
+  const locaticia = d.produto === "fianca_locaticia";
+  return {
+    segurado_id: d.segurado_id,
+    segurado_nome: d.segurado?.nome ?? null,
+    publico_privado: d.publico_privado ?? "",
+    modalidade: d.modalidade ?? (locaticia ? "locaticia" : ""),
+    tipo_movimento: d.tipo_movimento ?? "novo",
+    tipo_alteracao: d.tipo_alteracao ?? "",
+    importancia_segurada: d.importancia_segurada ?? null,
+    percentual_garantia: d.percentual_garantia != null ? String(d.percentual_garantia).replace(".", ",") : "",
+    vigencia_exigida: d.vigencia_exigida ?? "",
+    responsavel_tecnico_id: d.responsavel_tecnico_id ?? "",
+    responsavel_cliente_id: d.responsavel_cliente_id ?? "",
+    canal_id: d.canal_id ?? "",
+    // Nº do contrato/processo: um campo só; lê o contrato, senão o processo.
+    numero: d.numero_contrato ?? d.numero_processo ?? "",
+    objeto: d.objeto ?? "",
+    observacao: d.observacao ?? "",
+  };
+}
+
+const pctNumero = (v: string) => (v.trim() ? Number(v.replace(/\./g, "").replace(",", ".")) : null);
+
+/** Valores para gravar. Canal/responsável pelo cliente só vão quando o ADMIN pode editar. */
+function valoresDoEstado(f: EstadoCampos, d: DemandaLista, admin: boolean) {
+  const locaticia = d.produto === "fianca_locaticia";
+  const numero = f.numero.trim() || null;
+  return {
+    segurado_id: f.segurado_id,
+    publico_privado: f.publico_privado || null,
+    modalidade: locaticia ? "locaticia" : f.modalidade || null,
+    tipo_movimento: f.tipo_movimento || null,
+    tipo_alteracao: f.tipo_movimento === "endosso" ? f.tipo_alteracao || null : null,
+    importancia_segurada: f.importancia_segurada,
+    percentual_garantia: pctNumero(f.percentual_garantia),
+    vigencia_exigida: f.vigencia_exigida.trim() || null,
+    responsavel_tecnico_id: f.responsavel_tecnico_id || null,
+    // Grava o mesmo número nas duas colunas: leitores antigos continuam funcionando.
+    numero_contrato: numero,
+    numero_processo: numero,
+    objeto: f.objeto.trim() || null,
+    observacao: f.observacao.trim() || null,
+    ...(admin || !d.canal_id ? (f.canal_id ? { canal_id: f.canal_id } : {}) : {}),
+    ...(admin || !d.responsavel_cliente_id
+      ? f.responsavel_cliente_id ? { responsavel_cliente_id: f.responsavel_cliente_id } : {}
+      : {}),
+  };
+}
+
+function useEhAdmin() {
+  return hasRole(useMeuPerfilEfetivo(), "ADMIN");
+}
+
+function CampoPercentual({ valor, onChange }: { valor: string; onChange: (v: string) => void }) {
+  return (
+    <div className="relative">
+      <Input
+        value={valor}
+        inputMode="decimal"
+        placeholder={A_DEFINIR}
+        className="pr-8"
+        onChange={(e) => onChange(e.target.value.replace(/[^\d,]/g, "").replace(/,(?=.*,)/g, ""))}
+      />
+      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
+    </div>
+  );
+}
+
+function CamposDemanda({
+  demanda,
+  f,
+  setF,
+}: {
+  demanda: DemandaLista;
+  f: EstadoCampos;
+  setF: (f: EstadoCampos) => void;
+}) {
+  const locaticia = demanda.produto === "fianca_locaticia";
+  const { data: pessoas = [] } = useResponsaveis();
+  const { data: canais = [] } = useCanais();
+  const admin = useEhAdmin();
+  const canalFixo = !!demanda.canal_id && !admin;
+  const respFixo = !!demanda.responsavel_cliente_id && !admin;
+  const up = (p: Partial<EstadoCampos>) => setF({ ...f, ...p });
+  const nomePessoa = (id: string) => pessoas.find((p) => p.user_id === id)?.nome ?? A_DEFINIR;
+
+  return (
+    <div className="space-y-4">
+      <SeletorSegurado
+        produto={demanda.produto}
+        seguradoId={f.segurado_id}
+        seguradoNome={f.segurado_nome}
+        onEscolher={(id, nome, pp) =>
+          up({ segurado_id: id || null, segurado_nome: nome || null, ...(pp ? { publico_privado: pp } : {}) })
+        }
+      />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="space-y-1">
+          <Label>Segurado público ou privado</Label>
+          <Select value={f.publico_privado} onValueChange={(v) => up({ publico_privado: v })}>
+            <SelectTrigger><SelectValue placeholder={A_DEFINIR} /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="publico">Público</SelectItem>
+              <SelectItem value="privado">Privado</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label>Modalidade</Label>
+          {locaticia ? (
+            <Input value="Locatícia" readOnly disabled />
+          ) : (
+            <Select value={f.modalidade} onValueChange={(v) => up({ modalidade: v })}>
+              <SelectTrigger><SelectValue placeholder={A_DEFINIR} /></SelectTrigger>
+              <SelectContent>
+                {MODALIDADES.map((m) => (
+                  <SelectItem key={m.valor} value={m.valor}>{m.rotulo}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+        <div className="space-y-1">
+          <Label>Tipo de movimento</Label>
+          <Select value={f.tipo_movimento} onValueChange={(v) => up({ tipo_movimento: v })}>
+            <SelectTrigger><SelectValue placeholder={A_DEFINIR} /></SelectTrigger>
+            <SelectContent>
+              {TIPOS_MOVIMENTO.map((t) => (
+                <SelectItem key={t.valor} value={t.valor}>{t.rotulo}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        {f.tipo_movimento === "endosso" && (
+          <div className="space-y-1">
+            <Label>Tipo de alteração</Label>
+            <Select value={f.tipo_alteracao} onValueChange={(v) => up({ tipo_alteracao: v })}>
+              <SelectTrigger><SelectValue placeholder={A_DEFINIR} /></SelectTrigger>
+              <SelectContent>
+                {TIPOS_ALTERACAO.map((t) => (
+                  <SelectItem key={t.valor} value={t.valor}>{t.rotulo}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        <div className="space-y-1">
+          <Label>Importância segurada *</Label>
+          <CampoReal valor={f.importancia_segurada} onChange={(v) => up({ importancia_segurada: v })} />
+        </div>
+        <div className="space-y-1">
+          <Label>% da garantia</Label>
+          <CampoPercentual valor={f.percentual_garantia} onChange={(v) => up({ percentual_garantia: v })} />
+        </div>
+        <div className="space-y-1">
+          <Label>Vigência exigida</Label>
+          <Input value={f.vigencia_exigida} placeholder="Ex.: 24 meses" onChange={(e) => up({ vigencia_exigida: e.target.value })} />
+        </div>
+        <div className="space-y-1">
+          <Label>Nº do contrato/processo</Label>
+          <Input value={f.numero} placeholder={A_DEFINIR} onChange={(e) => up({ numero: e.target.value })} />
+        </div>
+        <div className="space-y-1">
+          <Label>Responsável técnico</Label>
+          <Select value={f.responsavel_tecnico_id} onValueChange={(v) => up({ responsavel_tecnico_id: v })}>
+            <SelectTrigger><SelectValue placeholder={A_DEFINIR} /></SelectTrigger>
+            <SelectContent>
+              {pessoas.map((p) => (
+                <SelectItem key={p.user_id} value={p.user_id}>{p.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label className="flex items-center gap-1">Responsável pelo cliente <AjudaTexto texto={AJUDA_CANAL_RESPONSAVEL} /></Label>
+          {respFixo ? (
+            <p className="rounded-md bg-muted px-3 py-2 text-sm">{nomePessoa(f.responsavel_cliente_id)}</p>
+          ) : (
+            <Select value={f.responsavel_cliente_id} onValueChange={(v) => up({ responsavel_cliente_id: v })}>
+              <SelectTrigger><SelectValue placeholder={A_DEFINIR} /></SelectTrigger>
+              <SelectContent>
+                {pessoas.map((p) => (
+                  <SelectItem key={p.user_id} value={p.user_id}>{p.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+        <div className="space-y-1">
+          <Label className="flex items-center gap-1">Canal <AjudaTexto texto={AJUDA_CANAL_RESPONSAVEL} /></Label>
+          {canalFixo ? (
+            <p className="rounded-md bg-muted px-3 py-2 text-sm">{demanda.canal?.nome ?? A_DEFINIR}</p>
+          ) : (
+            <Select value={f.canal_id} onValueChange={(v) => up({ canal_id: v })}>
+              <SelectTrigger><SelectValue placeholder={A_DEFINIR} /></SelectTrigger>
+              <SelectContent>
+                {canais.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-1">
+          <Label>Objeto</Label>
+          <Textarea value={f.objeto} placeholder={A_DEFINIR} rows={3} onChange={(e) => up({ objeto: e.target.value })} />
+        </div>
+        <div className="space-y-1">
+          <Label>Observação</Label>
+          <Textarea value={f.observacao} placeholder={A_DEFINIR} rows={3} onChange={(e) => up({ observacao: e.target.value })} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Completar triagem                                                  */
 /* ------------------------------------------------------------------ */
 
@@ -335,173 +579,50 @@ function TriagemDialog({
   onFechar: () => void;
 }) {
   const locaticia = demanda.produto === "fianca_locaticia";
-  const { data: pessoas = [] } = useResponsaveis();
   const completar = useCompletarTriagem();
+  const admin = useEhAdmin();
+  const [f, setF] = useState<EstadoCampos>(() => estadoDaDemanda(demanda));
 
-  const [seguradoId, setSeguradoId] = useState<string | null>(demanda.segurado_id);
-  const [seguradoNome, setSeguradoNome] = useState<string | null>(demanda.segurado?.nome ?? null);
-  const [pubPriv, setPubPriv] = useState(demanda.publico_privado ?? "");
-  const [modalidade, setModalidade] = useState(demanda.modalidade ?? (locaticia ? "locaticia" : ""));
-  const [movimento, setMovimento] = useState(demanda.tipo_movimento ?? "novo");
-  const [alteracao, setAlteracao] = useState(demanda.tipo_alteracao ?? "");
-  const [is, setIs] = useState(demanda.importancia_segurada?.toString() ?? "");
-  const [pct, setPct] = useState(demanda.percentual_garantia?.toString() ?? "");
-  const [objeto, setObjeto] = useState(demanda.objeto ?? "");
-  const [vigencia, setVigencia] = useState(demanda.vigencia_exigida ?? "");
-  const [respTecnico, setRespTecnico] = useState(demanda.responsavel_tecnico_id ?? "");
+  // Abre sempre com o que está gravado na demanda (inclusive o que a IA aplicou).
+  useEffect(() => {
+    if (aberto) setF(estadoDaDemanda(demanda));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aberto]);
 
   const salvar = async () => {
-    if (!seguradoId) {
+    if (!f.segurado_id) {
       toast.error(`Informe o ${locaticia ? "locador" : "segurado"} para fechar a triagem.`);
       return;
     }
-    if (!is.trim()) {
+    if (f.importancia_segurada == null) {
       toast.error("A importância segurada é obrigatória.");
       return;
     }
-    if (movimento === "endosso" && !alteracao) {
+    if (f.tipo_movimento === "endosso" && !f.tipo_alteracao) {
       toast.error("Endosso precisa do tipo de alteração.");
       return;
     }
     try {
       await completar.mutateAsync({
         id: demanda.id,
-        dados: {
-          segurado_id: seguradoId,
-          publico_privado: pubPriv || null,
-          modalidade: locaticia ? "locaticia" : modalidade || null,
-          tipo_movimento: movimento || null,
-          tipo_alteracao: movimento === "endosso" ? alteracao || null : null,
-          importancia_segurada: Number(is.replace(",", ".")),
-          percentual_garantia: pct.trim() ? Number(pct.replace(",", ".")) : null,
-          objeto: objeto.trim() || null,
-          vigencia_exigida: vigencia.trim() || null,
-          // Data limite vem da leitura do edital e o responsável pelo cliente
-          // é copiado do cadastro na criação; os dois ficam na aba Dados.
-          responsavel_tecnico_id: respTecnico || null,
-        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        dados: valoresDoEstado(f, demanda, admin) as any,
       });
       toast.success("Conferência concluída. Para mudar de etapa, use “Mover card para fase”.");
       onFechar();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Não foi possível salvar a triagem.");
+      toast.error(mensagemDeErro(e, "Não foi possível salvar a triagem."));
     }
   };
 
   return (
     <Dialog open={aberto} onOpenChange={(o) => !o && onFechar()}>
-      <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Completar triagem</DialogTitle>
-          <DialogDescription>
-            Os dados vindos da Entrada aparecem só para conferência: quem corrige a entrada é a
-            tela de Entrada de Demandas.
-          </DialogDescription>
+          <DialogDescription>Confira os dados da demanda e conclua a triagem.</DialogDescription>
         </DialogHeader>
-
-        <div className="rounded-md border border-border bg-muted/40 p-3 text-sm">
-          <Linha rotulo="Cliente" valor={demanda.cliente?.nome ?? A_DEFINIR} />
-          <Linha rotulo="Chegada" valor={dataHora(demanda.chegada_em)} />
-          <Linha rotulo="Canal" valor={demanda.canal?.nome ?? A_DEFINIR} />
-          <Linha rotulo="Produto" valor={ROTULO_PRODUTO[demanda.produto] ?? demanda.produto} />
-        </div>
-
-        <div className="space-y-4">
-          <SeletorSegurado
-            produto={demanda.produto}
-            seguradoId={seguradoId}
-            seguradoNome={seguradoNome}
-            onEscolher={(id, nome, pp) => {
-              setSeguradoId(id || null);
-              setSeguradoNome(nome || null);
-              if (pp) setPubPriv(pp);
-            }}
-          />
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1">
-              <Label>Segurado público ou privado</Label>
-              <Select value={pubPriv} onValueChange={setPubPriv}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="publico">Público</SelectItem>
-                  <SelectItem value="privado">Privado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label>Modalidade</Label>
-              {locaticia ? (
-                <Input value="Locatícia" readOnly disabled />
-              ) : (
-                <Select value={modalidade} onValueChange={setModalidade}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    {MODALIDADES.map((m) => (
-                      <SelectItem key={m.valor} value={m.valor}>{m.rotulo}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-            <div className="space-y-1">
-              <Label>Tipo de movimento</Label>
-              <Select value={movimento} onValueChange={setMovimento}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>
-                  {TIPOS_MOVIMENTO.map((t) => (
-                    <SelectItem key={t.valor} value={t.valor}>{t.rotulo}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {movimento === "endosso" && (
-              <div className="space-y-1">
-                <Label>Tipo de alteração</Label>
-                <Select value={alteracao} onValueChange={setAlteracao}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    {TIPOS_ALTERACAO.map((t) => (
-                      <SelectItem key={t.valor} value={t.valor}>{t.rotulo}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-            {/* Apólice anterior (renovação/endosso) fica preparada no banco, mas
-                sem seletor: a tela de apólice ainda não existe e um seletor
-                quebrado é pior que um campo ausente. */}
-            <div className="space-y-1">
-              <Label>Importância segurada *</Label>
-              <Input value={is} onChange={(e) => setIs(e.target.value)} placeholder="0,00" inputMode="decimal" />
-            </div>
-            <div className="space-y-1">
-              <Label>% de garantia sobre o contrato</Label>
-              <Input value={pct} onChange={(e) => setPct(e.target.value)} placeholder="Opcional" inputMode="decimal" />
-            </div>
-            <div className="space-y-1">
-              <Label>Vigência exigida</Label>
-              <Input value={vigencia} onChange={(e) => setVigencia(e.target.value)} placeholder="Ex.: 24 meses" />
-            </div>
-            <div className="space-y-1">
-              <Label>Responsável técnico</Label>
-              <Select value={respTecnico} onValueChange={setRespTecnico}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>
-                  {pessoas.map((p) => (
-                    <SelectItem key={p.user_id} value={p.user_id}>{p.nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <Label>Objeto</Label>
-            <Textarea value={objeto} onChange={(e) => setObjeto(e.target.value)} rows={3} />
-          </div>
-        </div>
-
+        <CamposDemanda demanda={demanda} f={f} setF={setF} />
         <DialogFooter>
           <Button variant="ghost" onClick={onFechar}>Cancelar</Button>
           <Button onClick={salvar} disabled={completar.isPending}>
@@ -635,8 +756,7 @@ function EditorLegenda({ demanda }: { demanda: DemandaLista }) {
 
   const atalhos = [
     { rotulo: demanda.produto === "fianca_locaticia" ? "Locador" : "Segurado", texto: demanda.segurado?.nome },
-    { rotulo: "Nº do processo", texto: demanda.numero_processo },
-    { rotulo: "Nº do contrato", texto: demanda.numero_contrato },
+    { rotulo: "Nº do contrato/processo", texto: demanda.numero_contrato ?? demanda.numero_processo },
   ].filter((a): a is { rotulo: string; texto: string } => !!a.texto?.trim());
 
   const acrescentar = (t: string) => {
@@ -727,300 +847,117 @@ function EditorLegenda({ demanda }: { demanda: DemandaLista }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Aba Dados (edição)                                                 */
+/* Bloco "Dados da demanda" (substitui as abas Dados e Origem)        */
 /* ------------------------------------------------------------------ */
 
-function AbaDados({ demanda }: { demanda: DemandaLista }) {
-  const { data: pessoas = [] } = useResponsaveis();
+function BlocoDadosDemanda({ demanda }: { demanda: DemandaLista }) {
   const atualizar = useAtualizarDemanda();
-  const locaticia = demanda.produto === "fianca_locaticia";
-
-  const [f, setF] = useState({
-    modalidade: demanda.modalidade ?? "",
-    publico_privado: demanda.publico_privado ?? "",
-    tipo_movimento: demanda.tipo_movimento ?? "",
-    tipo_alteracao: demanda.tipo_alteracao ?? "",
-    importancia_segurada: demanda.importancia_segurada?.toString() ?? "",
-    percentual_garantia: demanda.percentual_garantia?.toString() ?? "",
-    objeto: demanda.objeto ?? "",
-    vigencia_exigida: demanda.vigencia_exigida ?? "",
-    data_limite: demanda.data_limite ?? "",
-    responsavel_cliente_id: demanda.responsavel_cliente_id ?? "",
-    responsavel_tecnico_id: demanda.responsavel_tecnico_id ?? "",
-    premio_estimado: demanda.premio_estimado?.toString() ?? "",
-    comissao_estimada: demanda.comissao_estimada?.toString() ?? "",
-    observacao: demanda.observacao ?? "",
-    numero_processo: demanda.numero_processo ?? "",
-    numero_contrato: demanda.numero_contrato ?? "",
-  });
+  const admin = useEhAdmin();
+  const { data: origem } = useOrigemDaDemanda(demanda.entrada_id);
+  const [f, setF] = useState<EstadoCampos>(() => estadoDaDemanda(demanda));
+  const [editando, setEditando] = useState(false);
 
   useEffect(() => {
-    setF({
-      modalidade: demanda.modalidade ?? "",
-      publico_privado: demanda.publico_privado ?? "",
-      tipo_movimento: demanda.tipo_movimento ?? "",
-      tipo_alteracao: demanda.tipo_alteracao ?? "",
-      importancia_segurada: demanda.importancia_segurada?.toString() ?? "",
-      percentual_garantia: demanda.percentual_garantia?.toString() ?? "",
-      objeto: demanda.objeto ?? "",
-      vigencia_exigida: demanda.vigencia_exigida ?? "",
-      data_limite: demanda.data_limite ?? "",
-      responsavel_cliente_id: demanda.responsavel_cliente_id ?? "",
-      responsavel_tecnico_id: demanda.responsavel_tecnico_id ?? "",
-      premio_estimado: demanda.premio_estimado?.toString() ?? "",
-      comissao_estimada: demanda.comissao_estimada?.toString() ?? "",
-      observacao: demanda.observacao ?? "",
-      numero_processo: demanda.numero_processo ?? "",
-      numero_contrato: demanda.numero_contrato ?? "",
-    });
+    setF(estadoDaDemanda(demanda));
   }, [demanda]);
-
-  const num = (v: string) => (v.trim() ? Number(v.replace(",", ".")) : null);
 
   const salvar = async () => {
     try {
-      await atualizar.mutateAsync({
-        id: demanda.id,
-        valores: {
-          modalidade: locaticia ? "locaticia" : f.modalidade || null,
-          publico_privado: f.publico_privado || null,
-          tipo_movimento: f.tipo_movimento || null,
-          tipo_alteracao: f.tipo_movimento === "endosso" ? f.tipo_alteracao || null : null,
-          importancia_segurada: num(f.importancia_segurada),
-          percentual_garantia: num(f.percentual_garantia),
-          objeto: f.objeto.trim() || null,
-          vigencia_exigida: f.vigencia_exigida.trim() || null,
-          data_limite: f.data_limite || null,
-          responsavel_cliente_id: f.responsavel_cliente_id || null,
-          responsavel_tecnico_id: f.responsavel_tecnico_id || null,
-          premio_estimado: num(f.premio_estimado),
-          comissao_estimada: num(f.comissao_estimada),
-          observacao: f.observacao.trim() || null,
-          numero_processo: f.numero_processo.trim() || null,
-          numero_contrato: f.numero_contrato.trim() || null,
-        },
-      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await atualizar.mutateAsync({ id: demanda.id, valores: valoresDoEstado(f, demanda, admin) as any });
       toast.success("Dados da demanda atualizados.");
+      setEditando(false);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Não foi possível salvar.");
+      toast.error(mensagemDeErro(e, "Não foi possível salvar."));
     }
   };
 
-  return (
-    <div className="space-y-4">
-      <div className="rounded-md border border-border bg-muted/40 p-3">
-        <Linha rotulo="Cliente" valor={demanda.cliente?.nome ?? A_DEFINIR} />
-        <Linha
-          rotulo={locaticia ? "Locador" : "Segurado"}
-          valor={ouDefinir(demanda.segurado?.nome ?? null)}
-        />
-        <Linha rotulo="Produto" valor={ROTULO_PRODUTO[demanda.produto] ?? demanda.produto} />
-        <Linha rotulo="Etapa" valor={rotuloEtapa(demanda.etapa)} />
-      </div>
+  const numero = demanda.numero_contrato ?? demanda.numero_processo;
+  const pct = demanda.percentual_garantia != null ? `${String(demanda.percentual_garantia).replace(".", ",")} %` : null;
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-1">
-          <Label>Modalidade</Label>
-          {locaticia ? (
-            <Input value="Locatícia" readOnly disabled />
-          ) : (
-            <Select value={f.modalidade} onValueChange={(v) => setF({ ...f, modalidade: v })}>
-              <SelectTrigger><SelectValue placeholder={A_DEFINIR} /></SelectTrigger>
-              <SelectContent>
-                {MODALIDADES.map((m) => (
-                  <SelectItem key={m.valor} value={m.valor}>{m.rotulo}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+  return (
+    <section className="space-y-3 rounded-md border p-4">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="font-semibold text-[#14405C]">Dados da demanda</h3>
+        {!editando && (
+          <Button size="sm" variant="outline" onClick={() => setEditando(true)}>
+            <Pencil className="mr-1 h-3.5 w-3.5" /> Editar
+          </Button>
+        )}
+      </div>
+      <div className="grid gap-x-6 rounded-md bg-muted/40 px-3 py-1 text-sm sm:grid-cols-2">
+        <Linha rotulo="Cliente" valor={demanda.cliente?.nome ?? A_DEFINIR} />
+        <Linha rotulo="Chegada" valor={dataHora(demanda.chegada_em)} />
+        <Linha rotulo="Canal" valor={ouDefinir(demanda.canal?.nome ?? origem?.canal?.nome ?? null)} />
+        <Linha rotulo="Produto" valor={ROTULO_PRODUTO[demanda.produto] ?? demanda.produto} />
+        {origem?.protocolo && <Linha rotulo="Protocolo da entrada" valor={origem.protocolo} />}
+        {origem?.assunto && <Linha rotulo="Assunto" valor={origem.assunto} />}
+      </div>
+      {demanda.solicitacao_id && (
+        <p className="text-xs text-muted-foreground">
+          Veio do formulário público de Garantia Judicial.{" "}
+          <Link to="/garantia/formulario-admin" className="font-semibold text-primary underline-offset-4 hover:underline">
+            Abrir o Formulário Admin
+          </Link>
+        </p>
+      )}
+      {editando ? (
+        <div className="space-y-3">
+          <CamposDemanda demanda={demanda} f={f} setF={setF} />
+          <div className="flex gap-2">
+            <Button onClick={salvar} disabled={atualizar.isPending}>
+              {atualizar.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Salvar dados
+            </Button>
+            <Button variant="ghost" onClick={() => { setF(estadoDaDemanda(demanda)); setEditando(false); }}>Cancelar</Button>
+          </div>
+        </div>
+      ) : (
+        <div className="grid gap-x-6 text-sm sm:grid-cols-2">
+          <Linha rotulo={demanda.produto === "fianca_locaticia" ? "Locador" : "Segurado"} valor={ouDefinir(demanda.segurado?.nome ?? null)} />
+          <Linha rotulo="Modalidade" valor={rotuloModalidade(demanda.modalidade)} />
+          <Linha rotulo="Importância segurada" valor={demanda.importancia_segurada != null ? moeda(demanda.importancia_segurada) : ouDefinir(null)} />
+          <Linha rotulo="% da garantia" valor={ouDefinir(pct)} />
+          <Linha rotulo="Vigência exigida" valor={ouDefinir(demanda.vigencia_exigida)} />
+          <Linha rotulo="Nº do contrato/processo" valor={ouDefinir(numero)} />
+          {demanda.objeto && (
+            <div className="sm:col-span-2"><Linha rotulo="Objeto" valor={<span className="line-clamp-3 font-normal">{demanda.objeto}</span>} /></div>
           )}
         </div>
-        <div className="space-y-1">
-          <Label>Segurado público ou privado</Label>
-          <Select value={f.publico_privado} onValueChange={(v) => setF({ ...f, publico_privado: v })}>
-            <SelectTrigger><SelectValue placeholder={A_DEFINIR} /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="publico">Público</SelectItem>
-              <SelectItem value="privado">Privado</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1">
-          <Label>Tipo de movimento</Label>
-          <Select value={f.tipo_movimento} onValueChange={(v) => setF({ ...f, tipo_movimento: v })}>
-            <SelectTrigger><SelectValue placeholder={A_DEFINIR} /></SelectTrigger>
-            <SelectContent>
-              {TIPOS_MOVIMENTO.map((t) => (
-                <SelectItem key={t.valor} value={t.valor}>{t.rotulo}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        {f.tipo_movimento === "endosso" && (
-          <div className="space-y-1">
-            <Label>Tipo de alteração</Label>
-            <Select value={f.tipo_alteracao} onValueChange={(v) => setF({ ...f, tipo_alteracao: v })}>
-              <SelectTrigger><SelectValue placeholder={A_DEFINIR} /></SelectTrigger>
-              <SelectContent>
-                {TIPOS_ALTERACAO.map((t) => (
-                  <SelectItem key={t.valor} value={t.valor}>{t.rotulo}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-        <div className="space-y-1">
-          <Label>Importância segurada</Label>
-          <Input
-            value={f.importancia_segurada}
-            placeholder={A_DEFINIR}
-            inputMode="decimal"
-            onChange={(e) => setF({ ...f, importancia_segurada: e.target.value })}
-          />
-        </div>
-        <div className="space-y-1">
-          <Label>% de garantia sobre o contrato</Label>
-          <Input
-            value={f.percentual_garantia}
-            placeholder={A_DEFINIR}
-            inputMode="decimal"
-            onChange={(e) => setF({ ...f, percentual_garantia: e.target.value })}
-          />
-        </div>
-        <div className="space-y-1">
-          <Label>Vigência exigida</Label>
-          <Input
-            value={f.vigencia_exigida}
-            placeholder={A_DEFINIR}
-            onChange={(e) => setF({ ...f, vigencia_exigida: e.target.value })}
-          />
-        </div>
-        <div className="space-y-1">
-          <Label>Data limite</Label>
-          <Input type="date" value={f.data_limite} onChange={(e) => setF({ ...f, data_limite: e.target.value })} />
-        </div>
-        <div className="space-y-1">
-          <Label>Responsável pelo cliente</Label>
-          <Select
-            value={f.responsavel_cliente_id}
-            onValueChange={(v) => setF({ ...f, responsavel_cliente_id: v })}
-          >
-            <SelectTrigger><SelectValue placeholder={A_DEFINIR} /></SelectTrigger>
-            <SelectContent>
-              {pessoas.map((p) => (
-                <SelectItem key={p.user_id} value={p.user_id}>{p.nome}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1">
-          <Label>Responsável técnico</Label>
-          <Select
-            value={f.responsavel_tecnico_id}
-            onValueChange={(v) => setF({ ...f, responsavel_tecnico_id: v })}
-          >
-            <SelectTrigger><SelectValue placeholder={A_DEFINIR} /></SelectTrigger>
-            <SelectContent>
-              {pessoas.map((p) => (
-                <SelectItem key={p.user_id} value={p.user_id}>{p.nome}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1">
-          <Label>Prêmio estimado</Label>
-          <Input
-            value={f.premio_estimado}
-            placeholder={A_DEFINIR}
-            inputMode="decimal"
-            onChange={(e) => setF({ ...f, premio_estimado: e.target.value })}
-          />
-        </div>
-        <div className="space-y-1">
-          <Label>Comissão estimada</Label>
-          <Input
-            value={f.comissao_estimada}
-            placeholder={A_DEFINIR}
-            inputMode="decimal"
-            onChange={(e) => setF({ ...f, comissao_estimada: e.target.value })}
-          />
-        </div>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-1">
-          <Label>Nº do processo</Label>
-          <Input value={f.numero_processo} placeholder={A_DEFINIR} onChange={(e) => setF({ ...f, numero_processo: e.target.value })} />
-        </div>
-        <div className="space-y-1">
-          <Label>Nº do contrato</Label>
-          <Input value={f.numero_contrato} placeholder={A_DEFINIR} onChange={(e) => setF({ ...f, numero_contrato: e.target.value })} />
-        </div>
-      </div>
-
-      <div className="space-y-1">
-        <Label>Objeto</Label>
-        <Textarea value={f.objeto} placeholder={A_DEFINIR} rows={3} onChange={(e) => setF({ ...f, objeto: e.target.value })} />
-      </div>
-      <div className="space-y-1">
-        <Label>Observação</Label>
-        <Textarea value={f.observacao} placeholder={A_DEFINIR} rows={3} onChange={(e) => setF({ ...f, observacao: e.target.value })} />
-      </div>
-
-      <Button onClick={salvar} disabled={atualizar.isPending}>
-        {atualizar.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-        Salvar dados
-      </Button>
-    </div>
+      )}
+    </section>
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Abas Origem e Histórico                                            */
-/* ------------------------------------------------------------------ */
-
-function AbaOrigem({ demanda }: { demanda: DemandaLista }) {
-  const { data: origem, isLoading } = useOrigemDaDemanda(demanda.entrada_id);
-
-  const tempoCadastro = useMemo(() => {
-    const ms = new Date(demanda.cadastrado_em).getTime() - new Date(demanda.chegada_em).getTime();
-    if (!Number.isFinite(ms) || ms < 0) return A_DEFINIR;
-    return duracaoLegivel(Math.floor(ms / 1000));
-  }, [demanda.cadastrado_em, demanda.chegada_em]);
-
+function HistoricoDialog({
+  demanda,
+  catalogo,
+  podeVerTempo,
+}: {
+  demanda: DemandaLista;
+  catalogo: StatusCatalogo[];
+  podeVerTempo: boolean;
+}) {
+  const [aberto, setAberto] = useState(false);
   return (
-    <div className="space-y-4 text-sm">
-      <div className="rounded-md border border-border p-3">
-        <Linha rotulo="Protocolo da entrada" valor={ouDefinir(origem?.protocolo ?? null)} />
-        <Linha rotulo="Chegada" valor={dataHora(demanda.chegada_em)} />
-        <Linha rotulo="Origem" valor={ouDefinir(origem?.origem ?? null)} />
-        <Linha rotulo="Canal" valor={ouDefinir(demanda.canal?.nome ?? origem?.canal?.nome ?? null)} />
-        <Linha rotulo="Cadastrada em" valor={dataHora(demanda.cadastrado_em)} />
-        <Linha rotulo="Entre chegada e cadastro" valor={tempoCadastro} />
-        <Linha rotulo="Assunto" valor={ouDefinir(origem?.assunto ?? null)} />
-      </div>
-
-      {isLoading && <p className="text-muted-foreground">Carregando a entrada de origem…</p>}
-      {!demanda.entrada_id && !demanda.solicitacao_id && (
-        <p className="text-muted-foreground">
-          Esta demanda não veio da Entrada de Demandas nem do formulário público.
-        </p>
-      )}
-
-      {demanda.solicitacao_id && (
-        <div className="rounded-md border border-border bg-muted/40 p-3">
-          <p className="font-medium">Veio do formulário público de Garantia Judicial.</p>
-          <p className="mt-1 text-muted-foreground">
-            A solicitação original é consultada no Formulário Admin — esta tela não altera nada lá.
-          </p>
-          <Link
-            to="/garantia/formulario-admin"
-            className="mt-2 inline-block font-semibold text-primary underline-offset-4 hover:underline"
-          >
-            Abrir o Formulário Admin
-          </Link>
-        </div>
-      )}
-    </div>
+    <>
+      <button
+        type="button"
+        className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+        onClick={() => setAberto(true)}
+      >
+        Histórico
+      </button>
+      <Dialog open={aberto} onOpenChange={setAberto}>
+        <DialogContent className="max-h-[85dvh] w-[calc(100%-2rem)] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Histórico</DialogTitle>
+            <DialogDescription>{demanda.legenda ?? demanda.numero}</DialogDescription>
+          </DialogHeader>
+          {aberto && <AbaHistorico demanda={demanda} catalogo={catalogo} podeVerTempo={podeVerTempo} />}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -1224,7 +1161,14 @@ function ConteudoDaFase({
       </div>
     );
   }
-  if (demanda.etapa === "3" && demanda.produto !== "fianca_locaticia") return <AbaLimites demanda={demanda} />;
+  // Cada fase traz os documentos junto: nenhum jeito de anexar/abrir se perde sem as abas.
+  if (demanda.etapa === "3" && demanda.produto !== "fianca_locaticia")
+    return (
+      <div className="space-y-4">
+        <AbaLimites demanda={demanda} />
+        <AbaDocumentos demanda={demanda} />
+      </div>
+    );
   if (demanda.etapa === "3b")
     return (
       <div className="space-y-4">
@@ -1233,7 +1177,13 @@ function ConteudoDaFase({
         <AbaDocumentos demanda={demanda} />
       </div>
     );
-  if (demanda.etapa === "4") return <AbaCotacoes demanda={demanda} />;
+  if (demanda.etapa === "4")
+    return (
+      <div className="space-y-4">
+        <AbaCotacoes demanda={demanda} />
+        <AbaDocumentos demanda={demanda} />
+      </div>
+    );
   if (demanda.etapa === "5") {
     return (
       <div className="space-y-4">
@@ -1245,7 +1195,13 @@ function ConteudoDaFase({
       </div>
     );
   }
-  if (demanda.etapa === "6") return <AbaCuradoria demanda={demanda} />;
+  if (demanda.etapa === "6")
+    return (
+      <div className="space-y-4">
+        <AbaCuradoria demanda={demanda} />
+        <AbaDocumentos demanda={demanda} />
+      </div>
+    );
   if (demanda.etapa === "7") {
     return (
       <div className="space-y-5">
@@ -1257,12 +1213,12 @@ function ConteudoDaFase({
   if (["8", "9"].includes(demanda.etapa)) {
     return (
       <div className="space-y-5">
-        {demanda.etapa === "8" && <AbaDocumentos demanda={demanda} tipoInicial="apolice" />}
+        <AbaDocumentos demanda={demanda} tipoInicial={demanda.etapa === "8" ? "apolice" : undefined} />
         <AbaApolice demanda={demanda} podeVerTempo={podeVerTempo} />
       </div>
     );
   }
-  return <AbaDados demanda={demanda} />;
+  return <AbaDocumentos demanda={demanda} />;
 }
 
 export function DemandaSheet({
@@ -1384,6 +1340,9 @@ export function DemandaSheet({
               {demanda.legenda ?? demanda.cliente?.nome ?? "Demanda"}
             </DialogTitle>
             <EditorLegenda demanda={demanda} />
+            <span className="ml-auto shrink-0 pt-2">
+              <HistoricoDialog demanda={demanda} catalogo={catalogo} podeVerTempo={podeVerTempo} />
+            </span>
           </div>
           <DialogDescription className="text-left">
             {ROTULO_PRODUTO[demanda.produto] ?? demanda.produto} ·{" "}
@@ -1483,6 +1442,7 @@ export function DemandaSheet({
                 ))}
               </div>
             </div>
+            <BlocoDadosDemanda demanda={demanda} />
             <ConteudoDaFase
               demanda={demanda}
               catalogo={catalogo}
@@ -1494,48 +1454,8 @@ export function DemandaSheet({
           </main>
         </div>
 
-        <Separator />
-
-        <Tabs defaultValue="dados" className="min-w-0">
-          <div className="w-full overflow-x-auto">
-            <TabsList className="w-max min-w-full justify-start">
-            <TabsTrigger value="dados">Dados completos</TabsTrigger>
-            <TabsTrigger value="documentos">Documentos</TabsTrigger>
-            {demanda.produto === "seguro_garantia" && (
-              <TabsTrigger value="limites">Limites</TabsTrigger>
-            )}
-            <TabsTrigger value="cotacoes">Cotações</TabsTrigger>
-            <TabsTrigger value="origem">Origem</TabsTrigger>
-            <TabsTrigger value="historico">Histórico</TabsTrigger>
-            </TabsList>
-          </div>
-          <TabsContent value="dados" className="mt-4">
-            <AbaDados demanda={demanda} />
-          </TabsContent>
-          <TabsContent value="documentos" className="mt-4">
-            {/* Na etapa da minuta, a aba já abre com o tipo "Minuta" escolhido. */}
-            <AbaDocumentos demanda={demanda} tipoInicial={demanda.etapa === "7" ? "minuta" : undefined} />
-          </TabsContent>
-          <TabsContent value="cotacoes" className="mt-4">
-            <AbaCotacoes demanda={demanda} />
-          </TabsContent>
-          {demanda.produto === "seguro_garantia" && (
-            <TabsContent value="limites" className="mt-4">
-              <AbaLimites demanda={demanda} />
-            </TabsContent>
-          )}
-          <TabsContent value="origem" className="mt-4">
-            <AbaOrigem demanda={demanda} />
-          </TabsContent>
-          <TabsContent value="historico" className="mt-4">
-            <AbaHistorico demanda={demanda} catalogo={catalogo} podeVerTempo={podeVerTempo} />
-          </TabsContent>
-        </Tabs>
-
-
         <div className="text-xs text-muted-foreground">
-          Importância segurada: {moeda(demanda.importancia_segurada)} · Data limite:{" "}
-          {dataCurta(demanda.data_limite)}
+          Importância segurada: {moeda(demanda.importancia_segurada)}
         </div>
 
         <TriagemDialog aberto={triagemAberta} demanda={demanda} onFechar={() => setTriagemAberta(false)} />

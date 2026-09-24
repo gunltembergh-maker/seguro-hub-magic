@@ -170,6 +170,11 @@ export function AnaliseContratoDialog({ aberto, onFechar, demanda, documento, an
     const gerais = { ...sugestoesBase };
     delete gerais.modalidades;
     const escolhida = sugestoesBase.modalidades?.find((m) => m.nome === modalidadeLegada);
+    // Análises antigas: une processo/contrato num só e descarta data limite.
+    const numero = gerais.numero_contrato ?? gerais.numero_processo;
+    delete gerais.numero_processo;
+    delete gerais.data_limite;
+    if (numero) gerais.numero_contrato = numero;
     return { ...gerais, ...(escolhida?.campos ?? (sugestoesBase.modalidades?.length === 1 ? sugestoesBase.modalidades[0].campos : {})) } as CamposSugeridosComFonteIA;
   }, [sugestoesBase, modalidadeLegada]);
 
@@ -256,8 +261,7 @@ export function AnaliseContratoDialog({ aberto, onFechar, demanda, documento, an
       { rotulo: "Vigência fim", valor: vigFim?.valor ?? "—", pagina: paginaDaFonte(vigFim?.fonte) ?? paginaDe(sugestoes.vigencia_exigida) },
     ] : [{ rotulo: "Vigência", valor: modResultado?.vigencia_obs?.valor ?? sugestoes.vigencia_exigida?.valor ?? "Não consta no documento", pagina: paginaDe(sugestoes.vigencia_exigida) ?? paginaDaFonte(modResultado?.vigencia_obs?.fonte), vazio: !modResultado?.vigencia_obs?.valor && !sugestoes.vigencia_exigida }]),
     ...(sugestoes.objeto ? [{ rotulo: "Objeto", valor: <span className={objetoAberto ? "" : "line-clamp-2"}>{sugestoes.objeto.valor}</span>, pagina: paginaDe(sugestoes.objeto) }] : []),
-    ...(sugestoes.numero_processo ? [{ rotulo: "Nº processo", valor: sugestoes.numero_processo.valor, pagina: paginaDe(sugestoes.numero_processo) }] : []),
-    ...(sugestoes.numero_contrato ? [{ rotulo: "Nº contrato", valor: sugestoes.numero_contrato.valor, pagina: paginaDe(sugestoes.numero_contrato) }] : []),
+    ...(sugestoes.numero_contrato ? [{ rotulo: "Nº do contrato/processo", valor: sugestoes.numero_contrato.valor, pagina: paginaDe(sugestoes.numero_contrato) }] : []),
   ] : [];
 
   const outrasModalidades = (classif?.modalidades ?? []).filter((m) => m.id !== local?.modalidade_id);
@@ -353,7 +357,7 @@ export function AnaliseContratoDialog({ aberto, onFechar, demanda, documento, an
 
       <Dialog open={previa} onOpenChange={setPrevia}><DialogContent className="max-h-[85dvh] w-[calc(100%-2rem)] overflow-y-auto sm:max-w-2xl"><DialogHeader><DialogTitle>Conferir preenchimento</DialogTitle><DialogDescription>Campos já preenchidos começam desmarcados. Marque-os somente se quiser substituir o trabalho atual.</DialogDescription></DialogHeader><div className="space-y-2">
         {sugestoes.tomador && <div className="flex items-start gap-3 rounded-md border p-3 opacity-80"><Checkbox checked={false} disabled /><span className="min-w-0 text-sm"><strong>Tomador</strong><span className="block text-muted-foreground">Atual: {demanda.cliente?.nome ?? "—"}</span><span className="block">Lido: {sugestoes.tomador.valor}{sugestoes.tomador.cnpj ? ` · ${sugestoes.tomador.cnpj}` : ""}</span><span className="block text-xs text-muted-foreground">O tomador já vem da Entrada; confira se bate.</span></span></div>}
-        {CAMPOS_APLICAVEIS.map((c) => { const campo = sugestoes[c.chave as keyof typeof sugestoes]; if (!campo || typeof campo !== "object" || !("valor" in campo)) return null; const atualKey = CAMPOS_ATUAIS[c.chave]; const atual = c.chave === "segurado" ? demanda.segurado?.nome ?? null : atualKey ? demanda[atualKey] : null; return <label key={c.chave} className="flex items-start gap-3 rounded-md border p-3"><Checkbox checked={!!selecionados[c.chave]} onCheckedChange={(v) => setSelecionados((s) => ({ ...s, [c.chave]: v === true }))} /><span className="min-w-0 text-sm"><strong>{c.rotulo}</strong><span className="block text-muted-foreground">Atual: {valorTexto(atual)}</span><span className="block">Sugerido: {valorTexto(campo.valor)}</span><span className="block text-xs text-muted-foreground">Fonte: {campo.fonte}</span></span></label>; })}
+        {CAMPOS_APLICAVEIS.map((c) => { const campo = sugestoes[c.chave as keyof typeof sugestoes]; if (!campo || typeof campo !== "object" || !("valor" in campo)) return null; const atualKey = CAMPOS_ATUAIS[c.chave]; const atual = c.chave === "segurado" ? demanda.segurado?.nome ?? null : c.chave === "numero_contrato" ? demanda.numero_contrato ?? demanda.numero_processo : atualKey ? demanda[atualKey] : null; const fmtPct = (v: unknown) => c.chave === "percentual_garantia" && typeof v === "number" ? `${String(v).replace(".", ",")} %` : valorTexto(v); return <label key={c.chave} className="flex items-start gap-3 rounded-md border p-3"><Checkbox checked={!!selecionados[c.chave]} onCheckedChange={(v) => setSelecionados((s) => ({ ...s, [c.chave]: v === true }))} /><span className="min-w-0 text-sm"><strong>{c.rotulo}</strong><span className="block text-muted-foreground">Atual: {fmtPct(atual)}</span><span className="block">Sugerido: {fmtPct(campo.valor)}</span><span className="block text-xs text-muted-foreground">Fonte: {campo.fonte}</span></span></label>; })}
       </div><DialogFooter><Button variant="ghost" onClick={() => setPrevia(false)}>Voltar</Button><Button onClick={aplicar} disabled={!Object.values(selecionados).some(Boolean)}><Check className="mr-2 h-4 w-4" />Confirmar preenchimento</Button></DialogFooter></DialogContent></Dialog>
     </Dialog>
   );
