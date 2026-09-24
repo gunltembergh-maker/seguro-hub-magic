@@ -129,6 +129,21 @@ export interface DemandaChecklist {
   dre_assinados: boolean | null;
   precisa_nomeacao: boolean;
   precisa_ccg: boolean;
+  /** IS da demanda — usada para ver se o cosseguro alcança o valor. */
+  importancia_segurada?: number | null;
+  /** Soma da IS assumida no cosseguro (saída B). */
+  cosseguro_total?: number;
+  /** Dispensa com motivo (saída C). */
+  cadastro_dispensado_motivo?: string | null;
+}
+
+/** Tipos que satisfazem a saída A do cadastro: basta UM deles. */
+export const TIPOS_SAIDA_CADASTRO = ["dre", "balanco", "alteracao_contratual"] as const;
+
+/** Cosseguro só satisfaz quando a soma alcança ou passa a IS. */
+export function cosseguroCobre(demanda: DemandaChecklist): boolean {
+  const is = Number(demanda.importancia_segurada ?? 0);
+  return is > 0 && Number(demanda.cosseguro_total ?? 0) >= is;
 }
 
 export interface Pendencia {
@@ -171,8 +186,8 @@ export function pendenciasAnaliseDemanda(
 
 /**
  * Etapa 3b (documentos de cadastro): nada é obrigatório por padrão.
- *  · DRE e balanço só quando exige_cadastro = true (a consulta a mercado não
- *    achou limite em nenhuma seguradora). NÃO há mínimo de exercícios.
+ *  · Documento de cadastro só quando exige_cadastro = true (nenhuma com
+ *    portal cobre sozinha a IS). Um entre DRE, balanço e alteração basta.
  *  · As duas conferências de assinatura precisam estar respondidas nesse caso;
  *    responder "não" não trava, mas fica visível como pendência.
  *  · Carta de nomeação e CCG só quando marcados como necessários.
@@ -183,21 +198,20 @@ export function pendenciasEtapa3b(
 ): Pendencia[] {
   const lista: Pendencia[] = [];
   const motivoCadastro =
-    "a consulta a mercado não encontrou limite em nenhuma seguradora, então DRE e balanço passam a ser exigidos";
+    "nenhuma seguradora com portal tem limite disponível que cubra sozinha a importância segurada";
 
-  if (demanda.exige_cadastro) {
-    if (!tiposPresentes.has("dre")) {
+  // Três saídas quando o cadastro é exigido:
+  //   A) pelo menos UM documento entre DRE, balanço e alteração contratual;
+  //   B) cosseguro cuja soma de IS alcança a IS da demanda;
+  //   C) dispensa com motivo escrito (fica registrada mesmo se chegar documento).
+  const resolvidoSemDocs = cosseguroCobre(demanda) || !!demanda.cadastro_dispensado_motivo?.trim();
+  if (demanda.exige_cadastro && !resolvidoSemDocs) {
+    const temDoc = TIPOS_SAIDA_CADASTRO.some((t) => tiposPresentes.has(t));
+    if (!temDoc) {
       lista.push({
         etapa: "3b",
-        texto: "Anexe pelo menos um DRE (um exercício já basta).",
-        motivo: motivoCadastro,
-        bloqueia: true,
-      });
-    }
-    if (!tiposPresentes.has("balanco")) {
-      lista.push({
-        etapa: "3b",
-        texto: "Anexe pelo menos um balanço (um exercício já basta).",
+        texto:
+          "Anexe pelo menos um documento de cadastro (DRE, balanço ou alteração contratual — um basta), feche um cosseguro que alcance a IS ou siga com a dispensa justificada.",
         motivo: motivoCadastro,
         bloqueia: true,
       });
