@@ -341,8 +341,6 @@ function TriagemDialog({
   const [pct, setPct] = useState(demanda.percentual_garantia?.toString() ?? "");
   const [objeto, setObjeto] = useState(demanda.objeto ?? "");
   const [vigencia, setVigencia] = useState(demanda.vigencia_exigida ?? "");
-  const [dataLimite, setDataLimite] = useState(demanda.data_limite ?? "");
-  const [respCliente, setRespCliente] = useState(demanda.responsavel_cliente_id ?? "");
   const [respTecnico, setRespTecnico] = useState(demanda.responsavel_tecnico_id ?? "");
 
   const salvar = async () => {
@@ -352,10 +350,6 @@ function TriagemDialog({
     }
     if (!is.trim()) {
       toast.error("A importância segurada é obrigatória.");
-      return;
-    }
-    if (!dataLimite) {
-      toast.error("A data limite é obrigatória: é ela que organiza a fila.");
       return;
     }
     if (movimento === "endosso" && !alteracao) {
@@ -375,8 +369,8 @@ function TriagemDialog({
           percentual_garantia: pct.trim() ? Number(pct.replace(",", ".")) : null,
           objeto: objeto.trim() || null,
           vigencia_exigida: vigencia.trim() || null,
-          data_limite: dataLimite,
-          responsavel_cliente_id: respCliente || null,
+          // Data limite vem da leitura do edital e o responsável pelo cliente
+          // é copiado do cadastro na criação; os dois ficam na aba Dados.
           responsavel_tecnico_id: respTecnico || null,
         },
       });
@@ -481,21 +475,6 @@ function TriagemDialog({
             <div className="space-y-1">
               <Label>Vigência exigida</Label>
               <Input value={vigencia} onChange={(e) => setVigencia(e.target.value)} placeholder="Ex.: 24 meses" />
-            </div>
-            <div className="space-y-1">
-              <Label>Data limite * (sessão, assinatura ou prazo judicial)</Label>
-              <Input type="date" value={dataLimite} onChange={(e) => setDataLimite(e.target.value)} />
-            </div>
-            <div className="space-y-1">
-              <Label>Responsável pelo cliente</Label>
-              <Select value={respCliente} onValueChange={setRespCliente}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>
-                  {pessoas.map((p) => (
-                    <SelectItem key={p.user_id} value={p.user_id}>{p.nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
             <div className="space-y-1">
               <Label>Responsável técnico</Label>
