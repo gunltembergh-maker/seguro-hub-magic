@@ -89,6 +89,12 @@ const areasAll: AreaItem[] = [
         icon: FileSignature,
         perms: ["menu_comercial_canal_parceiros"],
       },
+      {
+        title: "Garantia",
+        url: "/garantia/comercial",
+        icon: ClipboardList,
+        perms: ["menu_garantia_comercial"],
+      },
     ],
   },
   {
@@ -161,8 +167,6 @@ const ramosAll: CollapsibleItem[] = [
         perms: ["menu_garantia_crm"] },
       { title: "Painel da Gerência", url: "/garantia/painel", icon: BarChart3,
         perms: ["menu_garantia_painel"] },
-      { title: "Comercial", url: "/garantia/comercial", icon: ClipboardList,
-        perms: ["menu_garantia_comercial"] },
     ],
   },
   { title: "Benefícios", url: "/beneficios", icon: HeartPulse, tooltip: "Benefícios", perm: "menu_ramo_beneficios" },
@@ -294,7 +298,12 @@ export function AppSidebar() {
   const isAdmin = hasRole(meuPerfil, "ADMIN");
 
   const areas = areasAll
-    .filter((i) => isAdmin || hasPermission(meuPerfil, i.perm))
+    .filter(
+      (i) =>
+        isAdmin ||
+        hasPermission(meuPerfil, i.perm) ||
+        (i.children ?? []).some((c) => (c.perms ?? []).some((p) => hasPermission(meuPerfil, p))),
+    )
     .map((i) => semFilhosProibidos(i, meuPerfil, isAdmin));
   // A área aparece quando o perfil tem a permissão do grupo OU a de qualquer
   // um dos filhos — um sub-item liberado sozinho precisa ter porta de entrada.
