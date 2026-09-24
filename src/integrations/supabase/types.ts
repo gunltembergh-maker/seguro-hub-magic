@@ -2901,6 +2901,7 @@ export type Database = {
           criado_em: string
           demanda_id: string | null
           documento_id: string | null
+          documentos_ids: string[]
           erro_mensagem: string | null
           fluxo: string
           id: string
@@ -2920,6 +2921,7 @@ export type Database = {
           criado_em?: string
           demanda_id?: string | null
           documento_id?: string | null
+          documentos_ids?: string[]
           erro_mensagem?: string | null
           fluxo: string
           id?: string
@@ -2939,6 +2941,7 @@ export type Database = {
           criado_em?: string
           demanda_id?: string | null
           documento_id?: string | null
+          documentos_ids?: string[]
           erro_mensagem?: string | null
           fluxo?: string
           id?: string

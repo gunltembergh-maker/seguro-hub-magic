@@ -50,6 +50,12 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { PaginaHub } from "@/components/hub/pagina-hub";
+import {
+  TAMANHO_MAXIMO_BYTES,
+  rotuloTipoDocumento,
+  tiposContratoObrigatorios,
+  tiposDaEntrada,
+} from "@/lib/garantia/documentos-regra";
 
 import { useMeuPerfilEfetivo } from "@/contexts/view-as-context";
 import { hasPermission, hasRole } from "@/hooks/use-meu-perfil";
@@ -317,6 +323,20 @@ function CelulaPendencia({ entrada }: { entrada: EntradaLista }) {
     }
   }
 
+  if (entrada.demanda_id) {
+    // A demanda existe; faltou o documento. Rotear de novo criaria outra.
+    return (
+      <div className="space-y-1">
+        <Badge variant="outline" className="border-destructive text-destructive">
+          Retida · demanda sem documento
+        </Badge>
+        {entrada.motivo_retencao && (
+          <p className="max-w-[240px] text-xs text-muted-foreground">{entrada.motivo_retencao}</p>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-1">
       <Badge variant="outline" className="border-destructive text-destructive">
@@ -355,6 +375,7 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
   const [produto, setProduto] = useState<ProdutoGarantia | "">("");
   const [assunto, setAssunto] = useState("");
   const [observacao, setObservacao] = useState("");
+  const [anexos, setAnexos] = useState<{ arquivo: File; tipo: string }[]>([]);
   const [resultado, setResultado] = useState<{ protocolo: string; chegada: string; registro: string } | null>(null);
 
   const canais = useCanais();
@@ -375,10 +396,38 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
     setProduto("");
     setAssunto("");
     setObservacao("");
+    setAnexos([]);
     setResultado(null);
   }
 
+  // Sem documento não é demanda: sem ele não dá para saber o que é pedido.
+  const ehGarantia = ramo === "garantia";
+  const obrigatorios = produto ? tiposContratoObrigatorios(produto) : [];
+  const razaoBloqueio = !ehGarantia
+    ? null
+    : !produto
+      ? "Escolha o produto para anexar os documentos."
+      : anexos.some((a) => !a.tipo)
+        ? "Escolha o tipo de cada arquivo anexado."
+        : !anexos.some((a) => obrigatorios.includes(a.tipo))
+          ? `Anexe pelo menos um documento de contrato (${obrigatorios.map(rotuloTipoDocumento).join(", ")}).`
+          : null;
+
+  function adicionarArquivos(lista: FileList | null) {
+    if (!lista) return;
+    const novos: { arquivo: File; tipo: string }[] = [];
+    for (const f of Array.from(lista)) {
+      if (f.size > TAMANHO_MAXIMO_BYTES) {
+        toast.error(`${f.name} passa de 20 MB, que é o teto por anexo.`);
+        continue;
+      }
+      novos.push({ arquivo: f, tipo: "" });
+    }
+    setAnexos((a) => [...a, ...novos]);
+  }
+
   async function salvar() {
+    if (razaoBloqueio) return toast.error(razaoBloqueio);
     if (!cliente) return toast.error("Escolha o cliente.");
     if (!assunto.trim()) return toast.error("Informe o assunto.");
     if (futuro) return toast.error("A chegada não pode estar no futuro.");
@@ -394,13 +443,21 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
         canal_id: canalId || null,
         assunto: assunto.trim(),
         observacao: observacao.trim() || null,
+        anexos: ehGarantia ? anexos : undefined,
       });
       setResultado({
         protocolo: r.entrada.protocolo,
         chegada: r.entrada.chegada_em,
         registro: r.entrada.registrado_em,
       });
-      toast.success(`Entrada ${r.entrada.protocolo} registrada.`);
+      if (r.falhaAnexo) {
+        toast.error(
+          `Entrada ${r.entrada.protocolo} registrada e demanda criada, mas sem documento: ${r.falhaAnexo} Anexe pela aba Documentos da demanda.`,
+          { duration: 12000 },
+        );
+      } else {
+        toast.success(`Entrada ${r.entrada.protocolo} registrada.`);
+      }
     } catch (err) {
       toast.error(mensagemDeErro(err));
     }
@@ -552,7 +609,7 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
               {ramo === "garantia" ? (
                 <div className="space-y-1">
                   <Label>Produto *</Label>
-                  <Select value={produto} onValueChange={(v) => setProduto(v as ProdutoGarantia)}>
+                  <Select value={produto} onValueChange={(v) => { setProduto(v as ProdutoGarantia); setAnexos((l) => l.map((a) => (tiposDaEntrada(v).some((t) => t.valor === a.tipo) ? a : { ...a, tipo: "" }))); }}>
                     <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="seguro_garantia">Seguro Garantia</SelectItem>
@@ -573,17 +630,67 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
                 <Input value={assunto} onChange={(e) => setAssunto(e.target.value)} />
               </div>
 
+              <div className="space-y-2 sm:col-span-2">
+                <Label>Documentos{ehGarantia ? " *" : ""}</Label>
+                {!ehGarantia ? (
+                  <p className="text-xs text-muted-foreground">
+                    Este ramo fica retido sem demanda, e documento sem demanda não teria onde ficar: aqui não se anexa.
+                  </p>
+                ) : (
+                  <>
+                    <Input
+                      type="file"
+                      multiple
+                      disabled={!produto}
+                      onChange={(e) => { adicionarArquivos(e.target.files); e.target.value = ""; }}
+                    />
+                    {anexos.length > 0 && (
+                      <ul className="space-y-2">
+                        {anexos.map((a, i) => (
+                          <li key={`${a.arquivo.name}-${i}`} className="flex min-w-0 flex-col gap-2 rounded-md border p-2 sm:flex-row sm:items-center">
+                            <span className="min-w-0 flex-1 break-all text-sm">{a.arquivo.name}</span>
+                            <Select
+                              value={a.tipo}
+                              onValueChange={(v) => setAnexos((l) => l.map((x, j) => (j === i ? { ...x, tipo: v } : x)))}
+                            >
+                              <SelectTrigger className="sm:w-56"><SelectValue placeholder="Tipo do documento" /></SelectTrigger>
+                              <SelectContent>
+                                {tiposDaEntrada(produto).map((t) => (
+                                  <SelectItem key={t.valor} value={t.valor}>{t.rotulo}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setAnexos((l) => l.filter((_, j) => j !== i))}
+                            >
+                              Remover
+                            </Button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Até 20 MB por arquivo. DRE, balanço e outros documentos podem ir juntos.
+                    </p>
+                  </>
+                )}
+              </div>
+
               <div className="space-y-1 sm:col-span-2">
                 <Label>Observação</Label>
                 <Textarea rows={3} value={observacao} onChange={(e) => setObservacao(e.target.value)} />
               </div>
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="flex-col gap-2 sm:flex-row sm:items-center">
+              {razaoBloqueio && <p className="mr-auto text-xs text-destructive">{razaoBloqueio}</p>}
               <Button variant="outline" onClick={() => { limpar(); onFechar(); }}>Cancelar</Button>
               <Button
                 onClick={salvar}
-                disabled={criarEntrada.isPending}
+                disabled={criarEntrada.isPending || !!razaoBloqueio}
                 className="bg-[#14405C] hover:bg-[#14405C]/90"
               >
                 {criarEntrada.isPending && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}

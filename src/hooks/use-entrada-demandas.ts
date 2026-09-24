@@ -6,6 +6,12 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { BUCKET_PIPELINE, TAMANHO_MAXIMO_BYTES } from "@/lib/garantia/documentos-regra";
+
+export interface AnexoEntrada {
+  arquivo: File;
+  tipo: string;
+}
 
 export type RamoEntrada = "garantia" | "beneficios" | "demais_ramos" | "credito" | "outro";
 export type ProdutoGarantia = "seguro_garantia" | "fianca_locaticia";
@@ -222,6 +228,8 @@ export interface NovaEntrada {
   canal_id: string | null;
   assunto: string;
   observacao: string | null;
+  /** Só Garantia. Pelo menos um documento de contrato — a tela garante. */
+  anexos?: AnexoEntrada[];
 }
 
 export interface DadosRoteamento {
@@ -230,6 +238,42 @@ export interface DadosRoteamento {
   cliente_id: string;
   chegada_em: string;
   canal_id: string | null;
+  anexos?: AnexoEntrada[];
+}
+
+export interface ResultadoRoteamento {
+  demandaId: string;
+  /** Preenchido quando a demanda nasceu mas algum anexo não subiu. */
+  falhaAnexo: string | null;
+}
+
+/**
+ * Sobe os anexos da Entrada no caminho `${demanda}/${tipo}/${versao}-${nome}`.
+ * A versão gravada é do trigger; aqui só se conta para montar o caminho.
+ */
+async function subirAnexos(demandaId: string, anexos: AnexoEntrada[], uid: string | null) {
+  const porTipo: Record<string, number> = {};
+  for (const { arquivo, tipo } of anexos) {
+    if (arquivo.size > TAMANHO_MAXIMO_BYTES) throw new Error(`${arquivo.name} passa de 20 MB.`);
+    porTipo[tipo] = (porTipo[tipo] ?? 0) + 1;
+    const nomeLimpo = arquivo.name.replace(/[^\w.\-() ]+/g, "_");
+    const caminho = `${demandaId}/${tipo}/${porTipo[tipo]}-${nomeLimpo}`;
+    const { error: erroUpload } = await supabase.storage
+      .from(BUCKET_PIPELINE)
+      .upload(caminho, arquivo, { contentType: arquivo.type || "application/octet-stream", upsert: false });
+    if (erroUpload) throw new Error(`Não foi possível enviar ${arquivo.name}: ${erroUpload.message}`);
+    const { error } = await supabase.from("garantia_documentos").insert({
+      demanda_id: demandaId,
+      tipo,
+      caminho,
+      nome_arquivo: arquivo.name,
+      tamanho_bytes: arquivo.size,
+      mime_type: arquivo.type || null,
+      enviado_por: uid,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+    if (error) throw error;
+  }
 }
 
 /**
@@ -244,7 +288,15 @@ export interface DadosRoteamento {
  * corrige, não se deleta.
  * Nada é escrito em garantia_status_historico — o trigger do banco cuida.
  */
-async function abrirDemandaGarantia(d: DadosRoteamento, uid: string | null): Promise<string> {
+async function abrirDemandaGarantia(d: DadosRoteamento, uid: string | null): Promise<ResultadoRoteamento> {
+  // Responsável pelo cliente é COPIADO do cadastro: se mudar lá depois, a
+  // demanda guarda quem era na chegada. Continua editável na aba Dados.
+  const { data: clienteHub } = await supabase
+    .from("hub_clientes")
+    .select("responsavel_id")
+    .eq("id", d.cliente_id)
+    .maybeSingle();
+  let demandaCriada: string | null = null;
   try {
     const { data: demanda, error: erroDemanda } = await supabase
       .from("garantia_demandas")
@@ -259,12 +311,34 @@ async function abrirDemandaGarantia(d: DadosRoteamento, uid: string | null): Pro
         status_atual: "triagem",
         triagem_completa: false,
         cadastrado_por: uid,
+        responsavel_cliente_id: clienteHub?.responsavel_id ?? null,
         modalidade: d.produto === "fianca_locaticia" ? "locaticia" : null,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any)
       .select("id")
       .single();
     if (erroDemanda) throw erroDemanda;
+    demandaCriada = demanda.id as string;
+
+    // Anexo falhou: NÃO se apaga a demanda (DELETE é só de ADMIN e não
+    // reclamaria). A entrada fica retida, apontando para a demanda, com o
+    // motivo; o checklist da análise impede que ela avance sem documento.
+    if (d.anexos?.length) {
+      try {
+        await subirAnexos(demandaCriada, d.anexos, uid);
+      } catch (erroAnexo) {
+        const falha = erroAnexo instanceof Error ? erroAnexo.message : "Falha no envio dos anexos.";
+        await supabase
+          .from("hub_entradas")
+          .update({
+            destino: "retida",
+            demanda_id: demandaCriada,
+            motivo_retencao: `Demanda criada, mas sem documento: ${falha} Anexe pela aba Documentos da demanda.`,
+          })
+          .eq("id", d.entrada_id);
+        return { demandaId: demandaCriada, falhaAnexo: falha };
+      }
+    }
 
     const { error: erroVinculo } = await supabase
       .from("hub_entradas")
@@ -272,14 +346,17 @@ async function abrirDemandaGarantia(d: DadosRoteamento, uid: string | null): Pro
       .eq("id", d.entrada_id);
     if (erroVinculo) throw erroVinculo;
 
-    return demanda.id as string;
+    return { demandaId: demanda.id as string, falhaAnexo: null };
   } catch (err) {
     const quando = new Date().toLocaleString("pt-BR");
     const { error: erroCompensacao } = await supabase
       .from("hub_entradas")
       .update({
         destino: "retida",
-        motivo_retencao: `Falha ao abrir a demanda de Garantia em ${quando}; a entrada ficou registrada e pode ser roteada de novo.`,
+        ...(demandaCriada ? { demanda_id: demandaCriada } : {}),
+        motivo_retencao: demandaCriada
+          ? `Demanda criada em ${quando}, mas a entrada não foi marcada como roteada.`
+          : `Falha ao abrir a demanda de Garantia em ${quando}; a entrada ficou registrada e pode ser roteada de novo.`,
       })
       .eq("id", d.entrada_id);
     // Se nem a compensação passou, o erro original é o que interessa na tela.
@@ -323,19 +400,20 @@ export function useCriarEntrada() {
         .single();
       if (erroEntrada) throw erroEntrada;
 
-      if (!ehGarantia) return { entrada, demandaId: null as string | null };
+      if (!ehGarantia) return { entrada, demandaId: null as string | null, falhaAnexo: null as string | null };
 
-      const demandaId = await abrirDemandaGarantia(
+      const { demandaId, falhaAnexo } = await abrirDemandaGarantia(
         {
           entrada_id: entrada.id,
           produto: v.produto!,
           cliente_id: v.cliente_id,
           chegada_em: v.chegada_em,
           canal_id: v.canal_id,
+          anexos: v.anexos,
         },
         uid,
       );
-      return { entrada, demandaId };
+      return { entrada, demandaId, falhaAnexo };
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["entrada", "lista"] });

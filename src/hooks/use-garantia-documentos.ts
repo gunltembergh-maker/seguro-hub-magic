@@ -67,7 +67,7 @@ export function useAnalisesDaDemanda(demandaId: string) {
       const { data, error } = await supabase
         .from("garantia_analises_ia")
         .select(
-          "id, demanda_id, documento_id, fluxo, situacao, resumo, resultado, campos_sugeridos, aplicada, aplicada_por, aplicada_em, erro_mensagem, solicitada_por, criado_em, atualizado_em, job_id",
+          "id, demanda_id, documento_id, documentos_ids, fluxo, situacao, resumo, resultado, campos_sugeridos, aplicada, aplicada_por, aplicada_em, erro_mensagem, solicitada_por, criado_em, atualizado_em, job_id",
         )
         .eq("demanda_id", demandaId)
         .order("criado_em", { ascending: false });
