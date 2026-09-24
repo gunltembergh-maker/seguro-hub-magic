@@ -173,8 +173,16 @@ export const analisarDocumento = createServerFn({ method: "POST" })
       if (erroSalvar) throw erroSalvar;
       return { ok: true, situacao: "concluida", analiseId: existente.id, resultado: resultado as unknown as Json, resumo: resumo || null, campos_sugeridos: campos as unknown as Json };
     } catch (erro) {
-      console.error("[garantia/ia] análise não concluída", { analiseId: existente.id, erro });
-      await sb.from("garantia_analises_ia").update({ situacao: "erro", erro_mensagem: "Não foi possível concluir a análise deste documento. Tente novamente." }).eq("id", existente.id);
-      return { ok: false, erro: "analise_falhou", mensagem: "Não foi possível concluir a análise deste documento. Tente novamente." };
+      const detalhe = erro instanceof Error ? erro.message : String(erro);
+      console.error("[garantia/ia] análise não concluída", {
+        analiseId: existente.id,
+        erro: detalhe,
+        stack: erro instanceof Error ? erro.stack : undefined,
+      });
+      // Só mensagens já escritas para o usuário neste fluxo chegam à tela.
+      const paraUsuario = /^(Este PDF parece escaneado|O documento .+ não possui texto legível\.|O documento armazenado está vazio\.)/.test(detalhe);
+      const mensagem = paraUsuario ? detalhe : "Não foi possível concluir a análise deste documento. Tente novamente.";
+      await sb.from("garantia_analises_ia").update({ situacao: "erro", erro_mensagem: mensagem }).eq("id", existente.id);
+      return { ok: false, erro: "analise_falhou", mensagem };
     }
   });

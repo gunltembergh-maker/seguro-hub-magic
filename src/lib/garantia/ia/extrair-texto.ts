@@ -1,6 +1,9 @@
 // CÓPIA DECLARADA de public/analise-limite/deepseek.js.
 // Qualquer mudança de comportamento deve ser feita nos dois lugares. O arquivo
 // em public/ é estático e não pode ser importado pelo bundle da aplicação.
+// Diferença deliberada: o ramo de servidor usa `unpdf`, porque o pdf.js legacy
+// depende de import dinâmico do worker, que não existe no Cloudflare Worker.
+// O public/analise-limite/deepseek.js roda no navegador e não precisa disso.
 
 export const MAX_PDF_PAGES = 600;
 export const TEXT_CHUNK_SIZE = 30000;
@@ -82,15 +85,20 @@ async function extrairPDFcomOCR(pdf: any, totalPaginas: number): Promise<{ texto
   } finally { await worker.terminate(); }
 }
 
-export async function extrairPDF(file: File): Promise<ArquivoExtraido> {
-  const pdfjs = typeof window === "undefined"
-    ? await import("pdfjs-dist/legacy/build/pdf.mjs")
-    : await import("pdfjs-dist");
-  if (typeof window !== "undefined") {
-    const workerUrl = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
-    pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+async function abrirPdf(bytes: Uint8Array): Promise<any> {
+  if (typeof window === "undefined") {
+    // Servidor: unpdf traz o pdf.js com o worker embutido.
+    const { getDocumentProxy } = await import("unpdf");
+    return getDocumentProxy(bytes);
   }
-  const pdf = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+  const pdfjs = await import("pdfjs-dist");
+  const workerUrl = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
+  pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+  return pdfjs.getDocument({ data: bytes }).promise;
+}
+
+export async function extrairPDF(file: File): Promise<ArquivoExtraido> {
+  const pdf = await abrirPdf(new Uint8Array(await file.arrayBuffer()));
   const totalPaginas = Math.min(pdf.numPages, MAX_PDF_PAGES);
   let textoCompleto = "";
   const partes: ParteExtraida[] = [];
