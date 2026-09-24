@@ -78,6 +78,10 @@ export interface CamposSugeridosComFonteIA {
   numero_processo?: CampoSugeridoComFonte<string>;
   numero_contrato?: CampoSugeridoComFonte<string>;
   percentual_garantia?: CampoSugeridoComFonte<number>;
+  /** Nome do segurado (ou locador); o CNPJ ajuda a achar o cadastro. */
+  segurado?: CampoSugeridoComFonte<string> & { cnpj?: string | null };
+  /** AAAA-MM-DD. */
+  data_limite?: CampoSugeridoComFonte<string>;
   modalidades?: Array<{ nome: string; campos: CamposSugeridosComFonteIA }>;
 }
 
