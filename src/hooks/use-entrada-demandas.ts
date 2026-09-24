@@ -26,6 +26,7 @@ export interface ClienteHub {
   municipio: string | null;
   uf: string | null;
   responsavel_id: string | null;
+  canal_id: string | null;
 }
 
 export interface EntradaLista {
@@ -72,7 +73,7 @@ export function useBuscaClientes(termo: string) {
       if (digitos.length >= 3) filtros.push(`cpf_cnpj.like.${digitos}%`);
       const { data, error } = await supabase
         .from("hub_clientes")
-        .select("id, tipo_pessoa, cpf_cnpj, nome, nome_fantasia, municipio, uf, responsavel_id")
+        .select("id, tipo_pessoa, cpf_cnpj, nome, nome_fantasia, municipio, uf, responsavel_id, canal_id")
         .or(filtros.join(","))
         .eq("ativo", true)
         .order("nome")
@@ -192,7 +193,7 @@ export function useCriarCliente() {
         .from("hub_clientes")
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .insert(valores as any)
-        .select("id, tipo_pessoa, cpf_cnpj, nome, nome_fantasia, municipio, uf, responsavel_id")
+        .select("id, tipo_pessoa, cpf_cnpj, nome, nome_fantasia, municipio, uf, responsavel_id, canal_id")
         .single();
       if (error) throw error;
       return data as ClienteHub;
@@ -210,7 +211,7 @@ export function useAtualizarCliente() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .update(valores as any)
         .eq("id", id)
-        .select("id, tipo_pessoa, cpf_cnpj, nome, nome_fantasia, municipio, uf, responsavel_id")
+        .select("id, tipo_pessoa, cpf_cnpj, nome, nome_fantasia, municipio, uf, responsavel_id, canal_id")
         .single();
       if (error) throw error;
       return data as ClienteHub;
@@ -293,7 +294,7 @@ async function abrirDemandaGarantia(d: DadosRoteamento, uid: string | null): Pro
   // demanda guarda quem era na chegada. Continua editável na aba Dados.
   const { data: clienteHub } = await supabase
     .from("hub_clientes")
-    .select("responsavel_id")
+    .select("responsavel_id, canal_id")
     .eq("id", d.cliente_id)
     .maybeSingle();
   let demandaCriada: string | null = null;
@@ -305,7 +306,8 @@ async function abrirDemandaGarantia(d: DadosRoteamento, uid: string | null): Pro
         entrada_id: d.entrada_id,
         cliente_id: d.cliente_id,
         chegada_em: d.chegada_em,
-        canal_id: d.canal_id,
+        // Canal e responsável são do CLIENTE: vêm do cadastro dele.
+        canal_id: clienteHub?.canal_id ?? d.canal_id,
         fase: "negociacao",
         etapa: "1",
         status_atual: "triagem",
