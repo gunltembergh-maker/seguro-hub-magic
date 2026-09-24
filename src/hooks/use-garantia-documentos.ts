@@ -47,6 +47,7 @@ const CAMPOS_DOC =
 export function useDocumentosDaDemanda(demandaId: string) {
   return useQuery({
     queryKey: ["garantia", "documentos", demandaId],
+    enabled: !!demandaId,
     queryFn: async (): Promise<DocumentoDemanda[]> => {
       const { data, error } = await supabase
         .from("garantia_documentos")
