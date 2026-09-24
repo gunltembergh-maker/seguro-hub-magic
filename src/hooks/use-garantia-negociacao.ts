@@ -436,7 +436,7 @@ export function impedimentoDaTransicao(
   if (etapaDestino === "5") {
     const faltando: string[] = [];
     if (demanda.importancia_segurada == null) faltando.push("importância segurada");
-    if (!demanda.data_limite) faltando.push("data limite");
+    // Data limite não trava mais: vem da leitura do edital e é editável na aba Dados.
     if (faltando.length) {
       return `Para montar a proposta faltam: ${faltando.join(" e ")}. Preencha na aba Dados do detalhe da demanda.`;
     }
@@ -576,8 +576,8 @@ export interface DadosTriagem {
   percentual_garantia: number | null;
   objeto: string | null;
   vigencia_exigida: string | null;
-  data_limite: string | null;
-  responsavel_cliente_id: string | null;
+  data_limite?: string | null;
+  responsavel_cliente_id?: string | null;
   responsavel_tecnico_id: string | null;
 }
 

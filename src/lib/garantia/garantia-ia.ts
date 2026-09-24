@@ -114,6 +114,8 @@ export interface AnaliseIA {
   id: string;
   demanda_id: string | null;
   documento_id: string | null;
+  /** Todos os documentos lidos; documento_id guarda o primeiro. */
+  documentos_ids: string[];
   fluxo: string;
   situacao: string;
   resumo: string | null;
