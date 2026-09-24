@@ -12,7 +12,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { AlertTriangle, Clock, Inbox, Loader2, RotateCcw, Search } from "lucide-react";
+import { AlertTriangle, Building2, CircleDollarSign, Clock, Inbox, Layers3, Loader2, RotateCcw, Search, ShieldCheck, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -105,6 +105,12 @@ function Cartao({
 }) {
   const horasNoStatus = podeVerTempo && inicioStatus ? horasDesde(inicioStatus) : null;
   const slaEstourado = horasNoStatus != null && slaHoras != null && horasNoStatus > slaHoras;
+  const informacoes = [
+    demanda.segurado?.nome ? { rotulo: demanda.produto === "fianca_locaticia" ? "Locador" : "Segurado", valor: demanda.segurado.nome, Icone: ShieldCheck } : null,
+    demanda.modalidade ? { rotulo: "Modalidade", valor: rotuloModalidade(demanda.modalidade), Icone: Layers3 } : null,
+    demanda.importancia_segurada != null ? { rotulo: "Importância segurada (R$)", valor: moeda(demanda.importancia_segurada), Icone: CircleDollarSign } : null,
+    responsavel ? { rotulo: "Responsável técnico", valor: responsavel, Icone: UserRound } : null,
+  ].filter((item): item is NonNullable<typeof item> => item !== null);
 
   return (
     <button
@@ -113,60 +119,47 @@ function Cartao({
       onDragStart={onArrastar}
       onClick={onAbrir}
       className={cn(
-        "w-full rounded-lg border border-border bg-card p-3 text-left shadow-sm transition-colors hover:border-primary/50",
-        !demanda.triagem_completa && "border-amber-300",
+        "w-full rounded-md border border-border bg-card p-3 text-left shadow-sm transition-colors hover:border-primary/50",
+        !demanda.triagem_completa && "border-warning/60",
       )}
     >
-      {/* Situação: com quem está a bola. Teal = trabalho interno; neutro = espera externa. */}
-      <div className="mb-2 flex items-center gap-1.5">
-      <AjudaFase etapa={demanda.etapa} />
-      <Badge
-        className={cn(
-          "max-w-full whitespace-normal text-left text-[11px] font-medium",
-          statusInterno
-            ? "bg-[#338B85] text-white hover:bg-[#338B85]"
-            : "bg-muted text-muted-foreground hover:bg-muted",
-        )}
-      >
-        {statusNome}
-      </Badge>
-      </div>
-      {chegouDocumento && (
-        <p className="mb-2 text-[11px] text-[#338B85]">Chegou documento depois do pedido</p>
-      )}
-      <div className="flex items-start justify-between gap-2">
-        <span className="line-clamp-2 text-sm font-semibold text-card-foreground">
-          {demanda.legenda ?? demanda.cliente?.nome ?? "Cliente a definir"}
-        </span>
-        <div className="flex shrink-0 items-center gap-1">
-          {demanda.codigo && (
-            <Badge variant="outline" className="text-[10px] font-normal">{demanda.codigo}</Badge>
-          )}
-          <SeloProduto produto={demanda.produto} />
+      <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
+        <div className="flex min-w-0 items-center gap-1.5">
+          <AjudaFase etapa={demanda.etapa} />
+          <Badge className={cn("max-w-full truncate text-[10px] font-medium", statusInterno ? "bg-primary hover:bg-primary" : "bg-muted text-muted-foreground hover:bg-muted")}>
+            {statusNome}
+          </Badge>
         </div>
+        <SeloProduto produto={demanda.produto} />
       </div>
+      <h3 className="line-clamp-2 break-words text-sm font-semibold leading-snug text-card-foreground">
+        {demanda.numero} · {demanda.cliente?.nome ?? "Cliente"}
+      </h3>
 
-      {demanda.segurado?.nome && (
-        <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
-          Segurado: {demanda.segurado.nome}
-        </p>
+      {informacoes.length ? (
+        <div className="mt-3 space-y-2.5">
+          {informacoes.map(({ rotulo, valor, Icone }) => (
+            <div key={rotulo} className="grid grid-cols-[14px_minmax(0,1fr)] gap-2">
+              <Icone className="mt-0.5 h-3.5 w-3.5 text-muted-foreground" />
+              <div className="min-w-0">
+                <p className="text-[9px] font-semibold uppercase text-muted-foreground">{rotulo}</p>
+                <p className="line-clamp-2 text-xs font-medium text-card-foreground">{valor}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground"><Building2 className="h-3.5 w-3.5" /> dados a conferir</p>
       )}
 
-      <p className="mt-1 text-xs text-muted-foreground">
-        {rotuloModalidade(demanda.modalidade)} · {moeda(demanda.importancia_segurada)}
-      </p>
-
-
-      <p className="mt-1 text-xs text-muted-foreground">
-        Responsável técnico: {responsavel ?? "a definir"}
-      </p>
-
-      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+      <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-border pt-2.5">
         {!demanda.triagem_completa && (
-          <Badge className="bg-amber-100 text-[11px] text-amber-900 hover:bg-amber-100">
+          <Badge variant="outline" className="border-warning/60 text-[10px] text-foreground">
             conferência pendente
           </Badge>
         )}
+        {chegouDocumento && <Badge variant="secondary" className="text-[10px]">chegou documento depois do pedido</Badge>}
+        {demanda.codigo && <Badge variant="outline" className="text-[10px] font-normal">{demanda.codigo}</Badge>}
         {/* Tempo no status e SLA: só para quem tem o Painel da Gerência. */}
         {podeVerTempo && horasNoStatus != null && (
           <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">

@@ -70,7 +70,7 @@ export function AbaCotacoes({ demanda }: { demanda: DemandaLista }) {
     setEditando(c);
     setChave(c.chave_mercado ?? LIVRE);
     setLivre(c.seguradora_livre ?? "");
-    setTaxa(c.taxa?.toString() ?? "");
+    setTaxa(c.taxa?.toString().replace(".", ",") ?? "");
     setPremio(c.premio?.toString() ?? "");
     setComissao(c.comissao_pct?.toString() ?? "");
     setCosseguro(c.cosseguro);
@@ -164,8 +164,17 @@ export function AbaCotacoes({ demanda }: { demanda: DemandaLista }) {
               </div>
             )}
             <div className="space-y-1">
-              <Label>Taxa</Label>
-              <Input value={taxa} onChange={(e) => setTaxa(e.target.value)} inputMode="decimal" />
+              <Label>Taxa (% a.a.)</Label>
+              <div className="relative">
+                <Input
+                  className="pr-8"
+                  value={taxa}
+                  onChange={(e) => setTaxa(e.target.value.replace(/[^\d,]/g, "").replace(/,(?=.*,)/g, ""))}
+                  inputMode="decimal"
+                  placeholder="Ex.: 1,25"
+                />
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
+              </div>
             </div>
             <div className="space-y-1">
               <Label>Prêmio</Label>
