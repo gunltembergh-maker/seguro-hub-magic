@@ -1074,8 +1074,11 @@ const mesmoConjunto = (a: string[] | null | undefined, b: string[]) =>
  * Bloco de IA da Análise da demanda: o corretor escolhe o que a IA lê. O
  * prompt sai da seleção (contrato ou financeiro), nunca de um seletor.
  */
+const DOCS_VAZIO: DocumentoDemanda[] = [];
+
 function AnaliseTecnica({ demanda }: { demanda: DemandaLista }) {
-  const { data: docs = [] } = useDocumentosDaDemanda(demanda.id);
+  const { data } = useDocumentosDaDemanda(demanda.id);
+  const docs = data ?? DOCS_VAZIO;
   const { data: analises = [], refetch } = useAnalisesDaDemanda(demanda.id);
   const [aberta, setAberta] = useState(false);
   const [analiseSelecionada, setAnaliseSelecionada] = useState<AnaliseIA | null>(null);
@@ -1091,8 +1094,10 @@ function AnaliseTecnica({ demanda }: { demanda: DemandaLista }) {
   // a pessoa já mexeu fica como ela deixou.
   useEffect(() => {
     setMarcados((atual) => {
+      const faltando = vigentes.filter((d) => !(d.id in atual));
+      if (!faltando.length) return atual;
       const prox = { ...atual };
-      for (const d of vigentes) if (!(d.id in prox)) prox[d.id] = TIPOS_IA_CONTRATO.includes(d.tipo);
+      for (const d of faltando) prox[d.id] = TIPOS_IA_CONTRATO.includes(d.tipo);
       return prox;
     });
   }, [vigentes]);

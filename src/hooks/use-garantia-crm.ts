@@ -69,6 +69,7 @@ const CAMPOS_COTACAO =
 export function useCotacoes(demandaId: string) {
   return useQuery({
     queryKey: ["garantia", "cotacoes", demandaId],
+    enabled: !!demandaId,
     queryFn: async (): Promise<CotacaoDemanda[]> => {
       const { data, error } = await supabase
         .from("garantia_cotacoes")
@@ -264,6 +265,7 @@ export interface AprovacaoMinuta {
 export function useAprovacoesMinuta(demandaId: string) {
   return useQuery({
     queryKey: ["garantia", "aprovacoes-minuta", demandaId],
+    enabled: !!demandaId,
     queryFn: async (): Promise<AprovacaoMinuta[]> => {
       const { data, error } = await supabase
         .from("garantia_aprovacoes_minuta")
