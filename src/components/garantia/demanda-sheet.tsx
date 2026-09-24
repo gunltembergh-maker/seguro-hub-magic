@@ -74,6 +74,7 @@ import {
   useRegistrarPerda,
   useTrocarStatus,
   useVoltarEtapa,
+  totalCosseguro,
   type DemandaLista,
   type StatusCatalogo,
 } from "@/hooks/use-garantia-negociacao";
