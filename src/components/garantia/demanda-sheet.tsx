@@ -1074,8 +1074,11 @@ const mesmoConjunto = (a: string[] | null | undefined, b: string[]) =>
  * Bloco de IA da Análise da demanda: o corretor escolhe o que a IA lê. O
  * prompt sai da seleção (contrato ou financeiro), nunca de um seletor.
  */
+const DOCS_VAZIO: DocumentoDemanda[] = [];
+
 function AnaliseTecnica({ demanda }: { demanda: DemandaLista }) {
-  const { data: docs = [] } = useDocumentosDaDemanda(demanda.id);
+  const { data } = useDocumentosDaDemanda(demanda.id);
+  const docs = data ?? DOCS_VAZIO;
   const { data: analises = [], refetch } = useAnalisesDaDemanda(demanda.id);
   const [aberta, setAberta] = useState(false);
   const [analiseSelecionada, setAnaliseSelecionada] = useState<AnaliseIA | null>(null);
