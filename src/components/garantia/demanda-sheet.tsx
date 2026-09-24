@@ -1065,7 +1065,7 @@ function AbaHistorico({
 /* ------------------------------------------------------------------ */
 
 const CAMPOS_ANALISE =
-  "id, demanda_id, documento_id, documentos_ids, fluxo, situacao, resumo, resultado, campos_sugeridos, aplicada, aplicada_por, aplicada_em, erro_mensagem, solicitada_por, criado_em, atualizado_em, job_id";
+  "id, demanda_id, documento_id, documentos_ids, fluxo, situacao, resumo, resultado, campos_sugeridos, aplicada, aplicada_por, aplicada_em, erro_mensagem, solicitada_por, criado_em, atualizado_em, job_id, classificacao, modalidade_id, modalidade_rotulo";
 
 const mesmoConjunto = (a: string[] | null | undefined, b: string[]) =>
   !!a && a.length === b.length && b.every((id) => a.includes(id));
