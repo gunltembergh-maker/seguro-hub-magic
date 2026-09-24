@@ -1,5 +1,5 @@
 // "Solicitar documento ao comercial": avisa o time comercial no sino, coloca a
-// demanda em aguard_doc_contrato e registra o pedido no histórico (RPC).
+// demanda em aguard_comercial e registra o pedido no histórico (RPC).
 import { useMemo, useState } from "react";
 import { Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
@@ -52,16 +52,16 @@ export function SolicitarDocumentoComercial({ demanda }: { demanda: DemandaLista
   return (
     <>
       <Button variant="outline" size="sm" onClick={abrir} data-tour="gar-solicitar-documento">
-        <Send className="mr-1 h-4 w-4" /> Solicitar documento ao comercial
+        <Send className="mr-1 h-4 w-4" /> Solicitar ao comercial
       </Button>
       <Dialog open={aberto} onOpenChange={setAberto}>
         <DialogContent className="w-[calc(100%-2rem)] max-w-md">
           <DialogHeader>
-            <DialogTitle>Solicitar documento ao comercial</DialogTitle>
+            <DialogTitle>Solicitar ao comercial</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1">
-              <Label>Documentos que faltam *</Label>
+              <Label>O que falta *</Label>
               <Textarea rows={3} value={faltando} onChange={(e) => setFaltando(e.target.value)} />
             </div>
             <div className="space-y-1">
@@ -69,7 +69,7 @@ export function SolicitarDocumentoComercial({ demanda }: { demanda: DemandaLista
               <Textarea rows={2} value={obs} onChange={(e) => setObs(e.target.value)} />
             </div>
             <p className="text-xs text-muted-foreground">
-              O time comercial recebe o aviso no sino e a demanda passa a “Aguardando documentação do contrato”.
+              O time comercial recebe o aviso no sino e a demanda passa sozinha a “Aguardando retorno do comercial”.
             </p>
           </div>
           <DialogFooter>

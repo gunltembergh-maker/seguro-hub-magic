@@ -42,7 +42,12 @@ interface ItemFila {
   status_nome: string;
   aguardando_desde: string | null;
   o_que_falta: string | null;
+  status_atual?: string | null;
 }
+
+// A RPC distingue pelo nome; o código entra quando vier.
+const aguardaCliente = (i: ItemFila) =>
+  i.status_atual ? i.status_atual === "aguard_cliente_comercial" : /cliente/i.test(i.status_nome);
 
 const CHAVE = ["garantia", "fila-comercial"];
 
@@ -51,6 +56,7 @@ const ERROS: Record<string, string> = {
   demanda_nao_aguarda_comercial: "Esta demanda não está mais aguardando o comercial.",
   arquivo_grande: "Um dos arquivos passa de 20 MB.",
   falha_upload: "Não foi possível enviar o arquivo.",
+  falha_historico: "Não foi possível registrar o retorno.",
 };
 
 function ComercialPage() {
@@ -98,7 +104,7 @@ function ComercialPage() {
           </PopoverTrigger>
           <PopoverContent className="w-80 text-sm text-muted-foreground">
             Aqui aparecem as demandas em que o corretor está esperando algo do comercial, a mais antiga primeiro.
-            Abra a demanda, responda o que foi pedido e anexe os documentos. O corretor é avisado e decide se a pendência foi resolvida.
+            Abra a demanda, responda o que foi pedido e anexe os documentos. A demanda volta sozinha para o corretor, que é avisado. Se estiver esperando o cliente, marque “Aguardando cliente”: ela continua na sua fila.
           </PopoverContent>
         </Popover>
       }
@@ -115,6 +121,9 @@ function ComercialPage() {
                 className="w-full rounded-lg border bg-card p-4 text-left transition-colors hover:bg-muted/40">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <p className="min-w-0 break-words font-medium">
+                    <span className={`mr-2 inline-block rounded-full px-2 py-0.5 align-middle text-[10px] font-medium ${aguardaCliente(i) ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground"}`}>
+                      {aguardaCliente(i) ? "Aguardando cliente" : "Aguardando você"}
+                    </span>
                     {[i.numero, i.legenda].filter(Boolean).join(" · ") || "Demanda de Garantia"}
                   </p>
                   <span className="text-xs text-muted-foreground">
@@ -150,6 +159,9 @@ function DialogoRetorno({ item, onFechar }: { item: ItemFila; onFechar: () => vo
   const [resposta, setResposta] = useState("");
   const [arquivos, setArquivos] = useState<File[]>([]);
   const [enviando, setEnviando] = useState(false);
+  const [obsCliente, setObsCliente] = useState("");
+  const [modoCliente, setModoCliente] = useState(false);
+  const podeAguardarCliente = item.status_atual ? item.status_atual === "aguard_comercial" : !aguardaCliente(item);
   const grande = arquivos.some((f) => f.size > TAMANHO_MAXIMO_BYTES);
 
   const enviar = async () => {
@@ -178,6 +190,25 @@ function DialogoRetorno({ item, onFechar }: { item: ItemFila; onFechar: () => vo
     }
   };
 
+  const aguardarCliente = async () => {
+    setEnviando(true);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any).rpc("rpc_garantia_comercial_aguardar_cliente", {
+        _demanda_id: item.demanda_id,
+        _observacao: obsCliente.trim() || null,
+      });
+      if (error) throw error;
+      toast.success("Marcada como aguardando o cliente. A demanda continua na sua fila.");
+      qc.invalidateQueries({ queryKey: CHAVE });
+      onFechar();
+    } catch (e) {
+      toast.error(mensagemDeErro(e, "Não foi possível marcar como aguardando o cliente."));
+    } finally {
+      setEnviando(false);
+    }
+  };
+
   return (
     <Dialog open onOpenChange={(o) => !o && onFechar()}>
       <DialogContent className="w-[calc(100%-2rem)] max-w-md">
@@ -196,8 +227,21 @@ function DialogoRetorno({ item, onFechar }: { item: ItemFila; onFechar: () => vo
             {grande && <p className="text-xs text-destructive">Cada arquivo pode ter até 20 MB.</p>}
           </div>
         </div>
+        {modoCliente && (
+          <div className="space-y-1">
+            <Label>Observação para o corretor (opcional)</Label>
+            <Textarea rows={2} maxLength={2000} value={obsCliente} onChange={(e) => setObsCliente(e.target.value)} />
+            <div className="flex justify-end gap-2 pt-1">
+              <Button variant="ghost" size="sm" onClick={() => setModoCliente(false)}>Voltar</Button>
+              <Button variant="outline" size="sm" disabled={enviando} onClick={() => void aguardarCliente()}>Confirmar</Button>
+            </div>
+          </div>
+        )}
         <DialogFooter>
           <Button variant="outline" onClick={onFechar}>Cancelar</Button>
+          {podeAguardarCliente && !modoCliente && (
+            <Button variant="secondary" disabled={enviando} onClick={() => setModoCliente(true)}>Aguardando cliente</Button>
+          )}
           <Button disabled={!resposta.trim() || grande || enviando} onClick={() => void enviar()}>
             {enviando && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
             Enviar retorno

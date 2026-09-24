@@ -18,7 +18,7 @@ export const AJUDA_POR_ETAPA: Record<string, AjudaFase> = {
       "Selecione quais documentos a IA deve ler — contrato, edital e processo vão juntos; DRE e balanço são leitura separada, não misture as duas.",
       "Rode a análise e confira campo a campo antes de aplicar: o que já tem valor não é sobrescrito sozinho.",
       "O que a IA não achou, preencha à mão.",
-      "Se faltar documento e ele estiver com o comercial, use “Solicitar documento ao comercial” — isso avisa o time comercial e marca a espera.",
+      "Se faltar documento e ele estiver com o comercial, use “Solicitar ao comercial” — isso avisa o time comercial e a situação muda sozinha; quando ele responde, volta para você.",
     ],
     paraAvancar:
       "Pelo menos um documento de contrato anexado (edital, contrato ou processo; na fiança, o contrato de locação).",
@@ -115,5 +115,6 @@ export const ajudaDaEtapa = (etapa: string): AjudaFase | null => AJUDA_POR_ETAPA
 export const FLUXO_INTEIRO: string[] = [
   "A demanda entra pela Entrada de Demandas, que é a porta única de todos os ramos, sempre com pelo menos um documento — sem documento não há o que analisar. De lá ela vira um card em Análise da demanda e segue por Consulta a mercado, Cadastro quando necessário, Cotação e Proposta. O aceite do cliente gera o código GAR e leva ao CRM, onde ela passa por Curadoria, Minuta, Emissão e Financeiro até virar apólice vigente.",
   "Cada fase tem uma situação — com quem a bola está parada agora — que se troca no topo do card com um clique. Mover de fase é outra coisa: são os botões da direita, e voltar de fase pede um motivo, porque voltar é como se conserta o que saiu errado. Fiança locatícia segue o mesmo caminho, só pulando a consulta a mercado, que as APIs das seguradoras não atendem.",
+  "A troca entre corretor e comercial é automática: ao usar “Solicitar ao comercial” a demanda passa a aguardar o comercial, e quando ele responde na aba dele ela volta sozinha para o corretor.",
   "Nada é apagado: demanda perdida vira estado e pode ser reaberta; apólice encerrada sai da carteira e fica no histórico.",
 ];

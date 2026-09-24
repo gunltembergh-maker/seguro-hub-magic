@@ -100,6 +100,9 @@ import { BlocoCocorretagem } from "@/components/garantia/bloco-cocorretagem";
 import { AjudaFase } from "@/components/garantia/ajuda-fase";
 import { fluxoIADoTipo } from "@/lib/garantia/documentos-regra";
 import { supabase } from "@/integrations/supabase/client";
+
+/** Status que só mudam sozinhos (RPC do pedido/retorno do comercial). */
+const STATUS_AUTOMATICOS = new Set(["aguard_comercial", "aguard_cliente_comercial", "aguard_doc_contrato", "aguard_doc_cadastro"]);
 import type { AnaliseIA } from "@/lib/garantia/garantia-ia";
 import { resumirConsulta } from "@/lib/garantia/limites-regra";
 import {
@@ -1284,7 +1287,6 @@ function ConteudoDaFase({
             <Button variant={demanda.triagem_completa ? "outline" : "default"} onClick={onTriagem}>
               {demanda.triagem_completa ? "Revisar conferência dos dados" : "Conferir dados da demanda"}
             </Button>
-            <SolicitarDocumentoComercial demanda={demanda} />
           </div>
         </div>
       </div>
@@ -1366,6 +1368,8 @@ export function DemandaSheet({
   const trocar = useTrocarStatus();
   const voltar = useVoltarEtapa();
   const [retornoPara, setRetornoPara] = useState<StatusCatalogo | null>(null);
+  const [retomarAberto, setRetomarAberto] = useState(false);
+  const { data: historico = [] } = useHistoricoDemanda(demanda?.id ?? null);
   const aceite = useRegistrarAceite();
   const demandaId = demanda?.id ?? "";
   const clienteId = demanda?.cliente_id ?? null;
@@ -1424,9 +1428,36 @@ export function DemandaSheet({
   }));
   const impedimentosDaFase = [...new Set(impedimentos.filter((i) => !i.retorno).map((i) => i.impedimento).filter(Boolean))];
   const tudoPronto = pendencias.length === 0 && impedimentosDaFase.length === 0;
+  // Troca manual do corretor: só o próprio trabalho e a seguradora da etapa, mais
+  // "Aguardando cliente" nas etapas com cliente. A troca com o comercial é automática.
+  const etapaCliente = ["1", "2", "3b"].includes(demanda.etapa);
   const situacoes = catalogo
-    .filter((s) => s.ativo && s.fase === demanda.fase && (s.etapa === demanda.etapa || s.etapa === "qualquer"))
+    .filter((s) => s.ativo && s.fase === demanda.fase && !STATUS_AUTOMATICOS.has(s.codigo))
+    .filter(
+      (s) =>
+        (s.etapa === demanda.etapa && (s.com_quem === "corretora" || s.com_quem === "seguradora")) ||
+        (s.codigo === "aguard_cliente" && etapaCliente) ||
+        s.codigo === demanda.status_atual,
+    )
     .sort((a, b) => a.ordem - b.ordem);
+  const comComercial = demanda.status_atual === "aguard_comercial" || demanda.status_atual === "aguard_cliente_comercial";
+  const pedidoComercial = historico.find((h) => !h.fim)?.observacao ?? null;
+
+  const retomarComigo = async (motivo: string) => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: codigo, error } = await (supabase as any).rpc("garantia_status_trabalho", { _etapa: demanda.etapa });
+      if (error) throw error;
+      const destino = catalogo.find((s) => s.codigo === codigo);
+      if (!destino) throw new Error("Status de trabalho da etapa não encontrado.");
+      void motivo;
+      await trocar.mutateAsync({ demanda, destino });
+      toast.success(`Situação: “${destino.nome}”.`);
+      setRetomarAberto(false);
+    } catch (e) {
+      toast.error(mensagemDeErro(e, "Não foi possível retomar a demanda."));
+    }
+  };
 
   const mudarEtapa = async (coluna: (typeof colunas)[number], destino: StatusCatalogo) => {
     const impedimento = impedimentoDaTransicao(demanda, destino, contextoMercado, tiposPresentes, contextoCrm, statusAtual);
@@ -1487,12 +1518,27 @@ export function DemandaSheet({
               <CampoLeitura rotulo="Etapa" valor={rotuloEtapa(demanda.etapa, colunas)} />
               <div className="space-y-1">
                 <Label>Com quem está agora</Label>
+                {comComercial ? (
+                  <div className="space-y-1.5 rounded-md border bg-muted/40 p-2.5 text-sm">
+                    <p className="font-medium">
+                      {demanda.status_atual === "aguard_comercial" ? "Com o comercial" : "Comercial aguardando o cliente"}
+                    </p>
+                    {pedidoComercial && <p className="whitespace-pre-line text-xs text-muted-foreground">{pedidoComercial}</p>}
+                    <button type="button" className="text-xs text-muted-foreground underline-offset-2 hover:underline" onClick={() => setRetomarAberto(true)}>
+                      Retomar comigo
+                    </button>
+                  </div>
+                ) : (
                 <Select value={demanda.status_atual} onValueChange={mudarSituacao} disabled={trocar.isPending}>
                   <SelectTrigger className="w-full min-w-0"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {situacoes.map((s) => <SelectItem key={s.codigo} value={s.codigo}>{s.nome}</SelectItem>)}
                   </SelectContent>
                 </Select>
+                )}
+                {demanda.fase === "negociacao" && !comComercial && ["1", "2", "3", "3b", "4", "5"].includes(demanda.etapa) && (
+                  <div className="pt-1"><SolicitarDocumentoComercial demanda={demanda} /></div>
+                )}
                 {statusAtual?.com_quem && <p className="text-xs text-muted-foreground">{rotuloComQuem(statusAtual.com_quem)}</p>}
               </div>
               {podeVerTempo && statusAtual?.sla_horas != null && <p className="text-xs text-muted-foreground">SLA da fase: {statusAtual.sla_horas} h</p>}
@@ -1546,6 +1592,15 @@ export function DemandaSheet({
             )}
             {demanda.fase === "crm" && <BlocoRetornoCrm demandaId={demanda.id} />}
             </div>
+            <MotivoDialog
+              aberto={retomarAberto}
+              titulo="Retomar comigo"
+              descricao="Use quando o comercial respondeu fora do Hub. Diga em poucas palavras o que aconteceu."
+              rotuloConfirmar="Retomar"
+              pendente={trocar.isPending}
+              onFechar={() => setRetomarAberto(false)}
+              onConfirmar={retomarComigo}
+            />
             <MotivoDialog
               aberto={!!retornoPara}
               titulo={`Voltar para “${retornoPara?.nome ?? ""}”`}

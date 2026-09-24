@@ -6393,6 +6393,7 @@ export type Database = {
         Args: { _chave_mercado: string; _cliente_id: string; _delta: number }
         Returns: boolean
       }
+      garantia_status_trabalho: { Args: { _etapa: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -7615,6 +7616,14 @@ export type Database = {
       rpc_fechamento_vencidos: {
         Args: { p_ano: number; p_gran: string; p_periodo: number }
         Returns: Json
+      }
+      rpc_garantia_comercial_aguardar_cliente: {
+        Args: { _demanda_id: string; _observacao?: string }
+        Returns: undefined
+      }
+      rpc_garantia_comercial_responder: {
+        Args: { _demanda_id: string; _resposta: string }
+        Returns: string
       }
       rpc_garantia_dar_baixa_apolice: {
         Args: {
