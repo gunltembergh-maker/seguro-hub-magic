@@ -43,6 +43,7 @@ import { AbaCuradoria } from "@/components/garantia/aba-curadoria";
 import { AbaMinuta } from "@/components/garantia/aba-minuta";
 import { AbaApolice } from "@/components/garantia/aba-apolice";
 import { AnaliseContratoDialog } from "@/components/garantia/analise-contrato-dialog";
+import { BlocoRetornoCrm, MotivoDialog } from "@/components/garantia/retorno-crm";
 import {
   useAprovacoesMinuta,
   useCotacoes,
@@ -68,6 +69,7 @@ import {
   useOrigemDaDemanda,
   useRegistrarPerda,
   useTrocarStatus,
+  useVoltarEtapa,
   type DemandaLista,
   type StatusCatalogo,
 } from "@/hooks/use-garantia-negociacao";
@@ -1232,6 +1234,8 @@ export function DemandaSheet({
   const [triagemAberta, setTriagemAberta] = useState(false);
   const [perdaAberta, setPerdaAberta] = useState(false);
   const trocar = useTrocarStatus();
+  const voltar = useVoltarEtapa();
+  const [retornoPara, setRetornoPara] = useState<StatusCatalogo | null>(null);
   const aceite = useRegistrarAceite();
   const demandaId = demanda?.id ?? "";
   const clienteId = demanda?.cliente_id ?? null;
@@ -1276,7 +1280,7 @@ export function DemandaSheet({
     .sort((a, b) => a.ordem - b.ordem);
   const impedimentos = destinos.map((destino) => ({
     destino,
-    impedimento: impedimentoDaTransicao(demanda, destino, contextoMercado, tiposPresentes, contextoCrm),
+    impedimento: impedimentoDaTransicao(demanda, destino, contextoMercado, tiposPresentes, contextoCrm, statusAtual),
   }));
   const impedimentosDaFase = [...new Set(impedimentos.map((item) => item.impedimento).filter(Boolean))];
   const tudoPronto = pendencias.length === 0 && impedimentosDaFase.length === 0;
@@ -1284,9 +1288,15 @@ export function DemandaSheet({
   const mudarStatus = async (codigo: string) => {
     const destino = catalogo.find((s) => s.codigo === codigo);
     if (!destino) return;
-    const impedimento = impedimentoDaTransicao(demanda, destino, contextoMercado, tiposPresentes, contextoCrm);
+    const impedimento = impedimentoDaTransicao(demanda, destino, contextoMercado, tiposPresentes, contextoCrm, statusAtual);
     if (impedimento) {
       toast.error(impedimento);
+      return;
+    }
+    // Voltar DE ETAPA pede motivo (vai para o histórico). Dentro da etapa, um clique.
+    const etapaDestino = destino.etapa === "qualquer" ? demanda.etapa : destino.etapa;
+    if (statusAtual && destino.ordem < statusAtual.ordem && etapaDestino !== demanda.etapa) {
+      setRetornoPara(destino);
       return;
     }
     try {
@@ -1337,6 +1347,25 @@ export function DemandaSheet({
                 </div>
               );
             })}
+            {demanda.fase === "crm" && <BlocoRetornoCrm demandaId={demanda.id} />}
+            <MotivoDialog
+              aberto={!!retornoPara}
+              titulo={`Voltar para “${retornoPara?.nome ?? ""}”`}
+              descricao="Voltar de etapa exige um motivo curto. Ele fica registrado no histórico da demanda."
+              rotuloConfirmar="Voltar"
+              pendente={voltar.isPending}
+              onFechar={() => setRetornoPara(null)}
+              onConfirmar={async (motivo) => {
+                if (!retornoPara) return;
+                try {
+                  await voltar.mutateAsync({ demandaId: demanda.id, destino: retornoPara.codigo, motivo });
+                  toast.success(`Demanda voltou para “${retornoPara.nome}”.`);
+                  setRetornoPara(null);
+                } catch (e) {
+                  toast.error(mensagemDeErro(e));
+                }
+              }}
+            />
           </aside>
 
           <main className="min-w-0 space-y-5 lg:order-1">
