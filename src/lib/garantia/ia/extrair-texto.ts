@@ -46,6 +46,10 @@ function comAvisoTruncado(partes: ParteExtraida[], aviso: string) {
 }
 
 async function extrairPDFcomOCR(pdf: any, totalPaginas: number): Promise<{ textoCompleto: string; partes: ParteExtraida[] }> {
+  if (typeof document === "undefined") {
+    // O servidor (Worker) não tem canvas nativo; OCR só roda no navegador.
+    throw new Error("Este PDF parece escaneado (sem texto digital). A leitura por imagem não está disponível nesta análise.");
+  }
   const { createWorker } = await import("tesseract.js");
   const worker = await createWorker(["por", "eng"]);
   let textoCompleto = "";
@@ -56,18 +60,13 @@ async function extrairPDFcomOCR(pdf: any, totalPaginas: number): Promise<{ texto
     for (let i = 1; i <= totalPaginas; i++) {
       const page = await pdf.getPage(i);
       const viewport = page.getViewport({ scale: 2 });
-      const canvas = typeof document !== "undefined"
-        ? document.createElement("canvas")
-        : (await import("@napi-rs/canvas")).createCanvas(Math.ceil(viewport.width), Math.ceil(viewport.height));
+      const canvas = document.createElement("canvas");
       canvas.width = viewport.width;
       canvas.height = viewport.height;
       const canvasContext = canvas.getContext("2d");
       if (!canvasContext) throw new Error("Não foi possível preparar a página para leitura.");
       await page.render({ canvas, canvasContext, viewport }).promise;
-      const entradaOcr = (typeof document !== "undefined"
-        ? canvas
-        : (canvas as import("@napi-rs/canvas").Canvas).toBuffer("image/png")) as Parameters<typeof worker.recognize>[0];
-      const { data } = await worker.recognize(entradaOcr);
+      const { data } = await worker.recognize(canvas);
       const pageText = data.text.replace(/\s+/g, " ").trim();
       if (!pageText) continue;
       textoCompleto += `[Pagina ${i}]\n${pageText}\n\n`;
