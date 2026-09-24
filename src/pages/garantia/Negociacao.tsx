@@ -63,7 +63,6 @@ import {
   MODALIDADES,
   ROTULO_PRODUTO,
   dataCurta,
-  diasAte,
   duracaoLegivel,
   horasDesde,
   moeda,
