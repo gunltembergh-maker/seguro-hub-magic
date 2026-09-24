@@ -4258,6 +4258,27 @@ export type Database = {
           },
         ]
       }
+      garantia_time_comercial: {
+        Row: {
+          ativo: boolean
+          criado_em: string
+          criado_por: string | null
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          criado_em?: string
+          criado_por?: string | null
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          criado_em?: string
+          criado_por?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       hub_admin_settings: {
         Row: {
           atualizado_em: string
@@ -4494,6 +4515,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      hub_notificacoes: {
+        Row: {
+          criado_em: string
+          criado_por: string | null
+          dados: Json | null
+          id: string
+          lida: boolean
+          link: string | null
+          mensagem: string | null
+          tipo: string
+          titulo: string
+          user_id: string
+        }
+        Insert: {
+          criado_em?: string
+          criado_por?: string | null
+          dados?: Json | null
+          id?: string
+          lida?: boolean
+          link?: string | null
+          mensagem?: string | null
+          tipo: string
+          titulo: string
+          user_id: string
+        }
+        Update: {
+          criado_em?: string
+          criado_por?: string | null
+          dados?: Json | null
+          id?: string
+          lida?: boolean
+          link?: string | null
+          mensagem?: string | null
+          tipo?: string
+          titulo?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       lavoro_sync_log: {
         Row: {
@@ -7425,6 +7485,7 @@ export type Database = {
         Args: { _aprovar: boolean; _resposta: string; _solicitacao_id: string }
         Returns: undefined
       }
+      rpc_garantia_docs_apos_pedido: { Args: never; Returns: string[] }
       rpc_garantia_historico_demanda: {
         Args: { _demanda_id: string }
         Returns: {
@@ -7585,6 +7646,10 @@ export type Database = {
           codigo: string
           legenda: string
         }[]
+      }
+      rpc_garantia_solicitar_documento: {
+        Args: { _demanda_id: string; _faltando: string; _observacao?: string }
+        Returns: number
       }
       rpc_garantia_solicitar_retorno: {
         Args: { _demanda_id: string; _motivo: string }
