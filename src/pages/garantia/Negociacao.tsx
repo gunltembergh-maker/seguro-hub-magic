@@ -10,7 +10,7 @@
 // Nada é escrito em garantia_status_historico pela interface — o relógio é do
 // trigger do banco.
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { AlertTriangle, Clock, Inbox, Loader2, RotateCcw, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -71,6 +71,8 @@ import {
 } from "@/lib/garantia/formato";
 import { cn } from "@/lib/utils";
 import { mensagemDeErro } from "@/lib/erro";
+import { useDocsAposPedido } from "@/hooks/use-garantia-comercial";
+import { TimeComercialBotao } from "@/components/garantia/time-comercial";
 
 const TODOS = "__todos__";
 
@@ -82,6 +84,7 @@ function Cartao({
   demanda,
   statusNome,
   statusInterno,
+  chegouDocumento,
   slaHoras,
   inicioStatus,
   podeVerTempo,
@@ -92,6 +95,7 @@ function Cartao({
   demanda: DemandaLista;
   statusNome: string;
   statusInterno: boolean;
+  chegouDocumento?: boolean;
   slaHoras: number | null;
   inicioStatus?: string;
   podeVerTempo: boolean;
@@ -125,6 +129,9 @@ function Cartao({
       >
         {statusNome}
       </Badge>
+      {chegouDocumento && (
+        <p className="mb-2 text-[11px] text-[#338B85]">Chegou documento depois do pedido</p>
+      )}
       <div className="flex items-start justify-between gap-2">
         <span className="line-clamp-2 text-sm font-semibold text-card-foreground">
           {demanda.legenda ?? demanda.cliente?.nome ?? "Cliente a definir"}
@@ -256,6 +263,7 @@ function Quadro({
                   demanda={d}
                   statusNome={catalogo.find((s) => s.codigo === d.status_atual)?.nome ?? d.status_atual}
                   statusInterno={catalogo.find((s) => s.codigo === d.status_atual)?.relogio === "interno"}
+                  chegouDocumento={docsAposPedido?.has(d.id)}
                   slaHoras={catalogo.find((s) => s.codigo === d.status_atual)?.sla_horas ?? null}
                   inicioStatus={inicios[d.id]}
                   podeVerTempo={podeVerTempo}
