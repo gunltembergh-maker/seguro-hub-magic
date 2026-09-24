@@ -50,6 +50,7 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { PaginaHub } from "@/components/hub/pagina-hub";
+import { AjudaTexto, AJUDA_CANAL_RESPONSAVEL } from "@/components/garantia/ajuda-texto";
 import {
   TAMANHO_MAXIMO_BYTES,
   rotuloTipoDocumento,
@@ -363,8 +364,20 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
   const perfil = useMeuPerfilEfetivo();
   const isAdmin = hasRole(perfil, "ADMIN");
   const podeCanal = isAdmin || hasPermission(perfil, "entrada_cadastrar_canal");
+  const podeResponsavel = isAdmin || hasPermission(perfil, "entrada_definir_responsavel");
 
-  const [cliente, setCliente] = useState<ClienteHub | null>(null);
+  const [cliente, setClienteBruto] = useState<ClienteHub | null>(null);
+  const [responsavelId, setResponsavelId] = useState<string>("");
+  // Canal e responsável são do cliente: ao escolher, herdam o cadastro dele.
+  const setCliente = (c: ClienteHub | null) => {
+    setClienteBruto(c);
+    setCanalId(c?.canal_id ?? "");
+    setResponsavelId(c?.responsavel_id ?? "");
+  };
+  const canalFixo = !!cliente?.canal_id && !isAdmin;
+  const responsavelFixo = !!cliente?.responsavel_id && !isAdmin;
+  const responsaveisLista = useResponsaveis();
+  const atualizarCliente = useAtualizarCliente();
   const [cadastrando, setCadastrando] = useState(false);
 
   const [chegada, setChegada] = useState(agoraLocal());
@@ -391,6 +404,7 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
     setChegada(agoraLocal());
     setOrigem("email");
     setCanalId("");
+    setResponsavelId("");
     setNovoCanal("");
     setRamo("garantia");
     setProduto("");
@@ -435,6 +449,15 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
     if (ramo === "garantia" && !produto) return toast.error("Escolha o produto de Garantia.");
 
     try {
+      // Grava no CLIENTE o que ainda faltava (ou o que o ADMIN trocou).
+      const noCliente: Record<string, string> = {};
+      if (canalId && canalId !== (cliente.canal_id ?? "") && (!cliente.canal_id || isAdmin)) noCliente.canal_id = canalId;
+      if (responsavelId && responsavelId !== (cliente.responsavel_id ?? "") && (!cliente.responsavel_id || isAdmin))
+        noCliente.responsavel_id = responsavelId;
+      if (Object.keys(noCliente).length) {
+        const atualizado = await atualizarCliente.mutateAsync({ id: cliente.id, valores: noCliente });
+        setClienteBruto(atualizado);
+      }
       const r = await criarEntrada.mutateAsync({
         ramo,
         produto: ramo === "garantia" ? (produto as ProdutoGarantia) : null,
@@ -567,7 +590,12 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
               </div>
 
               <div className="space-y-1 sm:col-span-2">
-                <Label>Canal</Label>
+                <Label className="flex items-center gap-1">Canal <AjudaTexto texto={AJUDA_CANAL_RESPONSAVEL} /></Label>
+                {canalFixo ? (
+                  <p className="rounded-md bg-muted p-2 text-sm">
+                    {(canais.data ?? []).find((c) => c.id === canalId)?.nome ?? "—"}
+                  </p>
+                ) : (
                 <Select value={canalId} onValueChange={setCanalId}>
                   <SelectTrigger><SelectValue placeholder="Selecione o canal" /></SelectTrigger>
                   <SelectContent>
@@ -576,7 +604,8 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
                     ))}
                   </SelectContent>
                 </Select>
-                {podeCanal && (
+                )}
+                {podeCanal && !canalFixo && (
                   <div className="flex gap-2 pt-1">
                     <Input
                       placeholder="Cadastrar canal novo"
@@ -594,6 +623,28 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
                   </div>
                 )}
               </div>
+
+              {cliente && (
+                <div className="space-y-1 sm:col-span-2">
+                  <Label className="flex items-center gap-1">Responsável pelo cliente <AjudaTexto texto={AJUDA_CANAL_RESPONSAVEL} /></Label>
+                  {responsavelFixo || !podeResponsavel ? (
+                    <p className="rounded-md bg-muted p-2 text-sm">
+                      {responsavelId
+                        ? (responsaveisLista.data ?? []).find((p) => p.user_id === responsavelId)?.nome ?? "—"
+                        : "Não definido. Definir o responsável exige permissão específica."}
+                    </p>
+                  ) : (
+                    <Select value={responsavelId} onValueChange={setResponsavelId}>
+                      <SelectTrigger><SelectValue placeholder="Sem responsável definido" /></SelectTrigger>
+                      <SelectContent>
+                        {(responsaveisLista.data ?? []).map((p) => (
+                          <SelectItem key={p.user_id} value={p.user_id}>{p.nome}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              )}
 
               <div className="space-y-1">
                 <Label>Ramo *</Label>
@@ -839,6 +890,8 @@ function CadastroCliente({
 
   const [f, setF] = useState({ ...VAZIO });
   const [responsavel, setResponsavel] = useState<string>("");
+  const [canalCliente, setCanalCliente] = useState<string>("");
+  const canaisCadastro = useCanais();
   const [consultando, setConsultando] = useState(false);
   const [veioDaReceita, setVeioDaReceita] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -932,6 +985,7 @@ function CadastroCliente({
         cartao_atualizado_em: veioDaReceita ? new Date().toISOString() : null,
         cartao_fonte: veioDaReceita ? "rfb" : "manual",
         responsavel_id: podeResponsavel && responsavel ? responsavel : null,
+        canal_id: canalCliente || null,
       });
       onPronto(novo);
     } catch (err) {
@@ -1078,7 +1132,18 @@ function CadastroCliente({
         </div>
 
         <div className="space-y-1 sm:col-span-2">
-          <Label>Responsável pelo cliente</Label>
+          <Label className="flex items-center gap-1">Canal <AjudaTexto texto={AJUDA_CANAL_RESPONSAVEL} /></Label>
+          <Select value={canalCliente} onValueChange={setCanalCliente}>
+            <SelectTrigger><SelectValue placeholder="Selecione o canal" /></SelectTrigger>
+            <SelectContent>
+              {(canaisCadastro.data ?? []).map((c) => (
+                <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1 sm:col-span-2">
+          <Label className="flex items-center gap-1">Responsável pelo cliente <AjudaTexto texto={AJUDA_CANAL_RESPONSAVEL} /></Label>
           {podeResponsavel ? (
             <Select value={responsavel} onValueChange={setResponsavel}>
               <SelectTrigger><SelectValue placeholder="Sem responsável definido" /></SelectTrigger>
