@@ -11,6 +11,8 @@ import { AlertTriangle, ExternalLink, Loader2 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { SuperAdminGate } from "@/components/admin/SuperAdminGate";
+import { ConfirmarSenhaDialog } from "@/components/admin/ConfirmarSenhaDialog";
+import { hasRole, useMeuPerfil } from "@/hooks/use-meu-perfil";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -114,6 +116,10 @@ export function FilaAlteracoesPercentual({ semCard = false }: { semCard?: boolea
   const [observacao, setObservacao] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [senhaPara, setSenhaPara] = useState<{ id: string; aprovar: boolean; obs: string | null } | null>(null);
+  const { data: meuPerfil } = useMeuPerfil();
+  const souAdmin = hasRole(meuPerfil, "ADMIN");
+  const proprio = (a: Alteracao | null) => !!a && a.sou_o_solicitante === true && souAdmin;
 
   const linhas = pendentes.data ?? [];
   if (pendentes.isLoading || linhas.length === 0) return null;
@@ -164,7 +170,14 @@ export function FilaAlteracoesPercentual({ semCard = false }: { semCard?: boolea
               </Button>
               {a.sou_o_aprovador === true ? (
                 <>
-                  <Button size="sm" onClick={() => { setErro(null); setAprovando(a); }}>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setErro(null);
+                      if (proprio(a)) setSenhaPara({ id: a.alteracao_id, aprovar: true, obs: null });
+                      else setAprovando(a);
+                    }}
+                  >
                     Aprovar
                   </Button>
                   <Button
@@ -330,7 +343,13 @@ export function FilaAlteracoesPercentual({ semCard = false }: { semCard?: boolea
             <Button
               variant="destructive"
               disabled={salvando || !observacao.trim()}
-              onClick={() => recusando && decidir(recusando.alteracao_id, false, observacao.trim())}
+              onClick={() => {
+                if (!recusando) return;
+                if (proprio(recusando)) {
+                  setSenhaPara({ id: recusando.alteracao_id, aprovar: false, obs: observacao.trim() });
+                  setRecusando(null);
+                } else decidir(recusando.alteracao_id, false, observacao.trim());
+              }}
             >
               {salvando && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Recusar
@@ -338,6 +357,20 @@ export function FilaAlteracoesPercentual({ semCard = false }: { semCard?: boolea
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmarSenhaDialog
+        aberto={!!senhaPara}
+        area="alteracao_percentual"
+        alvo={senhaPara?.id ?? null}
+        titulo="Confirmar aprovação"
+        descricao="Você está decidindo um pedido feito por você. Confirme a sua senha de aprovação."
+        onFechar={() => setSenhaPara(null)}
+        onConfirmado={() => {
+          const p = senhaPara;
+          setSenhaPara(null);
+          if (p) void decidir(p.id, p.aprovar, p.obs);
+        }}
+      />
     </>
   );
 }
