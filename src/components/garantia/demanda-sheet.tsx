@@ -649,16 +649,49 @@ function PerdaDialog({
   onFechar: () => void;
 }) {
   const registrar = useRegistrarPerda();
+  const { data: cotacoes = [] } = useCotacoes(aberto ? demanda.id : "");
+  const { data: seguradorasCat = [] } = useSeguradorasGarantia();
+  const { data: parametros } = useParametrosGarantia();
+  const { data: mediaMod } = useTaxaMediaModalidade(demanda.modalidade, aberto);
+  const comissaoPct = valorParametro(parametros, PARAM_COMISSAO);
   const [motivo, setMotivo] = useState("");
-  const [premio, setPremio] = useState(demanda.premio_estimado?.toString() ?? "");
-  const [comissao, setComissao] = useState(demanda.comissao_estimada?.toString() ?? "");
+  const [premio, setPremio] = useState<number | null>(null);
+  const [prazo, setPrazo] = useState("365");
+  const [editadoManual, setEditadoManual] = useState(false);
   const [concorrente, setConcorrente] = useState("");
   const [retomar, setRetomar] = useState("");
   const [obs, setObs] = useState("");
 
+  const sugestao = useMemo(
+    () =>
+      sugerirPremio({
+        cotacoes: cotacoes.map((c) => ({
+          premio: c.premio,
+          escolhida: c.escolhida,
+          seguradora: nomeSeguradoraCotacao(c, seguradorasCat),
+        })),
+        importanciaSegurada: demanda.importancia_segurada,
+        prazoDias: Number(prazo) || 365,
+        taxaReferenciaPct: valorParametro(parametros, PARAM_TAXA),
+        mediaModalidade: mediaMod ?? null,
+        rotuloModalidade: rotuloModalidade(demanda.modalidade),
+      }),
+    [cotacoes, seguradorasCat, demanda.importancia_segurada, demanda.modalidade, prazo, parametros, mediaMod],
+  );
+
+  useEffect(() => {
+    if (!editadoManual) setPremio(sugestao?.premio ?? null);
+  }, [sugestao, editadoManual]);
+
+  const comissao = comissaoEstimada(premio, comissaoPct);
+
   const salvar = async () => {
     if (!motivo) {
       toast.error("O motivo da perda é obrigatório.");
+      return;
+    }
+    if (premio == null || !(premio > 0)) {
+      toast.error("Informe o prêmio estimado (maior que zero) para registrar a perda.");
       return;
     }
     try {
@@ -666,8 +699,8 @@ function PerdaDialog({
         demanda,
         perda: {
           motivo,
-          premio_estimado: premio.trim() ? Number(premio.replace(",", ".")) : null,
-          comissao_estimada: comissao.trim() ? Number(comissao.replace(",", ".")) : null,
+          premio_estimado: premio,
+          comissao_estimada: comissao,
           concorrente: concorrente.trim() || null,
           data_retomar: retomar || null,
           observacao: obs.trim() || null,
@@ -676,7 +709,7 @@ function PerdaDialog({
       toast.success("Perda registrada. A demanda continua no Hub, agora como perdida.");
       onFechar();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Não foi possível registrar a perda.");
+      toast.error(mensagemDeErro(e));
     }
   };
 
