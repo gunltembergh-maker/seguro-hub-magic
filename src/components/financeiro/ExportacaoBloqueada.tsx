@@ -29,6 +29,9 @@ export interface ExportacaoBloqueadaProps {
   canalId?: string | null;
   situacao?: string | null;
   motivo?: string | null;
+  proximoPasso?: string | null;
+  liberacaoStatus?: "PENDENTE" | "APROVADA" | "USADA" | null;
+  liberacaoUsadaEm?: string | null;
   valor: number;
   ano: number;
   mes: number;
@@ -42,6 +45,9 @@ export function ExportacaoBloqueada({
   canalId,
   situacao,
   motivo,
+  proximoPasso,
+  liberacaoStatus,
+  liberacaoUsadaEm,
   valor,
   ano,
   mes,
@@ -81,10 +87,14 @@ export function ExportacaoBloqueada({
                 ? "Contrato vencido"
                 : situacao === "VINCULO_A_CONFIRMAR"
                   ? "Vínculo a confirmar"
+                  : situacao === "EM_CONFERENCIA"
+                    ? "Contrato em conferência"
                   : "Parceiro sem contrato assinado no Hub"}
             </AlertTitle>
             <AlertDescription>
-              {motivo ??
+              {liberacaoStatus === "USADA"
+                ? `Liberação usada${liberacaoUsadaEm ? ` em ${new Date(liberacaoUsadaEm).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}` : ""}. Para exportar de novo, peça outra liberação.`
+                : proximoPasso ?? motivo ??
                 "Enquanto não houver contrato válido no Hub, o arquivo de repasse deste parceiro não pode ser gerado."}
             </AlertDescription>
           </Alert>

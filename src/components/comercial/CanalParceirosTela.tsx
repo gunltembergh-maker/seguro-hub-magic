@@ -205,6 +205,13 @@ function BadgeContrato({ situacao }: { situacao?: string | null }) {
       </Badge>
     );
   }
+  if (s === "LIBERADO_SEM_CONTRATO") {
+    return (
+      <Badge className="border-cyan-600/40 bg-cyan-50 text-cyan-800 hover:bg-cyan-50 dark:bg-cyan-950/40 dark:text-cyan-200">
+        {texto}
+      </Badge>
+    );
+  }
   if (s === "VINCULO_A_CONFIRMAR" || s === "EM_CONFERENCIA") {
     return (
       <Badge className="border-amber-600/40 bg-amber-50 text-amber-800 hover:bg-amber-50 dark:bg-amber-950/40 dark:text-amber-200">
@@ -640,6 +647,8 @@ export default function CanalParceirosTela() {
             podeExportarPorChave={podeExportarPorChave}
             pctPorChave={pctPorChave}
             paradoPorChave={paradoPorChave}
+            onCobrar={cobrar}
+            cobrando={cobrando}
           />
         </TabsContent>
 

@@ -75,6 +75,7 @@ type SituacaoContrato = {
     | "VENCIDO"
     | "VINCULO_A_CONFIRMAR"
     | "AGUARDANDO_JURIDICO"
+    | "EM_CONFERENCIA"
     | "SUSPENSO"
     | "LIBERADO_SEM_CONTRATO";
   pode_exportar: boolean;
@@ -87,6 +88,12 @@ type SituacaoContrato = {
   motivo_parado?: string | null;
   bloqueado?: boolean | null;
   bloqueio_motivo?: string | null;
+  quem_libera?: "ADMINISTRADOR" | "FINANCEIRO" | "JURIDICO" | "COMERCIAL" | null;
+  proximo_passo?: string | null;
+  liberacao_status?: "PENDENTE" | "APROVADA" | "USADA" | null;
+  liberacao_ciclo?: string | null;
+  liberacao_usada_em?: string | null;
+  pode_cobrar?: boolean | null;
 };
 
 const fmtBR = (iso: string | null | undefined) =>
@@ -94,6 +101,7 @@ const fmtBR = (iso: string | null | undefined) =>
 
 function motivoBloqueio(s?: SituacaoContrato | null) {
   if (!s) return "Parceiro sem contrato assinado no Hub";
+  if (s.motivo_parado?.trim()) return s.motivo_parado;
   if (s.situacao === "VENCIDO") return `Contrato vencido em ${fmtBR(s.vigencia_fim)}`;
   if (s.situacao === "VINCULO_A_CONFIRMAR")
     return "Contrato recebido, aguardando um administrador confirmar o vínculo";
@@ -110,6 +118,8 @@ function rotuloParado(s?: SituacaoContrato | null) {
       return "Contrato suspenso";
     case "VENCIDO":
       return "Contrato vencido";
+    case "EM_CONFERENCIA":
+      return "Contrato em conferência";
     default:
       return "Sem contrato";
   }
@@ -129,6 +139,8 @@ function BadgeContrato({ s }: { s?: SituacaoContrato | null }) {
     VINCULO_A_CONFIRMAR: { bg: "#FEF3C7", color: "#92400E", label: "A confirmar" },
     SEM_CONTRATO: { bg: "#FEE2E2", color: "#991B1B", label: "Sem contrato" },
     VENCIDO: { bg: "#FEE2E2", color: "#991B1B", label: "Vencido" },
+    EM_CONFERENCIA: { bg: "#FEF3C7", color: "#92400E", label: "Contrato em conferência" },
+    LIBERADO_SEM_CONTRATO: { bg: "#CFFAFE", color: "#155E75", label: "Liberado sem contrato, 1 exportação" },
   };
   const st = estilos[situacao] ?? estilos.SEM_CONTRATO;
   return (
@@ -264,6 +276,9 @@ export function RepasseParceiro() {
   /** Clique no Exportar de um parceiro liberado. A data vem do ciclo. */
   const pedirExport = async (canalClicado: string, modo: ModoExport) => {
     if (exportando) return;
+    const situacaoContrato = situacaoDe(canalClicado);
+    const usaLiberacao = modo === "PARCEIRO" && situacaoContrato?.situacao === "LIBERADO_SEM_CONTRATO";
+    if (usaLiberacao && !window.confirm("Esta exportação usa a liberação sem contrato. Depois dela, para exportar de novo será preciso pedir outra. Continuar?")) return;
     setExportando(canalClicado);
     const toastId = toast.loading("Gerando planilha…");
     try {
@@ -279,6 +294,9 @@ export function RepasseParceiro() {
         toast.warning("Resultado truncado em 20.000 linhas. Ajuste os filtros para exportar tudo.", { duration: 8000 });
       }
       toast.success(r.arquivo, { id: toastId });
+      if (usaLiberacao) toast.success("Liberação usada. Para exportar de novo, peça outra.");
+      queryClient.invalidateQueries({ queryKey: ["canal-parceiro-situacao"] });
+      queryClient.invalidateQueries({ queryKey: ["minhas-notificacoes"] });
     } catch (e: any) {
       toast.error(e?.message || "Falha ao gerar a planilha", { id: toastId });
     } finally {
