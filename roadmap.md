@@ -13,6 +13,6 @@
 - [x] IA Garantia: extração servidor com unpdf, log/mensagem de erro, destroy do VisualizadorPdf
 
 - [ ] Registrar no catálogo de permissões (por usuário) todos os acessos já existentes nos Perfis
-- [ ] Check-in: modal de erro com mensagem real, passos, suporte e IP
-- [ ] Início: Acesso Rápido em destaque para quem não vê a Receita
-- [ ] Acesso Rápido alinhado ao menu (mesmas chaves, fonte única)
+- [x] Check-in: modal de erro com mensagem real, passos, suporte e IP
+- [x] Início: Acesso Rápido em destaque para quem não vê a Receita
+- [x] Acesso Rápido alinhado ao menu (mesmas chaves, fonte única)
