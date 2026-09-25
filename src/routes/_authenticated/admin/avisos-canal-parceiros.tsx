@@ -132,7 +132,9 @@ function AvisosCanalParceirosPage() {
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
           Avisos de 60 e 30 dias vão para o Jurídico e o Comercial. Avisos de 15 dias e
-          diários vão só para o Jurídico. O juridico@lavoroseguros.com.br recebe sempre.
+          diários vão só para o Jurídico. No Comercial, recebem automaticamente as pessoas
+          com a Área Comercial Lavoro; aqui você desliga quem não deve receber e inclui
+          outras pessoas. O juridico@lavoroseguros.com.br recebe sempre.
         </p>
       </header>
 
@@ -197,7 +199,9 @@ function AvisosCanalParceirosPage() {
               ) : lista.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-sm text-muted-foreground text-center py-6">
-                    Ninguém na lista
+                    {grupo === "canal_vencimento_comercial"
+                      ? "Ninguém com a Área Comercial Lavoro ainda. Defina a Área no cadastro do usuário ou use Adicionar pessoa."
+                      : "Ninguém na lista"}
                   </TableCell>
                 </TableRow>
               ) : (
