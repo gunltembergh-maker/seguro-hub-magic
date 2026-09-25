@@ -317,7 +317,10 @@ export default function EntradaDemandas() {
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => setEntradaAberta(e)}
                       onKeyDown={(evento) => {
-                        if (evento.key === "Enter" || evento.key === " ") setEntradaAberta(e);
+                        if (evento.key === "Enter" || evento.key === " ") {
+                          evento.preventDefault();
+                          setEntradaAberta(e);
+                        }
                       }}
                     >
                       <TableCell className="font-mono text-xs">{e.protocolo}</TableCell>
@@ -584,7 +587,15 @@ function CelulaPendencia({ entrada }: { entrada: EntradaLista }) {
       {entrada.motivo_retencao && (
         <p className="max-w-[240px] text-xs text-muted-foreground">{entrada.motivo_retencao}</p>
       )}
-      <Button size="sm" variant="outline" onClick={tentar} disabled={rotear.isPending}>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={(evento) => {
+          evento.stopPropagation();
+          void tentar();
+        }}
+        disabled={rotear.isPending}
+      >
         {rotear.isPending ? (
           <Loader2 className="mr-1 h-3 w-3 animate-spin" />
         ) : (
