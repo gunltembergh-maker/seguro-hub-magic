@@ -1101,7 +1101,7 @@ function ColunaHistoricoPorFase({
   cotacoes: ReturnType<typeof useCotacoes>["data"];
   seguradoras: ReturnType<typeof useSeguradorasGarantia>["data"];
 }) {
-  const etapaPorStatus = new Map(catalogo.filter((s) => s.etapa !== "qualquer").map((s) => [s.codigo, s.etapa]));
+  const etapaPorStatus = new Map(catalogo.filter((s) => s.etapa !== "qualquer").map((s) => [s.codigo, s.etapa === "2" ? "1" : s.etapa]));
   let ultimaEtapa: string | null = null;
   const porEtapa = new Map<string, HistoricoItem[]>();
   for (const item of itens) {
@@ -1389,7 +1389,7 @@ export function DemandaSheet({
   const qc = useQueryClient();
   const [retornoPara, setRetornoPara] = useState<StatusCatalogo | null>(null);
   const [retomarAberto, setRetomarAberto] = useState(false);
-  const { data: historico = [] } = useHistoricoDemanda(demanda?.id ?? null);
+  const { data: historico = [], isLoading: carregandoHistorico } = useHistoricoDemanda(demanda?.id ?? null);
   const aceite = useRegistrarAceite();
   const demandaId = demanda?.id ?? "";
   const clienteId = demanda?.cliente_id ?? null;
@@ -1532,12 +1532,24 @@ export function DemandaSheet({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid min-h-0 min-w-0 gap-6 lg:grid-cols-[232px_minmax(0,1fr)_280px]">
-          <div className="min-w-0 lg:order-1 lg:max-h-full lg:self-start lg:overflow-y-auto lg:pr-1">
-            <ColunaHistorico demanda={demanda} catalogo={catalogo} podeVerTempo={podeVerTempo} />
+        <div className="grid min-h-0 min-w-0 gap-6 lg:grid-cols-[288px_minmax(0,1fr)_280px]">
+          <div className="order-3 min-w-0 lg:order-1 lg:max-h-full lg:self-start lg:overflow-y-auto lg:pr-1">
+            <ColunaHistoricoPorFase
+              demanda={demanda}
+              catalogo={catalogo}
+              podeVerTempo={podeVerTempo}
+              colunas={colunas}
+              posicaoAtual={posicaoAtual}
+              itens={historico}
+              isLoading={carregandoHistorico}
+              consulta={consulta}
+              resumoMercado={resumoMercado}
+              cotacoes={cotacoes}
+              seguradoras={seguradorasConfig}
+            />
           </div>
 
-          <aside className="min-w-0 space-y-5 lg:order-3 lg:max-h-full lg:overflow-y-auto lg:pr-1">
+          <aside className="order-2 min-w-0 space-y-5 lg:order-3 lg:max-h-full lg:overflow-y-auto lg:pr-1">
             <div className="space-y-3" data-tour="gar-situacao">
               <h3 className="font-semibold text-brand-navy">Situação</h3>
               <CampoLeitura rotulo="Etapa" valor={rotuloEtapa(demanda.etapa, colunas)} />
@@ -1646,9 +1658,9 @@ export function DemandaSheet({
             />
           </aside>
 
-          <main className="min-w-0 space-y-6 lg:order-2 lg:overflow-y-auto lg:pr-2">
-            <BlocoDadosDemanda demanda={demanda} />
-            <section className="space-y-4 border-t border-border pt-5">
+          <main className="order-1 min-w-0 space-y-6 lg:order-2 lg:overflow-y-auto lg:pr-2">
+            {(demanda.etapa === "1" || demanda.etapa === "2") && <BlocoDadosDemanda demanda={demanda} />}
+            <section className={`space-y-4 ${(demanda.etapa === "1" || demanda.etapa === "2") ? "border-t border-border pt-5" : ""}`}>
               <div className="flex items-center gap-2">
                 <h3 className="font-semibold text-brand-navy">{rotuloEtapa(demanda.etapa, colunas)}</h3>
                 <AjudaFase etapa={demanda.etapa} />
