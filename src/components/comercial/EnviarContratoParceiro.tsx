@@ -145,6 +145,8 @@ export default function EnviarContratoParceiro({
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [resposta, setResposta] = useState<Resposta | null>(null);
+  const [vinculoDefinido, setVinculoDefinido] = useState(false);
+  const podeDefinir = usePodeDefinirVinculo();
   const [progresso, setProgresso] = useState<ProgressoOcr | null>(null);
 
   // cadastro manual do parceiro (contrato ainda não assinado)
@@ -669,6 +671,7 @@ export default function EnviarContratoParceiro({
                 contratoId={contratoIdResultado}
                 extracao={e}
                 onConcluido={(r) => {
+                  setVinculoDefinido(true);
                   setResposta((atual) =>
                     atual
                       ? {
