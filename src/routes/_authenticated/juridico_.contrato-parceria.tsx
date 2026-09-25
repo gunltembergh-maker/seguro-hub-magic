@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import ContratoParceriaTela from "@/components/juridico/ContratoParceriaTela";
+import FaixaTreinamento from "@/components/comercial/FaixaTreinamento";
 
 export const Route = createFileRoute("/_authenticated/juridico_/contrato-parceria")({
   head: () => ({
@@ -19,6 +20,7 @@ function ContratoParceriaPage() {
   return (
     <div className="min-h-screen bg-background px-6 pb-10 pt-6 md:px-8 md:pt-8 lg:px-10 lg:pt-10">
       <div className="mx-auto max-w-7xl">
+        <FaixaTreinamento />
         <ContratoParceriaTela />
       </div>
     </div>
