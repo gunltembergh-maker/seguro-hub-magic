@@ -11,6 +11,7 @@ import {
   ArrowRight,
   Building2,
   Clock,
+  Check,
   Download,
   ExternalLink,
   Eye,
@@ -408,18 +409,31 @@ export default function EntradaDemandas() {
 function DialogEntradaLeitura({ entrada, onFechar }: { entrada: EntradaLista | null; onFechar: () => void }) {
   const pessoas = useResponsaveis();
   const [baixando, setBaixando] = useState<string | null>(null);
-  const demandaId = entrada?.demanda_id ?? entrada?.demanda?.id ?? null;
-  const documentos = useQuery({
-    queryKey: ["entrada", "documentos", demandaId],
-    enabled: !!demandaId,
-    queryFn: async (): Promise<DocumentoDemanda[]> => {
+  const detalhes = useQuery({
+    queryKey: ["entrada", "detalhes", entrada?.id],
+    enabled: !!entrada,
+    queryFn: async (): Promise<{
+      demanda: { id: string; codigo: string | null; legenda: string | null } | null;
+      documentos: DocumentoDemanda[];
+    }> => {
+      let demanda = entrada?.demanda ?? null;
+      if (!demanda && entrada) {
+        const { data, error } = await supabase
+          .from("garantia_demandas")
+          .select("id, codigo, legenda")
+          .eq("entrada_id", entrada.id)
+          .maybeSingle();
+        if (error) throw error;
+        demanda = data;
+      }
+      if (!demanda) return { demanda: null, documentos: [] };
       const { data, error } = await supabase
         .from("garantia_documentos")
         .select("id, demanda_id, tipo, caminho, nome_arquivo, tamanho_bytes, mime_type, versao, substituido_por_id, externo, solicitacao_id, caminho_externo, observacao, enviado_por, criado_em")
-        .eq("demanda_id", demandaId ?? "")
+        .eq("demanda_id", demanda.id)
         .order("criado_em", { ascending: true });
       if (error) throw error;
-      return (data ?? []) as unknown as DocumentoDemanda[];
+      return { demanda, documentos: (data ?? []) as unknown as DocumentoDemanda[] };
     },
   });
 
@@ -471,11 +485,11 @@ function DialogEntradaLeitura({ entrada, onFechar }: { entrada: EntradaLista | n
         <Separator />
         <section className="space-y-3">
           <h3 className="text-[11px] font-semibold uppercase text-muted-foreground">Documentos enviados</h3>
-          {documentos.isLoading ? (
+          {detalhes.isLoading ? (
             <p className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Carregando documentos...</p>
-          ) : documentos.isError ? (
-            <p className="text-sm text-destructive">{mensagemDeErro(documentos.error, "Não foi possível carregar os documentos.")}</p>
-          ) : documentos.data?.length ? documentos.data.map((doc) => (
+          ) : detalhes.isError ? (
+            <p className="text-sm text-destructive">{mensagemDeErro(detalhes.error, "Não foi possível carregar os documentos.")}</p>
+          ) : detalhes.data?.documentos.length ? detalhes.data.documentos.map((doc) => (
             <div key={doc.id} className="flex items-center justify-between gap-3 rounded-md border p-3">
               <div className="flex min-w-0 items-start gap-2">
                 <FileText className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
@@ -508,9 +522,9 @@ function DialogEntradaLeitura({ entrada, onFechar }: { entrada: EntradaLista | n
         </section>
 
         <DialogFooter className="gap-2 sm:justify-between">
-          {demandaId ? (
-            <Button variant="outline" onClick={() => { window.location.href = `/garantia/negociacao?demanda=${demandaId}`; }}>
-              <ExternalLink className="mr-2 h-4 w-4" /> Abrir demanda {entrada.demanda?.codigo ?? entrada.demanda?.legenda ?? ""}
+          {detalhes.data?.demanda ? (
+            <Button variant="outline" onClick={() => { window.location.href = `/garantia/negociacao?demanda=${detalhes.data.demanda?.id}`; }}>
+              <ExternalLink className="mr-2 h-4 w-4" /> Abrir demanda {detalhes.data.demanda.codigo ?? detalhes.data.demanda.legenda ?? ""}
             </Button>
           ) : <span />}
           <Button onClick={onFechar} className="bg-[#14405C] hover:bg-[#14405C]/90">Fechar</Button>
@@ -614,6 +628,8 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
   const [observacao, setObservacao] = useState("");
   const [anexos, setAnexos] = useState<{ arquivo: File; tipo: string }[]>([]);
   const [resultado, setResultado] = useState<{ protocolo: string; chegada: string; registro: string } | null>(null);
+  const [conferenciaAberta, setConferenciaAberta] = useState(false);
+  const [conferido, setConferido] = useState(false);
 
   const canais = useCanais();
   const criarCanal = useCriarCanal();
@@ -636,6 +652,8 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
     setObservacao("");
     setAnexos([]);
     setResultado(null);
+    setConferenciaAberta(false);
+    setConferido(false);
   }
 
   // Sem documento não é demanda: exige pelo menos um, de qualquer tipo (muitas
@@ -663,6 +681,16 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
       novos.push({ arquivo: f, tipo: "" });
     }
     setAnexos((a) => [...a, ...novos]);
+  }
+
+  function validarAntesDeRegistrar() {
+    if (razaoBloqueio) return toast.error(razaoBloqueio);
+    if (!cliente) return toast.error("Escolha o cliente.");
+    if (!assunto.trim()) return toast.error("Informe o assunto.");
+    if (futuro) return toast.error("A chegada não pode estar no futuro.");
+    if (ramo === "garantia" && !produto) return toast.error("Escolha o produto de Garantia.");
+    setConferido(false);
+    setConferenciaAberta(true);
   }
 
   async function salvar() {
@@ -698,6 +726,8 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
         chegada: r.entrada.chegada_em,
         registro: r.entrada.registrado_em,
       });
+      setConferenciaAberta(false);
+      setConferido(false);
       if (r.falhaAnexo) {
         toast.error(
           `Entrada ${r.entrada.protocolo} registrada e demanda criada, mas sem documento: ${r.falhaAnexo} Anexe pela aba Documentos da demanda.`,
@@ -966,7 +996,7 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
               {razaoBloqueio && <p className="mr-auto text-xs text-destructive">{razaoBloqueio}</p>}
               <Button variant="outline" onClick={() => { limpar(); onFechar(); }}>Cancelar</Button>
               <Button
-                onClick={salvar}
+                onClick={validarAntesDeRegistrar}
                 disabled={criarEntrada.isPending || !!razaoBloqueio}
                 className="bg-[#14405C] hover:bg-[#14405C]/90"
               >
@@ -977,6 +1007,73 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
           </div>
         )}
       </DialogContent>
+      <Dialog open={conferenciaAberta} onOpenChange={(o) => { if (!o && !criarEntrada.isPending) setConferenciaAberta(false); }}>
+        <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Confira antes de registrar</DialogTitle>
+            <DialogDescription>Depois de registrada, a entrada não pode ser editada. Veja se está tudo certo.</DialogDescription>
+          </DialogHeader>
+
+          {cliente && (
+            <div className="grid gap-4 rounded-lg border bg-slate-50 p-4 sm:grid-cols-2">
+              <CampoLeitura rotulo="Cliente" className="sm:col-span-2">
+                {cliente.nome}
+                <span className="block text-xs font-normal text-muted-foreground">
+                  {mascaraDoc(cliente.cpf_cnpj)}
+                  {cliente.municipio ? ` · ${cliente.municipio}/${cliente.uf ?? ""}` : ""}
+                </span>
+              </CampoLeitura>
+              <CampoLeitura rotulo="Ramo / produto">
+                {rotuloRamo(ramo)}{produto ? ` · ${rotuloProduto(produto)}` : ""}
+              </CampoLeitura>
+              <CampoLeitura rotulo="Chegada da demanda">
+                {fmtDataHora(new Date(chegada).toISOString())}
+                <span className="block text-xs font-normal text-muted-foreground">
+                  há {duracaoHumana(new Date(chegada).toISOString(), new Date().toISOString())} · o relógio começa aqui
+                </span>
+              </CampoLeitura>
+            </div>
+          )}
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <CampoLeitura rotulo="Origem">{ORIGENS.find((o) => o.valor === origem)?.rotulo ?? origem}</CampoLeitura>
+            <CampoLeitura rotulo="Canal">{(canais.data ?? []).find((c) => c.id === canalId)?.nome ?? "—"}</CampoLeitura>
+            <CampoLeitura rotulo="Responsável pelo cliente">
+              {(responsaveisLista.data ?? []).find((p) => p.user_id === responsavelId)?.nome ?? "Não definido"}
+            </CampoLeitura>
+            <CampoLeitura rotulo="Documentos">
+              {ehGarantia ? `${anexos.length} ${anexos.length === 1 ? "anexo" : "anexos"}` : "—"}
+              {ehGarantia && anexos.length > 0 && (
+                <span className="block text-xs font-normal text-muted-foreground">
+                  {anexos.map((a) => rotuloTipoDocumento(a.tipo)).join(" · ")}
+                </span>
+              )}
+            </CampoLeitura>
+            <CampoLeitura rotulo="Assunto" className="sm:col-span-2">{assunto.trim()}</CampoLeitura>
+            {observacao.trim() && <CampoLeitura rotulo="Observação" className="sm:col-span-2">{observacao.trim()}</CampoLeitura>}
+          </div>
+
+          <label className="flex cursor-pointer items-start gap-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-amber-800">
+            <Checkbox checked={conferido} onCheckedChange={(v) => setConferido(v === true)} className="mt-0.5" />
+            <span className="text-sm font-medium">Conferi o cliente, o ramo e o horário de chegada</span>
+          </label>
+
+          <p className="text-xs text-muted-foreground">O botão só libera depois de marcar a conferência.</p>
+          <DialogFooter>
+            <Button variant="outline" disabled={criarEntrada.isPending} onClick={() => setConferenciaAberta(false)}>
+              Voltar e corrigir
+            </Button>
+            <Button
+              className="bg-[#14405C] hover:bg-[#14405C]/90"
+              disabled={!conferido || criarEntrada.isPending}
+              onClick={salvar}
+            >
+              {criarEntrada.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+              Confirmar e registrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
