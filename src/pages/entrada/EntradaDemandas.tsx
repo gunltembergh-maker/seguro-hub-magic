@@ -22,6 +22,7 @@ import {
   Plus,
   Search,
   Trash2,
+  Upload,
   UserPlus,
 } from "lucide-react";
 import { toast } from "sonner";
