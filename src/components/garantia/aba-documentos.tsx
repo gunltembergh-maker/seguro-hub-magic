@@ -44,6 +44,7 @@ import {
   perguntaIA,
   podeAnalisarPorIA,
   rotuloTipoDocumento,
+  tiposDaEntrada,
   tiposDisponiveis,
   type GrupoDocumento,
 } from "@/lib/garantia/documentos-regra";
@@ -55,12 +56,60 @@ function tamanhoLegivel(bytes: number | null): string {
   return `${(bytes / (1024 * 1024)).toFixed(1).replace(".", ",")} MB`;
 }
 
+function DefinirTipoDocumento({ doc, produto }: { doc: DocumentoDemanda; produto: string }) {
+  const qc = useQueryClient();
+  const [salvando, setSalvando] = useState(false);
+  return (
+    <Select
+      disabled={salvando}
+      onValueChange={async (v) => {
+        setSalvando(true);
+        try {
+          // substituido_por_id volta a nulo: o arquivo deixa de ser uma versão de "outro"
+          // e passa a contar como documento do tipo escolhido.
+          const { error } = await supabase
+            .from("garantia_documentos")
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .update({ tipo: v, substituido_por_id: null } as any)
+            .eq("id", doc.id);
+          if (error) throw error;
+          toast.success("Tipo definido.");
+          qc.invalidateQueries({ queryKey: ["garantia", "documentos"] });
+          qc.invalidateQueries({ queryKey: ["garantia", "analises-ia"] });
+          qc.invalidateQueries({ queryKey: ["garantia", "demandas"] });
+          qc.invalidateQueries({ queryKey: ["garantia", "fila-comercial"] });
+          qc.invalidateQueries({ queryKey: ["garantia-painel"] });
+        } catch (e) {
+          toast.error(mensagemDeErro(e, "Não foi possível definir o tipo."));
+        } finally {
+          setSalvando(false);
+        }
+      }}
+    >
+      <SelectTrigger className="h-8 w-48">
+        <SelectValue placeholder="Definir tipo" />
+      </SelectTrigger>
+      <SelectContent>
+        {tiposDaEntrada(produto)
+          .filter((t) => t.valor !== "outro")
+          .map((t) => (
+            <SelectItem key={t.valor} value={t.valor}>
+              {t.rotulo}
+            </SelectItem>
+          ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 function ItemDocumento({
   doc,
   substituido,
+  produto,
 }: {
   doc: DocumentoDemanda;
   substituido: boolean;
+  produto?: string;
 }) {
   const [baixando, setBaixando] = useState(false);
   const [desanexarAberto, setDesanexarAberto] = useState(false);
@@ -76,6 +125,9 @@ function ItemDocumento({
           </span>
           <Badge variant="outline">v{doc.versao}</Badge>
           {substituido && <Badge variant="secondary">substituída</Badge>}
+          {doc.tipo === "outro" && doc.externo !== true && produto && (
+            <DefinirTipoDocumento doc={doc} produto={produto} />
+          )}
           {doc.externo && (
             <Badge variant="secondary" className="gap-1">
               <Lock className="h-3 w-3" /> fluxo judicial · somente leitura
@@ -448,6 +500,19 @@ export function AbaDocumentos({
       ) : (
         <div className="space-y-4">
           {[...porTipo.entries()].map(([t, lista]) => {
+            if (t === "outro") {
+              return (
+                <section key={t} className="space-y-2">
+                  <div>
+                    <h4 className="font-semibold text-[#14405C]">Sem tipo definido</h4>
+                    <p className="text-xs text-muted-foreground">Defina o tipo para contar nas pendências da fase.</p>
+                  </div>
+                  {lista.map((d) => (
+                    <ItemDocumento key={d.id} doc={d} substituido={false} produto={demanda.produto} />
+                  ))}
+                </section>
+              );
+            }
             const [atual, ...anteriores] = lista;
             if (!atual) return null;
             const aberto = !!expandido[t];
