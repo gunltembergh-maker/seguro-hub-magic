@@ -66,6 +66,7 @@ import { Route as AuthenticatedAdminImportarBasesRouteImport } from './routes/_a
 import { Route as AuthenticatedAdminEmailsRouteImport } from './routes/_authenticated/admin/emails'
 import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_authenticated/admin/configuracoes'
 import { Route as AuthenticatedAdminComunicadosRouteImport } from './routes/_authenticated/admin/comunicados'
+import { Route as AuthenticatedAdminAvisosCanalParceirosRouteImport } from './routes/_authenticated/admin/avisos-canal-parceiros'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
@@ -406,6 +407,12 @@ const AuthenticatedAdminComunicadosRoute =
     path: '/comunicados',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminAvisosCanalParceirosRoute =
+  AuthenticatedAdminAvisosCanalParceirosRouteImport.update({
+    id: '/avisos-canal-parceiros',
+    path: '/avisos-canal-parceiros',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const LovableEmailTransactionalPreviewRoute =
   LovableEmailTransactionalPreviewRouteImport.update({
     id: '/lovable/email/transactional/preview',
@@ -545,6 +552,7 @@ export interface FileRoutesByFullPath {
   '/api/canal-parceiro-documento': typeof ApiCanalParceiroDocumentoRoute
   '/api/canal-parceiro-validar-contrato': typeof ApiCanalParceiroValidarContratoRoute
   '/auth/senha': typeof AuthSenhaRoute
+  '/admin/avisos-canal-parceiros': typeof AuthenticatedAdminAvisosCanalParceirosRoute
   '/admin/comunicados': typeof AuthenticatedAdminComunicadosRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/admin/emails': typeof AuthenticatedAdminEmailsRoute
@@ -622,6 +630,7 @@ export interface FileRoutesByTo {
   '/api/canal-parceiro-documento': typeof ApiCanalParceiroDocumentoRoute
   '/api/canal-parceiro-validar-contrato': typeof ApiCanalParceiroValidarContratoRoute
   '/auth/senha': typeof AuthSenhaRoute
+  '/admin/avisos-canal-parceiros': typeof AuthenticatedAdminAvisosCanalParceirosRoute
   '/admin/comunicados': typeof AuthenticatedAdminComunicadosRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/admin/emails': typeof AuthenticatedAdminEmailsRoute
@@ -702,6 +711,7 @@ export interface FileRoutesById {
   '/api/canal-parceiro-documento': typeof ApiCanalParceiroDocumentoRoute
   '/api/canal-parceiro-validar-contrato': typeof ApiCanalParceiroValidarContratoRoute
   '/auth/senha': typeof AuthSenhaRoute
+  '/_authenticated/admin/avisos-canal-parceiros': typeof AuthenticatedAdminAvisosCanalParceirosRoute
   '/_authenticated/admin/comunicados': typeof AuthenticatedAdminComunicadosRoute
   '/_authenticated/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/_authenticated/admin/emails': typeof AuthenticatedAdminEmailsRoute
@@ -782,6 +792,7 @@ export interface FileRouteTypes {
     | '/api/canal-parceiro-documento'
     | '/api/canal-parceiro-validar-contrato'
     | '/auth/senha'
+    | '/admin/avisos-canal-parceiros'
     | '/admin/comunicados'
     | '/admin/configuracoes'
     | '/admin/emails'
@@ -859,6 +870,7 @@ export interface FileRouteTypes {
     | '/api/canal-parceiro-documento'
     | '/api/canal-parceiro-validar-contrato'
     | '/auth/senha'
+    | '/admin/avisos-canal-parceiros'
     | '/admin/comunicados'
     | '/admin/configuracoes'
     | '/admin/emails'
@@ -938,6 +950,7 @@ export interface FileRouteTypes {
     | '/api/canal-parceiro-documento'
     | '/api/canal-parceiro-validar-contrato'
     | '/auth/senha'
+    | '/_authenticated/admin/avisos-canal-parceiros'
     | '/_authenticated/admin/comunicados'
     | '/_authenticated/admin/configuracoes'
     | '/_authenticated/admin/emails'
@@ -1430,6 +1443,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminComunicadosRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/avisos-canal-parceiros': {
+      id: '/_authenticated/admin/avisos-canal-parceiros'
+      path: '/avisos-canal-parceiros'
+      fullPath: '/admin/avisos-canal-parceiros'
+      preLoaderRoute: typeof AuthenticatedAdminAvisosCanalParceirosRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/lovable/email/transactional/preview': {
       id: '/lovable/email/transactional/preview'
       path: '/lovable/email/transactional/preview'
@@ -1574,6 +1594,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteRouteChildren {
+  AuthenticatedAdminAvisosCanalParceirosRoute: typeof AuthenticatedAdminAvisosCanalParceirosRoute
   AuthenticatedAdminComunicadosRoute: typeof AuthenticatedAdminComunicadosRoute
   AuthenticatedAdminConfiguracoesRoute: typeof AuthenticatedAdminConfiguracoesRoute
   AuthenticatedAdminEmailsRoute: typeof AuthenticatedAdminEmailsRoute
@@ -1588,6 +1609,8 @@ interface AuthenticatedAdminRouteRouteChildren {
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
   {
+    AuthenticatedAdminAvisosCanalParceirosRoute:
+      AuthenticatedAdminAvisosCanalParceirosRoute,
     AuthenticatedAdminComunicadosRoute: AuthenticatedAdminComunicadosRoute,
     AuthenticatedAdminConfiguracoesRoute: AuthenticatedAdminConfiguracoesRoute,
     AuthenticatedAdminEmailsRoute: AuthenticatedAdminEmailsRoute,
