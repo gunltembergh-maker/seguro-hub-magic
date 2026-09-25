@@ -2,6 +2,7 @@
 //
 // Tudo que decide situação, vigência e liberação de repasse vem do banco.
 // A tela só mostra e chama as RPCs; nunca calcula regra por conta própria.
+import { DefinirParceiroContrato, usePodeDefinirVinculo } from "@/components/comercial/DefinirParceiroContrato";
 import { mensagemDeErro } from "@/lib/erro";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -507,7 +508,7 @@ export default function CanalParceirosTela() {
   /* Contagens das três filas, para montar (ou esconder) o bloco "Precisa de você". */
   const pendVerificacao = usePendenciasVerificacao();
   const altPendentes = useAlteracoesPercentual("PENDENTE");
-  const nVinculos = isAdmin ? vinculosPendentes.length : 0;
+  const nVinculos = vinculosPendentes.length;
   const nVerificacao = isAdmin ? (pendVerificacao.data ?? []).length : 0;
   const nAlteracoes = (altPendentes.data ?? []).length;
   const filasAtivas = [nVinculos, nVerificacao, nAlteracoes].filter((n) => n > 0).length;
@@ -1157,38 +1158,8 @@ function VinculosAConfirmar({
   onResolvido: () => void;
   semCard?: boolean;
 }) {
-  const [escolha, setEscolha] = useState<Record<string, string>>({});
-  const [salvando, setSalvando] = useState<string | null>(null);
-
-  async function resolver(contratoId: string) {
-    const canalId = escolha[contratoId];
-    if (!canalId) return;
-    setSalvando(contratoId);
-    try {
-      const { data, error } = await supabase.rpc(
-        "rpc_canal_parceiro_resolver_vinculo" as never,
-        {
-          p_contrato_id: contratoId,
-          p_canal_id: canalId,
-        } as never,
-      );
-      if (error) throw error;
-      const r = (Array.isArray(data) ? data[0] : data) as {
-        situacao?: string;
-        pode_exportar?: boolean;
-      } | null;
-      toast.success(
-        r?.pode_exportar
-          ? "Vínculo confirmado. Repasse liberado."
-          : `Vínculo confirmado. Situação: ${r?.situacao ?? "—"}.`,
-      );
-      onResolvido();
-    } catch (e) {
-      toast.error(mensagemDeErro(e));
-    } finally {
-      setSalvando(null);
-    }
-  }
+  const podeDefinir = usePodeDefinirVinculo();
+  void parceiros;
 
   const conteudo = (
     <div className="space-y-3">
@@ -1208,29 +1179,13 @@ function VinculosAConfirmar({
                 {c.motivo_bloqueio ?? "Sem motivo informado."}
               </p>
             </div>
-            <Select
-              value={escolha[id] ?? ""}
-              onValueChange={(v) => setEscolha((e) => ({ ...e, [id]: v }))}
-            >
-              <SelectTrigger className="md:w-72">
-                <SelectValue placeholder="Escolha o parceiro" />
-              </SelectTrigger>
-              <SelectContent>
-                {parceiros.map((p) => (
-                  <SelectItem key={p.canal_id} value={p.canal_id}>
-                    {p.nome ?? p.razao_social ?? p.canal_id}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              onClick={() => resolver(id)}
-              disabled={!escolha[id] || salvando === id}
-              size="sm"
-            >
-              {salvando === id && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Confirmar
-            </Button>
+            {podeDefinir.data ? (
+              <DefinirParceiroContrato contratoId={id} onConcluido={() => onResolvido()} />
+            ) : (
+              <p className="text-xs text-muted-foreground md:max-w-xs">
+                Aguardando o Comercial, o Jurídico ou um administrador definir o parceiro
+              </p>
+            )}
           </div>
         );
       })}

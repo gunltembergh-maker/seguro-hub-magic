@@ -6560,6 +6560,7 @@ export type Database = {
       pode_cadastros: { Args: never; Returns: boolean }
       pode_definir_data_repasse: { Args: never; Returns: boolean }
       pode_definir_responsavel_cliente: { Args: never; Returns: boolean }
+      pode_definir_vinculo_contrato: { Args: never; Returns: boolean }
       pode_entrada_cadastrar_canal: { Args: never; Returns: boolean }
       pode_entrada_demandas: { Args: never; Returns: boolean }
       pode_garantia_painel: { Args: never; Returns: boolean }
@@ -7484,6 +7485,24 @@ export type Database = {
           situacao: string
           vigencia_fim: string
           vigencia_inicio: string
+        }[]
+      }
+      rpc_canal_parceiro_vincular_novo: {
+        Args: {
+          p_chave_planilha?: string
+          p_cnpj?: string
+          p_contrato_id: string
+          p_nome: string
+          p_razao_social?: string
+        }
+        Returns: {
+          canal_id: string
+          canal_nome: string
+          contrato_id: string
+          criou_parceiro: boolean
+          motivo: string
+          pode_exportar: boolean
+          situacao: string
         }[]
       }
       rpc_canal_repasse_autorizar_envio_parceiro: {

@@ -8,6 +8,7 @@
 // A pessoa declara se o contrato está assinado; quem constata a assinatura é
 // sempre o servidor, lendo o arquivo. O componente nunca decide situação:
 // quem decide é a função do banco.
+import { DefinirParceiroContrato, usePodeDefinirVinculo } from "@/components/comercial/DefinirParceiroContrato";
 import { mensagemDeErro } from "@/lib/erro";
 import { useRef, useState } from "react";
 import { AlertTriangle, CheckCircle2, FileText, Loader2, ScanLine, XCircle } from "lucide-react";
@@ -144,6 +145,8 @@ export default function EnviarContratoParceiro({
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [resposta, setResposta] = useState<Resposta | null>(null);
+  const [vinculoDefinido, setVinculoDefinido] = useState(false);
+  const podeDefinir = usePodeDefinirVinculo();
   const [progresso, setProgresso] = useState<ProgressoOcr | null>(null);
 
   // cadastro manual do parceiro (contrato ainda não assinado)
@@ -350,6 +353,10 @@ export default function EnviarContratoParceiro({
   const situacao = resposta?.resultado?.situacao ?? null;
   const motivo = resposta?.resultado?.motivo ?? null;
   const e = resposta?.extracao ?? null;
+  const contratoIdResultado =
+    (resposta?.resultado?.contrato_id as string | undefined) ??
+    (resposta?.resultado?.id as string | undefined) ??
+    null;
   const origem = resposta?.origem_leitura ?? null;
   const faltaDado =
     !e?.vigencia_fim || (e.pct_beneficios == null && e.pct_garantia == null && e.pct_demais == null);
@@ -653,8 +660,39 @@ export default function EnviarContratoParceiro({
                 <AlertTitle>Vínculo a confirmar</AlertTitle>
                 <AlertDescription>
                   {motivo ? `${motivo} ` : ""}
-                  Um administrador precisa confirmar a qual parceiro este contrato pertence.
+                  {podeDefinir.data
+                    ? "Nenhum parceiro da lista casou com este contrato. Escolha o parceiro abaixo ou cadastre um novo."
+                    : "Aguardando o Comercial, o Jurídico ou um administrador definir o parceiro."}
                 </AlertDescription>
+              </Alert>
+            )}
+            {situacao === "VINCULO_A_CONFIRMAR" && podeDefinir.data && contratoIdResultado && (
+              <DefinirParceiroContrato
+                contratoId={contratoIdResultado}
+                extracao={e}
+                onConcluido={(r) => {
+                  setVinculoDefinido(true);
+                  setResposta((atual) =>
+                    atual
+                      ? {
+                          ...atual,
+                          resultado: {
+                            ...(atual.resultado ?? {}),
+                            situacao: r?.situacao ?? null,
+                            motivo: r?.motivo ?? null,
+                          },
+                        }
+                      : atual,
+                  );
+                  onSucesso?.();
+                }}
+              />
+            )}
+            {vinculoDefinido && situacao !== "ATIVO" && situacao !== "VINCULO_A_CONFIRMAR" && motivo && (
+              <Alert className="border-amber-600/40 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Parceiro definido</AlertTitle>
+                <AlertDescription>{motivo}</AlertDescription>
               </Alert>
             )}
 
