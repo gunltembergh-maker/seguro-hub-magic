@@ -3,6 +3,7 @@
 // Tudo que decide situação, vigência e liberação de repasse vem do banco.
 // A tela só mostra e chama as RPCs; nunca calcula regra por conta própria.
 import { DefinirParceiroContrato, usePodeDefinirVinculo } from "@/components/comercial/DefinirParceiroContrato";
+import { BotaoExcluirContrato } from "@/components/comercial/ExcluirContrato";
 import { mensagemDeErro } from "@/lib/erro";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -1179,6 +1180,14 @@ function VinculosAConfirmar({
                 {c.motivo_bloqueio ?? "Sem motivo informado."}
               </p>
             </div>
+            <BotaoExcluirContrato
+              contratoId={id}
+              arquivoNome={c.arquivo_nome}
+              parceiro={c.parceiro}
+              situacao={c.situacao}
+              vigenciaInicio={c.vigencia_inicio}
+              vigenciaFim={c.vigencia_fim}
+            />
             {podeDefinir.data ? (
               <DefinirParceiroContrato contratoId={id} onConcluido={() => onResolvido()} />
             ) : (
@@ -1376,6 +1385,15 @@ function DetalheParceiro({
                       </p>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-1">
+                      <BotaoExcluirContrato
+                        contratoId={c.contrato_id}
+                        arquivoNome={c.arquivo_nome}
+                        parceiro={c.parceiro ?? nome}
+                        situacao={c.situacao}
+                        vigenciaInicio={c.vigencia_inicio}
+                        vigenciaFim={c.vigencia_fim}
+                        className="h-7 px-2 text-destructive hover:text-destructive"
+                      />
                       <BadgeContrato situacao={c.situacao} />
                       <BadgeLeitura
                         origem={c.origem_leitura}

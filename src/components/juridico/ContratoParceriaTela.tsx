@@ -5,6 +5,7 @@ import { FileSignature, FileText, Lock, RefreshCw, ShieldOff, Unlock, Upload } f
 import { supabase } from "@/integrations/supabase/client";
 import { hasPermission } from "@/hooks/use-meu-perfil";
 import { useMeuPerfilEfetivo } from "@/contexts/view-as-context";
+import { BotaoExcluirContrato } from "@/components/comercial/ExcluirContrato";
 import { mensagemDeErro } from "@/lib/erro";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
@@ -390,6 +391,14 @@ export default function ContratoParceriaTela() {
                                   </Button>
                                 </>
                               )}
+                              <BotaoExcluirContrato
+                                contratoId={l.contrato_id}
+                                arquivoNome={l.arquivo_nome}
+                                parceiro={l.parceiro}
+                                situacao={l.situacao}
+                                vigenciaInicio={l.vigencia_inicio}
+                                vigenciaFim={l.vigencia_fim}
+                              />
                               {podeRenovar && l.contrato_id && (
                                 renovavel ? (
                                   <Button size="sm" variant="outline" onClick={() => { setJustificativa(""); setAcao({ tipo: "RENOVAR", linha: l }); }}>

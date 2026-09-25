@@ -4,6 +4,7 @@
 // abre o PDF por link temporário de 5 minutos e chama a RPC de correção.
 // Quem pode corrigir e quem pode atestar assinatura é decidido pelo banco:
 // aqui só escondemos o que a pessoa não pode usar e mostramos o erro do banco.
+import { BotaoExcluirContrato } from "@/components/comercial/ExcluirContrato";
 import { mensagemDeErro } from "@/lib/erro";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -364,6 +365,14 @@ export function FilaVerificacaoContratos({ semCard = false }: { semCard?: boolea
                 <FileText className="mr-2 h-4 w-4" />
                 Ver aqui
               </Button>
+              <BotaoExcluirContrato
+                contratoId={p.contrato_id}
+                arquivoNome={p.arquivo_nome}
+                parceiro={p.parceiro}
+                situacao={p.situacao}
+                vigenciaInicio={p.vigencia_inicio}
+                vigenciaFim={p.vigencia_fim}
+              />
               {p.situacao === "VINCULO_A_CONFIRMAR" ? (
                 <span className="self-center text-xs text-muted-foreground">
                   Defina o parceiro acima para seguir

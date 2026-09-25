@@ -7294,6 +7294,17 @@ export type Database = {
           parceiro: string
         }[]
       }
+      rpc_canal_parceiro_excluir_contrato: {
+        Args: { p_contrato_id: string; p_motivo: string }
+        Returns: {
+          arquivos_sem_uso: string[]
+          canal_id: string
+          canal_nome: string
+          excluidos: number
+          reativado_id: string
+          reativado_vigencia: string
+        }[]
+      }
       rpc_canal_parceiro_liberacoes: {
         Args: { p_status?: string }
         Returns: {
