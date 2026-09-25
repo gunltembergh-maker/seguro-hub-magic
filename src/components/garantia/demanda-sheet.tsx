@@ -11,7 +11,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, ArrowRight, Ban, Check, ChevronDown, Loader2, Pencil, Plus, RotateCcw, Search, X } from "lucide-react";
+import { AlertTriangle, ArrowRight, Ban, Check, ChevronDown, Loader2, Pencil, Plus, RotateCcw, Search, Trash2, X } from "lucide-react";
+import { ConfirmarExclusaoDialog } from "@/components/garantia/confirmar-exclusao";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -1389,6 +1390,9 @@ export function DemandaSheet({
   const qc = useQueryClient();
   const [retornoPara, setRetornoPara] = useState<StatusCatalogo | null>(null);
   const [retomarAberto, setRetomarAberto] = useState(false);
+  const ehAdmin = useEhAdmin();
+  const [excluirAberto, setExcluirAberto] = useState(false);
+  const [excluindo, setExcluindo] = useState(false);
   const { data: historico = [], isLoading: carregandoHistorico } = useHistoricoDemanda(demanda?.id ?? null);
   const aceite = useRegistrarAceite();
   const demandaId = demanda?.id ?? "";
@@ -1629,6 +1633,50 @@ export function DemandaSheet({
             )}
             {demanda.fase === "crm" && <BlocoRetornoCrm demandaId={demanda.id} />}
             </div>
+            {ehAdmin && (
+              <div className="border-t border-border pt-4">
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start text-destructive hover:text-destructive"
+                  onClick={() => setExcluirAberto(true)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" /> Excluir card
+                </Button>
+              </div>
+            )}
+            <ConfirmarExclusaoDialog
+              aberto={excluirAberto}
+              titulo="Excluir este card?"
+              descricao="O card some do quadro para todos. Histórico, documentos e cotações ficam guardados só para auditoria. Não é possível excluir card com apólice lançada."
+              rotuloConfirmar="Excluir card"
+              pendente={excluindo}
+              onFechar={() => setExcluirAberto(false)}
+              onConfirmar={async (motivo) => {
+                setExcluindo(true);
+                try {
+                  const { error } = await (supabase as any).rpc("rpc_garantia_excluir_demanda", {
+                    _demanda_id: demanda.id,
+                    _motivo: motivo,
+                  });
+                  if (error) throw error;
+                  toast.success("Card excluído.");
+                  for (const k of [
+                    ["garantia", "demandas"],
+                    ["garantia", "historico"],
+                    ["garantia", "perdas"],
+                    ["garantia", "fila-comercial"],
+                    ["garantia-painel"],
+                  ])
+                    qc.invalidateQueries({ queryKey: k });
+                  setExcluirAberto(false);
+                  onFechar();
+                } catch (e) {
+                  toast.error(mensagemDeErro(e));
+                } finally {
+                  setExcluindo(false);
+                }
+              }}
+            />
             <MotivoDialog
               aberto={retomarAberto}
               titulo="Retomar comigo"
