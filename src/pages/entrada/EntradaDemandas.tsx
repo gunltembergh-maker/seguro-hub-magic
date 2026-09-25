@@ -66,6 +66,7 @@ import {
   TAMANHO_MAXIMO_BYTES,
   rotuloTipoDocumento,
   tiposContratoObrigatorios,
+  tiposDaEntrada,
 } from "@/lib/garantia/documentos-regra";
 
 import { useMeuPerfilEfetivo } from "@/contexts/view-as-context";
@@ -669,10 +670,24 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
     setConferido(false);
   }
 
-  // Documentos são opcionais e entram todos como "outro": o tipo é definido
-  // depois, no card. O contrato continua exigido para sair da Análise.
   const ehGarantia = ramo === "garantia";
-  const razaoBloqueio = !ehGarantia ? null : !produto ? "Escolha o produto." : null;
+  // O novo fluxo de documentos (opcionais, sem tipo, arrastar e soltar) está
+  // liberado só para ADMIN por enquanto. Para os demais vale o fluxo antigo,
+  // com documento obrigatório e tipo escolhido na hora.
+  const modoNovoDocs = isAdmin;
+  const razaoBloqueio = !ehGarantia
+    ? null
+    : modoNovoDocs
+      ? !produto
+        ? "Escolha o produto."
+        : null
+      : !produto
+        ? "Escolha o produto para anexar os documentos."
+        : anexos.length === 0
+          ? "Anexe pelo menos um documento."
+          : anexos.some((a) => !a.tipo)
+            ? "Escolha o tipo de cada arquivo anexado."
+            : null;
 
   function adicionarArquivos(lista: FileList | null) {
     if (!lista) return;
@@ -682,7 +697,7 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
         toast.error(`${f.name} passa de 20 MB, que é o teto por anexo.`);
         continue;
       }
-      novos.push({ arquivo: f, tipo: "outro" });
+      novos.push({ arquivo: f, tipo: modoNovoDocs ? "outro" : "" });
     }
     setAnexos((a) => [...a, ...novos]);
   }
@@ -919,7 +934,19 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
               {ramo === "garantia" ? (
                 <div className="space-y-1">
                   <Label>Produto *</Label>
-                  <Select value={produto} onValueChange={(v) => setProduto(v as ProdutoGarantia)}>
+                  <Select
+                    value={produto}
+                    onValueChange={(v) => {
+                      setProduto(v as ProdutoGarantia);
+                      // Sem o fluxo novo, o tipo de cada anexo precisa continuar
+                      // válido no produto escolhido.
+                      if (!modoNovoDocs) {
+                        setAnexos((l) =>
+                          l.map((a) => (tiposDaEntrada(v).some((t) => t.valor === a.tipo) ? a : { ...a, tipo: "" })),
+                        );
+                      }
+                    }}
+                  >
                     <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="seguro_garantia">Seguro Garantia</SelectItem>
@@ -941,12 +968,12 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
               </div>
 
               <div className="space-y-2 sm:col-span-2">
-                <Label>Documentos</Label>
+                <Label>Documentos{ehGarantia && !modoNovoDocs ? " *" : ""}</Label>
                 {!ehGarantia ? (
                   <p className="text-xs text-muted-foreground">
                     Este ramo fica retido sem demanda, e documento sem demanda não teria onde ficar: aqui não se anexa.
                   </p>
-                ) : (
+                ) : modoNovoDocs ? (
                   <>
                     <input
                       ref={inputArquivoRef}
@@ -997,6 +1024,47 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
                     )}
                     <p className="text-xs text-muted-foreground">
                       Opcional. Anexe o que já tiver (edital, contrato, e-mail…). O tipo de cada documento pode ser definido depois, no card.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <Input
+                      type="file"
+                      multiple
+                      disabled={!produto}
+                      onChange={(e) => { adicionarArquivos(e.target.files); e.target.value = ""; }}
+                    />
+                    {anexos.length > 0 && (
+                      <ul className="space-y-2">
+                        {anexos.map((a, i) => (
+                          <li key={`${a.arquivo.name}-${i}`} className="flex min-w-0 flex-col gap-2 rounded-md border p-2 sm:flex-row sm:items-center">
+                            <span className="min-w-0 flex-1 break-all text-sm">{a.arquivo.name}</span>
+                            <Select
+                              value={a.tipo}
+                              onValueChange={(v) => setAnexos((l) => l.map((x, j) => (j === i ? { ...x, tipo: v } : x)))}
+                            >
+                              <SelectTrigger className="sm:w-56"><SelectValue placeholder="Tipo do documento" /></SelectTrigger>
+                              <SelectContent>
+                                {tiposDaEntrada(produto).map((t) => (
+                                  <SelectItem key={t.valor} value={t.valor}>{t.rotulo}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setAnexos((l) => l.filter((_, j) => j !== i))}
+                            >
+                              Remover
+                            </Button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Anexe pelo menos um documento, de qualquer tipo (edital, contrato, DRE, balanço, alteração
+                      contratual). Até 20 MB por arquivo.
                     </p>
                   </>
                 )}
@@ -1064,8 +1132,8 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
                   ? "Nenhum documento"
                   : `${anexos.length} ${anexos.length === 1 ? "anexo" : "anexos"}`}
               {ehGarantia && anexos.length > 0 && (
-                <span className="block break-all text-xs font-normal text-muted-foreground">
-                  {anexos.map((a) => a.arquivo.name).join(" · ")}
+                <span className={`block text-xs font-normal text-muted-foreground${modoNovoDocs ? " break-all" : ""}`}>
+                  {anexos.map((a) => (modoNovoDocs ? a.arquivo.name : rotuloTipoDocumento(a.tipo))).join(" · ")}
                 </span>
               )}
             </CampoLeitura>
