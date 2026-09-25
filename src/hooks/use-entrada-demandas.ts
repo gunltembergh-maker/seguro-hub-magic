@@ -42,8 +42,17 @@ export interface EntradaLista {
   demanda_id: string | null;
   registrado_em: string;
   registrado_por: string | null;
-  cliente: { id: string; nome: string; cpf_cnpj: string } | null;
+  observacao: string | null;
+  cliente: {
+    id: string;
+    nome: string;
+    cpf_cnpj: string;
+    municipio: string | null;
+    uf: string | null;
+    responsavel_id: string | null;
+  } | null;
   canal: { id: string; nome: string } | null;
+  demanda: { id: string; codigo: string | null; legenda: string | null } | null;
 }
 
 export const soDigitosDoc = (v: string) => v.replace(/\D+/g, "");
@@ -138,7 +147,7 @@ export function useEntradas(filtros: FiltrosEntradas) {
       let q = supabase
         .from("hub_entradas")
         .select(
-          "id, protocolo, ramo, produto, chegada_em, origem, assunto, destino, motivo_retencao, demanda_id, registrado_em, registrado_por, cliente:hub_clientes(id, nome, cpf_cnpj), canal:canais(id, nome)",
+          "id, protocolo, ramo, produto, chegada_em, origem, assunto, observacao, destino, motivo_retencao, demanda_id, registrado_em, registrado_por, cliente:hub_clientes(id, nome, cpf_cnpj, municipio, uf, responsavel_id), canal:canais(id, nome), demanda:garantia_demandas!hub_entradas_demanda_fk(id, codigo, legenda)",
         )
         .order("registrado_em", { ascending: false })
         .limit(300);
