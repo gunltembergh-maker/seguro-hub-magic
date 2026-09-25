@@ -66,6 +66,7 @@ import {
   TAMANHO_MAXIMO_BYTES,
   rotuloTipoDocumento,
   tiposContratoObrigatorios,
+  tiposDaEntrada,
 } from "@/lib/garantia/documentos-regra";
 
 import { useMeuPerfilEfetivo } from "@/contexts/view-as-context";
@@ -669,10 +670,24 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
     setConferido(false);
   }
 
-  // Documentos são opcionais e entram todos como "outro": o tipo é definido
-  // depois, no card. O contrato continua exigido para sair da Análise.
   const ehGarantia = ramo === "garantia";
-  const razaoBloqueio = !ehGarantia ? null : !produto ? "Escolha o produto." : null;
+  // O novo fluxo de documentos (opcionais, sem tipo, arrastar e soltar) está
+  // liberado só para ADMIN por enquanto. Para os demais vale o fluxo antigo,
+  // com documento obrigatório e tipo escolhido na hora.
+  const modoNovoDocs = isAdmin;
+  const razaoBloqueio = !ehGarantia
+    ? null
+    : modoNovoDocs
+      ? !produto
+        ? "Escolha o produto."
+        : null
+      : !produto
+        ? "Escolha o produto para anexar os documentos."
+        : anexos.length === 0
+          ? "Anexe pelo menos um documento."
+          : anexos.some((a) => !a.tipo)
+            ? "Escolha o tipo de cada arquivo anexado."
+            : null;
 
   function adicionarArquivos(lista: FileList | null) {
     if (!lista) return;
@@ -682,7 +697,7 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
         toast.error(`${f.name} passa de 20 MB, que é o teto por anexo.`);
         continue;
       }
-      novos.push({ arquivo: f, tipo: "outro" });
+      novos.push({ arquivo: f, tipo: modoNovoDocs ? "outro" : "" });
     }
     setAnexos((a) => [...a, ...novos]);
   }
@@ -919,7 +934,19 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
               {ramo === "garantia" ? (
                 <div className="space-y-1">
                   <Label>Produto *</Label>
-                  <Select value={produto} onValueChange={(v) => setProduto(v as ProdutoGarantia)}>
+                  <Select
+                    value={produto}
+                    onValueChange={(v) => {
+                      setProduto(v as ProdutoGarantia);
+                      // Sem o fluxo novo, o tipo de cada anexo precisa continuar
+                      // válido no produto escolhido.
+                      if (!modoNovoDocs) {
+                        setAnexos((l) =>
+                          l.map((a) => (tiposDaEntrada(v).some((t) => t.valor === a.tipo) ? a : { ...a, tipo: "" })),
+                        );
+                      }
+                    }}
+                  >
                     <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="seguro_garantia">Seguro Garantia</SelectItem>
