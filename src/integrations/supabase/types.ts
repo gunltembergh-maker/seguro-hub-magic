@@ -6186,6 +6186,16 @@ export type Database = {
         }[]
       }
       canal_contratos_renovar_vencidos: { Args: never; Returns: number }
+      canal_destinatarios_grupo: {
+        Args: { p_grupo: string }
+        Returns: {
+          email: string
+          nome: string
+          origem: string
+          recebe: boolean
+          user_id: string
+        }[]
+      }
       canal_liberacao_emails_pendentes: {
         Args: never
         Returns: {
@@ -6629,6 +6639,20 @@ export type Database = {
         Returns: number
       }
       rpc_admin_caixa_reset: { Args: never; Returns: string }
+      rpc_admin_canal_destinatario_definir: {
+        Args: { p_grupo: string; p_recebe: boolean; p_user_id: string }
+        Returns: undefined
+      }
+      rpc_admin_canal_destinatarios: {
+        Args: { p_grupo: string }
+        Returns: {
+          email: string
+          nome: string
+          origem: string
+          recebe: boolean
+          user_id: string
+        }[]
+      }
       rpc_admin_contas_mesmo_cpf: {
         Args: { p_user_id: string }
         Returns: {
