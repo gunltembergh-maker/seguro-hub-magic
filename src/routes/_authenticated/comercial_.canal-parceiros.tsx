@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import CanalParceirosTela from "@/components/comercial/CanalParceirosTela";
+import FaixaTreinamento from "@/components/comercial/FaixaTreinamento";
 
 export const Route = createFileRoute("/_authenticated/comercial_/canal-parceiros")({
   validateSearch: (search: Record<string, unknown>): { demanda?: string } =>
@@ -29,6 +30,7 @@ function CanalParceirosPage() {
   return (
     <div className="min-h-screen bg-background px-6 pb-10 pt-6 md:px-8 md:pt-8 lg:px-10 lg:pt-10">
       <div className="mx-auto max-w-7xl">
+        <FaixaTreinamento />
         <CanalParceirosTela />
       </div>
     </div>
