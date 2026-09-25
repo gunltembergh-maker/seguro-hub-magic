@@ -1470,6 +1470,7 @@ export type Database = {
           percentual_repasse: number | null
           pipefy_card_id: number | null
           razao_social: string | null
+          treinamento: boolean
           updated_at: string
         }
         Insert: {
@@ -1491,6 +1492,7 @@ export type Database = {
           percentual_repasse?: number | null
           pipefy_card_id?: number | null
           razao_social?: string | null
+          treinamento?: boolean
           updated_at?: string
         }
         Update: {
@@ -1512,6 +1514,7 @@ export type Database = {
           percentual_repasse?: number | null
           pipefy_card_id?: number | null
           razao_social?: string | null
+          treinamento?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -1586,6 +1589,7 @@ export type Database = {
           suspenso_motivo: string | null
           suspenso_por: string | null
           tipo: string
+          treinamento: boolean
           validado_em: string | null
           vigencia_fim: string | null
           vigencia_inicio: string | null
@@ -1624,6 +1628,7 @@ export type Database = {
           suspenso_motivo?: string | null
           suspenso_por?: string | null
           tipo?: string
+          treinamento?: boolean
           validado_em?: string | null
           vigencia_fim?: string | null
           vigencia_inicio?: string | null
@@ -1662,6 +1667,7 @@ export type Database = {
           suspenso_motivo?: string | null
           suspenso_por?: string | null
           tipo?: string
+          treinamento?: boolean
           validado_em?: string | null
           vigencia_fim?: string | null
           vigencia_inicio?: string | null
@@ -1723,6 +1729,7 @@ export type Database = {
           solicitado_em: string
           solicitado_por: string | null
           status: string
+          treinamento: boolean
           usada_em: string | null
         }
         Insert: {
@@ -1746,6 +1753,7 @@ export type Database = {
           solicitado_em?: string
           solicitado_por?: string | null
           status?: string
+          treinamento?: boolean
           usada_em?: string | null
         }
         Update: {
@@ -1769,6 +1777,7 @@ export type Database = {
           solicitado_em?: string
           solicitado_por?: string | null
           status?: string
+          treinamento?: boolean
           usada_em?: string | null
         }
         Relationships: [
@@ -1806,6 +1815,7 @@ export type Database = {
           status: string
           superada_em: string | null
           superada_por_contrato_id: string | null
+          treinamento: boolean
           vigencia_fim: string | null
         }
         Insert: {
@@ -1832,6 +1842,7 @@ export type Database = {
           status?: string
           superada_em?: string | null
           superada_por_contrato_id?: string | null
+          treinamento?: boolean
           vigencia_fim?: string | null
         }
         Update: {
@@ -1858,6 +1869,7 @@ export type Database = {
           status?: string
           superada_em?: string | null
           superada_por_contrato_id?: string | null
+          treinamento?: boolean
           vigencia_fim?: string | null
         }
         Relationships: [
@@ -1894,6 +1906,7 @@ export type Database = {
           liberado_por: string | null
           motivo: string
           motivo_liberacao: string | null
+          treinamento: boolean
         }
         Insert: {
           bloqueado_em?: string
@@ -1904,6 +1917,7 @@ export type Database = {
           liberado_por?: string | null
           motivo: string
           motivo_liberacao?: string | null
+          treinamento?: boolean
         }
         Update: {
           bloqueado_em?: string
@@ -1914,6 +1928,7 @@ export type Database = {
           liberado_por?: string | null
           motivo?: string
           motivo_liberacao?: string | null
+          treinamento?: boolean
         }
         Relationships: [
           {
@@ -1933,6 +1948,7 @@ export type Database = {
           detalhe: Json | null
           id: string
           tipo: string
+          treinamento: boolean
           usuario_id: string | null
         }
         Insert: {
@@ -1942,6 +1958,7 @@ export type Database = {
           detalhe?: Json | null
           id?: string
           tipo: string
+          treinamento?: boolean
           usuario_id?: string | null
         }
         Update: {
@@ -1951,6 +1968,7 @@ export type Database = {
           detalhe?: Json | null
           id?: string
           tipo?: string
+          treinamento?: boolean
           usuario_id?: string | null
         }
         Relationships: [
@@ -1978,6 +1996,7 @@ export type Database = {
           criado_por: string | null
           id: string
           origem: string
+          treinamento: boolean
         }
         Insert: {
           canal_id: string
@@ -1986,6 +2005,7 @@ export type Database = {
           criado_por?: string | null
           id?: string
           origem?: string
+          treinamento?: boolean
         }
         Update: {
           canal_id?: string
@@ -1994,6 +2014,7 @@ export type Database = {
           criado_por?: string | null
           id?: string
           origem?: string
+          treinamento?: boolean
         }
         Relationships: [
           {
@@ -2042,6 +2063,7 @@ export type Database = {
           id: string
           levado_ao_gerencial_em: string | null
           observacao: string | null
+          treinamento: boolean
           valor_pago: number | null
         }
         Insert: {
@@ -2056,6 +2078,7 @@ export type Database = {
           id?: string
           levado_ao_gerencial_em?: string | null
           observacao?: string | null
+          treinamento?: boolean
           valor_pago?: number | null
         }
         Update: {
@@ -2070,6 +2093,7 @@ export type Database = {
           id?: string
           levado_ao_gerencial_em?: string | null
           observacao?: string | null
+          treinamento?: boolean
           valor_pago?: number | null
         }
         Relationships: [
@@ -2099,6 +2123,7 @@ export type Database = {
           definida_por: string | null
           id: string
           observacao: string | null
+          treinamento: boolean
         }
         Insert: {
           canal_id?: string | null
@@ -2109,6 +2134,7 @@ export type Database = {
           definida_por?: string | null
           id?: string
           observacao?: string | null
+          treinamento?: boolean
         }
         Update: {
           canal_id?: string | null
@@ -2119,6 +2145,7 @@ export type Database = {
           definida_por?: string | null
           id?: string
           observacao?: string | null
+          treinamento?: boolean
         }
         Relationships: [
           {
@@ -2152,6 +2179,7 @@ export type Database = {
           solicitado_em: string
           solicitado_por: string | null
           status: string
+          treinamento: boolean
           valor_total: number | null
         }
         Insert: {
@@ -2175,6 +2203,7 @@ export type Database = {
           solicitado_em?: string
           solicitado_por?: string | null
           status?: string
+          treinamento?: boolean
           valor_total?: number | null
         }
         Update: {
@@ -2198,6 +2227,7 @@ export type Database = {
           solicitado_em?: string
           solicitado_por?: string | null
           status?: string
+          treinamento?: boolean
           valor_total?: number | null
         }
         Relationships: [
@@ -2238,6 +2268,7 @@ export type Database = {
           observacao: string | null
           status: string
           tipo: string
+          treinamento: boolean
           valor_autorizado: number | null
           valor_diverge: boolean
           valor_nf: number | null
@@ -2269,6 +2300,7 @@ export type Database = {
           observacao?: string | null
           status: string
           tipo: string
+          treinamento?: boolean
           valor_autorizado?: number | null
           valor_diverge?: boolean
           valor_nf?: number | null
@@ -2300,6 +2332,7 @@ export type Database = {
           observacao?: string | null
           status?: string
           tipo?: string
+          treinamento?: boolean
           valor_autorizado?: number | null
           valor_diverge?: boolean
           valor_nf?: number | null
@@ -2336,6 +2369,7 @@ export type Database = {
           id: string
           liberacao_id: string | null
           linhas: number | null
+          treinamento: boolean
           valor_total: number | null
         }
         Insert: {
@@ -2352,6 +2386,7 @@ export type Database = {
           id?: string
           liberacao_id?: string | null
           linhas?: number | null
+          treinamento?: boolean
           valor_total?: number | null
         }
         Update: {
@@ -2368,6 +2403,7 @@ export type Database = {
           id?: string
           liberacao_id?: string | null
           linhas?: number | null
+          treinamento?: boolean
           valor_total?: number | null
         }
         Relationships: [
@@ -6177,6 +6213,7 @@ export type Database = {
         Args: { p_liberacao_id: string; p_message_id: string; p_tipo: string }
         Returns: undefined
       }
+      canal_modo_treinamento: { Args: never; Returns: boolean }
       canal_parceiro_alteracoes_para_email: {
         Args: never
         Returns: {
@@ -7592,9 +7629,31 @@ export type Database = {
           situacao: string
         }[]
       }
+      rpc_canal_treinamento_ativo: {
+        Args: never
+        Returns: {
+          ativo: boolean
+          desde: string
+          por: string
+        }[]
+      }
       rpc_canal_treinamento_definir: {
         Args: { p_ativo: boolean; p_emails?: string[] }
         Returns: undefined
+      }
+      rpc_canal_treinamento_limpar: {
+        Args: { p_manter_contratos?: boolean }
+        Returns: {
+          apagados: number
+          item: string
+        }[]
+      }
+      rpc_canal_treinamento_resumo: {
+        Args: never
+        Returns: {
+          item: string
+          quantidade: number
+        }[]
       }
       rpc_canal_treinamento_status: {
         Args: never
