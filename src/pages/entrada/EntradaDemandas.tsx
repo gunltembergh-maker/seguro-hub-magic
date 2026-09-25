@@ -4,7 +4,7 @@
 // retida — é melhor ter o registro do que perder a demanda por não ter tela.
 
 import { mensagemDeErro } from "@/lib/erro";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
