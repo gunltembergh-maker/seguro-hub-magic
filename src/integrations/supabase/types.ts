@@ -7833,7 +7833,7 @@ export type Database = {
       }
       rpc_garantia_docs_apos_pedido: { Args: never; Returns: string[] }
       rpc_garantia_excluir_demanda: {
-        Args: { _demanda_id: string; _motivo: string }
+        Args: { _demanda_id: string; _motivo?: string }
         Returns: undefined
       }
       rpc_garantia_fila_comercial: {
