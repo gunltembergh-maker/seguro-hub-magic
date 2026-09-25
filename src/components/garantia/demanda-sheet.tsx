@@ -1650,13 +1650,13 @@ export function DemandaSheet({
               descricao="O card some do quadro para todos. Histórico, documentos e cotações ficam guardados só para auditoria. Não é possível excluir card com apólice lançada."
               rotuloConfirmar="Excluir card"
               pendente={excluindo}
+              exigeMotivo={false}
               onFechar={() => setExcluirAberto(false)}
-              onConfirmar={async (motivo) => {
+              onConfirmar={async () => {
                 setExcluindo(true);
                 try {
                   const { error } = await (supabase as any).rpc("rpc_garantia_excluir_demanda", {
                     _demanda_id: demanda.id,
-                    _motivo: motivo,
                   });
                   if (error) throw error;
                   toast.success("Card excluído.");
