@@ -8081,6 +8081,10 @@ export type Database = {
           total_sucessos: number
         }[]
       }
+      rpc_hub_excluir_entrada: {
+        Args: { _entrada_id: string }
+        Returns: undefined
+      }
       rpc_hub_listar_pessoas: {
         Args: never
         Returns: {
