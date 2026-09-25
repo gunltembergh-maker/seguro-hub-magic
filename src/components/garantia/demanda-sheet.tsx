@@ -91,6 +91,7 @@ import {
   useVoltarEtapa,
   totalCosseguro,
   type DemandaLista,
+  type HistoricoItem,
   type StatusCatalogo,
 } from "@/hooks/use-garantia-negociacao";
 import { mensagemDeErro } from "@/lib/erro";
@@ -958,25 +959,19 @@ function EditorLegenda({ demanda }: { demanda: DemandaLista }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Bloco "Dados da demanda" (substitui as abas Dados e Origem)        */
+/* Dados da análise e origem                                          */
 /* ------------------------------------------------------------------ */
 
-function BlocoDadosDemanda({ demanda }: { demanda: DemandaLista }) {
+function BlocoDadosDemanda({ demanda, compacto = false }: { demanda: DemandaLista; compacto?: boolean }) {
   const atualizar = useAtualizarDemanda();
   const admin = useEhAdmin();
-  const { data: origem } = useOrigemDaDemanda(demanda.entrada_id);
   const { data: pessoas = [] } = useResponsaveis();
   const [f, setF] = useState<EstadoCampos>(() => estadoDaDemanda(demanda));
   const [editando, setEditando] = useState(false);
-  const [analiseAberta, setAnaliseAberta] = useState(demanda.etapa === "1");
 
   useEffect(() => {
     setF(estadoDaDemanda(demanda));
   }, [demanda]);
-
-  useEffect(() => {
-    setAnaliseAberta(demanda.etapa === "1");
-  }, [demanda.id, demanda.etapa]);
 
   const salvar = async () => {
     try {
@@ -992,171 +987,163 @@ function BlocoDadosDemanda({ demanda }: { demanda: DemandaLista }) {
   const numero = demanda.numero_contrato ?? demanda.numero_processo;
   const pct = demanda.percentual_garantia != null ? `${String(demanda.percentual_garantia).replace(".", ",")} %` : null;
   const nomePessoa = (id: string | null) => id ? pessoas.find((p) => p.user_id === id)?.nome ?? null : null;
-  const canal = demanda.canal?.nome ?? origem?.canal?.nome ?? null;
-  const protocolo = origem?.protocolo ?? null;
-  const resumoOrigem = [demanda.cliente?.nome, canal, protocolo].filter(Boolean).join(" · ") || "Sem dados de origem";
 
   return (
-    <div className="space-y-5">
-      <Collapsible open={analiseAberta} onOpenChange={setAnaliseAberta}>
-        <section className="space-y-4">
-          <div className="flex items-center gap-2 border-b border-border pb-2">
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" className="group h-auto min-w-0 flex-1 justify-start p-0 text-left">
-                <ChevronDown className="mr-2 h-4 w-4 shrink-0 transition-transform group-data-[state=open]:rotate-180" />
-                <span className="font-semibold text-brand-navy">Análise da demanda</span>
-              </Button>
-            </CollapsibleTrigger>
-            {!editando && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  setAnaliseAberta(true);
-                  setEditando(true);
-                }}
-              >
-                <Pencil className="mr-1 h-3.5 w-3.5" /> Editar
-              </Button>
-            )}
-          </div>
-          <CollapsibleContent>
-            {editando ? (
-              <div className="space-y-3">
-                <CamposDemanda demanda={demanda} f={f} setF={setF} />
-                <div className="flex gap-2">
-                  <Button onClick={salvar} disabled={atualizar.isPending}>
-                    {atualizar.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Salvar dados
-                  </Button>
-                  <Button variant="ghost" onClick={() => { setF(estadoDaDemanda(demanda)); setEditando(false); }}>Cancelar</Button>
-                </div>
-              </div>
-            ) : (
-              <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
-                <CampoLeitura rotulo={demanda.produto === "fianca_locaticia" ? "Locador" : "Segurado"} valor={demanda.segurado?.nome ?? null} />
-                <CampoLeitura rotulo="Modalidade" valor={demanda.modalidade ? rotuloModalidade(demanda.modalidade) : null} />
-                <CampoLeitura rotulo="Importância segurada (R$)" valor={demanda.importancia_segurada != null ? moeda(demanda.importancia_segurada) : null} />
-                <CampoLeitura rotulo="% da garantia" valor={pct} />
-                <CampoLeitura rotulo="Nº do contrato/processo" valor={numero} />
-                <CampoLeitura rotulo="Responsável técnico" valor={nomePessoa(demanda.responsavel_tecnico_id)} />
-                <CampoLeitura amplo rotulo="Vigência exigida" valor={demanda.vigencia_exigida ? <TextoRecolhivel texto={demanda.vigencia_exigida} /> : null} />
-                <CampoLeitura amplo rotulo="Objeto" valor={demanda.objeto ? <TextoRecolhivel texto={demanda.objeto} /> : null} />
-              </div>
-            )}
-          </CollapsibleContent>
-        </section>
-      </Collapsible>
-
-      <Collapsible>
-        <section className="rounded-md border border-border bg-muted/30 px-4 py-3">
-          <CollapsibleTrigger asChild>
-            <Button variant="ghost" className="group h-auto w-full justify-between p-0 text-left">
-              <span className="min-w-0">
-                <span className="block text-xs font-semibold uppercase text-muted-foreground">Origem</span>
-                <span className="mt-1 block truncate text-sm font-normal text-foreground">{resumoOrigem}</span>
-              </span>
-              <ChevronDown className="h-4 w-4 shrink-0 transition-transform group-data-[state=open]:rotate-180" />
+    <section className="space-y-4">
+      <div className="flex items-center justify-between gap-2 border-b border-border pb-2">
+        <h3 className="font-semibold text-brand-navy">Análise da demanda</h3>
+        <Button size="sm" variant="outline" onClick={() => setEditando(true)}>
+          <Pencil className="mr-1 h-3.5 w-3.5" /> Editar
+        </Button>
+      </div>
+      <div className={compacto ? "grid gap-3" : "grid gap-x-8 gap-y-5 sm:grid-cols-2"}>
+        <CampoLeitura rotulo={demanda.produto === "fianca_locaticia" ? "Locador" : "Segurado"} valor={demanda.segurado?.nome ?? null} />
+        <CampoLeitura rotulo="Modalidade" valor={demanda.modalidade ? rotuloModalidade(demanda.modalidade) : null} />
+        <CampoLeitura rotulo="Importância segurada (R$)" valor={demanda.importancia_segurada != null ? moeda(demanda.importancia_segurada) : null} />
+        <CampoLeitura rotulo="% da garantia" valor={pct} />
+        <CampoLeitura rotulo="Nº do contrato/processo" valor={numero} />
+        <CampoLeitura rotulo="Responsável técnico" valor={nomePessoa(demanda.responsavel_tecnico_id)} />
+        <CampoLeitura amplo rotulo="Vigência exigida" valor={demanda.vigencia_exigida ? <TextoRecolhivel texto={demanda.vigencia_exigida} /> : null} />
+        <CampoLeitura amplo rotulo="Objeto" valor={demanda.objeto ? <TextoRecolhivel texto={demanda.objeto} /> : null} />
+      </div>
+      <Dialog open={editando} onOpenChange={setEditando}>
+        <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto sm:max-w-4xl">
+          <DialogHeader><DialogTitle>Editar análise da demanda</DialogTitle></DialogHeader>
+          <CamposDemanda demanda={demanda} f={f} setF={setF} />
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => { setF(estadoDaDemanda(demanda)); setEditando(false); }}>Cancelar</Button>
+            <Button onClick={salvar} disabled={atualizar.isPending}>
+              {atualizar.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Salvar dados
             </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="pt-4">
-            <div className="grid gap-x-8 gap-y-4 border-t border-border pt-4 sm:grid-cols-2">
-              <CampoLeitura rotulo="Cliente" valor={demanda.cliente?.nome ?? null} />
-              <CampoLeitura rotulo="Chegada" valor={dataHora(demanda.chegada_em)} />
-              <CampoLeitura rotulo="Canal" valor={canal} />
-              <CampoLeitura rotulo="Responsável pelo cliente" valor={nomePessoa(demanda.responsavel_cliente_id)} />
-              <CampoLeitura rotulo="Protocolo" valor={protocolo} />
-              <CampoLeitura rotulo="Assunto" valor={origem?.assunto ?? null} />
-            </div>
-            {demanda.solicitacao_id && (
-              <p className="mt-4 text-xs text-muted-foreground">
-                Veio do formulário público de Garantia Judicial.{" "}
-                <Link to="/garantia/formulario-admin" className="font-semibold text-primary underline-offset-4 hover:underline">
-                  Abrir o Formulário Admin
-                </Link>
-              </p>
-            )}
-          </CollapsibleContent>
-        </section>
-      </Collapsible>
-    </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </section>
   );
 }
 
-function ColunaHistorico({
+function BlocoOrigem({ demanda }: { demanda: DemandaLista }) {
+  const { data: origem } = useOrigemDaDemanda(demanda.entrada_id);
+  const { data: pessoas = [] } = useResponsaveis();
+  const nomePessoa = (id: string | null) => id ? pessoas.find((p) => p.user_id === id)?.nome ?? null : null;
+  const canal = demanda.canal?.nome ?? origem?.canal?.nome ?? null;
+  const protocolo = origem?.protocolo ?? null;
+  const resumo = [demanda.cliente?.nome, canal, protocolo].filter(Boolean).join(" · ") || "Sem dados de origem";
+  return (
+    <Collapsible>
+      <section className="rounded-md border border-border bg-muted/30 px-3 py-3">
+        <CollapsibleTrigger asChild>
+          <Button variant="ghost" className="group h-auto w-full justify-between p-0 text-left">
+            <span className="min-w-0"><span className="block text-xs font-semibold uppercase text-muted-foreground">Origem</span><span className="mt-1 block truncate text-sm font-normal">{resumo}</span></span>
+            <ChevronDown className="h-4 w-4 shrink-0 transition-transform group-data-[state=open]:rotate-180" />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pt-4">
+          <div className="grid gap-3 border-t border-border pt-4">
+            <CampoLeitura rotulo="Cliente" valor={demanda.cliente?.nome ?? null} />
+            <CampoLeitura rotulo="Chegada" valor={dataHora(demanda.chegada_em)} />
+            <CampoLeitura rotulo="Canal" valor={canal} />
+            <CampoLeitura rotulo="Responsável pelo cliente" valor={nomePessoa(demanda.responsavel_cliente_id)} />
+            <CampoLeitura rotulo="Protocolo" valor={protocolo} />
+            <CampoLeitura rotulo="Assunto" valor={origem?.assunto ?? null} />
+          </div>
+          {demanda.solicitacao_id && <p className="mt-4 text-xs text-muted-foreground">Veio do formulário público de Garantia Judicial. <Link to="/garantia/formulario-admin" className="font-semibold text-primary hover:underline">Abrir o Formulário Admin</Link></p>}
+        </CollapsibleContent>
+      </section>
+    </Collapsible>
+  );
+}
+
+type ColunaQuadro = ReturnType<typeof colunasDoCatalogo>[number];
+
+function MovimentacoesFase({ itens, catalogo, podeVerTempo }: { itens: HistoricoItem[]; catalogo: StatusCatalogo[]; podeVerTempo: boolean }) {
+  const nomeStatus = (codigo: string) => catalogo.find((s) => s.codigo === codigo)?.nome ?? codigo;
+  return (
+    <ol className="space-y-0">
+      {itens.map((h, indice) => {
+        const atual = !h.fim;
+        return <li key={h.id} className="relative grid grid-cols-[12px_minmax(0,1fr)] gap-3 pb-4 last:pb-0">
+          {indice < itens.length - 1 && <span aria-hidden className="absolute bottom-0 left-[5px] top-3 w-px bg-border" />}
+          <span aria-hidden className={`relative z-10 mt-1.5 h-3 w-3 rounded-full border ${atual ? "border-primary bg-primary" : "border-border bg-muted"}`} />
+          <div className="min-w-0">
+            <Badge variant="secondary" className={`max-w-full rounded-full whitespace-normal px-2 py-0.5 text-left leading-snug ${atual ? "border-primary bg-primary text-primary-foreground" : "bg-muted"}`}>{nomeStatus(h.status_codigo)}</Badge>
+            <p className="mt-1 text-xs text-muted-foreground">{dataHora(h.inicio)}{podeVerTempo && h.fim ? ` · permaneceu ${duracaoLegivel(h.duracao_segundos)}` : ""}</p>
+            {h.observacao && <p className="mt-2 whitespace-pre-line rounded-md bg-muted px-2 py-1.5 text-xs text-muted-foreground">{h.observacao}</p>}
+          </div>
+        </li>;
+      })}
+    </ol>
+  );
+}
+
+function ColunaHistoricoPorFase({
   demanda,
   catalogo,
   podeVerTempo,
+  colunas,
+  posicaoAtual,
+  itens,
+  isLoading,
+  consulta,
+  resumoMercado,
+  cotacoes,
+  seguradoras,
 }: {
   demanda: DemandaLista;
   catalogo: StatusCatalogo[];
   podeVerTempo: boolean;
+  colunas: ColunaQuadro[];
+  posicaoAtual: number;
+  itens: HistoricoItem[];
+  isLoading: boolean;
+  consulta: ReturnType<typeof useConsultaAtual>["data"];
+  resumoMercado: ReturnType<typeof resumirConsulta>;
+  cotacoes: ReturnType<typeof useCotacoes>["data"];
+  seguradoras: ReturnType<typeof useSeguradorasGarantia>["data"];
 }) {
-  const { data: itens = [], isLoading } = useHistoricoDemanda(demanda.id);
-  const [expandido, setExpandido] = useState(false);
-  const nomeStatus = (c: string) => catalogo.find((s) => s.codigo === c)?.nome ?? c;
-  const visiveis = expandido ? itens : itens.slice(0, 2);
+  const etapaPorStatus = new Map(catalogo.filter((s) => s.etapa !== "qualquer").map((s) => [s.codigo, s.etapa === "2" ? "1" : s.etapa]));
+  let ultimaEtapa: string | null = null;
+  const porEtapa = new Map<string, HistoricoItem[]>();
+  for (const item of itens) {
+    const etapaCatalogo = etapaPorStatus.get(item.status_codigo);
+    if (etapaCatalogo) ultimaEtapa = etapaCatalogo;
+    if (!ultimaEtapa) continue;
+    porEtapa.set(ultimaEtapa, [...(porEtapa.get(ultimaEtapa) ?? []), item]);
+  }
+  const passadas = colunas.filter((c) => c.posicao < posicaoAtual && (porEtapa.get(c.etapa)?.length ?? 0) > 0);
+  const atuais = porEtapa.get(demanda.etapa) ?? [];
+  const escolhida = cotacoes?.find((c) => c.escolhida);
 
   return (
-    <section className="min-w-0" aria-labelledby="titulo-historico">
+    <section className="min-w-0 space-y-3" aria-labelledby="titulo-historico">
       <h3 id="titulo-historico" className="font-semibold text-brand-navy">Histórico</h3>
+      <BlocoOrigem demanda={demanda} />
       {isLoading ? (
-        <p className="mt-3 text-sm text-muted-foreground">Carregando o histórico…</p>
-      ) : !itens.length ? (
-        <p className="mt-3 text-sm text-muted-foreground">Ainda não há movimentações registradas.</p>
-      ) : (
-        <>
-          <ol className="mt-4">
-            {visiveis.map((h, indice) => {
-              const atual = indice === 0 && !h.fim;
-              const temProximo = indice < visiveis.length - 1;
-              return (
-                <li key={h.id} className="relative grid grid-cols-[12px_minmax(0,1fr)] gap-3 pb-5 last:pb-0">
-                  {temProximo && <span aria-hidden className="absolute bottom-0 left-[5px] top-3 w-px bg-border" />}
-                  <span
-                    aria-hidden
-                    className={`relative z-10 mt-1.5 h-3 w-3 rounded-full border ${
-                      atual ? "border-primary bg-primary" : "border-border bg-muted"
-                    }`}
-                  />
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <Badge
-                        variant="secondary"
-                        className={`max-w-full rounded-full whitespace-normal px-2 py-0.5 text-left leading-snug ${
-                          atual ? "border-primary bg-primary text-primary-foreground" : "bg-muted"
-                        }`}
-                      >
-                        {nomeStatus(h.status_codigo)}
-                      </Badge>
-                      {atual && <span className="text-xs font-medium text-primary">atual</span>}
-                    </div>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {dataHora(h.inicio)}
-                      {/* Sem menu_garantia_painel, a duração não é renderizada. */}
-                      {podeVerTempo && h.fim ? ` · permaneceu ${duracaoLegivel(h.duracao_segundos)}` : ""}
-                    </p>
-                    {h.observacao && (
-                      <p className="mt-2 whitespace-pre-line rounded-md bg-muted px-2 py-1.5 text-xs text-muted-foreground">
-                        {h.observacao}
-                      </p>
-                    )}
-                  </div>
-                </li>
-              );
-            })}
-          </ol>
-          {itens.length > 2 && (
-            <button
-              type="button"
-              className="mt-4 text-xs text-muted-foreground underline underline-offset-2"
-              onClick={() => setExpandido((valor) => !valor)}
-            >
-              {expandido ? "Mostrar menos" : "Mostrar mais"}
-            </button>
-          )}
-        </>
-      )}
+        <p className="text-sm text-muted-foreground">Carregando o histórico…</p>
+      ) : null}
+      {passadas.map((coluna) => {
+        const movimentos = porEtapa.get(coluna.etapa) ?? [];
+        const entrada = movimentos[0]?.inicio;
+        const saida = movimentos[movimentos.length - 1]?.fim;
+        return <Collapsible key={coluna.etapa}>
+          <section className="rounded-md border border-border px-3 py-3">
+            <CollapsibleTrigger asChild><Button variant="ghost" className="group h-auto w-full items-start justify-between p-0 text-left">
+              <span className="flex min-w-0 gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" /><span><span className="block text-sm font-semibold">{rotuloEtapa(coluna.etapa, colunas)}</span><span className="mt-1 block text-xs font-normal text-muted-foreground">{entrada ? dataHora(entrada) : A_DEFINIR} até {saida ? dataHora(saida) : A_DEFINIR}{podeVerTempo ? ` · ${duracaoLegivel(movimentos.reduce((s, h) => s + (h.duracao_segundos ?? 0), 0))}` : ""}</span></span></span>
+              <ChevronDown className="h-4 w-4 shrink-0 transition-transform group-data-[state=open]:rotate-180" />
+            </Button></CollapsibleTrigger>
+            <CollapsibleContent className="space-y-4 pt-4">
+              {(coluna.etapa === "1" || coluna.etapa === "2") && <BlocoDadosDemanda demanda={demanda} compacto />}
+              {coluna.etapa === "3" && consulta && <div className="grid gap-3"><CampoLeitura rotulo="Consultada em" valor={dataHora(consulta.consultada_em)} /><CampoLeitura rotulo="Com limite / sem limite / não consultado" valor={`${resumoMercado.total_com_limite} / ${resumoMercado.total_sem_limite} / ${resumoMercado.total_nao_consultado}`} /><CampoLeitura rotulo="Capacidade total" valor={moeda(resumoMercado.capacidade_total)} /></div>}
+              {coluna.etapa === "4" && <div className="grid gap-3"><CampoLeitura rotulo="Cotações recebidas" valor={cotacoes?.length ?? 0} />{escolhida && <><CampoLeitura rotulo="Cotação escolhida" valor={nomeSeguradoraCotacao(escolhida, seguradoras ?? [])} /><CampoLeitura rotulo="Prêmio" valor={moeda(escolhida.premio)} /><CampoLeitura rotulo="Taxa (% a.a.)" valor={escolhida.taxa != null ? `${Number(escolhida.taxa).toLocaleString("pt-BR")} % a.a.` : null} /></>}</div>}
+              <div className="border-t border-border pt-4"><MovimentacoesFase itens={movimentos} catalogo={catalogo} podeVerTempo={podeVerTempo} /></div>
+            </CollapsibleContent>
+          </section>
+        </Collapsible>;
+      })}
+      <section className="space-y-3 rounded-md border border-primary/30 px-3 py-3">
+        <div className="flex flex-wrap items-center gap-2"><span className="text-sm font-semibold">{rotuloEtapa(demanda.etapa, colunas)}</span><Badge className="bg-primary text-primary-foreground">atual</Badge></div>
+        {atuais.length ? <MovimentacoesFase itens={atuais} catalogo={catalogo} podeVerTempo={podeVerTempo} /> : <p className="text-xs text-muted-foreground">Ainda não há movimentações registradas.</p>}
+      </section>
     </section>
   );
 }
@@ -1402,7 +1389,7 @@ export function DemandaSheet({
   const qc = useQueryClient();
   const [retornoPara, setRetornoPara] = useState<StatusCatalogo | null>(null);
   const [retomarAberto, setRetomarAberto] = useState(false);
-  const { data: historico = [] } = useHistoricoDemanda(demanda?.id ?? null);
+  const { data: historico = [], isLoading: carregandoHistorico } = useHistoricoDemanda(demanda?.id ?? null);
   const aceite = useRegistrarAceite();
   const demandaId = demanda?.id ?? "";
   const clienteId = demanda?.cliente_id ?? null;
@@ -1545,12 +1532,24 @@ export function DemandaSheet({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid min-h-0 min-w-0 gap-6 lg:grid-cols-[232px_minmax(0,1fr)_280px]">
-          <div className="min-w-0 lg:order-1 lg:max-h-full lg:self-start lg:overflow-y-auto lg:pr-1">
-            <ColunaHistorico demanda={demanda} catalogo={catalogo} podeVerTempo={podeVerTempo} />
+        <div className="grid min-h-0 min-w-0 gap-6 lg:grid-cols-[288px_minmax(0,1fr)_280px]">
+          <div className="order-3 min-w-0 lg:order-1 lg:max-h-full lg:self-start lg:overflow-y-auto lg:pr-1">
+            <ColunaHistoricoPorFase
+              demanda={demanda}
+              catalogo={catalogo}
+              podeVerTempo={podeVerTempo}
+              colunas={colunas}
+              posicaoAtual={posicaoAtual}
+              itens={historico}
+              isLoading={carregandoHistorico}
+              consulta={consulta}
+              resumoMercado={resumoMercado}
+              cotacoes={cotacoes}
+              seguradoras={seguradorasConfig}
+            />
           </div>
 
-          <aside className="min-w-0 space-y-5 lg:order-3 lg:max-h-full lg:overflow-y-auto lg:pr-1">
+          <aside className="order-2 min-w-0 space-y-5 lg:order-3 lg:max-h-full lg:overflow-y-auto lg:pr-1">
             <div className="space-y-3" data-tour="gar-situacao">
               <h3 className="font-semibold text-brand-navy">Situação</h3>
               <CampoLeitura rotulo="Etapa" valor={rotuloEtapa(demanda.etapa, colunas)} />
@@ -1659,9 +1658,9 @@ export function DemandaSheet({
             />
           </aside>
 
-          <main className="min-w-0 space-y-6 lg:order-2 lg:overflow-y-auto lg:pr-2">
-            <BlocoDadosDemanda demanda={demanda} />
-            <section className="space-y-4 border-t border-border pt-5">
+          <main className="order-1 min-w-0 space-y-6 lg:order-2 lg:overflow-y-auto lg:pr-2">
+            {(demanda.etapa === "1" || demanda.etapa === "2") && <BlocoDadosDemanda demanda={demanda} />}
+            <section className={`space-y-4 ${(demanda.etapa === "1" || demanda.etapa === "2") ? "border-t border-border pt-5" : ""}`}>
               <div className="flex items-center gap-2">
                 <h3 className="font-semibold text-brand-navy">{rotuloEtapa(demanda.etapa, colunas)}</h3>
                 <AjudaFase etapa={demanda.etapa} />
