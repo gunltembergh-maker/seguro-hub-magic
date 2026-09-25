@@ -35,6 +35,7 @@ const AREAS = [
   "Garantia",
   "Comercial - Garantia",
   "Comercial - Beneficios",
+  "Comercial Lavoro",
   "Juridico",
   "Beneficios",
   "Serviços Externos",
