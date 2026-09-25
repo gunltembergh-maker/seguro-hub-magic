@@ -91,6 +91,7 @@ export const NAV_ADMIN: NavLeaf[] = [
   { title: "Relatório de Uso", url: "/admin/uso", icon: Activity, perms: ["menu_admin_uso"] },
   { title: "Reserva de Posições", url: "/admin/reservas", icon: CalendarCheck, perms: ["menu_admin_reservas"] },
   { title: "Configurações", url: "/admin/configuracoes", icon: Settings, perms: ["menu_admin_configuracoes"] },
+  { title: "Avisos do Canal Parceiros", url: "/admin/avisos-canal-parceiros", icon: Mail, perms: ["menu_admin_avisos_canal"] },
 ];
 
 export const NAV_EMAILS: NavLeaf[] = [
