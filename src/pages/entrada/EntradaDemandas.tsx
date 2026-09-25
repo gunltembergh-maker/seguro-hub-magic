@@ -66,7 +66,6 @@ import {
   TAMANHO_MAXIMO_BYTES,
   rotuloTipoDocumento,
   tiposContratoObrigatorios,
-  tiposDaEntrada,
 } from "@/lib/garantia/documentos-regra";
 
 import { useMeuPerfilEfetivo } from "@/contexts/view-as-context";
