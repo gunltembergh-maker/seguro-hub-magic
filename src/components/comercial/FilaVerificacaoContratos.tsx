@@ -364,9 +364,15 @@ export function FilaVerificacaoContratos({ semCard = false }: { semCard?: boolea
                 <FileText className="mr-2 h-4 w-4" />
                 Ver aqui
               </Button>
-              <Button size="sm" onClick={() => setConferindo(p)}>
-                Conferir e liberar
-              </Button>
+              {p.situacao === "VINCULO_A_CONFIRMAR" ? (
+                <span className="self-center text-xs text-muted-foreground">
+                  Defina o parceiro acima para seguir
+                </span>
+              ) : (
+                <Button size="sm" onClick={() => setConferindo(p)}>
+                  Conferir e liberar
+                </Button>
+              )}
             </div>
           </div>
 
