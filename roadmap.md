@@ -11,7 +11,6 @@
 - [x] Ajustar layout e responsividade de Entrada de Demandas e Garantia nas três larguras.
 - [x] Reorganizar o detalhe da demanda de Garantia em modal focado na fase atual.
 - [x] IA Garantia: extração servidor com unpdf, log/mensagem de erro, destroy do VisualizadorPdf
-- [x] Entrada de Demandas: consulta imutável, exclusão administrativa e conferência antes do registro
 
 - [x] Registrar no catálogo de permissões (por usuário) todos os acessos já existentes nos Perfis
 - [x] Check-in: modal de erro com mensagem real, passos, suporte e IP
