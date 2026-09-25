@@ -641,6 +641,8 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
   const [resultado, setResultado] = useState<{ protocolo: string; chegada: string; registro: string } | null>(null);
   const [conferenciaAberta, setConferenciaAberta] = useState(false);
   const [conferido, setConferido] = useState(false);
+  const [arrastando, setArrastando] = useState(false);
+  const inputArquivoRef = useRef<HTMLInputElement>(null);
 
   const canais = useCanais();
   const criarCanal = useCriarCanal();
@@ -667,19 +669,10 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
     setConferido(false);
   }
 
-  // Sem documento não é demanda: exige pelo menos um, de qualquer tipo (muitas
-  // vezes só há o que o comercial mandou). O documento do contrato é exigido
-  // depois, para sair da Análise da demanda (pendenciasAnaliseDemanda).
+  // Documentos são opcionais e entram todos como "outro": o tipo é definido
+  // depois, no card. O contrato continua exigido para sair da Análise.
   const ehGarantia = ramo === "garantia";
-  const razaoBloqueio = !ehGarantia
-    ? null
-    : !produto
-      ? "Escolha o produto para anexar os documentos."
-      : anexos.length === 0
-        ? "Anexe pelo menos um documento."
-        : anexos.some((a) => !a.tipo)
-          ? "Escolha o tipo de cada arquivo anexado."
-          : null;
+  const razaoBloqueio = !ehGarantia ? null : !produto ? "Escolha o produto." : null;
 
   function adicionarArquivos(lista: FileList | null) {
     if (!lista) return;
@@ -689,7 +682,7 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
         toast.error(`${f.name} passa de 20 MB, que é o teto por anexo.`);
         continue;
       }
-      novos.push({ arquivo: f, tipo: "" });
+      novos.push({ arquivo: f, tipo: "outro" });
     }
     setAnexos((a) => [...a, ...novos]);
   }
@@ -926,7 +919,7 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
               {ramo === "garantia" ? (
                 <div className="space-y-1">
                   <Label>Produto *</Label>
-                  <Select value={produto} onValueChange={(v) => { setProduto(v as ProdutoGarantia); setAnexos((l) => l.map((a) => (tiposDaEntrada(v).some((t) => t.valor === a.tipo) ? a : { ...a, tipo: "" }))); }}>
+                  <Select value={produto} onValueChange={(v) => setProduto(v as ProdutoGarantia)}>
                     <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="seguro_garantia">Seguro Garantia</SelectItem>
@@ -948,35 +941,48 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
               </div>
 
               <div className="space-y-2 sm:col-span-2">
-                <Label>Documentos{ehGarantia ? " *" : ""}</Label>
+                <Label>Documentos</Label>
                 {!ehGarantia ? (
                   <p className="text-xs text-muted-foreground">
                     Este ramo fica retido sem demanda, e documento sem demanda não teria onde ficar: aqui não se anexa.
                   </p>
                 ) : (
                   <>
-                    <Input
+                    <input
+                      ref={inputArquivoRef}
                       type="file"
                       multiple
-                      disabled={!produto}
+                      className="hidden"
                       onChange={(e) => { adicionarArquivos(e.target.files); e.target.value = ""; }}
                     />
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => inputArquivoRef.current?.click()}
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); inputArquivoRef.current?.click(); } }}
+                      onDragOver={(e) => { e.preventDefault(); setArrastando(true); }}
+                      onDragEnter={(e) => { e.preventDefault(); setArrastando(true); }}
+                      onDragLeave={(e) => { e.preventDefault(); setArrastando(false); }}
+                      onDrop={(e) => { e.preventDefault(); setArrastando(false); adicionarArquivos(e.dataTransfer.files); }}
+                      className={`cursor-pointer rounded-lg border-2 border-dashed p-6 text-center transition-colors ${
+                        arrastando ? "border-[#338B85] bg-[#338B85]/5" : "border-border hover:bg-muted/50"
+                      }`}
+                    >
+                      <Upload className="mx-auto h-6 w-6 text-muted-foreground" />
+                      <p className="mt-2 text-sm font-medium">Arraste os arquivos aqui</p>
+                      <p className="text-xs text-muted-foreground">ou clique para escolher · até 20 MB por arquivo</p>
+                    </div>
                     {anexos.length > 0 && (
                       <ul className="space-y-2">
                         {anexos.map((a, i) => (
-                          <li key={`${a.arquivo.name}-${i}`} className="flex min-w-0 flex-col gap-2 rounded-md border p-2 sm:flex-row sm:items-center">
+                          <li key={`${a.arquivo.name}-${i}`} className="flex min-w-0 items-center gap-2 rounded-md border p-2">
+                            <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
                             <span className="min-w-0 flex-1 break-all text-sm">{a.arquivo.name}</span>
-                            <Select
-                              value={a.tipo}
-                              onValueChange={(v) => setAnexos((l) => l.map((x, j) => (j === i ? { ...x, tipo: v } : x)))}
-                            >
-                              <SelectTrigger className="sm:w-56"><SelectValue placeholder="Tipo do documento" /></SelectTrigger>
-                              <SelectContent>
-                                {tiposDaEntrada(produto).map((t) => (
-                                  <SelectItem key={t.valor} value={t.valor}>{t.rotulo}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <span className="shrink-0 text-xs text-muted-foreground">
+                              {a.arquivo.size >= 1024 * 1024
+                                ? `${(a.arquivo.size / (1024 * 1024)).toFixed(1)} MB`
+                                : `${Math.max(1, Math.round(a.arquivo.size / 1024))} KB`}
+                            </span>
                             <Button
                               type="button"
                               size="sm"
@@ -990,8 +996,7 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
                       </ul>
                     )}
                     <p className="text-xs text-muted-foreground">
-                      Anexe pelo menos um documento, de qualquer tipo (edital, contrato, DRE, balanço, alteração
-                      contratual). Até 20 MB por arquivo.
+                      Opcional. Anexe o que já tiver (edital, contrato, e-mail…). O tipo de cada documento pode ser definido depois, no card.
                     </p>
                   </>
                 )}
@@ -1053,10 +1058,14 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
               {(responsaveisLista.data ?? []).find((p) => p.user_id === responsavelId)?.nome ?? "Não definido"}
             </CampoLeitura>
             <CampoLeitura rotulo="Documentos">
-              {ehGarantia ? `${anexos.length} ${anexos.length === 1 ? "anexo" : "anexos"}` : "—"}
+              {!ehGarantia
+                ? "—"
+                : anexos.length === 0
+                  ? "Nenhum documento"
+                  : `${anexos.length} ${anexos.length === 1 ? "anexo" : "anexos"}`}
               {ehGarantia && anexos.length > 0 && (
-                <span className="block text-xs font-normal text-muted-foreground">
-                  {anexos.map((a) => rotuloTipoDocumento(a.tipo)).join(" · ")}
+                <span className="block break-all text-xs font-normal text-muted-foreground">
+                  {anexos.map((a) => a.arquivo.name).join(" · ")}
                 </span>
               )}
             </CampoLeitura>
