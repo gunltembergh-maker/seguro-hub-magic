@@ -6,8 +6,12 @@
 // e apontam para o bucket de origem, sem cópia.
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Download, FileText, Loader2, Lock, Upload } from "lucide-react";
+import { Download, FileText, Loader2, Lock, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { mensagemDeErro } from "@/lib/erro";
+import { ConfirmarExclusaoDialog } from "@/components/garantia/confirmar-exclusao";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -59,6 +63,9 @@ function ItemDocumento({
   substituido: boolean;
 }) {
   const [baixando, setBaixando] = useState(false);
+  const [desanexarAberto, setDesanexarAberto] = useState(false);
+  const [desanexando, setDesanexando] = useState(false);
+  const qc = useQueryClient();
   return (
     <div className="flex items-center justify-between gap-3 rounded-md border p-2 text-sm">
       <div className="min-w-0">
@@ -81,6 +88,7 @@ function ItemDocumento({
         </p>
         {doc.observacao && <p className="text-xs text-muted-foreground">{doc.observacao}</p>}
       </div>
+      <div className="flex shrink-0 gap-2">
       <Button
         size="sm"
         variant="outline"
@@ -90,7 +98,7 @@ function ItemDocumento({
           try {
             await baixarDocumento(doc);
           } catch (e) {
-            toast.error(e instanceof Error ? e.message : "Não foi possível baixar.");
+            toast.error(mensagemDeErro(e, "Não foi possível baixar."));
           } finally {
             setBaixando(false);
           }
@@ -98,6 +106,46 @@ function ItemDocumento({
       >
         {baixando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
       </Button>
+      {doc.id && (
+        <Button
+          size="icon"
+          variant="outline"
+          className="h-9 w-9"
+          aria-label="Desanexar"
+          title="Desanexar"
+          onClick={() => setDesanexarAberto(true)}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      )}
+      </div>
+      <ConfirmarExclusaoDialog
+        aberto={desanexarAberto}
+        titulo={`Desanexar “${doc.nome_arquivo}”?`}
+        descricao="O documento sai deste card. O arquivo fica guardado para auditoria. Se houver uma versão anterior, ela volta a valer."
+        rotuloConfirmar="Desanexar"
+        pendente={desanexando}
+        onFechar={() => setDesanexarAberto(false)}
+        onConfirmar={async (motivo) => {
+          setDesanexando(true);
+          try {
+            const { error } = await (supabase as any).rpc("rpc_garantia_desanexar_documento", {
+              _documento_id: doc.id,
+              _motivo: motivo,
+            });
+            if (error) throw error;
+            toast.success("Documento desanexado.");
+            qc.invalidateQueries({ queryKey: ["garantia", "documentos"] });
+            qc.invalidateQueries({ queryKey: ["garantia", "analises-ia"] });
+            qc.invalidateQueries({ queryKey: ["garantia", "demandas"] });
+            setDesanexarAberto(false);
+          } catch (e) {
+            toast.error(mensagemDeErro(e));
+          } finally {
+            setDesanexando(false);
+          }
+        }}
+      />
     </div>
   );
 }
