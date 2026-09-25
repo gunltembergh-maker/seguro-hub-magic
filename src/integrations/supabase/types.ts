@@ -3873,6 +3873,42 @@ export type Database = {
           },
         ]
       }
+      garantia_exclusoes: {
+        Row: {
+          demanda_id: string | null
+          excluido_em: string
+          excluido_por: string | null
+          id: string
+          motivo: string
+          registro_id: string
+          rotulo: string | null
+          snapshot: Json
+          tipo: string
+        }
+        Insert: {
+          demanda_id?: string | null
+          excluido_em?: string
+          excluido_por?: string | null
+          id?: string
+          motivo: string
+          registro_id: string
+          rotulo?: string | null
+          snapshot: Json
+          tipo: string
+        }
+        Update: {
+          demanda_id?: string | null
+          excluido_em?: string
+          excluido_por?: string | null
+          id?: string
+          motivo?: string
+          registro_id?: string
+          rotulo?: string | null
+          snapshot?: Json
+          tipo?: string
+        }
+        Relationships: []
+      }
       garantia_financeiro: {
         Row: {
           apolice_id: string
@@ -7791,7 +7827,15 @@ export type Database = {
         Args: { _aprovar: boolean; _resposta: string; _solicitacao_id: string }
         Returns: undefined
       }
+      rpc_garantia_desanexar_documento: {
+        Args: { _documento_id: string; _motivo: string }
+        Returns: undefined
+      }
       rpc_garantia_docs_apos_pedido: { Args: never; Returns: string[] }
+      rpc_garantia_excluir_demanda: {
+        Args: { _demanda_id: string; _motivo: string }
+        Returns: undefined
+      }
       rpc_garantia_fila_comercial: {
         Args: never
         Returns: {
