@@ -968,12 +968,12 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
               </div>
 
               <div className="space-y-2 sm:col-span-2">
-                <Label>Documentos</Label>
+                <Label>Documentos{ehGarantia && !modoNovoDocs ? " *" : ""}</Label>
                 {!ehGarantia ? (
                   <p className="text-xs text-muted-foreground">
                     Este ramo fica retido sem demanda, e documento sem demanda não teria onde ficar: aqui não se anexa.
                   </p>
-                ) : (
+                ) : modoNovoDocs ? (
                   <>
                     <input
                       ref={inputArquivoRef}
@@ -1024,6 +1024,47 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
                     )}
                     <p className="text-xs text-muted-foreground">
                       Opcional. Anexe o que já tiver (edital, contrato, e-mail…). O tipo de cada documento pode ser definido depois, no card.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <Input
+                      type="file"
+                      multiple
+                      disabled={!produto}
+                      onChange={(e) => { adicionarArquivos(e.target.files); e.target.value = ""; }}
+                    />
+                    {anexos.length > 0 && (
+                      <ul className="space-y-2">
+                        {anexos.map((a, i) => (
+                          <li key={`${a.arquivo.name}-${i}`} className="flex min-w-0 flex-col gap-2 rounded-md border p-2 sm:flex-row sm:items-center">
+                            <span className="min-w-0 flex-1 break-all text-sm">{a.arquivo.name}</span>
+                            <Select
+                              value={a.tipo}
+                              onValueChange={(v) => setAnexos((l) => l.map((x, j) => (j === i ? { ...x, tipo: v } : x)))}
+                            >
+                              <SelectTrigger className="sm:w-56"><SelectValue placeholder="Tipo do documento" /></SelectTrigger>
+                              <SelectContent>
+                                {tiposDaEntrada(produto).map((t) => (
+                                  <SelectItem key={t.valor} value={t.valor}>{t.rotulo}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setAnexos((l) => l.filter((_, j) => j !== i))}
+                            >
+                              Remover
+                            </Button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Anexe pelo menos um documento, de qualquer tipo (edital, contrato, DRE, balanço, alteração
+                      contratual). Até 20 MB por arquivo.
                     </p>
                   </>
                 )}
