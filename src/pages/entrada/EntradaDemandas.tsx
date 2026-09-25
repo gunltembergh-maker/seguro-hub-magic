@@ -1132,8 +1132,8 @@ function DialogRegistro({ aberto, onFechar }: { aberto: boolean; onFechar: () =>
                   ? "Nenhum documento"
                   : `${anexos.length} ${anexos.length === 1 ? "anexo" : "anexos"}`}
               {ehGarantia && anexos.length > 0 && (
-                <span className="block break-all text-xs font-normal text-muted-foreground">
-                  {anexos.map((a) => a.arquivo.name).join(" · ")}
+                <span className={`block text-xs font-normal text-muted-foreground${modoNovoDocs ? " break-all" : ""}`}>
+                  {anexos.map((a) => (modoNovoDocs ? a.arquivo.name : rotuloTipoDocumento(a.tipo))).join(" · ")}
                 </span>
               )}
             </CampoLeitura>
