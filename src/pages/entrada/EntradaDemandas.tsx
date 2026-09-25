@@ -5,15 +5,22 @@
 
 import { mensagemDeErro } from "@/lib/erro";
 import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
   ArrowRight,
   Building2,
   Clock,
+  Download,
+  ExternalLink,
+  Eye,
+  FileText,
   Inbox,
   Loader2,
+  Lock,
   Plus,
   Search,
+  Trash2,
   UserPlus,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -22,6 +29,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ConfirmarExclusaoDialog } from "@/components/garantia/confirmar-exclusao";
 import {
   Dialog,
   DialogContent,
@@ -60,7 +69,9 @@ import {
 
 import { useMeuPerfilEfetivo } from "@/contexts/view-as-context";
 import { hasPermission, hasRole } from "@/hooks/use-meu-perfil";
+import { supabase } from "@/integrations/supabase/client";
 import { consultarCnpjEntrada } from "@/lib/entrada/entrada-cnpj.functions";
+import { baixarDocumento, type DocumentoDemanda } from "@/hooks/use-garantia-documentos";
 import {
   soDigitosDoc,
   useBuscaClientes,
@@ -136,10 +147,56 @@ function duracaoHumana(deISO: string, ateISO: string) {
   return `${Math.floor(h / 24)}d ${h % 24}h`;
 }
 
+function tamanhoLegivel(bytes: number | null) {
+  if (!bytes) return "tamanho não informado";
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1).replace(".", ",")} MB`;
+}
+
+function CampoLeitura({ rotulo, children, className = "" }: { rotulo: string; children: React.ReactNode; className?: string }) {
+  return (
+    <div className={className}>
+      <p className="text-[11px] font-semibold uppercase text-muted-foreground">{rotulo}</p>
+      <div className="mt-1 text-sm font-medium">{children}</div>
+    </div>
+  );
+}
+
 export default function EntradaDemandas() {
+  const perfil = useMeuPerfilEfetivo();
+  const isAdmin = hasRole(perfil, "ADMIN");
+  const qc = useQueryClient();
   const [filtros, setFiltros] = useState<FiltrosEntradas>({});
   const [aberto, setAberto] = useState(false);
+  const [entradaAberta, setEntradaAberta] = useState<EntradaLista | null>(null);
+  const [entradaExcluir, setEntradaExcluir] = useState<EntradaLista | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
   const entradas = useEntradas(filtros);
+
+  async function excluirEntrada() {
+    if (!entradaExcluir) return;
+    setExcluindo(true);
+    try {
+      const { error } = await (supabase as any).rpc("rpc_hub_excluir_entrada", {
+        _entrada_id: entradaExcluir.id,
+      });
+      if (error) throw error;
+      toast.success("Entrada excluída.");
+      setEntradaExcluir(null);
+      setEntradaAberta(null);
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["entrada", "lista"] }),
+        qc.invalidateQueries({ queryKey: ["garantia", "demandas"] }),
+        qc.invalidateQueries({ queryKey: ["garantia", "historico"] }),
+        qc.invalidateQueries({ queryKey: ["garantia", "fila-comercial"] }),
+        qc.invalidateQueries({ queryKey: ["garantia-painel"] }),
+      ]);
+    } catch (e) {
+      toast.error(mensagemDeErro(e));
+    } finally {
+      setExcluindo(false);
+    }
+  }
 
   return (
     <PaginaHub
@@ -214,7 +271,10 @@ export default function EntradaDemandas() {
 
       <Card className="min-w-0 overflow-hidden">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Entradas registradas</CardTitle>
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <CardTitle className="text-base">Entradas registradas</CardTitle>
+            <p className="text-xs text-muted-foreground">Clique em uma linha para ver o que foi enviado (somente leitura)</p>
+          </div>
         </CardHeader>
         <CardContent>
           {entradas.isLoading ? (
@@ -245,11 +305,20 @@ export default function EntradaDemandas() {
                     <TableHead className="hidden lg:table-cell">Canal</TableHead>
                     <TableHead className="hidden lg:table-cell">Assunto</TableHead>
                     <TableHead>Destino</TableHead>
+                    <TableHead className="w-20"><span className="sr-only">Ações</span></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {entradas.data!.map((e) => (
-                    <TableRow key={e.id}>
+                    <TableRow
+                      key={e.id}
+                      tabIndex={0}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => setEntradaAberta(e)}
+                      onKeyDown={(evento) => {
+                        if (evento.key === "Enter" || evento.key === " ") setEntradaAberta(e);
+                      }}
+                    >
                       <TableCell className="font-mono text-xs">{e.protocolo}</TableCell>
                       <TableCell className="hidden whitespace-nowrap text-xs lg:table-cell">{fmtDataHora(e.chegada_em)}</TableCell>
                       <TableCell>
@@ -282,6 +351,32 @@ export default function EntradaDemandas() {
                           <Badge variant="secondary">Descartada</Badge>
                         )}
                       </TableCell>
+                      <TableCell onClick={(evento) => evento.stopPropagation()}>
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                            aria-label="Ver dados enviados"
+                            title="Ver dados enviados"
+                            onClick={() => setEntradaAberta(e)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          {isAdmin && (
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8 text-destructive"
+                              aria-label="Excluir entrada"
+                              title="Excluir entrada"
+                              onClick={() => setEntradaExcluir(e)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -292,8 +387,136 @@ export default function EntradaDemandas() {
       </Card>
 
       <DialogRegistro aberto={aberto} onFechar={() => setAberto(false)} />
+      <DialogEntradaLeitura entrada={entradaAberta} onFechar={() => setEntradaAberta(null)} />
+      <ConfirmarExclusaoDialog
+        aberto={!!entradaExcluir}
+        titulo={`Excluir a entrada ${entradaExcluir?.protocolo ?? ""}?`}
+        descricao={entradaExcluir?.demanda_id
+          ? "A demanda aberta por esta entrada também será excluída do quadro. Tudo fica guardado só para auditoria. Não é possível excluir se a demanda já tiver apólice lançada."
+          : "A entrada some da lista. Fica guardada só para auditoria."}
+        rotuloConfirmar="Excluir entrada"
+        pendente={excluindo}
+        exigeMotivo={false}
+        onFechar={() => setEntradaExcluir(null)}
+        onConfirmar={excluirEntrada}
+      />
       </div>
     </PaginaHub>
+  );
+}
+
+function DialogEntradaLeitura({ entrada, onFechar }: { entrada: EntradaLista | null; onFechar: () => void }) {
+  const pessoas = useResponsaveis();
+  const [baixando, setBaixando] = useState<string | null>(null);
+  const demandaId = entrada?.demanda_id ?? entrada?.demanda?.id ?? null;
+  const documentos = useQuery({
+    queryKey: ["entrada", "documentos", demandaId],
+    enabled: !!demandaId,
+    queryFn: async (): Promise<DocumentoDemanda[]> => {
+      const { data, error } = await supabase
+        .from("garantia_documentos")
+        .select("id, demanda_id, tipo, caminho, nome_arquivo, tamanho_bytes, mime_type, versao, substituido_por_id, externo, solicitacao_id, caminho_externo, observacao, enviado_por, criado_em")
+        .eq("demanda_id", demandaId ?? "")
+        .order("criado_em", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as unknown as DocumentoDemanda[];
+    },
+  });
+
+  if (!entrada) return null;
+  const registrador = pessoas.data?.find((p) => p.user_id === entrada.registrado_por)?.nome;
+  const responsavel = pessoas.data?.find((p) => p.user_id === entrada.cliente?.responsavel_id)?.nome;
+  const origem = ORIGENS.find((o) => o.valor === entrada.origem)?.rotulo ?? entrada.origem;
+  const destino = entrada.destino === "roteada"
+    ? "Roteada para Garantia"
+    : entrada.destino === "retida"
+      ? `Retida${entrada.motivo_retencao ? ` · ${entrada.motivo_retencao}` : ""}`
+      : "Descartada";
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onFechar()}>
+      <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto sm:max-w-2xl">
+        <DialogHeader>
+          <div className="flex flex-wrap items-center gap-2">
+            <DialogTitle className="font-semibold text-[#14405C]">Entrada {entrada.protocolo}</DialogTitle>
+            <Badge variant="outline" className="gap-1"><Lock className="h-3 w-3" /> Somente leitura</Badge>
+          </div>
+          <DialogDescription>Dados exatamente como foram enviados. Não podem ser alterados.</DialogDescription>
+        </DialogHeader>
+
+        <div className="rounded-md bg-[#338B85]/10 p-3 text-xs font-medium text-[#338B85]">
+          Registrada em {fmtDataHora(entrada.registrado_em)}{registrador ? ` por ${registrador}` : ""} · {duracaoHumana(entrada.chegada_em, entrada.registrado_em)} depois da chegada
+        </div>
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <CampoLeitura rotulo="Cliente" className="sm:col-span-2">
+            {entrada.cliente?.nome ?? "—"}
+            {entrada.cliente && (
+              <span className="block text-xs font-normal text-muted-foreground">
+                {mascaraDoc(entrada.cliente.cpf_cnpj)}
+                {entrada.cliente.municipio ? ` · ${entrada.cliente.municipio}/${entrada.cliente.uf ?? ""}` : ""}
+              </span>
+            )}
+          </CampoLeitura>
+          <CampoLeitura rotulo="Ramo">{rotuloRamo(entrada.ramo)}{entrada.produto && <span className="block text-xs font-normal text-muted-foreground">{rotuloProduto(entrada.produto)}</span>}</CampoLeitura>
+          <CampoLeitura rotulo="Chegada da demanda">{fmtDataHora(entrada.chegada_em)}<span className="block text-xs font-normal text-muted-foreground">Início do relógio</span></CampoLeitura>
+          <CampoLeitura rotulo="Origem">{origem}</CampoLeitura>
+          <CampoLeitura rotulo="Canal">{entrada.canal?.nome ?? "—"}</CampoLeitura>
+          <CampoLeitura rotulo="Responsável pelo cliente">{responsavel ?? "Não definido"}</CampoLeitura>
+          <CampoLeitura rotulo="Destino">{destino}</CampoLeitura>
+          <CampoLeitura rotulo="Assunto" className="sm:col-span-2">{entrada.assunto ?? "—"}</CampoLeitura>
+          <CampoLeitura rotulo="Observação" className="sm:col-span-2">{entrada.observacao || "—"}</CampoLeitura>
+        </div>
+
+        <Separator />
+        <section className="space-y-3">
+          <h3 className="text-[11px] font-semibold uppercase text-muted-foreground">Documentos enviados</h3>
+          {documentos.isLoading ? (
+            <p className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Carregando documentos...</p>
+          ) : documentos.isError ? (
+            <p className="text-sm text-destructive">{mensagemDeErro(documentos.error, "Não foi possível carregar os documentos.")}</p>
+          ) : documentos.data?.length ? documentos.data.map((doc) => (
+            <div key={doc.id} className="flex items-center justify-between gap-3 rounded-md border p-3">
+              <div className="flex min-w-0 items-start gap-2">
+                <FileText className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                <div className="min-w-0">
+                  <p className="break-all text-sm font-medium">{doc.nome_arquivo}</p>
+                  <p className="text-xs text-muted-foreground">{fmtDataHora(doc.criado_em)} · {tamanhoLegivel(doc.tamanho_bytes)}</p>
+                  <Badge variant="outline" className="mt-1">{rotuloTipoDocumento(doc.tipo)}</Badge>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                aria-label={`Baixar ${doc.nome_arquivo}`}
+                title="Baixar documento"
+                disabled={baixando === doc.id}
+                onClick={async () => {
+                  setBaixando(doc.id);
+                  try { await baixarDocumento(doc); }
+                  catch (e) { toast.error(mensagemDeErro(e, "Não foi possível baixar.")); }
+                  finally { setBaixando(null); }
+                }}
+              >
+                {baixando === doc.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              </Button>
+            </div>
+          )) : (
+            <p className="text-sm text-muted-foreground">Nenhum documento enviado com esta entrada.</p>
+          )}
+        </section>
+
+        <DialogFooter className="gap-2 sm:justify-between">
+          {demandaId ? (
+            <Button variant="outline" onClick={() => { window.location.href = `/garantia/negociacao?demanda=${demandaId}`; }}>
+              <ExternalLink className="mr-2 h-4 w-4" /> Abrir demanda {entrada.demanda?.codigo ?? entrada.demanda?.legenda ?? ""}
+            </Button>
+          ) : <span />}
+          <Button onClick={onFechar} className="bg-[#14405C] hover:bg-[#14405C]/90">Fechar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
